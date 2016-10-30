@@ -1,0 +1,16 @@
+# documentation
+
+recursive-include docs/_build/html *
+
+# example files
+include testdata/*.csv
+include testdata/*.CSV
+include testdata/*.tcx
+include testdata/*.TCX
+
+include bin/testdata.csv
+include bin/crewnerddata.csv
+include bin/crewnerddata.tcx
+
+# readme
+include README.rst

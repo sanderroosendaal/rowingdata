@@ -1,0 +1,12 @@
+c:\users\e408191\appdata\local\continuum\anaconda\lib\site-packages\rowingdata-0.31-py2.7.egg\EGG-INFO\dependency_links.txt
+c:\users\e408191\appdata\local\continuum\anaconda\lib\site-packages\rowingdata-0.31-py2.7.egg\EGG-INFO\not-zip-safe
+c:\users\e408191\appdata\local\continuum\anaconda\lib\site-packages\rowingdata-0.31-py2.7.egg\EGG-INFO\PKG-INFO
+c:\users\e408191\appdata\local\continuum\anaconda\lib\site-packages\rowingdata-0.31-py2.7.egg\EGG-INFO\requires.txt
+c:\users\e408191\appdata\local\continuum\anaconda\lib\site-packages\rowingdata-0.31-py2.7.egg\EGG-INFO\SOURCES.txt
+c:\users\e408191\appdata\local\continuum\anaconda\lib\site-packages\rowingdata-0.31-py2.7.egg\EGG-INFO\top_level.txt
+c:\users\e408191\appdata\local\continuum\anaconda\lib\site-packages\rowingdata-0.31-py2.7.egg\rowingdata\otwplot.py
+c:\users\e408191\appdata\local\continuum\anaconda\lib\site-packages\rowingdata-0.31-py2.7.egg\rowingdata\otwplot.pyc
+c:\users\e408191\appdata\local\continuum\anaconda\lib\site-packages\rowingdata-0.31-py2.7.egg\rowingdata\rowingdata.py
+c:\users\e408191\appdata\local\continuum\anaconda\lib\site-packages\rowingdata-0.31-py2.7.egg\rowingdata\rowingdata.pyc
+c:\users\e408191\appdata\local\continuum\anaconda\lib\site-packages\rowingdata-0.31-py2.7.egg\rowingdata\__init__.py
+c:\users\e408191\appdata\local\continuum\anaconda\lib\site-packages\rowingdata-0.31-py2.7.egg\rowingdata\__init__.pyc
