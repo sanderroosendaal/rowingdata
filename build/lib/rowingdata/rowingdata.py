@@ -63,7 +63,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.91.7"
+__version__ = "0.91.8"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -1229,6 +1229,7 @@ class FITParser:
 	    ' DriveLength (meters)':np.zeros(nr_rows),
 	    ' StrokeDistance (meters)':np.zeros(nr_rows),
 	    ' DriveTime (ms)':np.zeros(nr_rows),
+	    ' DragFactor':np.zeros(nr_rows),
 	    ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
 	    ' AverageDriveForce (lbs)':np.zeros(nr_rows),
 	    ' PeakDriveForce (lbs)':np.zeros(nr_rows),
@@ -1375,6 +1376,7 @@ class RowProParser:
 			  ' StrokeDistance (meters)':np.zeros(nr_rows),
 			  ' DriveTime (ms)':np.zeros(nr_rows),
 			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
+			  ' DragFactor':np.zeros(nr_rows),
 			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
 			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
 			  ' ElapsedTime (sec)':seconds3,
@@ -1443,6 +1445,7 @@ class painsledDesktopParser:
 	trecovery = self.sled_df[' stroke.slideMs']
 	hr = self.sled_df[' stroke.hrBpm']
 	intervalcount = self.sled_df[' stroke.intervalNumber']
+	dragfactor = self.sled_df[' stroke.dragFactor']
 
 	nr_rows = len(spm)
 
@@ -1456,6 +1459,7 @@ class painsledDesktopParser:
 			  ' DriveLength (meters)':np.zeros(nr_rows),
 			  ' StrokeDistance (meters)':strokelength2,
 			  ' DriveTime (ms)':tdrive,
+			  ' DragFactor':dragfactor,
 			  ' StrokeRecoveryTime (ms)':trecovery,
 			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
 			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
@@ -1542,6 +1546,7 @@ class SpeedCoach2Parser:
 			  ' DriveLength (meters)':np.zeros(nr_rows),
 			  ' StrokeDistance (meters)':np.zeros(nr_rows),
 			  ' DriveTime (ms)':np.zeros(nr_rows),
+			  ' DragFactor':np.zeros(nr_rows),
 			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
 			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
 			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
@@ -1624,6 +1629,7 @@ class MysteryParser:
 			  ' DriveLength (meters)':np.zeros(nr_rows),
 			  ' StrokeDistance (meters)':strokelength,
 			  ' DriveTime (ms)':np.zeros(nr_rows),
+			  ' DragFactor':np.zeros(nr_rows),
 			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
 			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
 			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
@@ -1682,6 +1688,7 @@ class speedcoachParser:
 			  ' Horizontal (meters)': dist2,
 			  ' Cadence (stokes/min)':spm,
 			  ' HRCur (bpm)':hr,
+			  ' DragFactor':np.zeros(nr_rows),
 			  ' Stroke500mPace (sec/500m)':pace,
 			  ' Power (watts)':np.zeros(nr_rows),
 			  ' DriveLength (meters)':np.zeros(nr_rows),
@@ -1754,6 +1761,7 @@ class ErgDataParser:
 			  ' Stroke500mPace (sec/500m)':pace,
 			  ' Power (watts)':power,
 			  ' DriveLength (meters)':np.zeros(nr_rows),
+			  ' DragFactor':np.zeros(nr_rows),
 			  ' StrokeDistance (meters)':np.zeros(nr_rows),
 			  ' DriveTime (ms)':np.zeros(nr_rows),
 			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
@@ -1806,6 +1814,7 @@ class ErgStickParser:
 	spm = self.es_df['Stroke rate (/min)']
 	pace = self.es_df['Current pace (/500m)']
 	pace = np.clip(pace,0,1e4)
+	dragfactor = self.es_df['Drag factor']
 	drivelength = self.es_df['Drive length (m)']
 	strokedistance = self.es_df['Stroke distance (m)']
 	drivetime = self.es_df['Drive time (s)']*1000.
@@ -1832,6 +1841,7 @@ class ErgStickParser:
 			  ' DriveLength (meters)':drivelength,
 			  ' StrokeDistance (meters)':strokedistance,
 			  ' DriveTime (ms)':drivetime,
+			  ' DragFactor':dragfactor,
 			  ' StrokeRecoveryTime (ms)':recoverytime,
 			  ' AverageDriveForce (lbs)':stroke_av_force,
 			  ' PeakDriveForce (lbs)':stroke_peak_force,
@@ -2092,6 +2102,7 @@ class TCXParser:
 			  ' Power (watts)':np.zeros(nr_rows),
 			  ' DriveLength (meters)':np.zeros(nr_rows),
 			  ' StrokeDistance (meters)':strokelength2,
+			  ' DragFactor':np.zeros(nr_rows),
 			  ' DriveTime (ms)':np.zeros(nr_rows),
 			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
 			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
@@ -2159,6 +2170,7 @@ class TCXParser:
 			  ' Power (watts)':np.zeros(nr_rows),
 			  ' DriveLength (meters)':np.zeros(nr_rows),
 			  ' StrokeDistance (meters)':strokelength2,
+			  ' DragFactor':dragfactor,
 			  ' DriveTime (ms)':np.zeros(nr_rows),
 			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
 			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
@@ -2361,6 +2373,7 @@ class TCXParserNoHR:
 			  ' Power (watts)':np.zeros(nr_rows),
 			  ' DriveLength (meters)':np.zeros(nr_rows),
 			  ' StrokeDistance (meters)':strokelength2,
+			  ' DragFactor':np.zeros(nr_rows),
 			  ' DriveTime (ms)':np.zeros(nr_rows),
 			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
 			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
@@ -2428,6 +2441,7 @@ class TCXParserNoHR:
 			  ' Power (watts)':np.zeros(nr_rows),
 			  ' DriveLength (meters)':np.zeros(nr_rows),
 			  ' StrokeDistance (meters)':strokelength2,
+			  ' DragFactor':np.zeros(nr_rows),
 			  ' DriveTime (ms)':np.zeros(nr_rows),
 			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
 			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
@@ -2835,28 +2849,6 @@ def addzones(df,ut2,ut1,at,tr,an,mmax):
 	df['lim_max'] = mmax
 
 
-#	hr_df = DataFrame({'key': sled_df['TimeStamp (sec)'],
-#			   'hr_ut2': np.zeros(number_of_rows),
-#			   'hr_ut1': np.zeros(number_of_rows),
-#			   'hr_at': np.zeros(number_of_rows),
-#			   'hr_tr': np.zeros(number_of_rows),
-#			   'hr_an': np.zeros(number_of_rows),
-#			   'hr_max': np.zeros(number_of_rows),
-#			   'lim_ut2': ut2,
-#			   'lim_ut1': ut1,
-#			   'lim_at': at,
-#			   'lim_tr': tr,
-#			   'lim_an': an,
-#			   'lim_max': mmax,
-#			   'cum_dist':np.zeros(number_of_rows)
-#			   })
-
-				   
-	# merge the two dataframes together
-#	df = pd.merge(left=sled_df,right=hr_df,
-#		      left_on='TimeStamp (sec)',right_on='key',
-#		      how='left')
-
 
 
 	# create the columns containing the data for the colored bar chart
@@ -2928,7 +2920,7 @@ class rowingdata:
 	starttime = sled_df.loc[0,'TimeStamp (sec)']
 	# using UTC time for now
 	self.rowdatetime = datetime.datetime.utcfromtimestamp(starttime)
-	
+	self.dragfactor = sled_df[' DragFactor'].mean()
 	    	
 	# remove the start time from the time stamps
 	sled_df['TimeStamp (sec)']=sled_df['TimeStamp (sec)']-sled_df['TimeStamp (sec)'][0]
@@ -4111,6 +4103,7 @@ class rowingdata:
 
 	fig1 = plt.figure(figsize=(12,10))
 	fig_title = "Input File:  "+self.readfilename+" --- HR / Pace / Rate / Power"
+	fig_title += " Drag %d" % self.dragfactor
 
 	# First panel, hr
 	ax1 = fig1.add_subplot(4,1,1)
@@ -4286,6 +4279,8 @@ class rowingdata:
 
 	fig1 = plt.figure(figsize=(12,10))
 	fig_title = "Input File:  "+self.readfilename+" --- HR / Pace / Rate "
+	fig_title += " Drag %d" % self.dragfactor
+
 
 	# First panel, hr
 	ax1 = fig1.add_subplot(4,1,1)
@@ -4330,6 +4325,7 @@ class rowingdata:
 	ax1.set_title(fig_title)
 	timeTickFormatter = NullFormatter()
 	ax1.xaxis.set_major_formatter(timeTickFormatter)
+
 
 	grid(True)
 
@@ -4558,6 +4554,7 @@ class rowingdata:
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 	fig2 = plt.figure(figsize=(12,10))
 	fig_title = title
+	fig_title += " Drag %d" % self.dragfactor
 	
 	# Top plot is pace
 	ax5 = fig2.add_subplot(4,1,1)
@@ -4630,6 +4627,7 @@ class rowingdata:
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 	fig2 = plt.figure(figsize=(12,10))
 	fig_title = title
+	fig_title += " Drag %d" % self.dragfactor
 	
 	# Top plot is pace
 	ax5 = fig2.add_subplot(4,1,1)
@@ -4931,6 +4929,7 @@ class rowingdata:
 	fig1 = plt.figure(figsize=(12,10))
 
 	fig_title = title
+	fig_title += " Drag %d" % self.dragfactor
 
 	# First panel, hr
 	ax1 = fig1.add_subplot(4,1,1)
@@ -5036,6 +5035,7 @@ class rowingdata:
 	fig1 = plt.figure(figsize=(12,10))
 	
 	fig_title = title
+	fig_title += " Drag %d" % self.dragfactor
 
 	# First panel, hr
 	ax1 = fig1.add_subplot(4,1,1)
