@@ -63,7 +63,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.91.7"
+__version__ = "0.91.8"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -4103,6 +4103,7 @@ class rowingdata:
 
 	fig1 = plt.figure(figsize=(12,10))
 	fig_title = "Input File:  "+self.readfilename+" --- HR / Pace / Rate / Power"
+	fig_title += " Drag %d" % self.dragfactor
 
 	# First panel, hr
 	ax1 = fig1.add_subplot(4,1,1)
@@ -4278,6 +4279,8 @@ class rowingdata:
 
 	fig1 = plt.figure(figsize=(12,10))
 	fig_title = "Input File:  "+self.readfilename+" --- HR / Pace / Rate "
+	fig_title += " Drag %d" % self.dragfactor
+
 
 	# First panel, hr
 	ax1 = fig1.add_subplot(4,1,1)
@@ -4322,6 +4325,7 @@ class rowingdata:
 	ax1.set_title(fig_title)
 	timeTickFormatter = NullFormatter()
 	ax1.xaxis.set_major_formatter(timeTickFormatter)
+
 
 	grid(True)
 
@@ -4550,6 +4554,7 @@ class rowingdata:
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 	fig2 = plt.figure(figsize=(12,10))
 	fig_title = title
+	fig_title += " Drag %d" % self.dragfactor
 	
 	# Top plot is pace
 	ax5 = fig2.add_subplot(4,1,1)
@@ -4622,6 +4627,7 @@ class rowingdata:
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 	fig2 = plt.figure(figsize=(12,10))
 	fig_title = title
+	fig_title += " Drag %d" % self.dragfactor
 	
 	# Top plot is pace
 	ax5 = fig2.add_subplot(4,1,1)
@@ -4923,6 +4929,7 @@ class rowingdata:
 	fig1 = plt.figure(figsize=(12,10))
 
 	fig_title = title
+	fig_title += " Drag %d" % self.dragfactor
 
 	# First panel, hr
 	ax1 = fig1.add_subplot(4,1,1)
@@ -5028,6 +5035,7 @@ class rowingdata:
 	fig1 = plt.figure(figsize=(12,10))
 	
 	fig_title = title
+	fig_title += " Drag %d" % self.dragfactor
 
 	# First panel, hr
 	ax1 = fig1.add_subplot(4,1,1)
