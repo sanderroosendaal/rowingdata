@@ -63,7 +63,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.91.8"
+__version__ = "0.91.9"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -2920,7 +2920,10 @@ class rowingdata:
 	starttime = sled_df.loc[0,'TimeStamp (sec)']
 	# using UTC time for now
 	self.rowdatetime = datetime.datetime.utcfromtimestamp(starttime)
-	self.dragfactor = sled_df[' DragFactor'].mean()
+	try:
+	    self.dragfactor = sled_df[' DragFactor'].mean()
+	except KeyError:
+	    self.dragfactor = 0
 	    	
 	# remove the start time from the time stamps
 	sled_df['TimeStamp (sec)']=sled_df['TimeStamp (sec)']-sled_df['TimeStamp (sec)'][0]
