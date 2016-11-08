@@ -76,6 +76,9 @@ def main():
 	str += rowingphysics.main()
     return str
 
+def my_autopct(pct):
+    return ('%4.1f%%' % pct) if pct > 5 else ''
+
 def nanstozero(nr):
     if isnan(nr) or isinf(nr):
 	return 0
@@ -2470,7 +2473,8 @@ class rower:
 		 c2password="",
 		 weightcategory="hwt",
 		 mc=72.5,
-		 strokelength=1.35):
+		 strokelength=1.35,ftp=226,
+		 powerperc=[55,75,90,105,120]):
 	self.ut2=hrut2
 	self.ut1=hrut1
 	self.at=hrat
@@ -2479,6 +2483,8 @@ class rower:
 	self.max=hrmax
 	self.c2username=c2username
 	self.c2password=c2password
+	self.ftp = ftp
+	self.powerperc = powerperc
 	if (weknowphysics==1):
 	    self.rc = rowingphysics.crew(mc=mc,strokelength=strokelength)
 	else:
@@ -2515,6 +2521,23 @@ def roweredit(fileName="defaultrower.txt"):
 	    rc = rowingphysics.crew(mc=70.0)
 	else:
 	    rc = 0
+
+    try:
+	ftp = r.ftp
+    except AttributeError:
+	ftp = 225
+
+    print "Functional Threshold Power"
+    print "Your Functional Threshold Power is set to {ftp}".format(
+	ftp = ftp
+	)
+    strin = raw_input('Enter new FTP (just ENTER to keep {ftp}:'.format(ftp=ftp))
+    if (strin <> ""):
+	try:
+	    r.ftp = int(strin)
+	except ValueError:
+	    print "Not a valid number. Keeping original value"
+	    
 
     print "Heart Rate Training Bands"
     # hrmax
@@ -2826,11 +2849,53 @@ def boatedit(fileName="my1x.txt"):
     print "Done"
     return 1
 
+def addpowerzones(df,ftp,powerperc):
+    number_of_rows = df.shape[0]
+
+    df['pw_ut2'] = np.zeros(number_of_rows)
+    df['pw_ut1'] = np.zeros(number_of_rows)
+    df['pw_at'] = np.zeros(number_of_rows)
+    df['pw_tr'] = np.zeros(number_of_rows)
+    df['pw_an'] = np.zeros(number_of_rows)
+    df['pw_max'] = np.zeros(number_of_rows)
+
+    percut2,percut1,percat,perctr,percan = np.array(powerperc)/100.
+
+    ut2,ut1,at,tr,an = ftp*np.array(powerperc)/100.
+
+    df['limpw_ut2'] = percut2*ftp
+    df['limpw_ut1'] = percut1*ftp
+    df['limpw_at'] = percat*ftp
+    df['limpw_tr'] = perctr*ftp
+    df['limpw_an'] = percan*ftp
+
+    # create the columns containing the data for the colored bar chart
+    # attempt to do this in a way that doesn't generate dubious copy warnings
+    mask = (df[' Power (watts)']<=ut2)&(df[' Stroke500mPace (sec/500m)']<300)
+    df.loc[mask,'pw_ut2'] = df.loc[mask,' Power (watts)']
+
+    mask = (df[' Power (watts)']<=ut1)&(df[' Power (watts)']>ut2)&(df[' Stroke500mPace (sec/500m)']<300)
+    df.loc[mask,'pw_ut1'] = df.loc[mask,' Power (watts)']
+
+    mask = (df[' Power (watts)']<=at)&(df[' Power (watts)']>ut1)&(df[' Stroke500mPace (sec/500m)']<300)
+    df.loc[mask,'pw_at'] = df.loc[mask,' Power (watts)']
+
+    mask = (df[' Power (watts)']<=tr)&(df[' Power (watts)']>at)&(df[' Stroke500mPace (sec/500m)']<300)
+    df.loc[mask,'pw_tr'] = df.loc[mask,' Power (watts)']
+
+    mask = (df[' Power (watts)']<=an)&(df[' Power (watts)']>tr)&(df[' Stroke500mPace (sec/500m)']<300)
+    df.loc[mask,'pw_an'] = df.loc[mask,' Power (watts)']
+
+    mask = (df[' Power (watts)']>an)&(df[' Stroke500mPace (sec/500m)']<300)
+    df.loc[mask,'pw_max'] = df.loc[mask,' Power (watts)']
+
+    df = df.fillna(method='ffill')
+
+    return df
+
 def addzones(df,ut2,ut1,at,tr,an,mmax):
     	# define an additional data frame that will hold the multiple bar plot data and the hr 
 	# limit data for the plot, it also holds a cumulative distance column
-	# Sander: changed the first row of next line (compared to Greg)
-	# Sander: so it will work with my TCX to CSV parsed files
 
 	number_of_rows = df.shape[0]
 
@@ -2943,7 +3008,7 @@ class rowingdata:
 		      self.rower.max
 		      )
 
-
+	self.df = addpowerzones(self.df,self.rower.ftp,self.rower.powerperc)
 
     def getvalues(self,keystring):
 	""" Just a tool to get a column of the row data as a numpy array
@@ -2956,38 +3021,32 @@ class rowingdata:
 
     def write_csv(self,writeFile):
 	data = self.df
-	try:
-	    data = data.drop(['index',
-			      'hr_ut2',
-			      'hr_ut1',
-			      'hr_at',
-			      'hr_tr',
-			      'hr_an',
-			      'hr_max',
-			      'lim_ut2',
-			      'lim_ut1',
-			      'lim_at',
-			      'lim_tr',
-			      'lim_an',
-			      'lim_max',
-#			      'cum_dist',
-			      ],1)
-	except ValueError:
-	    data = data.drop([
-			      'hr_ut2',
-			      'hr_ut1',
-			      'hr_at',
-			      'hr_tr',
-			      'hr_an',
-			      'hr_max',
-			      'lim_ut2',
-			      'lim_ut1',
-			      'lim_at',
-			      'lim_tr',
-			      'lim_an',
-			      'lim_max',
-#			      'cum_dist',
-		],1)
+	data = data.drop(['index',
+			  'hr_ut2',
+			  'hr_ut1',
+			  'hr_at',
+			  'hr_tr',
+			  'hr_an',
+			  'hr_max',
+			  'lim_ut2',
+			  'lim_ut1',
+			  'lim_at',
+			  'lim_tr',
+			  'lim_an',
+			  'lim_max',
+			  'pw_ut2',
+			  'pw_ut1',
+			  'pw_at',
+			  'pw_tr',
+			  'pw_an',
+			  'pw_max',
+			  'limpw_ut2',
+			  'limpw_ut1',
+			  'limpw_at',
+			  'limpw_tr',
+			  'limpw_an',
+			  'limpw_max',
+			  ],1,errors='ignore')
 	    
 
 	# add time stamp to
@@ -4261,6 +4320,215 @@ class rowingdata:
 
 	plt.show()
 	print "done"
+
+
+    def plotmeters_powerzones_erg(self):
+	""" Creates two images containing interesting plots
+
+	x-axis is distance
+
+	Used with painsled (erg) data
+	
+
+	"""
+	
+	df = self.df
+
+	# distance increments for bar chart
+	dist_increments = -df.ix[:,'cum_dist'].diff()
+	dist_increments[0] = dist_increments[1]
+	
+
+	fig1 = plt.figure(figsize=(12,10))
+	fig_title = "Input File:  "+self.readfilename+" --- HR / Pace / Rate / Power"
+	fig_title += " Drag %d" % self.dragfactor
+
+	# First panel, Power
+	ax1 = fig1.add_subplot(4,1,1)
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_ut2'],
+		width = dist_increments,
+		color='gray', ec='gray')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_ut1'],
+		width = dist_increments,
+		color='y',ec='y')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_at'],
+		width = dist_increments,
+		color='g',ec='g')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_tr'],
+		width = dist_increments,
+		color='blue',ec='blue')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_an'],
+		width = dist_increments,
+		color='violet',ec='violet')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_max'],
+		width = dist_increments,
+		color='r',ec='r')
+
+
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_ut2'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_ut1'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_at'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_tr'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_an'],color='k')
+
+
+	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+
+	ax1.text(5,ut2+1.5,"UT2",size=8)
+	ax1.text(5,ut1+1.5,"UT1",size=8)
+	ax1.text(5,at+1.5,"AT",size=8)
+	ax1.text(5,tr+1.5,"TR",size=8)
+	ax1.text(5,an+1.5,"AN",size=8)
+
+	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
+
+	ax1.axis([0,end_dist,50,1.5*an])
+	ax1.set_xticks(range(1000,end_dist,1000))
+	ax1.set_ylabel('Power (Watts)')
+#	ax1.set_yticks(range(110,200,10))
+	ax1.set_title(fig_title)
+
+	grid(True)
+
+	# Second Panel, Pace
+	ax2 = fig1.add_subplot(4,1,2)
+	ax2.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
+	yrange = y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
+			      ultimate = [85,160])
+	ax2.axis([0,end_dist,yrange[1],yrange[0]])
+	ax2.set_xticks(range(1000,end_dist,1000))
+	ax2.set_ylabel('(sec/500)')
+#	ax2.set_yticks(range(145,95,-5))
+	grid(True)
+	majorTickFormatter = FuncFormatter(format_pace_tick)
+	majorLocator = (5)
+	ax2.yaxis.set_major_formatter(majorTickFormatter)
+
+	# Third Panel, rate
+	ax3 = fig1.add_subplot(4,1,3)
+	ax3.plot(df.ix[:,'cum_dist'],df.ix[:,' Cadence (stokes/min)'])
+	ax3.axis([0,end_dist,14,40])
+	ax3.set_xticks(range(1000,end_dist,1000))
+	ax3.set_ylabel('SPM')
+	ax3.set_yticks(range(16,40,2))
+
+	grid(True)
+
+	# Fourth Panel, HR
+	ax4 = fig1.add_subplot(4,1,4)
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_ut2'],
+		width = dist_increments,
+		color='gray', ec='gray')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_ut1'],
+		width = dist_increments,
+		color='y',ec='y')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_at'],
+		width = dist_increments,
+		color='g',ec='g')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_tr'],
+		width = dist_increments,
+		color='blue',ec='blue')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_an'],
+		width = dist_increments,
+		color='violet',ec='violet')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_max'],
+		width = dist_increments,
+		color='r',ec='r')
+
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_ut2'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_ut1'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_at'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_tr'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
+
+	ax4.text(5,self.rower.ut2+1.5,"UT2",size=8)
+	ax4.text(5,self.rower.ut1+1.5,"UT1",size=8)
+	ax4.text(5,self.rower.at+1.5,"AT",size=8)
+	ax4.text(5,self.rower.tr+1.5,"TR",size=8)
+	ax4.text(5,self.rower.an+1.5,"AN",size=8)
+	ax4.text(5,self.rower.max+1.5,"MAX",size=8)
+
+	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
+
+	ax4.axis([0,end_dist,100,1.1*self.rower.max])
+	ax4.set_xticks(range(1000,end_dist,1000))
+	ax4.set_ylabel('BPM')
+	ax4.set_yticks(range(110,200,10))
+
+	grid(True)
+	majorKmFormatter = FuncFormatter(format_dist_tick)
+	majorLocator = (1000)
+	ax4.xaxis.set_major_formatter(majorKmFormatter)
+
+	plt.subplots_adjust(hspace=0)
+	
+	fig2 = plt.figure(figsize=(12,10))
+	fig_title = "Input File:  "+self.readfilename+" --- Stroke Metrics"
+	
+	# Top plot is pace
+	ax5 = fig2.add_subplot(4,1,1)
+	ax5.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
+	yrange = y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
+			      ultimate = [85,160])
+	ax5.axis([0,end_dist,yrange[1],yrange[0]])
+	ax5.set_xticks(range(1000,end_dist,1000))
+	ax5.set_ylabel('(sec/500)')
+#	ax5.set_yticks(range(175,95,-10))
+	grid(True)
+	ax5.set_title(fig_title)
+	majorFormatter = FuncFormatter(format_pace_tick)
+	majorLocator = (5)
+	ax5.yaxis.set_major_formatter(majorFormatter)
+	
+	# next we plot the drive length
+	ax6 = fig2.add_subplot(4,1,2)
+	ax6.plot(df.ix[:,'cum_dist'],df.ix[:,' DriveLength (meters)'])
+	yrange = y_axis_range(df.ix[:,' DriveLength (meters)'],
+			      ultimate = [1,15])
+	ax6.axis([0,end_dist,yrange[0],yrange[1]])
+	ax6.set_xticks(range(1000,end_dist,1000))
+	ax6.set_ylabel('Drive Len(m)')
+#	ax6.set_yticks(np.arange(1.,2.,0.05))
+	grid(True)
+
+	# next we plot the drive time and recovery time
+	ax7 = fig2.add_subplot(4,1,3)
+	ax7.plot(df.ix[:,'cum_dist'],df.ix[:,' DriveTime (ms)']/1000.)
+	ax7.plot(df.ix[:,'cum_dist'],df.ix[:,' StrokeRecoveryTime (ms)']/1000.)
+	s = np.concatenate((df.ix[:,' DriveTime (ms)'].values/1000.,
+			   df.ix[:,' StrokeRecoveryTime (ms)'].values/1000.))
+	yrange = y_axis_range(s,ultimate=[0.5,4])
+	
+	ax7.axis([0,end_dist,yrange[0],yrange[1]])
+	ax7.set_xticks(range(1000,end_dist,1000))
+	ax7.set_ylabel('Drv / Rcv Time (s)')
+#	ax7.set_yticks(np.arange(0.2,3.0,0.2))
+	grid(True)
+
+	# Peak and average force
+	ax8 = fig2.add_subplot(4,1,4)
+	ax8.plot(df.ix[:,'cum_dist'],
+		 df.ix[:,' AverageDriveForce (lbs)']*lbstoN)
+	ax8.plot(df.ix[:,'cum_dist'],
+		 df.ix[:,' PeakDriveForce (lbs)']*lbstoN)
+	s = np.concatenate((df.ix[:,' AverageDriveForce (lbs)'].values*lbstoN,
+			   df.ix[:,' PeakDriveForce (lbs)'].values*lbstoN))
+	yrange = y_axis_range(s,ultimate=[0,1000])
+
+	ax8.axis([0,end_dist,yrange[0],yrange[1]])
+	ax8.set_xticks(range(1000,end_dist,1000))
+	ax8.set_xlabel('Dist (m)')
+	ax8.set_ylabel('Force (N)')
+#	ax8.set_yticks(range(25,300,25))
+	grid(True)
+	majorLocator = (1000)
+	ax8.xaxis.set_major_formatter(majorKmFormatter)
+	
+
+	plt.subplots_adjust(hspace=0)
+
+	plt.show()
     
     def plottime_erg(self):
 	""" Creates two images containing interesting plots
@@ -4462,7 +4730,6 @@ class rowingdata:
 
 	self.piechart()
 	
-	print "done"
 
     def get_metersplot_otw(self,title):
 	df = self.df
@@ -4470,7 +4737,7 @@ class rowingdata:
 	# distance increments for bar chart
 	dist_increments = -df.ix[:,'cum_dist'].diff()
 	dist_increments[0] = dist_increments[1]
-	dist_increments = abs(dist_increments)+dist_increments
+#	dist_increments = abs(dist_increments)+dist_increments
 
 	#	fig1 = plt.figure(figsize=(12,10))
 	fig1 = figure.Figure(figsize=(12,10))
@@ -4925,9 +5192,9 @@ class rowingdata:
 	df = self.df
 
 	# distance increments for bar chart
-	dist_increments = -df.ix[:,'cum_dist'].diff()
+	dist_increments = df.ix[:,'cum_dist'].diff()
 	dist_increments[0] = dist_increments[1]
-	dist_increments = dist_increments+abs(dist_increments)
+	dist_increments = 0.5*(dist_increments+abs(dist_increments))
 
 	fig1 = plt.figure(figsize=(12,10))
 
@@ -5005,18 +5272,53 @@ class rowingdata:
 
 	# Fourth Panel, watts
 	ax4 = fig1.add_subplot(4,1,4)
-	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,' Power (watts)'])
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_ut2'],
+		width = dist_increments,
+		color='gray', ec='gray')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_ut1'],
+		width = dist_increments,
+		color='y',ec='y')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_at'],
+		width = dist_increments,
+		color='g',ec='g')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_tr'],
+		width = dist_increments,
+		color='blue',ec='blue')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_an'],
+		width = dist_increments,
+		color='violet',ec='violet')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_max'],
+		width = dist_increments,
+		color='r',ec='r')
+
+
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_ut2'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_ut1'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_at'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_tr'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_an'],color='k')
+
+
+	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+
+	ax4.text(5,ut2+1.5,"UT2",size=8)
+	ax4.text(5,ut1+1.5,"UT1",size=8)
+	ax4.text(5,at+1.5,"AT",size=8)
+	ax4.text(5,tr+1.5,"TR",size=8)
+	ax4.text(5,an+1.5,"AN",size=8)
+
+	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
+
 	yrange = y_axis_range(df.ix[:,' Power (watts)'],
-			      ultimate=[50,550])
+			      ultimate=[50,555])
 	ax4.axis([0,end_dist,yrange[0],yrange[1]])
 	ax4.set_xticks(range(1000,end_dist,1000))
-	ax4.set_xlabel('Dist (km)')
-	ax4.set_ylabel('Watts')
-#	ax4.set_yticks(range(150,450,50))
+	ax4.set_xlabel('Dist (m)')
+	ax4.set_ylabel('Power (Watts)')
+#	ax4.set_yticks(range(110,200,10))
+
+
 	grid(True)
-	majorKmFormatter = FuncFormatter(format_dist_tick)
-	majorLocator = (1000)
-	ax4.xaxis.set_major_formatter(majorKmFormatter)
 
 	plt.subplots_adjust(hspace=0)
 
@@ -5120,7 +5422,43 @@ class rowingdata:
 
 	# Fourth Panel, watts
 	ax4 = fig1.add_subplot(4,1,4)
-	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,' Power (watts)'])
+	ax4.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'pw_ut2'],
+		width = time_increments,
+		color='gray', ec='gray')
+	ax4.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'pw_ut1'],
+		width = time_increments,
+		color='y',ec='y')
+	ax4.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'pw_at'],
+		width = time_increments,
+		color='g',ec='g')
+	ax4.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'pw_tr'],
+		width = time_increments,
+		color='blue',ec='blue')
+	ax4.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'pw_an'],
+		width = time_increments,
+		color='violet',ec='violet')
+	ax4.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'pw_max'],
+		width = time_increments,
+		color='r',ec='r')
+
+
+	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_ut2'],color='k')
+	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_ut1'],color='k')
+	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_at'],color='k')
+	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_tr'],color='k')
+	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_an'],color='k')
+
+
+	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+
+	ax4.text(5,ut2+1.5,"UT2",size=8)
+	ax4.text(5,ut1+1.5,"UT1",size=8)
+	ax4.text(5,at+1.5,"AT",size=8)
+	ax4.text(5,tr+1.5,"TR",size=8)
+	ax4.text(5,an+1.5,"AN",size=8)
+
+	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
+
 	yrange = y_axis_range(df.ix[:,' Power (watts)'],
 			      ultimate=[50,555])
 	ax4.axis([0,end_time,yrange[0],yrange[1]])
@@ -5137,10 +5475,6 @@ class rowingdata:
 	plt.subplots_adjust(hspace=0)
 	
 
-#	plt.show()
-
-#	self.piechart()
-	
 	return(fig1)
 
     def get_time_otwpower(self,title):
@@ -5579,7 +5913,7 @@ class rowingdata:
 	# distance increments for bar chart
 	dist_increments = -df.ix[:,'cum_dist'].diff()
 	dist_increments[0] = dist_increments[1]
-	dist_increments = abs(dist_increments)+dist_increments
+#	dist_increments = abs(dist_increments)+dist_increments
 
 	fig1 = plt.figure(figsize=(12,10))
 	fig_title = "Input File:  "+self.readfilename+" --- HR / Pace / Rate / Power"
@@ -5882,12 +6216,16 @@ class rowingdata:
 		
 	# print(time_in_zone)
 	wedge_labels = ['<ut2','ut2','ut1','at','tr','an']
+	totaltime = time_in_zone.sum()
 	for i in range(len(wedge_labels)):
 	    min = int(time_in_zone[i]/60.)
 	    sec = int(time_in_zone[i] - min*60.)
 	    secstr=str(sec).zfill(2)
 	    s = "%d:%s" % (min,secstr)
 	    wedge_labels[i] = wedge_labels[i]+"\n"+s
+	    perc = 100.*time_in_zone[i]/totaltime
+	    if perc < 5:
+		wedge_labels[i] = ''
 	
 	# print(wedge_labels)
 	fig2 = plt.figure(figsize=(5,5))
@@ -5896,13 +6234,143 @@ class rowingdata:
 	ax9.pie(time_in_zone,
 		labels=wedge_labels,
 		colors=['gray','gold','limegreen','dodgerblue','m','r'],
-		autopct='%4.1f%%',
+		autopct=my_autopct,
 		pctdistance=0.8,
 		counterclock=False,
 		startangle=90.0)
 
 	plt.show()
 	return 1
+
+    def power_piechart(self):
+	""" Figure 3 - Heart Rate Time in band.
+	This is not as simple as just totalling up the
+	hits for each band of HR.  Since each data point represents
+	a different increment of time.  This loop scans through the
+	HR data and adds that incremental time in each band
+
+	"""
+
+	df = self.df
+#	df.sort_values(by=' ElapsedTime (sec)',ascending = 1)
+	df.sort_values(by='TimeStamp (sec)',ascending = 1)
+	number_of_rows = self.number_of_rows
+
+	time_increments = df.ix[:,'TimeStamp (sec)'].diff()
+	time_increments[0] = time_increments[1]
+	time_increments = 0.5*(abs(time_increments)+(time_increments))
+
+	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+	
+	time_in_zone = np.zeros(6)
+	for i in range(number_of_rows):
+	    if df.ix[i,' Power (watts)'] <= ut2:
+		time_in_zone[0] += time_increments[i]
+	    elif df.ix[i,' Power (watts)'] <= ut1:
+		time_in_zone[1] += time_increments[i]
+	    elif df.ix[i,' Power (watts)'] <= at:
+		time_in_zone[2] += time_increments[i]
+	    elif df.ix[i,' Power (watts)'] <= tr:
+		time_in_zone[3] += time_increments[i]
+	    elif df.ix[i,' Power (watts)'] <= an:
+		time_in_zone[4] += time_increments[i]
+	    else:
+		time_in_zone[5] += time_increments[i]
+		
+	# print(time_in_zone)
+	wedge_labels = ['power<ut2','power ut2','power ut1','power at',
+			'power tr','power an']
+
+	totaltime = time_in_zone.sum()
+	for i in range(len(wedge_labels)):
+	    min = int(time_in_zone[i]/60.)
+	    sec = int(time_in_zone[i] - min*60.)
+	    secstr=str(sec).zfill(2)
+	    s = "%d:%s" % (min,secstr)
+	    wedge_labels[i] = wedge_labels[i]+"\n"+s
+	    perc = 100.*time_in_zone[i]/totaltime
+	    if perc < 5:
+		wedge_labels[i] = ''
+	
+	# print(wedge_labels)
+	fig2 = plt.figure(figsize=(5,5))
+	fig_title = "Input File:  "+self.readfilename+" --- Power Time in Zone"
+	ax9 = fig2.add_subplot(1,1,1)
+	ax9.pie(time_in_zone,
+		labels=wedge_labels,
+		colors=['gray','gold','limegreen','dodgerblue','m','r'],
+		autopct=my_autopct,
+		pctdistance=0.8,
+		counterclock=False,
+		startangle=90.0)
+
+	plt.show()
+	return 1
+
+    def get_power_piechart(self,title):
+	""" Figure 3 - Heart Rate Time in band.
+	This is not as simple as just totalling up the
+	hits for each band of HR.  Since each data point represents
+	a different increment of time.  This loop scans through the
+	HR data and adds that incremental time in each band
+
+	"""
+
+	df = self.df
+#	df.sort_values(by=' ElapsedTime (sec)',ascending = 1)
+	df.sort_values(by='TimeStamp (sec)',ascending = 1)
+	number_of_rows = self.number_of_rows
+
+	time_increments = df.ix[:,'TimeStamp (sec)'].diff()
+	time_increments[0] = time_increments[1]
+	time_increments = 0.5*(abs(time_increments)+(time_increments))
+
+	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+	
+	time_in_zone = np.zeros(6)
+	for i in range(number_of_rows):
+	    if df.ix[i,' Power (watts)'] <= ut2:
+		time_in_zone[0] += time_increments[i]
+	    elif df.ix[i,' Power (watts)'] <= ut1:
+		time_in_zone[1] += time_increments[i]
+	    elif df.ix[i,' Power (watts)'] <= at:
+		time_in_zone[2] += time_increments[i]
+	    elif df.ix[i,' Power (watts)'] <= tr:
+		time_in_zone[3] += time_increments[i]
+	    elif df.ix[i,' Power (watts)'] <= an:
+		time_in_zone[4] += time_increments[i]
+	    else:
+		time_in_zone[5] += time_increments[i]
+		
+	# print(time_in_zone)
+	wedge_labels = ['power<ut2','power ut2','power ut1','power at',
+			'power tr','power an']
+
+	totaltime = time_in_zone.sum()
+	for i in range(len(wedge_labels)):
+	    min = int(time_in_zone[i]/60.)
+	    sec = int(time_in_zone[i] - min*60.)
+	    secstr=str(sec).zfill(2)
+	    s = "%d:%s" % (min,secstr)
+	    wedge_labels[i] = wedge_labels[i]+"\n"+s
+	    perc = 100.*time_in_zone[i]/totaltime
+	    if perc < 5:
+		wedge_labels[i] = ''
+	
+	# print(wedge_labels)
+	fig2 = plt.figure(figsize=(5,5))
+	fig_title = title
+	ax9 = fig2.add_subplot(1,1,1)
+	ax9.pie(time_in_zone,
+		labels=wedge_labels,
+		colors=['gray','gold','limegreen','dodgerblue','m','r'],
+		autopct=my_autopct,
+		pctdistance=0.8,
+		counterclock=False,
+		startangle=90.0)
+
+	return fig2
+
 
     def get_piechart(self,title):
 	""" Figure 3 - Heart Rate Time in band.
@@ -5937,12 +6405,16 @@ class rowingdata:
 		
 	# print(time_in_zone)
 	wedge_labels = ['<ut2','ut2','ut1','at','tr','an']
+	totaltime = time_in_zone.sum()
 	for i in range(len(wedge_labels)):
 	    min = int(time_in_zone[i]/60.)
 	    sec = int(time_in_zone[i] - min*60.)
 	    secstr=str(sec).zfill(2)
 	    s = "%d:%s" % (min,secstr)
 	    wedge_labels[i] = wedge_labels[i]+"\n"+s
+	    perc = 100.*time_in_zone[i]/totaltime
+	    if perc < 5:
+		wedge_labels[i] = ''
 	
 	# print(wedge_labels)
 #	fig2 = plt.figure(figsize=(5,5))
@@ -5952,7 +6424,7 @@ class rowingdata:
 	ax9.pie(time_in_zone,
 		labels=wedge_labels,
 		colors=['gray','gold','limegreen','dodgerblue','m','r'],
-		autopct='%4.1f%%',
+		autopct=my_autopct,
 		pctdistance=0.8,
 		counterclock=False,
 		startangle=90.0)
