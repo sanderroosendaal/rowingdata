@@ -1,0 +1,836 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Rowingdata &#8212; rowingdata 0.92.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.92.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="top" title="rowingdata 0.92.0 documentation" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="rowingdata">
+<h1>Rowingdata<a class="headerlink" href="#rowingdata" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This is a solution for the self-tracking rowers.</p>
+<p>Some of us use Concept2 rowing machines. Some of us are On-The-Water
+rowers. All of us will use smartphone apps, smart watches, fitness (GPS)
+watches, etc. to track our activities.</p>
+<p>Most of them will cross-train. Bike. Run. Skate.</p>
+<p>That means, the Concept2 logbook is not a sufficient training logbook for us.</p>
+<p>At the same time, the Concept2 logbook is used in rankings, for challenges,
+and more. Many of us will want to log all our rowing on the Concept2 logbook.</p>
+<p>So there are a couple of challenges here:</p>
+<ul>
+<li><p class="first">How do I get my erg rows on Strava/SportTracks/Garmin Connect?</p>
+<blockquote>
+<div><ul class="simple">
+<li>Use an ANT+ device, like explained here: <a class="reference external" href="https://dr3do.wordpress.com/2015/07/09/hurray/">https://dr3do.wordpress.com/2015/07/09/hurray/</a></li>
+<li>Import from RowPro to SportTracks</li>
+<li>There are many smartphone apps to capture data from the PM3/4/5 erg monitor. Not many of them export in a format that is suitable for upload to the above-mentioned sites.</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">How do I get all my rows (including OTW) into the Concept2 logbook</p>
+<blockquote>
+<div><ul class="simple">
+<li>For On-Water and Erg: Add them manually</li>
+<li>For erg: Upload from ErgData, RowPro, Concept2 utility</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p>This project aims at giving you ways to:</p>
+<ul>
+<li><p class="first">Upload fitness data captured in TCX format to the Concept2 logbook (implemented)</p>
+<blockquote>
+<div><ul class="simple">
+<li>This should cover all your On-Water activities, whether they are captured with a SpeedCoach, a GPS fitness watch, your phone, or any other device. As long as you are able to export a valid TCX file.</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Get erg data captured with apps that have no &#8220;upload to Concept2&#8221; functionality and upload them to the Concept2 logbook (implemented)</p>
+<blockquote>
+<div><ul class="simple">
+<li>For example, painsled</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Get erg data captured with apps that have no TCX export functionality and convert hem to TCX (implemented)</p>
+<blockquote>
+<div><ul class="simple">
+<li>ErgData - downloaded to CSV, converted to TCX</li>
+<li>RowPro data - exported to CSV, converted to TCX.</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Make the data accessible in python and create useful plots. Who wants to be limited to what the on-line logbooks plot. Get your data and create:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Color HR band charts or Pie Charts (implemented)</li>
+<li>Plot drive length, drive time, and other erg related parameters as a function of time or distance (implemented)</li>
+<li>Create histograms (Do-it-yourself).</li>
+<li>And much more (do-it-yourself). You&#8217;ve got the entire Python matplotlib at your disposal. Goodbye excel!</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p>As soon as Crewnerd or Speedcoach can upload to C2 natively, or a web
+synchronization can be set up between the C2 logbook and popular fitness
+tracking sites, my project will lose much of its significance. But that&#8217;s OK.</p>
+<p>Well, at least the colorful plots remain.</p>
+</div>
+<div class="section" id="credits">
+<h2>Credits<a class="headerlink" href="#credits" title="Permalink to this headline">¶</a></h2>
+<p>The project is based on python plotting code by
+Greg Smith (<a class="reference external" href="https://quantifiedrowing.wordpress.com/">https://quantifiedrowing.wordpress.com/</a>)
+and inspired by the RowPro Dan Burpee spreadsheet
+(<a class="reference external" href="http://www.sub7irc.com/RP_Split_Template.zip">http://www.sub7irc.com/RP_Split_Template.zip</a>).</p>
+<img alt="_images/image001.png" src="_images/image001.png" />
+</div>
+<div class="section" id="to-install">
+<h2>To install<a class="headerlink" href="#to-install" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ easy_install rowingdata
+</pre></div>
+</div>
+<p>Or</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ pip install rowingdata
+</pre></div>
+</div>
+<p>To upgrade:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ pip install --upgrade rowingdata
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ easy_install --upgrade rowingdata
+</pre></div>
+</div>
+<p>Numpy, SciPy and matplotlib are needed. On Linux systems, they should be installed automatically through the dependencies.</p>
+<p>On Windows, there may be installation issues.</p>
+<p>A workaround is to install Anaconda, as described here: <a class="reference external" href="https://www.scipy.org/install.html">https://www.scipy.org/install.html</a></p>
+<p>Another option is to use official 32-bit installers:</p>
+<ul class="simple">
+<li><a class="reference external" href="http://sourceforge.net/projects/numpy/files/">http://sourceforge.net/projects/numpy/files/</a></li>
+<li><a class="reference external" href="http://sourceforge.net/projects/scipy/files/">http://sourceforge.net/projects/scipy/files/</a></li>
+<li><a class="reference external" href="http://sourceforge.net/projects/matplotlib/files/matplotlib/">http://sourceforge.net/projects/matplotlib/files/matplotlib/</a></li>
+</ul>
+<p>Or you can fetch the unofficial but recommended Windows releases from</p>
+<ul class="simple">
+<li><a class="reference external" href="http://www.lfd.uci.edu/~gohlke/pythonlibs/">http://www.lfd.uci.edu/~gohlke/pythonlibs/</a> (get the MKL builds for NumPy)</li>
+</ul>
+</div>
+<div class="section" id="command-line-tools">
+<h2>Command Line Tools<a class="headerlink" href="#command-line-tools" title="Permalink to this headline">¶</a></h2>
+<p>Beta. Use with caution.</p>
+<p>The easiest way to use rowingdata is from the command line.</p>
+<p>First, create a rower data file (if you don&#8217;t have one yet). Just run the
+following command and answer a few questions about yourself. If you don&#8217;t
+know what heart rate bands are, check here <a class="reference external" href="http://www.freespiritsrowing.com/content/utilities/hr-bands/">http://www.freespiritsrowing.com/content/utilities/hr-bands/</a> :</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ roweredit yourfilename.txt
+</pre></div>
+</div>
+<p>You can omit the file name. This will create a file defaultrower.txt.
+You can always run the same command to change parameters (for example
+if you lost or gained weight, change the user name or password, etc.</p>
+<img alt="_images/editrower.JPG" src="_images/editrower.JPG" />
+<p>Now you need the data files for your row. (The install comes with a few test
+files.) Get a TCX file (and a CSV summary file) from CrewNerd. TCX files from
+other tools should also work (not tested), as long as the TCX is valid.</p>
+<p>Or get a CSV export from painsled.</p>
+<div class="section" id="tcx-files">
+<h3>TCX files<a class="headerlink" href="#tcx-files" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="generic-tcx">
+<h4>Generic TCX<a class="headerlink" href="#generic-tcx" title="Permalink to this headline">¶</a></h4>
+<p>If you have a generic TCX file (from a SpeedCoach, from a Garmin), the
+following will create plots and spit out some summary text</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ tcxplot tcxfile.tcx yourrower.txt
+</pre></div>
+</div>
+<img alt="_images/greghoc.png" src="_images/greghoc.png" />
+<p>If you prefer a time based plot:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ tcxplottime tcxfile.tcx yourrower.txt
+</pre></div>
+</div>
+<p>Some TCX files do not have GPS position data. For example SpeedCoach with impeller.
+In that case:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ tcxplot_nogeo tcxfile.tcx yourrower.txt
+$ tcxplottime_nogeo tcxfile.tcx yourrower.txt
+</pre></div>
+</div>
+<p>The following will upload your row to the Concept2 logbook, and create a
+file crewnerddata.tcx_o.csv that looks like a painsled csv, for future use</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ tcxtoc2 tcxfile.tcx yourrower.txt
+</pre></div>
+</div>
+<p>Again, yourrower.txt is optional.</p>
+<img alt="_images/otwscreenshot.JPG" src="_images/otwscreenshot.JPG" />
+<p>Here is the row on the Concept2 logbook:</p>
+<img alt="_images/otwlogbook.JPG" src="_images/otwlogbook.JPG" />
+</div>
+<div class="section" id="crewnerd-with-summary">
+<h4>CrewNerd with summary<a class="headerlink" href="#crewnerd-with-summary" title="Permalink to this headline">¶</a></h4>
+<p>Having a crewnerddata.csv (summary csv) and a crewnerddata.tcx, the following
+will create plots and spit out some summary text</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ crewnerdplot crewnerddata yourrower.txt
+</pre></div>
+</div>
+<p>The yourrower.txt argument is the file where you keep your rower data.
+This is optional. If you don&#8217;t provide it, the tool will look for
+defaultrower.txt. If it doesn&#8217;t find that, it will use some default values.</p>
+<p>The script will also spit out some statistics from the summary csv.</p>
+<img alt="_images/woensdag.png" src="_images/woensdag.png" />
+<p>If you prefer a time based plot:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ crewnerdplottime crewnerddata yourrower.txt
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="painsled">
+<h3>Painsled<a class="headerlink" href="#painsled" title="Permalink to this headline">¶</a></h3>
+<p>Having painsled data in testdata.csv, the following will create plots and
+spit out some summary text</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ painsledplot testdata.csv yourrower.txt
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ painsledplottime testdata.csv yourrower.txt
+</pre></div>
+</div>
+<p>The yourrower.txt argument is the file where you keep your rower data.
+This is optional. If you don&#8217;t provide it, the tool will look for
+defaultrower.txt. If it doesn&#8217;t find that, it will use some default values.</p>
+<img alt="_images/2x20min.png" src="_images/2x20min.png" />
+<p>The following will upload your row to the Concept2 logbook:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ painsledtoc2 testdata.csv yourrower.txt
+</pre></div>
+</div>
+<p>Again, yourrower.txt is optional.</p>
+<img alt="_images/screenshot.JPG" src="_images/screenshot.JPG" />
+<p>Here is the row on the Concept2 logbook</p>
+<img alt="_images/screenshotlogbook.JPG" src="_images/screenshotlogbook.JPG" />
+</div>
+<div class="section" id="speedcoach-gps">
+<h3>SpeedCoach GPS<a class="headerlink" href="#speedcoach-gps" title="Permalink to this headline">¶</a></h3>
+<p>Having SpeedCoach GPS data in testdata.csv, the following will create plots and
+spit out some summary text</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ speedcoachplot testdata.csv yourrower.txt
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ speedcoachplottime testdata.csv yourrower.txt
+</pre></div>
+</div>
+<p>The yourrower.txt argument is the file where you keep your rower data.
+This is optional. If you don&#8217;t provide it, the tool will look for
+defaultrower.txt. If it doesn&#8217;t find that, it will use some default values.</p>
+<p>The following will upload your row to the Concept2 logbook:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ speedcoachtoc2 testdata.csv yourrower.txt &#39;2015-11-05T13:15:30-05:00&#39;
+</pre></div>
+</div>
+<p>Again, yourrower.txt and date string are optional.
+Because the SpeedCoach CSV file content doesn&#8217;t have the row date,
+you may provide a date string. The tool should be quite forgiving regarding
+the exact format in which you write your date/time string. However, if
+you input something ambiguous (time zone), the tool will guess
+and your row may end up on the wrong date.
+If nothing is provided, today&#8217;s date will be taken.</p>
+</div>
+<div class="section" id="rowpro">
+<h3>RowPro<a class="headerlink" href="#rowpro" title="Permalink to this headline">¶</a></h3>
+<p>Having RowPro exported data in testdata.csv,
+the following will create plots and
+spit out some summary text</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ rowproplot testdata.csv yourrower.txt
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ rowproplottime testdata.csv yourrower.txt
+</pre></div>
+</div>
+<p>The yourrower.txt argument is the file where you keep your rower data.
+This is optional. If you don&#8217;t provide it, the tool will look for
+defaultrower.txt. If it doesn&#8217;t find that, it will use some default values.</p>
+<p>For RowPro CSV files, upload to C2 logbook is not available on the command
+line. You can upload to C2 directly from the RowPro application.</p>
+</div>
+<div class="section" id="ergdata">
+<h3>ErgData<a class="headerlink" href="#ergdata" title="Permalink to this headline">¶</a></h3>
+<p>If you use ErgData, you can download a CSV file from your Concept2 log.
+Here is how you use those data in this tool:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ ergdataplot testdata.csv yourrower.txt
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ ergdataplottime testdata.csv yourrower.txt
+</pre></div>
+</div>
+<p>The yourrower.txt argument is the file where you keep your rower data.
+This is optional. If you don&#8217;t provide it, the tool will look for
+defaultrower.txt. If it doesn&#8217;t find that, it will use some default values.</p>
+<p>As your data are already on the Concept2 logbook, it doesn&#8217;t make sense to
+have a script to upload them once more.</p>
+<p>However, you may appreciate creating a TCX file for uploading to SportTracks.mobi or Strava:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ ergdatatotcx testdata.csv
+</pre></div>
+</div>
+<p>This will create a file testdata.csv_o.tcx which you can upload. I have tested
+this file on Strava and SportTracks with success. Somehow, even though the
+resulting file validates against the TCX Schema, I wasn&#8217;t able to upload the file to Garmin Connect, because Garmin Connect rejects TCX files from non-Garmin devices.</p>
+</div>
+<div class="section" id="ergstick">
+<h3>ErgStick<a class="headerlink" href="#ergstick" title="Permalink to this headline">¶</a></h3>
+<p>If you use ErgStick, you can download a CSV file from your Concept2 log.
+Here is how you use those data in this tool:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ ergstickplot testdata.csv yourrower.txt
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ ergstickplottime testdata.csv yourrower.txt
+</pre></div>
+</div>
+<p>The yourrower.txt argument is the file where you keep your rower data.
+This is optional. If you don&#8217;t provide it, the tool will look for
+defaultrower.txt. If it doesn&#8217;t find that, it will use some default values.</p>
+<p>As your data are already on the Concept2 logbook, it doesn&#8217;t make sense to
+have a script to upload them once more.</p>
+<p>However, you may appreciate creating a TCX file for uploading to SportTracks.mobi or Strava:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ ergsticktotcx testdata.csv
+</pre></div>
+</div>
+<p>This will create a file testdata.csv_o.tcx which you can upload. I have tested
+this file on Strava and SportTracks with success. Somehow, even though the
+resulting file validates against the TCX Schema, I wasn&#8217;t able to upload the file to Garmin Connect.</p>
+</div>
+<div class="section" id="copying-to-clipboard">
+<h3>Copying to clipboard<a class="headerlink" href="#copying-to-clipboard" title="Permalink to this headline">¶</a></h3>
+<p>From the command-line, this only works on windows:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>$ copystats testdata.csv yourrower.txt
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="directly-in-python">
+<h2>Directly in Python<a class="headerlink" href="#directly-in-python" title="Permalink to this headline">¶</a></h2>
+<p>Beta. Use with caution.</p>
+<div class="section" id="import">
+<h3>Import<a class="headerlink" href="#import" title="Permalink to this headline">¶</a></h3>
+<p>Import the package</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">rowingdata</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="your-personal-data">
+<h3>Your personal data<a class="headerlink" href="#your-personal-data" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="the-old-and-difficult-way">
+<h4>The old and difficult way<a class="headerlink" href="#the-old-and-difficult-way" title="Permalink to this headline">¶</a></h4>
+<p>If you&#8217;re not me (or have identical heart rate thresholds),
+you will have to change the default values for the rower. For example:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">john</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rower</span><span class="p">(</span><span class="n">hrut2</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span><span class="n">hrut1</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span><span class="n">hrat</span><span class="o">=</span><span class="mi">140</span><span class="p">,</span><span class="n">hrtr</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span><span class="n">hran</span><span class="o">=</span><span class="mi">170</span><span class="p">,</span><span class="n">hrmax</span><span class="o">=</span><span class="mi">180</span><span class="p">,</span><span class="n">c2username</span><span class="o">=</span><span class="s2">&quot;johntherower&quot;</span><span class="p">,</span><span class="n">c2password</span><span class="o">=</span><span class="s2">&quot;caughtacrab&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can store this locally like this</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">john</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;johnsdata.txt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then you can load this like this</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">john</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">read_obj</span><span class="p">(</span><span class="s2">&quot;johnsdata.txt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-new-and-easy-way">
+<h4>The new and easy way<a class="headerlink" href="#the-new-and-easy-way" title="Permalink to this headline">¶</a></h4>
+<p>Since version 0.65 there are easier ways.</p>
+<p>Create a new rower through some interactive Q&amp;A:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rowingdata</span><span class="o">.</span><span class="n">roweredit</span><span class="p">(</span><span class="s2">&quot;johnsdata.txt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you omit the file name, it will default to &#8220;defaultrower.txt&#8221;</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">john</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">getrower</span><span class="p">(</span><span class="s2">&quot;johnsdata.txt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you want to change John&#8217;s data, again just type:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rowingdata</span><span class="o">.</span><span class="n">roweredit</span><span class="p">(</span><span class="s2">&quot;johnsdata.txt&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="painsled-ios">
+<h3>Painsled iOS<a class="headerlink" href="#painsled-ios" title="Permalink to this headline">¶</a></h3>
+<p>To use with Painsled iOS CSV data, simply do</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="s2">&quot;testdata.csv&quot;</span><span class="p">,</span><span class="n">rower</span><span class="o">=</span><span class="n">myrower</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plotmeters_erg</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">row</span><span class="o">.</span><span class="n">allstats</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id1">
+<h3>RowPro<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>To use with RowPro CSV data, simply do</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rp</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">RowProParser</span><span class="p">(</span><span class="s2">&quot;RP_testdata.csv&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rp</span><span class="o">.</span><span class="n">write_csv</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plotmeters_erg</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plottime_erg</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">row</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="speedcoach">
+<h3>SpeedCoach<a class="headerlink" href="#speedcoach" title="Permalink to this headline">¶</a></h3>
+<p>To use with SpeedCoach CSV data, simply do</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sc</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">speedcoachParser</span><span class="p">(</span><span class="s2">&quot;RP_testdata.csv&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sc</span><span class="o">.</span><span class="n">write_csv</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plotmeters_erg</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plottime_erg</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">row</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="crewnerd-and-other-tcx">
+<h3>CrewNerd (and other TCX)<a class="headerlink" href="#crewnerd-and-other-tcx" title="Permalink to this headline">¶</a></h3>
+<p>To use with CrewNerd TCX data, simply do</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tcx</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">TCXParser</span><span class="p">(</span><span class="s2">&quot;2016-03-25-0758.tcx&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">tcx</span><span class="o">.</span><span class="n">write_csv</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">),</span><span class="n">rower</span><span class="o">=</span><span class="n">myrower</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plotmeters_otw</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plottime_otw</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">row</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="other-useful-stuff">
+<h3>Other useful stuff<a class="headerlink" href="#other-useful-stuff" title="Permalink to this headline">¶</a></h3>
+<p>To get any data column as a numpy array, use (for example for HR data -
+see list below for other accessible data fields).</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">getvalues</span><span class="p">[</span><span class="s1">&#39; HRCur (bpm)&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Of course you have access to the entire data frame as well:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">df</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="n">df</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">df</span><span class="o">.</span><span class="n">describe</span>
+</pre></div>
+</div>
+<p>To create the colorful plots,
+assuming you have a summary file from CrewNerd called 2016-03-25-0758.CSV and
+a TCX file called 2016-03-25-0758.TCX</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rowingdata</span><span class="o">.</span><span class="n">dorowall</span><span class="p">(</span><span class="s2">&quot;2016-03-25-0758&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Plots and statistics</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">uploadtoc2</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This will upload your row to Concept2 logbook. It just simply fill the online
+form for you. So nothing more than total distance and duration, date, weight
+category and row type.</p>
+<p>Export or re-export to a tcx file is done with</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">exporttotcx</span><span class="p">(</span><span class="s2">&quot;test.tcx&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>With the package at your full disposal, the sky is the limit. You can do any
+plot you like or do other statistics, like calculate your average stroke length
+including error margin, etc.</p>
+</div>
+</div>
+<div class="section" id="data-fields">
+<h2>Data Fields<a class="headerlink" href="#data-fields" title="Permalink to this headline">¶</a></h2>
+<p>The available data fields are</p>
+<ul class="simple">
+<li>&#8216;Timestamp (sec)&#8217;</li>
+<li>&#8216; Horizontal (meters)&#8217;</li>
+<li>&#8216; Cadence (stokes/min&#8217;</li>
+<li>&#8216; HRCur (bpm)&#8217;</li>
+<li>&#8216; Stroke500mPace (sec/500m)&#8217;</li>
+<li>&#8216; Power (watts)&#8217;</li>
+<li>&#8216; DriveLength (meters)&#8217;</li>
+<li>&#8216; StrokeDistance (meters)&#8217;</li>
+<li>&#8216; DriveTime (ms)&#8217;</li>
+<li>&#8216; StrokeRecoveryTime (ms)&#8217;</li>
+<li>&#8216; AverageDriveForce (lbs)&#8217;</li>
+<li>&#8216; PeakDriveForce (lbs)&#8217;</li>
+<li>&#8216;cum_dist&#8217;</li>
+</ul>
+<p>If imported from TCX, Rowpro, or other tools, some data fields may not contain
+useful information.</p>
+</div>
+<div class="section" id="release-notes">
+<h2>Release Notes:<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="x">
+<h3>0.90.x<a class="headerlink" href="#x" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Improved handling of RowPro files. Taking the split/interval info from the footer and putting it in the resulting data frame.</li>
+<li>Added functionality to update the intervals/splits</li>
+<li>Some fiddling with the interval statistics calculations</li>
+</ul>
+</div>
+<div class="section" id="id2">
+<h3>0.89.x<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Some internal optimizations to reduce memory consumption</li>
+<li>A simple EU format &#8220;1.000,0&#8221; instead of &#8220;1 000.0&#8221; recognition added to RowProParser</li>
+<li>Added a MysteryParser for a CSV file type that is clearly rowing data, but I don&#8217;t know the origin</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h3>0.86.x<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added support for SpeedCoach GPS 2 CSV file</li>
+<li>Added support for FIT files</li>
+<li>Improved the CrewNerd summary (now calculates time weighted averages)</li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h3>0.85.x<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Changes to support rowsandall.com rowing physics calculations</li>
+<li>TCX Export now adds Power if power calculations have been done</li>
+</ul>
+</div>
+<div class="section" id="id5">
+<h3>0.84.x<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added support for wind and stream updates on rowsandall.com</li>
+<li>Other changes to support rowsandall.com rowing physics calculations</li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h3>0.81.x<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>added some plotting for rowsandall.com</li>
+<li>a workaround for the ugly HR plateaux in plots from CrewNerd</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h3>0.80.x<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>fixed bug in summary strings for CrewNerd plots</li>
+<li>fixed bug in parser of ErgData files. Interval workouts should now work well.</li>
+</ul>
+</div>
+<div class="section" id="id8">
+<h3>0.79.x<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>rowingdata now uses a file object instead of a file name. Command-line tools updated.</li>
+<li>added code to get image objects (for use on web app)</li>
+<li>changing RowPro to cumulativetime</li>
+</ul>
+</div>
+<div class="section" id="id9">
+<h3>0.78.x<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added some experimental code for doing wind corrected pace</li>
+<li>Improved TCX processing (to minimize impact of some CrewNerd glitches)</li>
+</ul>
+</div>
+<div class="section" id="id10">
+<h3>0.77.x<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added ErgStickParser</li>
+<li>Added write_csv(writeFile) to rowingdata class</li>
+</ul>
+</div>
+<div class="section" id="id11">
+<h3>0.76.x<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added export to TCX file</li>
+<li>Corrected some bugs in dynamic y axis algo</li>
+<li>Corrected bug in Meter based OTW rowing plots (missing AN HR data in bar chart)</li>
+<li>Correct bug in CrewNerd summary stats algorithm.</li>
+<li>Pie chart improved: Now matches the HR bar plot (difference between &lt; and &lt;=)</li>
+<li>Pie chart - strange values. Corrected.</li>
+</ul>
+</div>
+<div class="section" id="id12">
+<h3>0.75.x<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added plotting for ErgData CSV files (exported from Concept2 log)</li>
+<li>Improved the colorful HR bar charts (with width parameter)</li>
+<li>Made y axis ranges dynamic (except for stroke rate plots)</li>
+<li>Replaced moving average with Exponentially Weighted Moving Average. Sounds more scientific. Doesn&#8217;t make a big difference in the data.</li>
+<li>In TCXParser, moved some of the heavy data lifting to __init__ (from write_csv)</li>
+</ul>
+</div>
+<div class="section" id="id13">
+<h3>0.74.x<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added command-line scripts to plot data from RowPro</li>
+<li>Added Pie Chart as extra plot to time based plot</li>
+</ul>
+</div>
+<div class="section" id="id14">
+<h3>0.73.x<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added parser for speedcoach CSV files</li>
+<li>Fixed bugs in RowProParser</li>
+</ul>
+</div>
+<div class="section" id="id15">
+<h3>0.72.x<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>added command line tools for generic TCX files (should work with RIM)</li>
+</ul>
+</div>
+<div class="section" id="id16">
+<h3>0.71.x<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>painsledDesktopParser now removes the &#8220;00 waiting to row&#8221;: Statistics for Painsled Desktop work</li>
+<li>Command line scripts should now install well</li>
+<li>Moved test data to testdata folder</li>
+<li>replaced * operator for the bool dtype with &amp;</li>
+<li>tested on Linux (Ubuntu), Mac OS X (thx Greg), Windows 7 &amp; Windows 10</li>
+<li>fixed bug related to clipboard copying on Mac and Linux. I have temporarily disabled clipboard copying of summary strings for all platforms except windows.</li>
+<li>using elapsed time where possible instead of time stamps</li>
+</ul>
+</div>
+<div class="section" id="id17">
+<h3>0.65<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Expanded command line scripts with time plots</li>
+<li>Command line scripts now take a rower file as an optional second argument</li>
+<li>Command line script to change rower parameters easily</li>
+</ul>
+</div>
+<div class="section" id="id18">
+<h3>0.63<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fixed a bug that caused unwanted forgetting of Concept2 username and password</li>
+</ul>
+</div>
+<div class="section" id="id19">
+<h3>0.62<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Fixed the time plot bug which also led to errors in the Concept2 upload (needed to sort the painsled data by time)</li>
+</ul>
+</div>
+<div class="section" id="id20">
+<h3>0.6<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added command-line tools and some test data</li>
+</ul>
+</div>
+<div class="section" id="id21">
+<h3>0.52<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Adding weight and row type to Concept2 upload</li>
+<li>Adding options to locally save concept2 username and password</li>
+<li>Added row type (e.g. &#8220;Indoor Rower&#8221; or &#8220;On-water&#8221;) to rowingdata</li>
+</ul>
+</div>
+<div class="section" id="id22">
+<h3>0.51<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Corrected some dependencies errors</li>
+</ul>
+</div>
+<div class="section" id="id23">
+<h3>0.5<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Upload to Concept2 logbook is working!</li>
+</ul>
+</div>
+<div class="section" id="id24">
+<h3>0.45<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added saving and loading of rower data (so you can store your password and HR data)</li>
+</ul>
+</div>
+<div class="section" id="id25">
+<h3>0.43<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Attempting to remove the dubious DataFrame copy errors using df.loc</li>
+</ul>
+</div>
+<div class="section" id="id26">
+<h3>0.42<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Added RowPro CSV Parser</li>
+<li>Added summary statistics and interval statistics (also copies the output to clipboard)</li>
+<li>Interval statistics now (sort of) works for Desktop Painsled data</li>
+</ul>
+</div>
+</div>
+<div class="section" id="known-bugs">
+<h2>Known bugs<a class="headerlink" href="#known-bugs" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Copy to clipboard doesn&#8217;t work from command-line on Linux, OS X</li>
+<li>The summary statistics don&#8217;t work well when you use the TCX from Rowing in Motion (RIM).</li>
+<li>RowProParser doesn&#8217;t read the header information. Total row time reported by the tool is shorter by about half a stroke. Also there are a few meters missing. As RowPro has its own upload to C2 log, I didn&#8217;t fix this bug. I guess RowPro users would use the tool mainly for plotting.</li>
+<li>The TCX created from the CSV doesn&#8217;t work upload to Garmin Connect. This is not a bug. It&#8217;s Garmin&#8217;s policy to not accept TCX from non-Garmin devices.</li>
+</ul>
+</div>
+<div class="section" id="future-functionality">
+<h2>Future functionality<a class="headerlink" href="#future-functionality" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first">Add support for other erg software tools (just need the csv/tcx and it will be easy)</p>
+<blockquote>
+<div><ul class="simple">
+<li>Done for generic TCX</li>
+<li>Done for CSV from SpeedCoach</li>
+<li>Done for RowPro</li>
+<li>Done for ErgData</li>
+<li>Done for ErgStick</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">Come up with a way to add Watts to the rowing plots - Done in EXPERIMENTAL mode</p>
+</li>
+<li><p class="first">Use the C2 logbook API and add splits and other data to the workout on the Concept2 logbook</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Rowingdata</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#credits">Credits</a></li>
+<li><a class="reference internal" href="#to-install">To install</a></li>
+<li><a class="reference internal" href="#command-line-tools">Command Line Tools</a><ul>
+<li><a class="reference internal" href="#tcx-files">TCX files</a><ul>
+<li><a class="reference internal" href="#generic-tcx">Generic TCX</a></li>
+<li><a class="reference internal" href="#crewnerd-with-summary">CrewNerd with summary</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#painsled">Painsled</a></li>
+<li><a class="reference internal" href="#speedcoach-gps">SpeedCoach GPS</a></li>
+<li><a class="reference internal" href="#rowpro">RowPro</a></li>
+<li><a class="reference internal" href="#ergdata">ErgData</a></li>
+<li><a class="reference internal" href="#ergstick">ErgStick</a></li>
+<li><a class="reference internal" href="#copying-to-clipboard">Copying to clipboard</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#directly-in-python">Directly in Python</a><ul>
+<li><a class="reference internal" href="#import">Import</a></li>
+<li><a class="reference internal" href="#your-personal-data">Your personal data</a><ul>
+<li><a class="reference internal" href="#the-old-and-difficult-way">The old and difficult way</a></li>
+<li><a class="reference internal" href="#the-new-and-easy-way">The new and easy way</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#painsled-ios">Painsled iOS</a></li>
+<li><a class="reference internal" href="#id1">RowPro</a></li>
+<li><a class="reference internal" href="#speedcoach">SpeedCoach</a></li>
+<li><a class="reference internal" href="#crewnerd-and-other-tcx">CrewNerd (and other TCX)</a></li>
+<li><a class="reference internal" href="#other-useful-stuff">Other useful stuff</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#data-fields">Data Fields</a></li>
+<li><a class="reference internal" href="#release-notes">Release Notes:</a><ul>
+<li><a class="reference internal" href="#x">0.90.x</a></li>
+<li><a class="reference internal" href="#id2">0.89.x</a></li>
+<li><a class="reference internal" href="#id3">0.86.x</a></li>
+<li><a class="reference internal" href="#id4">0.85.x</a></li>
+<li><a class="reference internal" href="#id5">0.84.x</a></li>
+<li><a class="reference internal" href="#id6">0.81.x</a></li>
+<li><a class="reference internal" href="#id7">0.80.x</a></li>
+<li><a class="reference internal" href="#id8">0.79.x</a></li>
+<li><a class="reference internal" href="#id9">0.78.x</a></li>
+<li><a class="reference internal" href="#id10">0.77.x</a></li>
+<li><a class="reference internal" href="#id11">0.76.x</a></li>
+<li><a class="reference internal" href="#id12">0.75.x</a></li>
+<li><a class="reference internal" href="#id13">0.74.x</a></li>
+<li><a class="reference internal" href="#id14">0.73.x</a></li>
+<li><a class="reference internal" href="#id15">0.72.x</a></li>
+<li><a class="reference internal" href="#id16">0.71.x</a></li>
+<li><a class="reference internal" href="#id17">0.65</a></li>
+<li><a class="reference internal" href="#id18">0.63</a></li>
+<li><a class="reference internal" href="#id19">0.62</a></li>
+<li><a class="reference internal" href="#id20">0.6</a></li>
+<li><a class="reference internal" href="#id21">0.52</a></li>
+<li><a class="reference internal" href="#id22">0.51</a></li>
+<li><a class="reference internal" href="#id23">0.5</a></li>
+<li><a class="reference internal" href="#id24">0.45</a></li>
+<li><a class="reference internal" href="#id25">0.43</a></li>
+<li><a class="reference internal" href="#id26">0.42</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#known-bugs">Known bugs</a></li>
+<li><a class="reference internal" href="#future-functionality">Future functionality</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/README.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Sander Roosendaal.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.4.8</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/README.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
