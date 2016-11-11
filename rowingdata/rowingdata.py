@@ -63,7 +63,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.92.1"
+__version__ = "0.92.2"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -3197,13 +3197,13 @@ class rowingdata:
 
 
 	    
-	    if intervaldistance != 0:
-		itime += [int(10*intervalduration)/10.,
-			  int(10*restduration)/10.]
-		idist += [int(intervaldistance),
-			  int(restdistance)]
-		itype += [workoutstate,3]
-	    
+	    #    if intervaldistance != 0:
+            itime += [int(10*intervalduration)/10.,
+                      int(10*restduration)/10.]
+            idist += [int(intervaldistance),
+                      int(restdistance)]
+            itype += [workoutstate,3]
+
 
 	return itime,idist,itype
 

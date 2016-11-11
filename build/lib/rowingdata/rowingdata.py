@@ -3197,13 +3197,13 @@ class rowingdata:
 
 
 	    
-	    if intervaldistance != 0:
-		itime += [int(10*intervalduration)/10.,
-			  int(10*restduration)/10.]
-		idist += [int(intervaldistance),
-			  int(restdistance)]
-		itype += [workoutstate,3]
-	    
+	    #    if intervaldistance != 0:
+            itime += [int(10*intervalduration)/10.,
+                      int(10*restduration)/10.]
+            idist += [int(intervaldistance),
+                      int(restdistance)]
+            itype += [workoutstate,3]
+
 
 	return itime,idist,itype
 
