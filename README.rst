@@ -504,6 +504,13 @@ useful information.
 ================
 Release Notes:
 ================
+0.92.x
+------
+
+- Added Power Zones
+- Improved Pie Charts
+- Added drag info to some charts
+- Bug fix in summary statistics
 
 0.90.x
 ------
