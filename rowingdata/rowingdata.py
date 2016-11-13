@@ -63,7 +63,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.92.2"
+__version__ = "0.92.3"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -1745,7 +1745,11 @@ class ErgDataParser:
 
 	dist2 = self.ed_df['Distance (meters)']
 	spm = self.ed_df['Stroke Rate']
-	pace = self.ed_df['Pace (seconds per 500m']
+        try:
+	    pace = self.ed_df['Pace (seconds per 500m']
+        except KeyError:
+	    pace = self.ed_df['Pace (seconds per 500m)']
+
 	pace = np.clip(pace,0,1e4)
 
 	hr = self.ed_df['Heart Rate']
