@@ -511,6 +511,7 @@ Release Notes:
 - Improved Pie Charts
 - Added drag info to some charts
 - Bug fix in summary statistics
+- Updated ErgDataParser because ErgData corrected a typo in their column header
 
 0.90.x
 ------
