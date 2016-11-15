@@ -63,7 +63,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.92.3"
+__version__ = "0.92.4"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -76,8 +76,8 @@ def main():
 	str += rowingphysics.main()
     return str
 
-def my_autopct(pct):
-    return ('%4.1f%%' % pct) if pct > 5 else ''
+def my_autopct(pct,cutoff=5):
+    return ('%4.1f%%' % pct) if pct > cutoff else ''
 
 def nanstozero(nr):
     if isnan(nr) or isinf(nr):
@@ -6221,6 +6221,14 @@ class rowingdata:
 	# print(time_in_zone)
 	wedge_labels = ['<ut2','ut2','ut1','at','tr','an']
 	totaltime = time_in_zone.sum()
+
+        perc = 100.*time_in_zone/totaltime
+        cutoff = 1.0
+        if len(perc[perc<cutoff])>1:
+            cutoff = 2.0
+            if len(perc[perc<cutoff])>1:
+                cutoff = 3.0
+        
 	for i in range(len(wedge_labels)):
 	    min = int(time_in_zone[i]/60.)
 	    sec = int(time_in_zone[i] - min*60.)
@@ -6228,7 +6236,7 @@ class rowingdata:
 	    s = "%d:%s" % (min,secstr)
 	    wedge_labels[i] = wedge_labels[i]+"\n"+s
 	    perc = 100.*time_in_zone[i]/totaltime
-	    if perc < 5:
+	    if perc < cutoff:
 		wedge_labels[i] = ''
 	
 	# print(wedge_labels)
@@ -6238,7 +6246,7 @@ class rowingdata:
 	ax9.pie(time_in_zone,
 		labels=wedge_labels,
 		colors=['gray','gold','limegreen','dodgerblue','m','r'],
-		autopct=my_autopct,
+		autopct=lambda x: my_autopct(x,cutoff=cutoff+2),
 		pctdistance=0.8,
 		counterclock=False,
 		startangle=90.0)
@@ -6286,6 +6294,13 @@ class rowingdata:
 			'power tr','power an']
 
 	totaltime = time_in_zone.sum()
+        perc = 100.*time_in_zone/totaltime
+        cutoff = 1.0
+        if len(perc[perc<cutoff])>1:
+            cutoff = 2.0
+            if len(perc[perc<cutoff])>1:
+                cutoff = 3.0
+        
 	for i in range(len(wedge_labels)):
 	    min = int(time_in_zone[i]/60.)
 	    sec = int(time_in_zone[i] - min*60.)
@@ -6293,7 +6308,8 @@ class rowingdata:
 	    s = "%d:%s" % (min,secstr)
 	    wedge_labels[i] = wedge_labels[i]+"\n"+s
 	    perc = 100.*time_in_zone[i]/totaltime
-	    if perc < 5:
+
+	    if perc < cutoff:
 		wedge_labels[i] = ''
 	
 	# print(wedge_labels)
@@ -6303,7 +6319,7 @@ class rowingdata:
 	ax9.pie(time_in_zone,
 		labels=wedge_labels,
 		colors=['gray','gold','limegreen','dodgerblue','m','r'],
-		autopct=my_autopct,
+		autopct=lambda x: my_autopct(x,cutoff=cutoff+2),
 		pctdistance=0.8,
 		counterclock=False,
 		startangle=90.0)
@@ -6351,6 +6367,13 @@ class rowingdata:
 			'power tr','power an']
 
 	totaltime = time_in_zone.sum()
+        perc = 100.*time_in_zone/totaltime
+        cutoff = 1.0
+        if len(perc[perc<cutoff])>1:
+            cutoff = 2.0
+            if len(perc[perc<cutoff])>1:
+                cutoff = 3.0
+
 	for i in range(len(wedge_labels)):
 	    min = int(time_in_zone[i]/60.)
 	    sec = int(time_in_zone[i] - min*60.)
@@ -6368,7 +6391,7 @@ class rowingdata:
 	ax9.pie(time_in_zone,
 		labels=wedge_labels,
 		colors=['gray','gold','limegreen','dodgerblue','m','r'],
-		autopct=my_autopct,
+		autopct=lambda x: my_autopct(x,cutoff=cutoff+2),
 		pctdistance=0.8,
 		counterclock=False,
 		startangle=90.0)
@@ -6410,6 +6433,13 @@ class rowingdata:
 	# print(time_in_zone)
 	wedge_labels = ['<ut2','ut2','ut1','at','tr','an']
 	totaltime = time_in_zone.sum()
+        perc = 100.*time_in_zone/totaltime
+        cutoff = 1.0
+        if len(perc[perc<cutoff])>1:
+            cutoff = 2.0
+            if len(perc[perc<cutoff])>1:
+                cutoff = 3.0
+
 	for i in range(len(wedge_labels)):
 	    min = int(time_in_zone[i]/60.)
 	    sec = int(time_in_zone[i] - min*60.)
@@ -6428,7 +6458,7 @@ class rowingdata:
 	ax9.pie(time_in_zone,
 		labels=wedge_labels,
 		colors=['gray','gold','limegreen','dodgerblue','m','r'],
-		autopct=my_autopct,
+		autopct=lambda x: my_autopct(x,cutoff=cutoff+2),
 		pctdistance=0.8,
 		counterclock=False,
 		startangle=90.0)
