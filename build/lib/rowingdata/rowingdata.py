@@ -63,7 +63,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.92.4"
+__version__ = "0.92.5"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -3205,8 +3205,8 @@ class rowingdata:
 	    intervalduration = tdwork['TimeStamp (sec)'].max()-previoustime
 	    # previoustime = tdrest[' ElapsedTime (sec)'].max()
 	    previoustime = td['TimeStamp (sec)'].max()
-	    
 
+            intervalduration = nanstozero(intervalduration)
 	    restdistance = nanstozero(tdrest['cum_dist'].max()-tdwork['cum_dist'].max())
 
 	    restduration = nanstozero(tdrest['TimeStamp (sec)'].max()-tdwork['TimeStamp (sec)'].max())
@@ -3990,17 +3990,20 @@ class rowingdata:
 		intervaldistance = 0
 
 	    
-	    previousdist = td['cum_dist'].max()
 
-	    intervalduration = tdwork['TimeStamp (sec)'].max()-previoustime
+	    intervalduration = nanstozero(tdwork['TimeStamp (sec)'].max()-previoustime)
 
 	    previoustime = td['TimeStamp (sec)'].max()
 
 
-	    restdistance = nanstozero(tdrest['cum_dist'].max()-tdwork['cum_dist'].max())
+	    restdistance = tdrest['cum_dist'].max()-tdwork['cum_dist'].max()
+            if np.isnan(tdwork['cum_dist'].max()):
+                        restdistance = tdrest['cum_dist'].max()-previousdist
+                        
+            restdistance = nanstozero(restdistance)
+	    previousdist = td['cum_dist'].max()
 
 	    restduration = nanstozero(tdrest[' ElapsedTime (sec)'].max())
-
 
 	    if intervaldistance != 0:
 		intervalpace = 500.*intervalduration/intervaldistance
