@@ -512,6 +512,7 @@ Release Notes:
 - Added drag info to some charts
 - Bug fix in summary statistics
 - Updated ErgDataParser because ErgData corrected a typo in their column header
+- Added power info to summary and interval summaries
 
 0.90.x
 ------
