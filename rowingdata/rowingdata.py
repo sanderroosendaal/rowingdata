@@ -63,7 +63,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.92.4"
+__version__ = "0.92.5"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -534,7 +534,7 @@ def movingaverage(interval, window_size):
     return np.convolve(interval, window, 'same')
 
 def interval_string(nr,totaldist,totaltime,avgpace,avgspm,
-		    avghr,maxhr,avgdps,
+		    avghr,maxhr,avgdps,avgpower,
 		    separator='|'):
     """ Used to create a nifty text string with the data for the interval
     """
@@ -546,11 +546,12 @@ def interval_string(nr,totaldist,totaltime,avgpace,avgspm,
 	inttime = format_pace(totaltime)
 	)
 
-    stri += "{tpace:0>7}{sep}{tspm:0>4.1f}{sep}{thr:3.1f}".format(
+    stri += "{tpace:0>7}{sep}{tpower:0>5.1f}{sep}{tspm:0>4.1f}{sep}{thr:3.1f}".format(
 	tpace=format_pace(avgpace),
 	sep=separator,
 	tspm=avgspm,
-	thr = avghr
+	thr = avghr,
+        tpower = avgpower,
 	)
 
     stri += "{sep}{tmaxhr:3.1f}{sep}{tdps:0>4.1f}".format(
@@ -564,7 +565,8 @@ def interval_string(nr,totaldist,totaltime,avgpace,avgspm,
     return stri
 
 def workstring(totaldist,totaltime,avgpace,avgspm,avghr,maxhr,avgdps,
-		  separator="|",symbol='W'):
+               avgpower,
+	       separator="|",symbol='W'):
 
     if np.isnan(totaldist):
 	totaldist = 0
@@ -578,6 +580,8 @@ def workstring(totaldist,totaltime,avgpace,avgspm,avghr,maxhr,avgdps,
 	maxhr = 0
     if np.isnan(avgdps):
 	avgdps = 0
+    if np.isnan(avgpower):
+	avgpower = 0
     if np.isnan(totaltime):
 	totaltime = 0
 
@@ -597,8 +601,9 @@ def workstring(totaldist,totaltime,avgpace,avgspm,avghr,maxhr,avgdps,
     stri1 += format_time(totaltime)+separator+pacestring
 	
 
-    stri1 += "{sep}{avgsr:0>4.1f}{sep}{avghr:0>5.1f}{sep}".format(
+    stri1 += "{sep}{avgpower:0>5.1f}{sep}{avgsr:0>4.1f}{sep}{avghr:0>5.1f}{sep}".format(
 	avgsr = avgspm,
+        avgpower = avgpower,
 	sep = separator,
 	avghr = avghr
 	)
@@ -612,7 +617,8 @@ def workstring(totaldist,totaltime,avgpace,avgspm,avghr,maxhr,avgdps,
     return stri1
     
 
-def summarystring(totaldist,totaltime,avgpace,avgspm,avghr,maxhr,avgdps,
+def summarystring(totaldist,totaltime,avgpace,avgspm,avghr,maxhr,
+                  avgdps,avgpower,
 		  readFile="",
 		  separator="|"):
     """ Used to create a nifty string summarizing your entire row
@@ -630,12 +636,14 @@ def summarystring(totaldist,totaltime,avgpace,avgspm,avghr,maxhr,avgdps,
 	maxhr = 0
     if np.isnan(avgdps):
 	avgdps = 0
+    if np.isnan(avgpower):
+	avgpower = 0
     if np.isnan(totaltime):
 	totaltime = 0
 
     stri1 = "Workout Summary - "+readFile+"\n"
-    stri1 += "--{sep}Total{sep}-Total-{sep}--Avg--{sep}Avg-{sep}-Avg-{sep}-Max-{sep}-Avg\n".format(sep=separator)
-    stri1 += "--{sep}Dist-{sep}-Time--{sep}-Pace--{sep}SPM-{sep}-HR--{sep}-HR--{sep}-DPS\n".format(sep=separator)
+    stri1 += "--{sep}Total{sep}-Total-{sep}--Avg--{sep}-Avg-{sep}Avg-{sep}-Avg-{sep}-Max-{sep}-Avg\n".format(sep=separator)
+    stri1 += "--{sep}Dist-{sep}-Time--{sep}-Pace--{sep}-Pwr-{sep}SPM-{sep}-HR--{sep}-HR--{sep}-DPS\n".format(sep=separator)
 
     pacestring = format_pace(avgpace)
 
@@ -650,7 +658,11 @@ def summarystring(totaldist,totaltime,avgpace,avgspm,avghr,maxhr,avgdps,
 
     stri1 += format_time(totaltime)+separator+pacestring
 	
-
+    stri1 += "{sep}{avgpower:0>5.1f}".format(
+        sep = separator,
+        avgpower = avgpower,
+        )
+    
     stri1 += "{sep}{avgsr:2.1f}{sep}{avghr:3.1f}{sep}".format(
 	avgsr = avgspm,
 	sep = separator,
@@ -991,9 +1003,8 @@ class summarydata:
 	maxhr = self.workdata['Max HR'].mean()
 	maxsr = self.workdata['Max SR'].mean()
 	totaldistance = self.workdata['Distance (m)'].sum()
-	# avgspeed = self.workdata['Avg Speed (m/s)'].mean()
 	totalstrokes = self.workdata['Strokes'].sum()
-	# avgpace = 500./avgspeed
+
 
 
 
@@ -3099,7 +3110,7 @@ class rowingdata:
 	intervalnrs = pd.unique(df[' lapIdx'])
 
 	stri = "Workout Details\n"
-	stri += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}SPM-{sep}AvgHR{sep}MaxHR{sep}DPS-\n".format(
+	stri += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-Pwr-{sep}SPM-{sep}AvgHR{sep}MaxHR{sep}DPS-\n".format(
 	    sep = separator
 	    )
 
@@ -3116,6 +3127,7 @@ class rowingdata:
 	    avghr = tdwork[' HRCur (bpm)'].mean()
 	    maxhr = tdwork[' HRCur (bpm)'].max()
 	    avgspm = tdwork[' Cadence (stokes/min)'].mean()
+            avgpower = tdwork[' Power (watts)'].mean()
 
 	    intervaldistance = tdwork[' Horizontal (meters)'].max()
 	    
@@ -3132,7 +3144,7 @@ class rowingdata:
 
 	    stri += interval_string(idx+1,intervaldistance,intervalduration,
 				    intervalpace,avgspm,
-				    avghr,maxhr,avgdps,
+				    avghr,maxhr,avgdps,avgpower,
 				    separator=separator)
 	    
 
@@ -3230,7 +3242,7 @@ class rowingdata:
 	intervalnrs = pd.unique(df[' lapIdx'])
 
 	stri = "Workout Details\n"
-	stri += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}SPM-{sep}AvgHR{sep}MaxHR{sep}DPS-\n".format(
+	stri += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-Pwr-{sep}SPM-{sep}AvgHR{sep}MaxHR{sep}DPS-\n".format(
 	    sep = separator
 	    )
 
@@ -3254,7 +3266,7 @@ class rowingdata:
 	    avghr = tdwork[' HRCur (bpm)'].mean()
 	    maxhr = tdwork[' HRCur (bpm)'].max()
 	    avgspm = tdwork[' Cadence (stokes/min)'].mean()
-
+            avgpower = tdwork[' Power (watts)'].mean()
 	    
 
 	    intervaldistance = tdwork['cum_dist'].max()-previousdist
@@ -3288,7 +3300,7 @@ class rowingdata:
 	    if intervaldistance != 0:
 		stri += interval_string(idx+1,intervaldistance,intervalduration,
 				    intervalpace,avgspm,
-				    avghr,maxhr,avgdps,
+				        avghr,maxhr,avgdps,avgpower,
 				    separator=separator)
 	    
 
@@ -3906,20 +3918,19 @@ class rowingdata:
 	distance = np.array(distances)
 	types = np.array(types)
 
-	#totaldist = df['cum_dist'].max()
-	totaldist = max(np.cumsum(distances))
-	totaltime = max(np.cumsum(times))
-	#totaltime = df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min()
-	#totaltime = totaltime+df.ix[0,' ElapsedTime (sec)']
+	totaldist = np.array(distances).sum()
+        totaltime = np.array(times).sum()
+
 	avgpace = 500*totaltime/totaldist
 	avghr = df[' HRCur (bpm)'].mean()
 	maxhr = df[' HRCur (bpm)'].max()
 	avgspm = df[' Cadence (stokes/min)'].mean()
 	avgdps = totaldist/(totaltime*avgspm/60.)
+        avgpower = df[' Power (watts)'].mean()
 
 
 	stri = summarystring(totaldist,totaltime,avgpace,avgspm,
-			     avghr,maxhr,avgdps,
+			     avghr,maxhr,avgdps,avgpower,
 			     readFile=self.readFile,
 			     separator=separator)
 
@@ -3946,6 +3957,7 @@ class rowingdata:
 	workhravg = 0
 	workdpsavg = 0
 	workhrmax = 0
+	workpoweravg = 0
 
 	restttot = 0.0
 	restdtot = 0.0
@@ -3953,6 +3965,7 @@ class rowingdata:
 	restspmavg = 0
 	resthravg = 0
 	restdpsavg = 0
+	restpoweravg = 0
 	resthrmax = 0
 
 	for idx in intervalnrs:
@@ -3965,11 +3978,12 @@ class rowingdata:
 	    avghr = nanstozero(tdwork[' HRCur (bpm)'].mean())
 	    maxhr = nanstozero(tdwork[' HRCur (bpm)'].max())
 	    avgspm = nanstozero(tdwork[' Cadence (stokes/min)'].mean())
+            avgpower = nanstozero(tdwork[' Power (watts)'].mean())
 
 	    avghrrest = nanstozero(tdrest[' HRCur (bpm)'].mean())
 	    maxhrrest = nanstozero(tdrest[' HRCur (bpm)'].max())
 	    avgspmrest = nanstozero(tdrest[' Cadence (stokes/min)'].mean())
-
+            avgrestpower = nanstozero(tdrest[' Power (watts)'].mean())
 
 	    intervaldistance = tdwork['cum_dist'].max()-previousdist
 	    if isnan(intervaldistance) or isinf(intervaldistance):
@@ -3979,7 +3993,7 @@ class rowingdata:
 	    previousdist = td['cum_dist'].max()
 
 	    intervalduration = tdwork['TimeStamp (sec)'].max()-previoustime
-	    # previoustime = tdrest[' ElapsedTime (sec)'].max()
+
 	    previoustime = td['TimeStamp (sec)'].max()
 
 
@@ -4016,23 +4030,26 @@ class rowingdata:
 	    workspmavg = workspmavg*workttot+intervalduration*avgspm
 	    workhravg = workhravg*workttot+intervalduration*avghr
 	    workdpsavg = workdpsavg*workttot+intervalduration*avgdps
+            workpoweravg = workpoweravg*workttot+intervalduration*avgpower
 	    if workttot+intervalduration>0:
 		workspmavg = workspmavg/(workttot+intervalduration)
 		workhravg = workhravg/(workttot+intervalduration)
 		workdpsavg = workdpsavg/(workttot+intervalduration)
-
+                workpoweravg = workpoweravg/(workttot+intervalduration)
 
 
 	    workhrmax = max(workhrmax,maxhr)
 
-	    restspmavg = restspmavg*restttot+intervalduration*avgspmrest
-	    resthravg = resthravg*restttot+intervalduration*avghrrest
-	    restdpsavg = restdpsavg*restttot+intervalduration*restdpsavg
+	    restspmavg = restspmavg*restttot+restduration*avgspmrest
+	    resthravg = resthravg*restttot+restduration*avghrrest
+	    restdpsavg = restdpsavg*restttot+restduration*restdpsavg
+	    restpoweravg = restpoweravg*restttot+restduration*avgrestpower
 
-	    if restttot+intervalduration>0:
-		restspmavg = restspmavg/(restttot+intervalduration)
-		resthravg = resthravg/(restttot+intervalduration)
-		restdpsavg = restdpsavg/(restttot+intervalduration)
+	    if restttot+restduration>0:
+		restspmavg = restspmavg/(restttot+restduration)
+		resthravg = resthravg/(restttot+restduration)
+		restdpsavg = restdpsavg/(restttot+restduration)
+		restpoweravg = restpoweravg/(restttot+restduration)
 
 	    resthrmax = max(resthrmax,maxhr)
 
@@ -4054,12 +4071,12 @@ class rowingdata:
 	    avgworkpace = 500.*workttot/workdtot
 
 	stri += workstring(workdtot,workttot,avgworkpace,workspmavg,
-			   workhravg,workhrmax,workdpsavg,
+			   workhravg,workhrmax,workdpsavg,workpoweravg,
 			   separator=separator,
 			   symbol='W')
 
 	stri += workstring(restdtot,restttot,avgrestpace,restspmavg,
-			   resthravg,resthrmax,restdpsavg,
+			   resthravg,resthrmax,restdpsavg,restpoweravg,
 			   separator=separator,
 			   symbol='R')
 
