@@ -43,7 +43,7 @@ def parse(s,debug=0):
     s = s.strip()
 
     # first check for nx(aap noot)/5min
-    p = re.compile('([0-9]+)x\(([A-Za-z]+)\)\/(.+)')
+    p = re.compile('([0-9]+)x\((.+)\)\/(.+)')
     m = p.match(s)
     if m != None:
 	n = int(m.group(1))
@@ -55,6 +55,21 @@ def parse(s,debug=0):
 	    return parse(piecestring,debug=debug)+parse(newstring,debug=debug)
 	if n==1:
 	    return parse(piece+"/"+m.group(3),debug=debug)
+
+    # first check for nx(aap noot)
+    p = re.compile('([0-9]+)x\((.+)\)')
+    m = p.match(s)
+    if m != None:
+	n = int(m.group(1))
+	piece = m.group(2)
+	if n>1:
+	    newstring = str(n-1)+"x("+piece+")"
+	    piecestring = piece
+	    return parse(piecestring,debug=debug)+parse(newstring,debug=debug)
+	if n==1:
+	    return parse(piece,debug=debug)
+
+    
 
     # now check for nxaap/5min
     p = re.compile('([0-9]+)x(.+)\/(.+)')

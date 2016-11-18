@@ -3270,7 +3270,7 @@ class rowingdata:
 	    
 
 	    intervaldistance = tdwork['cum_dist'].max()-previousdist
-	    if isnan(intervaldistance) or isinf(intervaldistance):
+            if isnan(intervaldistance) or isinf(intervaldistance):
 		intervaldistance = 0
 
 	    
