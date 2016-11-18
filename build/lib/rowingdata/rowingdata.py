@@ -63,7 +63,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.92.5"
+__version__ = "0.92.7"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -3270,7 +3270,7 @@ class rowingdata:
 	    
 
 	    intervaldistance = tdwork['cum_dist'].max()-previousdist
-	    if isnan(intervaldistance) or isinf(intervaldistance):
+            if isnan(intervaldistance) or isinf(intervaldistance):
 		intervaldistance = 0
 
 	    
