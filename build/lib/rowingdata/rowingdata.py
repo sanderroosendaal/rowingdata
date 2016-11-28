@@ -64,7 +64,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.92.8"
+__version__ = "0.92.9"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -1507,7 +1507,7 @@ class BoatCoachParser:
 	 """
     
     def __init__(self, boatcoach_file="bc_test.csv"):
-        df = pd.read_csv(boatcoach_file,skiprows=1)
+        df = pd.read_csv(boatcoach_file,skiprows=1,usecols=range(25))
 	self.boatcoach_df = df[df['workoutType'] != 'none']
         # get date from footer
         fop = open(boatcoach_file,'r')
