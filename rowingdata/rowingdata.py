@@ -2,6 +2,7 @@ import math
 import numpy as np
 #import pylab
 #import scipy
+import re
 
 try:
     from Tkinter import Tk
@@ -63,7 +64,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.92.7"
+__version__ = "0.92.8"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -90,6 +91,12 @@ def totimestamp(dt, epoch=datetime.datetime(1970,1,1)):
     # return td.total_seconds()
     return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6
 
+def timestrtosecs(string):
+    dt = parser.parse(string,fuzzy=True)
+    secs = 3600*dt.hour+60*dt.minute+dt.second
+
+    return secs
+    
 def spm_toarray(l):
     o = np.zeros(len(l))
     for i in range(len(l)):
@@ -118,6 +125,9 @@ def get_file_type(f):
 	if 'Practice Elapsed Time (s)' in firstline:
 	    return 'mystery'
 
+        if 'Club' in firstline:
+            return 'boatcoach'
+        
 	if 'Hair' in seventhline:
 	    return 'rp'
 
@@ -1415,7 +1425,7 @@ class painsledDesktopParser:
 	 """
     
     def __init__(self, sled_file="sled_test.csv"):
-	df = pd.read_csv(sled_file)
+	df = pd.read_csv(sled_file,skip_header=1)
 	# remove "00 waiting to row"
 	self.sled_df = df[df[' stroke.endWorkoutState'] != ' "00 waiting to row"']
 
@@ -1477,6 +1487,85 @@ class painsledDesktopParser:
 			  ' StrokeRecoveryTime (ms)':trecovery,
 			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
 			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
+			  ' lapIdx':intervalcount,
+			  ' ElapsedTime (sec)':unixtimes-unixtimes[0]
+			  })
+
+#	data.sort(['TimeStamp (sec)'],ascending=True)
+	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
+	
+
+	return data.to_csv(writeFile,index_label='index')
+
+class BoatCoachParser:
+    """ Parser for reading CSV files created by Painsled (desktop version)
+
+    Use: data = rowingdata.painsledDesktopParser("sled_data.csv")
+
+         data.write_csv("sled_data_out.csv")
+
+	 """
+    
+    def __init__(self, boatcoach_file="bc_test.csv"):
+        df = pd.read_csv(boatcoach_file,skiprows=1)
+	self.boatcoach_df = df[df['workoutType'] != 'none']
+        # get date from footer
+        fop = open(boatcoach_file,'r')
+        line = fop.readline()
+        dated =  re.split('Date:',line)[1][1:-1]
+	self.row_date = parser.parse(dated,fuzzy=True)
+        fop.close()
+
+    def time_values(self,timecolumn):
+	""" Converts boatcoach style time stamps to Unix time stamps	"""
+
+        row_date = time.mktime(self.row_date.timetuple())
+	# time stamps (ISO)
+	timesecs = timecolumn.apply(lambda x:timestrtosecs(x))
+	
+	# convert to unix style time stamp
+	unixtimes = row_date+timesecs
+        
+        return unixtimes
+
+
+    def write_csv(self,writeFile="example.csv"):
+	""" Exports Painsled (desktop) data to the CSV format that
+	I use in rowingdata
+	"""
+	
+
+	unixtimes = self.time_values(self.boatcoach_df['workTime'])
+
+	
+	dist2 = self.boatcoach_df['workDistance']
+	spm = self.boatcoach_df['strokeRate']
+	pace = self.boatcoach_df['stroke500MPace'].apply(lambda x:timestrtosecs(x))
+	power = self.boatcoach_df['strokePower']
+	ldrive = self.boatcoach_df['strokeLength']
+	tdrive = self.boatcoach_df['strokeDriveTime']
+	hr = self.boatcoach_df['currentHeartRate']
+	intervalcount = self.boatcoach_df['intervalCount']
+	dragfactor = self.boatcoach_df['dragFactor']
+        peakforce = self.boatcoach_df['strokePeakForce']
+        averageforce = self.boatcoach_df['strokeAverageForce']
+
+	nr_rows = len(spm)
+
+	# Create data frame with all necessary data to write to csv
+	data = DataFrame({'TimeStamp (sec)':unixtimes,
+			  ' Horizontal (meters)': dist2,
+			  ' Cadence (stokes/min)':spm,
+			  ' HRCur (bpm)':hr,
+			  ' Stroke500mPace (sec/500m)':pace,
+			  ' Power (watts)':power,
+			  ' DriveLength (meters)':ldrive,
+			  ' StrokeDistance (meters)':np.zeros(nr_rows),
+			  ' DriveTime (ms)':tdrive,
+			  ' DragFactor':dragfactor,
+			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
+			  ' AverageDriveForce (lbs)':averageforce,
+			  ' PeakDriveForce (lbs)':peakforce,
 			  ' lapIdx':intervalcount,
 			  ' ElapsedTime (sec)':unixtimes-unixtimes[0]
 			  })
