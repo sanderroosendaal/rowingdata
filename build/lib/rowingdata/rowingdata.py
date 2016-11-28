@@ -1425,7 +1425,7 @@ class painsledDesktopParser:
 	 """
     
     def __init__(self, sled_file="sled_test.csv"):
-	df = pd.read_csv(sled_file,skip_header=1)
+	df = pd.read_csv(sled_file)
 	# remove "00 waiting to row"
 	self.sled_df = df[df[' stroke.endWorkoutState'] != ' "00 waiting to row"']
 
