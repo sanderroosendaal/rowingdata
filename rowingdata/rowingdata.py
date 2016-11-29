@@ -1613,6 +1613,7 @@ class SpeedCoach2Parser:
             wash = 0.0*dist2
             avgforce = 0.0*dist2
             peakforce = 0.0*dist2
+            peakforceangle = 0.0*dist2
             strokeenergy = 0.0*dist2
             lat_values = 0.0*dist2
             long_values = 0.0*dist2
@@ -1627,6 +1628,7 @@ class SpeedCoach2Parser:
             wash = pd.to_numeric(self.NK_df['Wash'],errors='coerce')
             avgforce = pd.to_numeric(self.NK_df['Force Avg'],errors='coerce')/lbstoN
             peakforce = pd.to_numeric(self.NK_df['Force Max'],errors='coerce')/lbstoN
+            peakforceangle = pd.to_numeric(self.NK_df['Max Force Angle'],errors='coerce')
             strokeenergy = pd.to_numeric(self.NK_df['Work'],errors='coerce')
             lat_values = pd.to_numeric(self.NK_df['GPS Lat.'],errors='coerce')
             long_values = pd.to_numeric(self.NK_df['GPS Lon.'],errors='coerce')
@@ -1684,6 +1686,7 @@ class SpeedCoach2Parser:
                           'slip':slip,
                           'finish':finish,
                           'wash':wash,
+                          'peakforceangle':peakforceangle,
 			  ' longitude':long_values,
 			  ' latitude':lat_values,
 			  })
