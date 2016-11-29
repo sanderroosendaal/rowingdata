@@ -1603,7 +1603,7 @@ class SpeedCoach2Parser:
 	# Time,Distance,Pace,Watts,Cals,SPM,HR,DutyCycle,Rowfile_Id
 
 	try:
-            dist2 = self.NK_df['GPS Distance']
+            dist2 = pd.to_numeric(self.NK_df['GPS Distance'],errors='coerce')
 	    spm = self.NK_df['Stroke Rate']
 	    velo = pd.to_numeric(self.NK_df['GPS Speed'],errors='coerce')
             power = 0.0*dist2
@@ -1614,8 +1614,8 @@ class SpeedCoach2Parser:
             avgforce = 0.0*dist2
             peakforce = 0.0*dist2
             strokeenergy = 0.0*dist2
-            gpslat = 0.0*dist2
-            gpslon = 0.0*dist2
+            lat_values = 0.0*dist2
+            long_values = 0.0*dist2
         except KeyError:
             dist2 = self.NK_df['Distance (GPS)']
 	    spm = self.NK_df['Stroke Rate']
