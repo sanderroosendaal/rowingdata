@@ -64,7 +64,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.92.9"
+__version__ = "0.93.0"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -218,7 +218,7 @@ def skip_variable_header(f):
 
     fop = open(f,'r')
     for line in fop:
-	if line.startswith('Session Detail Data'):
+	if line.startswith('Session Detail Data') or line.startswith('Per-Stroke Data'):
 	    counter2 = counter
 	else:
 	    counter +=1
@@ -1602,9 +1602,34 @@ class SpeedCoach2Parser:
 
 	# Time,Distance,Pace,Watts,Cals,SPM,HR,DutyCycle,Rowfile_Id
 
-	dist2 = self.NK_df['GPS Distance']
-	spm = self.NK_df['Stroke Rate']
-	velo = pd.to_numeric(self.NK_df['GPS Speed'],errors='coerce')
+	try:
+            dist2 = pd.to_numeric(self.NK_df['GPS Distance'],errors='coerce')
+	    spm = self.NK_df['Stroke Rate']
+	    velo = pd.to_numeric(self.NK_df['GPS Speed'],errors='coerce')
+            power = 0.0*dist2
+            catch  = 0.0*dist2
+            slip = 0.0*dist2
+            finish = 0.0*dist2
+            wash = 0.0*dist2
+            avgforce = 0.0*dist2
+            peakforce = 0.0*dist2
+            strokeenergy = 0.0*dist2
+            lat_values = 0.0*dist2
+            long_values = 0.0*dist2
+        except KeyError:
+            dist2 = self.NK_df['Distance (GPS)']
+	    spm = self.NK_df['Stroke Rate']
+	    velo = pd.to_numeric(self.NK_df['Speed (GPS)'],errors='coerce')
+            power = pd.to_numeric(self.NK_df['Power'],errors='coerce')
+            catch= pd.to_numeric(self.NK_df['Catch'],errors='coerce')
+            slip = pd.to_numeric(self.NK_df['Slip'],errors='coerce')
+            finish = pd.to_numeric(self.NK_df['Finish'],errors='coerce')
+            wash = pd.to_numeric(self.NK_df['Wash'],errors='coerce')
+            avgforce = pd.to_numeric(self.NK_df['Force Avg'],errors='coerce')
+            peakforce = pd.to_numeric(self.NK_df['Force Max'],errors='coerce')
+            strokeenergy = pd.to_numeric(self.NK_df['Work'],errors='coerce')
+            lat_values = pd.to_numeric(self.NK_df['GPS Lat.'],errors='coerce')
+            long_values = pd.to_numeric(self.NK_df['GPS Lon.'],errors='coerce')
 	
 	lapidx = self.NK_df['Interval']
 
@@ -1645,16 +1670,22 @@ class SpeedCoach2Parser:
 			  ' Cadence (stokes/min)':spm,
 			  ' HRCur (bpm)':hr,
 			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':np.zeros(nr_rows),
+			  ' Power (watts)':power,
 			  ' DriveLength (meters)':np.zeros(nr_rows),
 			  ' StrokeDistance (meters)':np.zeros(nr_rows),
 			  ' DriveTime (ms)':np.zeros(nr_rows),
 			  ' DragFactor':np.zeros(nr_rows),
 			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
+			  ' AverageDriveForce (lbs)':avgforce,
+			  ' PeakDriveForce (lbs)':peakforce,
 			  ' ElapsedTime (sec)':seconds3,
 			  ' lapIdx':lapidx,
+                          'catch':catch,
+                          'slip':slip,
+                          'finish':finish,
+                          'wash':wash,
+			  ' longitude':long_values,
+			  ' latitude':lat_values,
 			  })
 	
 #	data.sort(['TimeStamp (sec)'],ascending=True)
