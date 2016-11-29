@@ -64,7 +64,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.93.0"
+__version__ = "0.93.1"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -1625,8 +1625,8 @@ class SpeedCoach2Parser:
             slip = pd.to_numeric(self.NK_df['Slip'],errors='coerce')
             finish = pd.to_numeric(self.NK_df['Finish'],errors='coerce')
             wash = pd.to_numeric(self.NK_df['Wash'],errors='coerce')
-            avgforce = pd.to_numeric(self.NK_df['Force Avg'],errors='coerce')
-            peakforce = pd.to_numeric(self.NK_df['Force Max'],errors='coerce')
+            avgforce = pd.to_numeric(self.NK_df['Force Avg'],errors='coerce')/lbstoN
+            peakforce = pd.to_numeric(self.NK_df['Force Max'],errors='coerce')/lbstoN
             strokeenergy = pd.to_numeric(self.NK_df['Work'],errors='coerce')
             lat_values = pd.to_numeric(self.NK_df['GPS Lat.'],errors='coerce')
             long_values = pd.to_numeric(self.NK_df['GPS Lon.'],errors='coerce')
