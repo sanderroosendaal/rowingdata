@@ -3778,7 +3778,8 @@ class rowingdata:
 
 
 	    
-    def otw_setpower(self,skiprows=0,rg=getrigging(),mc=70.0):
+    def otw_setpower(self,skiprows=0,rg=getrigging(),mc=70.0,
+                     powermeasured=False):
 	""" Adds power from rowing physics calculations to OTW result
 
 	For now, works only in singles
@@ -3792,6 +3793,7 @@ class rowingdata:
 	df = self.df
 	df['nowindpace'] = 300
 	df['equivergpower']= 0
+	df['power (model)']= 0
 
 	# creating a rower and rigging for now
 	# in future this must come from rowingdata.rower and rowingdata.rigging
@@ -3830,7 +3832,7 @@ class rowingdata:
 			res = [np.nan,np.nan,np.nan,np.nan,np.nan]
 		else:
 		    res = [np.nan,np.nan,np.nan,np.nan,np.nan]
-		df.ix[i,' Power (watts)'] = res[0]
+		df.ix[i,'power (model)'] = res[0]
 		df.ix[i,' AverageDriveForce (lbs)'] = res[2]/lbstoN
 		df.ix[i,' DriveTime (ms)'] = res[1]*drivetime
 		df.ix[i,' StrokeRecoveryTime (ms)'] = (1-res[1])*drivetime
@@ -3850,10 +3852,14 @@ class rowingdata:
 		velo = 0.0
 
 	self.df = df.interpolate()
+        if not powermeasured:
+            self.df[' Power (watts)'] = self.df['power (model)']
 
 
 
-    def otw_setpower_silent(self,skiprows=0,rg=getrigging(),mc=70.0):
+
+    def otw_setpower_silent(self,skiprows=0,rg=getrigging(),mc=70.0,
+                            powermeasured=False):
 	""" Adds power from rowing physics calculations to OTW result
 
 	For now, works only in singles
@@ -3865,7 +3871,8 @@ class rowingdata:
 	df = self.df
 	df['nowindpace'] = 300
 	df['equivergpower']= 0
-
+        df['power (model)'] = 0 
+        
 	# creating a rower and rigging for now
 	# in future this must come from rowingdata.rower and rowingdata.rigging
 	r = self.rower.rc
@@ -3904,7 +3911,7 @@ class rowingdata:
 			res = [np.nan,np.nan,np.nan,np.nan,np.nan]
 		else:
 		    res = [np.nan,np.nan,np.nan,np.nan,np.nan]
-		df.ix[i,' Power (watts)'] = res[0]
+		df.ix[i,'power (model)'] = res[0]
 		df.ix[i,' AverageDriveForce (lbs)'] = res[2]/lbstoN
 		df.ix[i,' DriveTime (ms)'] = res[1]*drivetime
 		df.ix[i,' StrokeRecoveryTime (ms)'] = (1-res[1])*drivetime
@@ -3917,11 +3924,13 @@ class rowingdata:
 		velo = 0.0
 
 	self.df = df.interpolate()
-
+        if not powermeasured:
+            self.df[' Power (watts)'] = self.df['power (model)']
 
 
 	    
-    def otw_setpower_verbose(self,skiprows=0,rg=getrigging(),mc=70.0):
+    def otw_setpower_verbose(self,skiprows=0,rg=getrigging(),mc=70.0,
+                             powermeasured=False):
 	""" Adds power from rowing physics calculations to OTW result
 
 	For now, works only in singles
@@ -3935,6 +3944,7 @@ class rowingdata:
 	df = self.df
 	df['nowindpace'] = 300
 	df['equivergpower']= 0
+	df['power (model)']= 0
 
 	# creating a rower and rigging for now
 	# in future this must come from rowingdata.rower and rowingdata.rigging
@@ -3974,7 +3984,7 @@ class rowingdata:
 			res = [np.nan,np.nan,np.nan,np.nan,np.nan]
 		else:
 		    res = [np.nan,np.nan,np.nan,np.nan,np.nan]
-		df.ix[i,' Power (watts)'] = res[0]
+		df.ix[i,'power (model)'] = res[0]
 		df.ix[i,' AverageDriveForce (lbs)'] = res[2]/lbstoN
 		df.ix[i,' DriveTime (ms)'] = res[1]*drivetime
 		df.ix[i,' StrokeRecoveryTime (ms)'] = (1-res[1])*drivetime
@@ -3986,6 +3996,8 @@ class rowingdata:
 		velo = 0.0
 
 	self.df = df.interpolate()
+        if not powermeasured:
+            self.df[' Power (watts)'] = self.df['power (model)']
 
 
     def otw_testphysics(self,rg=getrigging(),mc=70.0,p=120.,spm=30.):
