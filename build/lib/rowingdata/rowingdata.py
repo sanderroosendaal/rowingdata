@@ -64,7 +64,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.93.3"
+__version__ = "0.93.4"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -1536,7 +1536,8 @@ class BoatCoachParser:
         row_date = time.mktime(self.row_date.timetuple())
 	# time stamps (ISO)
 	timesecs = timecolumn.apply(lambda x:timestrtosecs(x))
-	
+        timesecs = make_cumvalues(timesecs)[0]
+        
 	# convert to unix style time stamp
 	unixtimes = row_date+timesecs
         
@@ -1660,8 +1661,6 @@ class SpeedCoach2Parser:
 
 
 	cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
-        print len(dist2),len(cum_dist)
-
 	pace = 500./velo
 	pace = pace.replace(np.nan,300)
 
