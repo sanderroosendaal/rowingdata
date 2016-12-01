@@ -64,7 +64,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.93.1"
+__version__ = "0.93.2"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -96,7 +96,21 @@ def timestrtosecs(string):
     secs = 3600*dt.hour+60*dt.minute+dt.second
 
     return secs
-    
+
+def timestrtosecs2(timestring):
+    try:
+	h,m,s = timestring.split(':')
+	sval = 3600*int(h)+60.*int(m)+float(s)
+    except ValueError:
+        try:
+	    m,s = timestring.split(':')
+	    sval = 60.*int(m)+float(s)
+        except ValueError:
+            sval = 0
+        
+    return sval
+
+
 def spm_toarray(l):
     o = np.zeros(len(l))
     for i in range(len(l)):
@@ -1596,6 +1610,15 @@ class SpeedCoach2Parser:
 	dated = dateline.split(',')[1]
 	self.row_date = parser.parse(dated,fuzzy=True)
 
+    def time_values(self,timecolumn):
+	""" Converts boatcoach style time stamps to Unix time stamps	"""
+
+        row_date = time.mktime(self.row_date.timetuple())
+	# time stamps (ISO)
+	timesecs = timecolumn.apply(lambda x:timestrtosecs2(x))
+	
+        return timesecs
+
     def write_csv(self,writeFile="example.csv"):
 	""" Exports RowPro data to the CSV format that I use in rowingdata
 	"""
@@ -1604,7 +1627,7 @@ class SpeedCoach2Parser:
 
 	try:
             dist2 = pd.to_numeric(self.NK_df['GPS Distance'],errors='coerce')
-	    spm = self.NK_df['Stroke Rate']
+	    spm = pd.to_numeric(self.NK_df['Stroke Rate'],errors='coerce')
 	    velo = pd.to_numeric(self.NK_df['GPS Speed'],errors='coerce')
             power = 0.0*dist2
             catch  = 0.0*dist2
@@ -1614,12 +1637,12 @@ class SpeedCoach2Parser:
             avgforce = 0.0*dist2
             peakforce = 0.0*dist2
             peakforceangle = 0.0*dist2
-            strokeenergy = 0.0*dist2
+            driveenergy = 0.0*dist2
             lat_values = 0.0*dist2
             long_values = 0.0*dist2
         except KeyError:
-            dist2 = self.NK_df['Distance (GPS)']
-	    spm = self.NK_df['Stroke Rate']
+            dist2 = pd.to_numeric(self.NK_df['Distance (GPS)'],errors='coerce')
+	    spm = pd.to_numeric(self.NK_df['Stroke Rate'],errors='coerce')
 	    velo = pd.to_numeric(self.NK_df['Speed (GPS)'],errors='coerce')
             power = pd.to_numeric(self.NK_df['Power'],errors='coerce')
             catch= pd.to_numeric(self.NK_df['Catch'],errors='coerce')
@@ -1629,26 +1652,28 @@ class SpeedCoach2Parser:
             avgforce = pd.to_numeric(self.NK_df['Force Avg'],errors='coerce')/lbstoN
             peakforce = pd.to_numeric(self.NK_df['Force Max'],errors='coerce')/lbstoN
             peakforceangle = pd.to_numeric(self.NK_df['Max Force Angle'],errors='coerce')
-            strokeenergy = pd.to_numeric(self.NK_df['Work'],errors='coerce')
+            driveenergy = pd.to_numeric(self.NK_df['Work'],errors='coerce')
             lat_values = pd.to_numeric(self.NK_df['GPS Lat.'],errors='coerce')
             long_values = pd.to_numeric(self.NK_df['GPS Lon.'],errors='coerce')
 	
-	lapidx = self.NK_df['Interval']
+	lapidx = pd.to_numeric(self.NK_df['Interval'],errors='coerce')
 
 	pace = 500./velo
 	pace = pace.replace(np.nan,300)
 
 	timestrings = self.NK_df['Elapsed Time']
-	seconds = []
+        seconds = self.time_values(timestrings)
 
-	for timestring in timestrings:
-	    try:
-		h,m,s = timestring.split(':')
-		sval = 3600*int(h)+60.*int(m)+float(s)
-	    except ValueError:
-		m,s = timestring.split(':')
-		sval = 60.*int(m)+float(s)
-	    seconds.append(sval)
+        
+#	for timestring in timestrings:
+#	    try:
+#		h,m,s = timestring.split(':')
+#		sval = 3600*int(h)+60.*int(m)+float(s)
+#	    except ValueError:
+#		m,s = timestring.split(':')
+#		sval = 60.*int(m)+float(s)
+#	    seconds.append(sval)
+
 
 
 	res = make_cumvalues_array(np.array(seconds))
@@ -1661,7 +1686,7 @@ class SpeedCoach2Parser:
 	# time.mktime(dateobj.timetuple())
 
 
-	hr = self.NK_df['Heart Rate']
+	hr = pd.to_numeric(self.NK_df['Heart Rate'],errors='coerce')
 	nr_rows = len(spm)
 
 
@@ -1685,6 +1710,7 @@ class SpeedCoach2Parser:
                           'catch':catch,
                           'slip':slip,
                           'finish':finish,
+                          'driveenergy':driveenergy,
                           'wash':wash,
                           'peakforceangle':peakforceangle,
 			  ' longitude':long_values,
@@ -3777,7 +3803,8 @@ class rowingdata:
 
 
 	    
-    def otw_setpower(self,skiprows=0,rg=getrigging(),mc=70.0):
+    def otw_setpower(self,skiprows=0,rg=getrigging(),mc=70.0,
+                     powermeasured=False):
 	""" Adds power from rowing physics calculations to OTW result
 
 	For now, works only in singles
@@ -3791,9 +3818,12 @@ class rowingdata:
 	df = self.df
 	df['nowindpace'] = 300
 	df['equivergpower']= 0
-
+	df['power (model)']= 0
+        df['averageforce (model)'] = 0
+        df['drivelength (model)'] = 0
+        
 	# creating a rower and rigging for now
-	# in future this must come from rowingdata.rower and rowingdata.rigging
+        # in future this must come from rowingdata.rower and rowingdata.rigging
 	r = self.rower.rc
 	r.mc = mc
 
@@ -3829,11 +3859,11 @@ class rowingdata:
 			res = [np.nan,np.nan,np.nan,np.nan,np.nan]
 		else:
 		    res = [np.nan,np.nan,np.nan,np.nan,np.nan]
-		df.ix[i,' Power (watts)'] = res[0]
-		df.ix[i,' AverageDriveForce (lbs)'] = res[2]/lbstoN
+		df.ix[i,'power (model)'] = res[0]
+		df.ix[i,'averageforce (model)'] = res[2]/lbstoN
 		df.ix[i,' DriveTime (ms)'] = res[1]*drivetime
 		df.ix[i,' StrokeRecoveryTime (ms)'] = (1-res[1])*drivetime
-		df.ix[i,' DriveLength (meters)'] = r.strokelength
+		df.ix[i,'drivelength (model)'] = r.strokelength
 		df.ix[i,'nowindpace'] = res[3]
 		df.ix[i,'equivergpower'] = res[4]
 
@@ -3849,10 +3879,15 @@ class rowingdata:
 		velo = 0.0
 
 	self.df = df.interpolate()
+        if not powermeasured:
+            self.df[' Power (watts)'] = self.df['power (model)']
+            self.df[' AverageDriveForce (lbs)'] = self.df['averageforce (model)']
+            self.df[' DriveLength (meters)'] = self.df['drivelength (model)']
 
 
 
-    def otw_setpower_silent(self,skiprows=0,rg=getrigging(),mc=70.0):
+    def otw_setpower_silent(self,skiprows=0,rg=getrigging(),mc=70.0,
+                            powermeasured=False):
 	""" Adds power from rowing physics calculations to OTW result
 
 	For now, works only in singles
@@ -3864,7 +3899,10 @@ class rowingdata:
 	df = self.df
 	df['nowindpace'] = 300
 	df['equivergpower']= 0
-
+        df['power (model)'] = 0 
+        df['averageforce (model)'] = 0
+        df['drivelength (model)'] = 0
+        
 	# creating a rower and rigging for now
 	# in future this must come from rowingdata.rower and rowingdata.rigging
 	r = self.rower.rc
@@ -3903,11 +3941,11 @@ class rowingdata:
 			res = [np.nan,np.nan,np.nan,np.nan,np.nan]
 		else:
 		    res = [np.nan,np.nan,np.nan,np.nan,np.nan]
-		df.ix[i,' Power (watts)'] = res[0]
-		df.ix[i,' AverageDriveForce (lbs)'] = res[2]/lbstoN
+		df.ix[i,'power (model)'] = res[0]
+		df.ix[i,'averageforce (model)'] = res[2]/lbstoN
 		df.ix[i,' DriveTime (ms)'] = res[1]*drivetime
 		df.ix[i,' StrokeRecoveryTime (ms)'] = (1-res[1])*drivetime
-		df.ix[i,' DriveLength (meters)'] = r.strokelength
+		df.ix[i,'drivelength (model)'] = r.strokelength
 		df.ix[i,'nowindpace'] = res[3]
 		df.ix[i,'equivergpower'] = res[4]
 		# update_progress(i,nr_of_rows)
@@ -3916,11 +3954,14 @@ class rowingdata:
 		velo = 0.0
 
 	self.df = df.interpolate()
-
-
+        if not powermeasured:
+            self.df[' Power (watts)'] = self.df['power (model)']
+            self.df[' AverageDriveForce (lbs)'] = self.df['averageforce (model)']
+            self.df[' DriveLength (meters)'] = self.df['drivelength (model)']
 
 	    
-    def otw_setpower_verbose(self,skiprows=0,rg=getrigging(),mc=70.0):
+    def otw_setpower_verbose(self,skiprows=0,rg=getrigging(),mc=70.0,
+                             powermeasured=False):
 	""" Adds power from rowing physics calculations to OTW result
 
 	For now, works only in singles
@@ -3934,6 +3975,9 @@ class rowingdata:
 	df = self.df
 	df['nowindpace'] = 300
 	df['equivergpower']= 0
+	df['power (model)']= 0
+        df['averageforce (model)'] = 0
+        df['drivelength (model)'] = 0
 
 	# creating a rower and rigging for now
 	# in future this must come from rowingdata.rower and rowingdata.rigging
@@ -3973,11 +4017,11 @@ class rowingdata:
 			res = [np.nan,np.nan,np.nan,np.nan,np.nan]
 		else:
 		    res = [np.nan,np.nan,np.nan,np.nan,np.nan]
-		df.ix[i,' Power (watts)'] = res[0]
-		df.ix[i,' AverageDriveForce (lbs)'] = res[2]/lbstoN
+		df.ix[i,'power (model)'] = res[0]
+		df.ix[i,'averageforce (model)'] = res[2]/lbstoN
 		df.ix[i,' DriveTime (ms)'] = res[1]*drivetime
 		df.ix[i,' StrokeRecoveryTime (ms)'] = (1-res[1])*drivetime
-		df.ix[i,' DriveLength (meters)'] = r.strokelength
+		df.ix[i,'drivelength (model)'] = r.strokelength
 		df.ix[i,'nowindpace'] = res[3]
 		df.ix[i,'equivergpower'] = res[4]
 		# update_progress(i,nr_of_rows)
@@ -3985,7 +4029,10 @@ class rowingdata:
 		velo = 0.0
 
 	self.df = df.interpolate()
-
+        if not powermeasured:
+            self.df[' Power (watts)'] = self.df['power (model)']
+            self.df[' AverageDriveForce (lbs)'] = self.df['averageforce (model)']
+            self.df[' DriveLength (meters)'] = self.df['drivelength (model)']
 
     def otw_testphysics(self,rg=getrigging(),mc=70.0,p=120.,spm=30.):
 	""" Check if erg pace is in right order
