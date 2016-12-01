@@ -64,7 +64,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.93.2"
+__version__ = "0.93.3"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -1658,25 +1658,17 @@ class SpeedCoach2Parser:
 	
 	lapidx = pd.to_numeric(self.NK_df['Interval'],errors='coerce')
 
+
+	cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
+        print len(dist2),len(cum_dist)
+
 	pace = 500./velo
 	pace = pace.replace(np.nan,300)
 
 	timestrings = self.NK_df['Elapsed Time']
         seconds = self.time_values(timestrings)
 
-        
-#	for timestring in timestrings:
-#	    try:
-#		h,m,s = timestring.split(':')
-#		sval = 3600*int(h)+60.*int(m)+float(s)
-#	    except ValueError:
-#		m,s = timestring.split(':')
-#		sval = 60.*int(m)+float(s)
-#	    seconds.append(sval)
-
-
-
-	res = make_cumvalues_array(np.array(seconds))
+        res = make_cumvalues_array(np.array(seconds))
 	seconds3 = res[0]
 	lapidx = res[1]
 
@@ -1715,6 +1707,7 @@ class SpeedCoach2Parser:
                           'peakforceangle':peakforceangle,
 			  ' longitude':long_values,
 			  ' latitude':lat_values,
+                          'cum_dist':cum_dist,
 			  })
 	
 #	data.sort(['TimeStamp (sec)'],ascending=True)
@@ -1837,6 +1830,9 @@ class speedcoachParser:
 	unixtime = seconds+totimestamp(dateobj)
 
 	dist2 = self.sc_df['Distance(m)']
+	cum_dist = np.zeros(number_of_rows)
+
+	cum_dist = make_cumvalues(dist2)
 	spm = self.sc_df['Rate']
 	pace = self.sc_df['Split(sec)']
 	pace = np.clip(pace,0,1e4)
@@ -1861,7 +1857,8 @@ class speedcoachParser:
 			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
 			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
 			  ' lapIdx':np.zeros(nr_rows),
-			  ' ElapsedTime (sec)':seconds
+			  ' ElapsedTime (sec)':seconds,
+                          'cum_dist':cum_dist,
 			  })
 
 #	data.sort(['TimeStamp (sec)'],ascending=True)
