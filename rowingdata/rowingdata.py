@@ -1536,7 +1536,8 @@ class BoatCoachParser:
         row_date = time.mktime(self.row_date.timetuple())
 	# time stamps (ISO)
 	timesecs = timecolumn.apply(lambda x:timestrtosecs(x))
-	
+        timesecs = make_cumvalues(timesecs)[0]
+        
 	# convert to unix style time stamp
 	unixtimes = row_date+timesecs
         
