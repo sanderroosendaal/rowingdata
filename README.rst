@@ -507,6 +507,7 @@ Release Notes:
 0.93.x
 ------
 - Added support for Empower Oarlock parameters from the CSV file export from SpeedCoach GPS 2 with Data Pack (LiNK v1.27 and higher)
+- Enabled gzip (through gzip=True in write_csv)
 
 0.92.x
 ------
