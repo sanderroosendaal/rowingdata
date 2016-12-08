@@ -1196,7 +1196,7 @@ class FITParser:
 	self.fitfile = FitFile(readFile,check_crc=False)
 	self.records = self.fitfile.messages
 
-    def write_csv(self,writeFile="fit_o.csv"):
+    def write_csv(self,writeFile="fit_o.csv",gzip=False):
 	cadence = []
 	hr = []
 	lat = []
@@ -1275,7 +1275,12 @@ class FITParser:
 	    ' lapIdx':lapidx,
 	    })
 
-	return data.to_csv(writeFile,index_label='index')	
+        if gzip:
+            return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+	    return data.to_csv(writeFile,index_label='index')
+
 
 class RowProParser:
     """ Parser for reading CSV files created by RowPro
@@ -1374,7 +1379,7 @@ class RowProParser:
 	except ValueError:
 	    self.row_date = parser.parse(dated2,fuzzy=True)
 
-    def write_csv(self,writeFile="example.csv"):
+    def write_csv(self,writeFile="example.csv",gzip=False):
 	""" Exports RowPro data to the CSV format that I use in rowingdata
 	"""
 
@@ -1424,8 +1429,11 @@ class RowProParser:
 #	data.sort(['TimeStamp (sec)'],ascending=True)
 	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
 
-
-	return data.to_csv(writeFile,index_label='index')
+        if gzip:
+	    return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile,index_label='index')
 	
 	
 
@@ -1463,7 +1471,7 @@ class painsledDesktopParser:
 	return unixtimes
 
 
-    def write_csv(self,writeFile="example.csv"):
+    def write_csv(self,writeFile="example.csv",gzip=False):
 	""" Exports Painsled (desktop) data to the CSV format that
 	I use in rowingdata
 	"""
@@ -1509,7 +1517,13 @@ class painsledDesktopParser:
 	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
 	
 
-	return data.to_csv(writeFile,index_label='index')
+        if gzip:
+	    return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile,index_label='index')
+	
+
 
 class BoatCoachParser:
     """ Parser for reading CSV files created by Painsled (desktop version)
@@ -1544,7 +1558,7 @@ class BoatCoachParser:
         return unixtimes
 
 
-    def write_csv(self,writeFile="example.csv"):
+    def write_csv(self,writeFile="example.csv",gzip=False):
 	""" Exports Painsled (desktop) data to the CSV format that
 	I use in rowingdata
 	"""
@@ -1588,8 +1602,12 @@ class BoatCoachParser:
 #	data.sort(['TimeStamp (sec)'],ascending=True)
 	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
 	
+        if gzip:
+	    return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile,index_label='index')
 
-	return data.to_csv(writeFile,index_label='index')
 
 class SpeedCoach2Parser:
     """ Parser for reading CSV files created by SpeedCoach GPS 2
@@ -1620,7 +1638,7 @@ class SpeedCoach2Parser:
 	
         return timesecs
 
-    def write_csv(self,writeFile="example.csv"):
+    def write_csv(self,writeFile="example.csv",gzip=False):
 	""" Exports RowPro data to the CSV format that I use in rowingdata
 	"""
 
@@ -1712,8 +1730,13 @@ class SpeedCoach2Parser:
 #	data.sort(['TimeStamp (sec)'],ascending=True)
 	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
 
+        if gzip:
+	    return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile,index_label='index')
 
-	return data.to_csv(writeFile,index_label='index')
+
 	
 	
 
@@ -1736,7 +1759,7 @@ class MysteryParser:
 	
 	self.row_date = row_date
 
-    def write_csv(self,writeFile="example.csv"):
+    def write_csv(self,writeFile="example.csv",gzip=False):
 	""" Exports to the CSV format that I use in rowingdata
 	"""
 
@@ -1796,7 +1819,13 @@ class MysteryParser:
 	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
 
 
-	return data.to_csv(writeFile,index_label='index')
+        if gzip:
+	    return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile,index_label='index')
+
+
 	
 	
 
@@ -1817,7 +1846,7 @@ class speedcoachParser:
 
 
 
-    def write_csv(self,writeFile="example.csv"):
+    def write_csv(self,writeFile="example.csv",gzip=False):
 	""" Exports SpeedCoach CSV data to the CSV format that
 	I use in rowingdata
 	"""
@@ -1864,7 +1893,13 @@ class speedcoachParser:
 	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
 	
 
-	return data.to_csv(writeFile,index_label='index')
+        if gzip:
+	    return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile,index_label='index')
+
+
 
 class ErgDataParser:
     """ Parser for reading CSV files created by ErgData/Concept2 logbook
@@ -1882,7 +1917,7 @@ class ErgDataParser:
 
 
 
-    def write_csv(self,writeFile="example.csv"):
+    def write_csv(self,writeFile="example.csv",gzip=False):
 	""" Exports  data to the CSV format that
 	I use in rowingdata
 	"""
@@ -1937,7 +1972,13 @@ class ErgDataParser:
 	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
 	
 
-	return data.to_csv(writeFile,index_label='index')
+        if gzip:
+	    return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile,index_label='index')
+
+
 
 	
 class ErgStickParser:
@@ -1956,7 +1997,7 @@ class ErgStickParser:
 
 
 
-    def write_csv(self,writeFile="example.csv"):
+    def write_csv(self,writeFile="example.csv",gzip=False):
 	""" Exports  data to the CSV format that
 	I use in rowingdata
 	"""
@@ -2016,7 +2057,12 @@ class ErgStickParser:
 	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
 	
 
-	return data.to_csv(writeFile,index_label='index')
+        if gzip:
+	    return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile,index_label='index')
+
 
 class TCXParserTester:
     def __init__(self, tcx_file):
@@ -2217,7 +2263,7 @@ class TCXParser:
 
 
 
-    def write_csv(self,writeFile='example.csv',window_size=5):
+    def write_csv(self,writeFile='example.csv',window_size=5,gzip=False):
 	""" Exports TCX data to the CSV format that
 	I use in rowingdata
 	"""
@@ -2277,10 +2323,15 @@ class TCXParser:
 	
 	self.data = data
 
-	return data.to_csv(writeFile,index_label='index')
+        if gzip:
+	    return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile,index_label='index')
+
 	
 
-    def write_nogeo_csv(self,writeFile='example.csv',window_size=5):
+    def write_nogeo_csv(self,writeFile='example.csv',window_size=5,gzip=False):
 	""" Exports TCX data without position data (indoor)
 	to the CSV format that
 	I use in rowingdata
@@ -2342,7 +2393,12 @@ class TCXParser:
 			  ' ElapsedTime (sec)':unixtimes-self.activity_starttime
 			  })
 	
-	return data.to_csv(writeFile,index_label='index')
+        if gzip:
+	    return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile,index_label='index')
+
 
 
 class TCXParserNoHR:
@@ -2488,7 +2544,7 @@ class TCXParserNoHR:
 
 
 
-    def write_csv(self,writeFile='example.csv',window_size=5):
+    def write_csv(self,writeFile='example.csv',window_size=5,gzip=False):
 	""" Exports TCX data to the CSV format that
 	I use in rowingdata
 	"""
@@ -2548,10 +2604,15 @@ class TCXParserNoHR:
 	
 	self.data = data
 
-	return data.to_csv(writeFile,index_label='index')
+        if gzip:
+	    return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile,index_label='index')
+
 	
 
-    def write_nogeo_csv(self,writeFile='example.csv',window_size=5):
+    def write_nogeo_csv(self,writeFile='example.csv',window_size=5,gzip=False):
 	""" Exports TCX data without position data (indoor)
 	to the CSV format that
 	I use in rowingdata
@@ -2613,7 +2674,12 @@ class TCXParserNoHR:
 			  ' ElapsedTime (sec)':unixtimes-self.activity_starttime
 			  })
 	
-	return data.to_csv(writeFile,index_label='index')
+        if gzip:
+	    return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile,index_label='index')
+
 
 
 class rower:
@@ -3134,12 +3200,17 @@ class rowingdata:
 	    self.readfilename = readFile.name
 	except AttributeError:
 	    self.readfilename = readFile
+
+
 	
 	self.readFile = readFile
 	self.rower = rower
 	self.rowtype = rowtype
-	
-	sled_df = pd.read_csv(readFile)
+
+        try:
+	    sled_df = pd.read_csv(readFile)
+        except IOError:
+            sled_df = pd.read_csv(readFile+'.gz')
 
 	# get the date of the row
 	starttime = sled_df.loc[0,'TimeStamp (sec)']
@@ -3179,7 +3250,7 @@ class rowingdata:
 	
 	return self.df[keystring].values
 
-    def write_csv(self,writeFile):
+    def write_csv(self,writeFile,gzip=False):
 	data = self.df
 	data = data.drop(['index',
 			  'hr_ut2',
@@ -3213,7 +3284,11 @@ class rowingdata:
 	starttimeunix = time.mktime(self.rowdatetime.timetuple())
 	data['TimeStamp (sec)'] = data['TimeStamp (sec)']+starttimeunix
 
-	return data.to_csv(writeFile,index_label='index')
+        if gzip:
+            return data.to_csv(writeFile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+	    return data.to_csv(writeFile,index_label='index')
 
     def spm_fromtimestamps(self):
 	df = self.df
