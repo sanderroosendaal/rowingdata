@@ -28,8 +28,12 @@ import pandas as pd
 from tqdm import tqdm
 
 from fitparse import FitFile
+
 from csvparsers import (
-    painsledDesktopParser,BoatCoachParser,speedcoachParser
+    painsledDesktopParser,
+    BoatCoachParser,
+    speedcoachParser,
+    ErgDataParser
     )
 
 weknowphysics = 0
@@ -1658,86 +1662,6 @@ class MysteryParser:
                                compression='gzip')
         else:
             return data.to_csv(writeFile,index_label='index')
-
-
-class ErgDataParser:
-    """ Parser for reading CSV files created by ErgData/Concept2 logbook
-
-    Use: data = rowingdata.ErgDataParser("ergdata.csv")
-
-         data.write_csv("speedcoach_data_out.csv")
-
-	 """
-    
-    def __init__(self, ed_file="ed_test.csv",row_date=datetime.datetime.utcnow()):
-	df = pd.read_csv(ed_file)
-	self.ed_df = df
-	self.row_date = row_date
-
-
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports  data to the CSV format that
-	I use in rowingdata
-	"""
-
-	seconds = self.ed_df['Time (seconds)']
-	dt = seconds.diff()
-	nrsteps = len(dt[dt<0])
-
-	res = make_cumvalues(seconds)
-	seconds2 = res[0]+seconds[0]
-	lapidx = res[1]
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtime = seconds2+totimestamp(dateobj)
-
-	dist2 = self.ed_df['Distance (meters)']
-	spm = self.ed_df['Stroke Rate']
-        try:
-	    pace = self.ed_df['Pace (seconds per 500m']
-        except KeyError:
-	    pace = self.ed_df['Pace (seconds per 500m)']
-
-	pace = np.clip(pace,0,1e4)
-
-	hr = self.ed_df['Heart Rate']
-
-	velocity = 500./pace
-	power = 2.8*velocity**3
-
-
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtime,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':np.zeros(nr_rows),
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' lapIdx':lapidx,
-			  ' ElapsedTime (sec)':seconds
-			  })
-
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-	
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-
 
 	
 class ErgStickParser:

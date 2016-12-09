@@ -29,6 +29,13 @@ from tqdm import tqdm
 
 from fitparse import FitFile
 
+from csvparsers import (
+    painsledDesktopParser,
+    BoatCoachParser,
+    speedcoachParser,
+    ErgDataParser
+    )
+
 weknowphysics = 0
 
 try:
@@ -64,7 +71,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.93.5"
+__version__ = "0.93.6"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -1437,176 +1444,7 @@ class RowProParser:
 	
 	
 
-class painsledDesktopParser:
-    """ Parser for reading CSV files created by Painsled (desktop version)
 
-    Use: data = rowingdata.painsledDesktopParser("sled_data.csv")
-
-         data.write_csv("sled_data_out.csv")
-
-	 """
-    
-    def __init__(self, sled_file="sled_test.csv"):
-	df = pd.read_csv(sled_file)
-	# remove "00 waiting to row"
-	self.sled_df = df[df[' stroke.endWorkoutState'] != ' "00 waiting to row"']
-
-
-
-    def time_values(self):
-	""" Converts painsled style time stamps to Unix time stamps	"""
-	
-	# time stamps (ISO)
-	timestamps = self.sled_df.loc[:,' stroke.driveStartMs'].values
-	
-	# convert to unix style time stamp
-	unixtimes = np.zeros(len(timestamps))
-
-	# there may be a more elegant and faster way with arrays 
-	for i in range(len(timestamps)):
-	    tt = iso8601.parse_date(timestamps[i][2:-1])
-	    # tt = parser.parse(timestamps[i],fuzzy=True)
-	    unixtimes[i] = time.mktime(tt.timetuple())
-
-	return unixtimes
-
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports Painsled (desktop) data to the CSV format that
-	I use in rowingdata
-	"""
-	
-
-	unixtimes = self.time_values()
-
-	
-	dist2 = self.sled_df[' stroke.startWorkoutMeter']
-	spm = self.sled_df[' stroke.strokesPerMin']
-	pace = self.sled_df[' stroke.paceSecPer1k']/2.0
-	pace = np.clip(pace,0,1e4)
-	power = self.sled_df[' stroke.watts']
-	ldrive = self.sled_df[' stroke.driveMeters']
-	strokelength2 = self.sled_df[' stroke.strokeMeters']
-	tdrive = self.sled_df[' stroke.driveMs']
-	trecovery = self.sled_df[' stroke.slideMs']
-	hr = self.sled_df[' stroke.hrBpm']
-	intervalcount = self.sled_df[' stroke.intervalNumber']
-	dragfactor = self.sled_df[' stroke.dragFactor']
-
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':strokelength2,
-			  ' DriveTime (ms)':tdrive,
-			  ' DragFactor':dragfactor,
-			  ' StrokeRecoveryTime (ms)':trecovery,
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' lapIdx':intervalcount,
-			  ' ElapsedTime (sec)':unixtimes-unixtimes[0]
-			  })
-
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-	
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-	
-
-
-class BoatCoachParser:
-    """ Parser for reading CSV files created by Painsled (desktop version)
-
-    Use: data = rowingdata.painsledDesktopParser("sled_data.csv")
-
-         data.write_csv("sled_data_out.csv")
-
-	 """
-    
-    def __init__(self, boatcoach_file="bc_test.csv"):
-        df = pd.read_csv(boatcoach_file,skiprows=1,usecols=range(25))
-	self.boatcoach_df = df[df['workoutType'] != 'none']
-        # get date from footer
-        fop = open(boatcoach_file,'r')
-        line = fop.readline()
-        dated =  re.split('Date:',line)[1][1:-1]
-	self.row_date = parser.parse(dated,fuzzy=True)
-        fop.close()
-
-    def time_values(self,timecolumn):
-	""" Converts boatcoach style time stamps to Unix time stamps	"""
-
-        row_date = time.mktime(self.row_date.timetuple())
-	# time stamps (ISO)
-	timesecs = timecolumn.apply(lambda x:timestrtosecs(x))
-        timesecs = make_cumvalues(timesecs)[0]
-        
-	# convert to unix style time stamp
-	unixtimes = row_date+timesecs
-        
-        return unixtimes
-
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports Painsled (desktop) data to the CSV format that
-	I use in rowingdata
-	"""
-	
-
-	unixtimes = self.time_values(self.boatcoach_df['workTime'])
-
-	
-	dist2 = self.boatcoach_df['workDistance']
-	spm = self.boatcoach_df['strokeRate']
-	pace = self.boatcoach_df['stroke500MPace'].apply(lambda x:timestrtosecs(x))
-	power = self.boatcoach_df['strokePower']
-	ldrive = self.boatcoach_df['strokeLength']
-	tdrive = self.boatcoach_df['strokeDriveTime']
-	hr = self.boatcoach_df['currentHeartRate']
-	intervalcount = self.boatcoach_df['intervalCount']
-	dragfactor = self.boatcoach_df['dragFactor']
-        peakforce = self.boatcoach_df['strokePeakForce']
-        averageforce = self.boatcoach_df['strokeAverageForce']
-
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':ldrive,
-			  ' StrokeDistance (meters)':np.zeros(nr_rows),
-			  ' DriveTime (ms)':tdrive,
-			  ' DragFactor':dragfactor,
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':averageforce,
-			  ' PeakDriveForce (lbs)':peakforce,
-			  ' lapIdx':intervalcount,
-			  ' ElapsedTime (sec)':unixtimes-unixtimes[0]
-			  })
-
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-	
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
 
 
 class SpeedCoach2Parser:
@@ -1824,161 +1662,6 @@ class MysteryParser:
                                compression='gzip')
         else:
             return data.to_csv(writeFile,index_label='index')
-
-
-	
-	
-
-
-class speedcoachParser:
-    """ Parser for reading CSV files created by SpeedCoach
-
-    Use: data = rowingdata.speedcoachParser("speedcoachdata.csv")
-
-         data.write_csv("speedcoach_data_out.csv")
-
-	 """
-    
-    def __init__(self, sc_file="sc_test.csv",row_date=datetime.datetime.utcnow()):
-	df = pd.read_csv(sc_file)
-	self.sc_df = df
-	self.row_date = row_date
-
-
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports SpeedCoach CSV data to the CSV format that
-	I use in rowingdata
-	"""
-
-	seconds = self.sc_df['Time(sec)']
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtime = seconds+totimestamp(dateobj)
-
-	dist2 = self.sc_df['Distance(m)']
-	cum_dist = np.zeros(number_of_rows)
-
-	cum_dist = make_cumvalues(dist2)
-	spm = self.sc_df['Rate']
-	pace = self.sc_df['Split(sec)']
-	pace = np.clip(pace,0,1e4)
-
-	hr = self.sc_df['HR']
-
-
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtime,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':np.zeros(nr_rows),
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':np.zeros(nr_rows),
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' lapIdx':np.zeros(nr_rows),
-			  ' ElapsedTime (sec)':seconds,
-                          'cum_dist':cum_dist,
-			  })
-
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-	
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-
-
-class ErgDataParser:
-    """ Parser for reading CSV files created by ErgData/Concept2 logbook
-
-    Use: data = rowingdata.ErgDataParser("ergdata.csv")
-
-         data.write_csv("speedcoach_data_out.csv")
-
-	 """
-    
-    def __init__(self, ed_file="ed_test.csv",row_date=datetime.datetime.utcnow()):
-	df = pd.read_csv(ed_file)
-	self.ed_df = df
-	self.row_date = row_date
-
-
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports  data to the CSV format that
-	I use in rowingdata
-	"""
-
-	seconds = self.ed_df['Time (seconds)']
-	dt = seconds.diff()
-	nrsteps = len(dt[dt<0])
-
-	res = make_cumvalues(seconds)
-	seconds2 = res[0]+seconds[0]
-	lapidx = res[1]
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtime = seconds2+totimestamp(dateobj)
-
-	dist2 = self.ed_df['Distance (meters)']
-	spm = self.ed_df['Stroke Rate']
-        try:
-	    pace = self.ed_df['Pace (seconds per 500m']
-        except KeyError:
-	    pace = self.ed_df['Pace (seconds per 500m)']
-
-	pace = np.clip(pace,0,1e4)
-
-	hr = self.ed_df['Heart Rate']
-
-	velocity = 500./pace
-	power = 2.8*velocity**3
-
-
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtime,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':np.zeros(nr_rows),
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' lapIdx':lapidx,
-			  ' ElapsedTime (sec)':seconds
-			  })
-
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-	
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-
 
 	
 class ErgStickParser:
