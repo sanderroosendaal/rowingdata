@@ -33,7 +33,19 @@ from csvparsers import (
     painsledDesktopParser,
     BoatCoachParser,
     speedcoachParser,
-    ErgDataParser
+    ErgDataParser,
+    ErgStickParser,
+    MysteryParser,
+    totimestamp,
+    make_cumvalues_array,
+    make_cumvalues,
+    timestrtosecs,
+    timestrtosecs2,
+    get_file_type,
+    get_file_line,
+    skip_variable_footer,
+    get_rowpro_footer,
+    skip_variable_header,
     )
 
 weknowphysics = 0
@@ -71,7 +83,7 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.93.6"
+__version__ = "0.93.7d"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -93,29 +105,6 @@ def nanstozero(nr):
     else:
 	return nr
 
-def totimestamp(dt, epoch=datetime.datetime(1970,1,1)):
-    td = dt - epoch
-    # return td.total_seconds()
-    return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6
-
-def timestrtosecs(string):
-    dt = parser.parse(string,fuzzy=True)
-    secs = 3600*dt.hour+60*dt.minute+dt.second
-
-    return secs
-
-def timestrtosecs2(timestring):
-    try:
-	h,m,s = timestring.split(':')
-	sval = 3600*int(h)+60.*int(m)+float(s)
-    except ValueError:
-        try:
-	    m,s = timestring.split(':')
-	    sval = 60.*int(m)+float(s)
-        except ValueError:
-            sval = 0
-        
-    return sval
 
 
 def spm_toarray(l):
@@ -125,127 +114,6 @@ def spm_toarray(l):
 
     return o
 
-def get_file_type(f):
-    fop = open(f,'r')
-    extension = f[-3:].lower()
-    if extension == 'csv':
-	# get first and 7th line of file
-	firstline = fop.readline()
-	
-	for i in range(3):
-	    fourthline = fop.readline()
-
-	for i in range(3):
-	    seventhline = fop.readline()
-
-	fop.close()
-
-	if 'SpeedCoach GPS Pro' in fourthline:
-	    return 'speedcoach2'
-
-	if 'Practice Elapsed Time (s)' in firstline:
-	    return 'mystery'
-
-        if 'Club' in firstline:
-            return 'boatcoach'
-        
-	if 'Hair' in seventhline:
-	    return 'rp'
-
-	if 'Total elapsed time (s)' in firstline:
-	    return 'ergstick'
-
-	if 'Stroke Number' in firstline:
-	    return 'ergdata'
-
-	if ' DriveTime (ms)' in firstline:
-	    return 'csv'
-
-	if 'HR' in firstline and 'Interval' in firstline and 'Avg HR' not in firstline:
-	    return 'speedcoach'
-
-	if 'stroke.REVISION' in firstline:
-	    return 'painsleddesktop'
-
-    if extension == 'tcx':
-	try:
-	    tree = objectify.parse(f)
-	    rt = tree.getroot()
-	except:
-	    return 'unknown'
-
-	if 'HeartRateBpm' in etree.tostring(rt):
-	    return 'tcx'
-	else:
-	    return 'tcxnohr'
-
-    if extension =='fit':
-	try:
-	    FitFile(f,check_crc=False).parse()
-	except:
-	    return 'unknown'
-
-	return 'fit'
-	    
-    return 'unknown'
-	
-
-def get_file_line(linenr,f):
-    fop = open(f,'r')
-    for i in range(linenr):
-	line = fop.readline()
-
-    fop.close()
-    return line
-
-
-def skip_variable_footer(f):
-    counter = 0
-    counter2 = 0
-
-    fop = open(f,'r')
-    for line in fop:
-	if line.startswith('Type') and counter>15:
-	    counter2 = counter
-	    counter += 1
-	else:
-	    counter += 1
-
-    fop.close()
-    return counter-counter2+1
-
-def get_rowpro_footer(f,converters={}):
-    counter = 0
-    counter2 = 0
-
-    fop = open(f,'r')
-    for line in fop:
-	if line.startswith('Type') and counter>15:
-	    counter2 = counter
-	    counter += 1
-	else:
-	    counter += 1
-
-    fop.close()
-    
-    return pd.read_csv(f,skiprows=counter2,
-		       converters=converters,
-		       engine='python',
-		       sep=None)
-    
-
-def skip_variable_header(f):
-    counter = 0
-
-    fop = open(f,'r')
-    for line in fop:
-	if line.startswith('Session Detail Data') or line.startswith('Per-Stroke Data'):
-	    counter2 = counter
-	else:
-	    counter +=1
-
-    fop.close()
-    return counter2+2
 
 def make_cumvalues_rowingdata(df):
     """ Takes entire dataframe, calculates cumulative distance
@@ -273,50 +141,6 @@ def make_cumvalues_rowingdata(df):
     return [cummeters,lapidx,cumworkmeters]
 	
 
-def make_cumvalues(xvalues):
-    """ Takes a Pandas dataframe with one column as input value.
-    Tries to create a cumulative series.
-    
-    """
-    
-    newvalues = 0.0*xvalues
-    dx = xvalues.diff()
-    dxpos = dx
-    mask = -xvalues.diff()>0.9*xvalues
-    nrsteps = len(dx.loc[mask])
-    lapidx = np.cumsum((-dx+abs(dx))/(-2*dx))
-    lapidx = lapidx.fillna(value=0)
-    if (nrsteps>0):
-	dxpos[mask] = xvalues[mask]
-	newvalues = np.cumsum(dxpos)+xvalues.ix[0,0]
-	newvalues.ix[0,0] = xvalues.ix[0,0]
-    else:
-	newvalues = xvalues
-
-    newvalues.fillna(method='ffill')
-
-    return [newvalues,lapidx]
-
-def make_cumvalues_array(xvalues):
-    """ Takes a Pandas dataframe with one column as input value.
-    Tries to create a cumulative series.
-    
-    """
-    
-    newvalues = 0.0*xvalues
-    dx = np.diff(xvalues)
-    dxpos = dx
-    nrsteps = len(dxpos[dxpos<0])
-    lapidx = np.append(0,np.cumsum((-dx+abs(dx))/(-2*dx)))
-    if (nrsteps>0):
-	indexes = np.where(dxpos<0)
-	for index in indexes:
-	    dxpos[index] = xvalues[index+1]
-	newvalues = np.append(0,np.cumsum(dxpos))+xvalues[0]
-    else:
-	newvalues = xvalues
-
-    return [newvalues,abs(lapidx)]
 
 def tailwind(bearing,vwind,winddir,vstream=0):
     """ Calculates head-on head/tailwind in direction of rowing
@@ -1574,179 +1398,7 @@ class SpeedCoach2Parser:
         else:
             return data.to_csv(writeFile,index_label='index')
 
-
 	
-	
-
-class MysteryParser:
-    """ Parser for reading CSV files created by CrewNerd interval export
-
-    Use: data = rowingdata.MysteryParser("mystery.csv")
-
-         data.write_csv("mystery.csv")
-
-	 """
-    
-    def __init__(self,Mfile="mystery.csv",
-		 row_date=datetime.datetime.utcnow()):
-
-	M_df = pd.read_csv(Mfile,
-			   engine='python',
-			   sep=None)
-	self.M_df = M_df.drop(M_df.index[[0]])
-	
-	self.row_date = row_date
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports to the CSV format that I use in rowingdata
-	"""
-
-	# Time,Distance,Pace,Watts,Cals,SPM,HR,DutyCycle,Rowfile_Id
-
-	dist2 = self.M_df['Distance (m)']
-	spm = self.M_df['Stroke Rate (SPM)']
-	velo = pd.to_numeric(self.M_df['Speed (m/s)'],errors='coerce')
-	
-	pace = 500./velo
-	pace = pace.replace(np.nan,300)
-
-	seconds = self.M_df['Practice Elapsed Time (s)']
-
-	lat_values = self.M_df['Lat']
-	long_values = self.M_df['Lon']
-
-
-	res = make_cumvalues_array(np.array(seconds))
-	seconds3 = res[0]
-	lapidx = res[1]
-
-	strokelength = velo/(spm/60.)
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtimes = seconds3+totimestamp(dateobj)
-	# time.mktime(dateobj.timetuple())
-
-
-	hr = self.M_df['HR (bpm)']
-	nr_rows = len(spm)
-
-
-	# Create data frame with all necessary data to write to csv
-	
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' longitude':long_values,
-			  ' latitude':lat_values,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':np.zeros(nr_rows),
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':strokelength,
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' ElapsedTime (sec)':seconds3,
-			  ' lapIdx':lapidx,
-			  })
-	
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-	
-class ErgStickParser:
-    """ Parser for reading CSV files created by ErgStick
-
-    Use: data = rowingdata.ErgStickParser("ergdata.csv")
-
-         data.write_csv("speedcoach_data_out.csv")
-
-	 """
-    
-    def __init__(self, ed_file="ed_test.csv",row_date=datetime.datetime.utcnow()):
-	df = pd.read_csv(ed_file)
-	self.es_df = df
-	self.row_date = row_date
-
-
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports  data to the CSV format that
-	I use in rowingdata
-	"""
-
-	seconds = self.es_df['Total elapsed time (s)']
-	res = make_cumvalues(seconds)
-	seconds2 = res[0]+seconds[0]
-	lapidx = res[1]
-
-	
-
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtime = seconds2+totimestamp(dateobj)
-
-	dist2 = self.es_df['Total distance (m)']
-	spm = self.es_df['Stroke rate (/min)']
-	pace = self.es_df['Current pace (/500m)']
-	pace = np.clip(pace,0,1e4)
-	dragfactor = self.es_df['Drag factor']
-	drivelength = self.es_df['Drive length (m)']
-	strokedistance = self.es_df['Stroke distance (m)']
-	drivetime = self.es_df['Drive time (s)']*1000.
-	recoverytime = self.es_df['Stroke recovery time (s)']*1000.
-	stroke_av_force = self.es_df['Ave. drive force (lbs)']
-	stroke_peak_force = self.es_df['Peak drive force (lbs)']
-	intervalcount = self.es_df['Interval count']
-
-	hr = self.es_df['Current heart rate (bpm)']
-
-	velocity = 500./pace
-	power = 2.8*velocity**3
-
-
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtime,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':drivelength,
-			  ' StrokeDistance (meters)':strokedistance,
-			  ' DriveTime (ms)':drivetime,
-			  ' DragFactor':dragfactor,
-			  ' StrokeRecoveryTime (ms)':recoverytime,
-			  ' AverageDriveForce (lbs)':stroke_av_force,
-			  ' PeakDriveForce (lbs)':stroke_peak_force,
-			  ' lapIdx':intervalcount,
-			  ' ElapsedTime (sec)':seconds2
-			  })
-
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-	
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-
 class TCXParserTester:
     def __init__(self, tcx_file):
         tree = objectify.parse(tcx_file)
