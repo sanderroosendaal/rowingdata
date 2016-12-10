@@ -36,6 +36,8 @@ from csvparsers import (
     ErgDataParser,
     ErgStickParser,
     MysteryParser,
+    RowProParser,
+    SpeedCoach2Parser,
     totimestamp,
     make_cumvalues_array,
     make_cumvalues,
@@ -46,6 +48,12 @@ from csvparsers import (
     skip_variable_footer,
     get_rowpro_footer,
     skip_variable_header,
+    lbstoN,
+    )
+
+from otherparsers import (
+    fitsummarydata,
+    FITParser,
     )
 
 weknowphysics = 0
@@ -87,8 +95,7 @@ __version__ = "0.93.7d"
 
 namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
-# we're going to plot SI units - convert pound force to Newton
-lbstoN = 4.44822
+
 
 def main():
     str = "Executing rowingdata version %s. " % __version__
@@ -654,168 +661,6 @@ def format_time_tick(x,pos=None):
 	template='%d:%s'
 	return template % (hour,min_str)
 
-class fitsummarydata:
-    def __init__(self,readFile):
-	self.readFile = readFile
-	self.fitfile = FitFile(readFile,check_crc=False)
-	self.records = self.fitfile.messages
-	self.summarytext = 'Work Details\n'
-
-
-    def setsummary(self,separator="|"):
-	lapcount = 0
-	self.summarytext += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-SPM-{sep}AvgHR{sep}MaxHR{sep}DPS-\n".format(
-	    sep = separator
-	    )
-
-	strokecount = 0
-	recordcount = 0
-	totalhr = 0
-	maxhr = 0
-
-	totaldistance = 0
-	totaltime = 0
-	grandhr = 0
-	grandmaxhr = 0
-	
-	for record in self.records:
-	    if record.name == 'record':
-		hr = record.get_value('heart_rate')
-		if hr is None:
-		    hr = 0
-		if hr>maxhr:
-		    maxhr = hr
-
-		if hr>grandmaxhr:
-		    grandmaxhr = hr
-		    
-		totalhr += hr
-
-		grandhr += hr
-		
-		strokecount += 1
-		recordcount += 1
-		
-	    if record.name == 'lap':
-		lapcount += 1
-
-		inthr = int(totalhr/float(strokecount))
-
-		inttime = record.get_value('total_elapsed_time')
-
-		lapmin = int(inttime/60)
-		lapsec = int(int(10*(inttime-lapmin*60.))/10.)
-		laptimestring = str(lapmin)+":"+str(lapsec)
-		
-		intdist = int(record.get_value('total_distance'))
-		intvelo = intdist/inttime
-		intpace = 500./intvelo
-
-		totaldistance += intdist
-		totaltime += inttime
-
-		intspm = 60.*strokecount/inttime
-		intdps = intdist/float(strokecount)
-
-		intmaxhr = maxhr
-
-		pacemin=int(intpace/60)
-		pacesec=int(10*(intpace-pacemin*60.))/10.
-		pacestring = str(pacemin)+":"+str(pacesec)
-
-		strokecount = 0
-		totalhr = 0
-		maxhr = 0
-
-
-		s = "{nr:0>2}{sep}{intdist:0>5d}{sep}".format(
-		    nr = lapcount,
-		    sep = separator,
-		    intdist = intdist
-		    )
-
-		s += " {lapmin:0>2}:{lapsec:0>2} {sep}".format(
-		    lapmin = lapmin,
-		    lapsec = lapsec,
-		    sep = separator,
-		    )
-
-		s+= "{pacemin:0>2}:{pacesec:0>3.1f}".format(
-		    pacemin = pacemin,
-		    pacesec = pacesec,
-		    )
-
-		s += "{sep} {intspm:0>4.1f}{sep}".format(
-		    intspm = intspm,
-		    sep = separator
-		    )
-
-		s += " {inthr:0>3d} {sep}".format(
-		    inthr = inthr,
-		    sep = separator
-		    )
-
-		s += " {intmaxhr:0>3d} {sep}".format(
-		    intmaxhr = intmaxhr,
-		    sep = separator
-		    )
-
-		s += " {dps:0>3.1f}".format(
-		    dps = intdps
-		    )
-
-		s+= "\n"
-		self.summarytext += s
-
-	# add total summary
-	overallvelo = totaldistance/totaltime
-	overallpace = 500./overallvelo
-
-	min=int(overallpace/60)
-	sec=int(10*(overallpace-min*60.))/10.
-	pacestring = str(min)+":"+str(sec)
-
-	totmin = int(totaltime/60)
-	totsec = int(int(10*(totaltime-totmin*60.))/10.)
-	timestring = str(totmin)+":"+str(totsec)
-
-	avghr = grandhr/float(recordcount)
-	avgspm = 60.*recordcount/totaltime
-
-	avgdps = totaldistance/float(recordcount)
-	
-	s = "Workout Summary\n"
-	s += "--{sep}{totaldistance:0>5}{sep}".format(
-	    totaldistance = int(totaldistance),
-	    sep = separator
-	    )
-#	s += " "+timestring
-
-	s += " {totmin:0>2}:{totsec:0>2} {sep} ".format(
-	    totmin = totmin,
-	    totsec = totsec,
-	    sep = separator,
-	    )
-	    
-	s += pacestring+separator
-
-	s += " {avgspm:0>4.1f}{sep}".format(
-	    sep = separator,
-	    avgspm = avgspm
-	    )
-
-	s += " {avghr:0>3} {sep} {grandmaxhr:0>3} {sep}".format(
-	    avghr = int(avghr),
-	    grandmaxhr = int(grandmaxhr),
-	    sep = separator
-	    )
-
-	s += " {avgdps:0>3.1f}".format(
-	    avgdps = avgdps
-	    )
-
-	self.summarytext+=s
-    
 
 class summarydata:
     """ This is used to create nice summary texts from CrewNerd's summary CSV
@@ -1016,387 +861,8 @@ class summarydata:
 	print stri
 	
 
-# Remark. I should write a generic CSV parser which takes a mapping to
-# painsled column labels as input. Then rewrite the ErgData, RowPro, SpeedCoach
-# parsers to use the generic CSV parser. 
-
-class FITParser:
-
-    def __init__(self, readFile):
-	self.readFile = readFile
-	self.fitfile = FitFile(readFile,check_crc=False)
-	self.records = self.fitfile.messages
-
-    def write_csv(self,writeFile="fit_o.csv",gzip=False):
-	cadence = []
-	hr = []
-	lat = []
-	lon = []
-	velo = []
-	timestamp = []
-	distance = []
-	lapidx = []
-	lapcounter = 0
-
-	for record in self.records:
-#	    if record.mesg_type.name == 'record':
-	    if record.name == 'record':
-		# obtain the values
-		s = record.get_value('speed')
-		h = record.get_value('heart_rate')
-		spm = record.get_value('cadence')
-		d = record.get_value('distance')
-		t = record.get_value('timestamp')
-		latva = record.get_value('position_lat')
-		if latva is not None:
-		    latv = record.get_value('position_lat')*(180./2**31)
-		else:
-		    latv = 0
-		lonva = record.get_value('position_long')
-		if lonva is not None:
-		    lonv = record.get_value('position_long')*(180./2**31)
-		else:
-		    lonv = 0
-
-		# get the unit
 
 
-		# add the values to the list
-		if latva is not None and lonva is not None:
-		    velo.append(s)
-		    hr.append(h)
-		    lapidx.append(lapcounter)
-		    lat.append(latv)
-		    lon.append(lonv)
-		    timestamp.append(totimestamp(t))
-		    cadence.append(spm)
-		    distance.append(d)
-#	    if record.mesg_type.name == 'lap':
-	    if record.name == 'lap':
-		lapcounter += 1
-
-	lat = pd.Series(lat)
-	lon = pd.Series(lon)
-
-	velo = pd.Series(velo)
-
-	pace = 500./velo
-
-	nr_rows = len(lat)
-
-	seconds3 = np.array(timestamp)-timestamp[0]
-
-	data = DataFrame({
-	    'TimeStamp (sec)':timestamp,
-	    ' Horizontal (meters)': distance,
-	    ' Cadence (stokes/min)':cadence,
-	    ' HRCur (bpm)':hr,
-	    ' longitude':lon,
-	    ' latitude':lat,
-	    ' Stroke500mPace (sec/500m)':pace,
-	    ' Power (watts)':np.zeros(nr_rows),
-	    ' DriveLength (meters)':np.zeros(nr_rows),
-	    ' StrokeDistance (meters)':np.zeros(nr_rows),
-	    ' DriveTime (ms)':np.zeros(nr_rows),
-	    ' DragFactor':np.zeros(nr_rows),
-	    ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-	    ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-	    ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-	    ' ElapsedTime (sec)':seconds3,
-	    ' lapIdx':lapidx,
-	    })
-
-        if gzip:
-            return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-	    return data.to_csv(writeFile,index_label='index')
-
-
-class RowProParser:
-    """ Parser for reading CSV files created by RowPro
-
-    Use: data = rowingdata.RowProParser("RPdata.csv")
-
-         data.write_csv("RPdata_out.csv")
-
-	 """
-    
-    def __init__(self,RPfile="RPtest.csv",skiprows=14,
-		 row_date=datetime.datetime.utcnow()):
-
-	skipfooter = skip_variable_footer(RPfile)
-	
-	self.RP_df = pd.read_csv(RPfile,skiprows=skiprows,
-				 skipfooter=skipfooter,
-				 engine='python',
-				 sep=None)
-
-	self.footer = get_rowpro_footer(RPfile)
-
-	# crude EU format detector
-	try:
-	    p = self.RP_df['Pace']*500.0
-	except TypeError:
-	    converters = {
-		'Distance': lambda x: float(x.replace('.','').replace(',','.')),
-		'AvgPace': lambda x: float(x.replace('.','').replace(',','.')),
-		'Pace': lambda x: float(x.replace('.','').replace(',','.')),
-		'AvgWatts': lambda x: float(x.replace('.','').replace(',','.')),
-		'Watts': lambda x: float(x.replace('.','').replace(',','.')),
-		'SPM': lambda x: float(x.replace('.','').replace(',','.')),
-		'EndHR': lambda x: float(x.replace('.','').replace(',','.')),
-		}
-	    self.RP_df = pd.read_csv(RPfile,skiprows=skiprows,
-				     skipfooter=skipfooter,
-				     converters=converters,
-				     engine='python',
-				     sep=None)
-	    self.footer = get_rowpro_footer(RPfile,converters=converters)
-
-	# replace key values
-	footerwork = self.footer[self.footer['Type']<=1]
-	maxindex = self.RP_df.index[-1]
-	endvalue = self.RP_df.loc[maxindex,'Time']
-	#self.RP_df.loc[-1,'Time'] = 0
-	dt = self.RP_df['Time'].diff()
-	therowindex = self.RP_df[dt<0].index
-
-	if len(footerwork)==2*(len(therowindex)+1):
-	    footerwork = self.footer[self.footer['Type']==1]
-	    self.RP_df.loc[-1,'Time'] = 0
-	    dt = self.RP_df['Time'].diff()
-	    therowindex = self.RP_df[dt<0].index
-	    nr = 0
-	    for i in footerwork.index:
-		time = footerwork.ix[i,'Time']
-		distance = footerwork.ix[i,'Distance']
-		avgpace = footerwork.ix[i,'AvgPace']
-		self.RP_df.ix[therowindex[nr],'Time'] = time
-		self.RP_df.ix[therowindex[nr],'Distance'] = distance
-		nr += 1
-	
-	if len(footerwork)==len(therowindex)+1:
-	    self.RP_df.loc[-1,'Time'] = 0
-	    dt = self.RP_df['Time'].diff()
-	    therowindex = self.RP_df[dt<0].index
-	    nr = 0
-	    for i in footerwork.index:
-		time = footerwork.ix[i,'Time']
-		distance = footerwork.ix[i,'Distance']
-		avgpace = footerwork.ix[i,'AvgPace']
-		self.RP_df.ix[therowindex[nr],'Time'] = time
-		self.RP_df.ix[therowindex[nr],'Distance'] = distance
-		nr += 1
-	else:
-	    self.RP_df.loc[maxindex,'Time'] = endvalue
-	    for i in footerwork.index:
-		time = footerwork.ix[i,'Time']
-		distance = footerwork.ix[i,'Distance']
-		avgpace = footerwork.ix[i,'AvgPace']
-		diff = self.RP_df['Time'].apply(lambda z: abs(time-z))
-		diff.sort_values(inplace=True)
-		theindex = diff.index[0]
-		self.RP_df.ix[theindex,'Time'] = time
-		self.RP_df.ix[theindex,'Distance'] = distance
-
-	    
-	dateline = get_file_line(11,RPfile)
-
-	dated = dateline.split(',')[0]
-	dated2 = dateline.split(';')[0]
-	try:
-	    self.row_date = parser.parse(dated,fuzzy=True)
-	except ValueError:
-	    self.row_date = parser.parse(dated2,fuzzy=True)
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports RowPro data to the CSV format that I use in rowingdata
-	"""
-
-
-	# Time,Distance,Pace,Watts,Cals,SPM,HR,DutyCycle,Rowfile_Id
-
-	dist2 = self.RP_df['Distance']
-	spm = self.RP_df['SPM']
-	pace = self.RP_df['Pace']*500.0
-	pace = np.clip(pace,0,1e4)
-	power = self.RP_df['Watts']
-	seconds = self.RP_df['Time']/1000.
-
-	res = make_cumvalues(seconds)
-	seconds2 = res[0]+seconds[0]
-	lapidx = res[1]
-	seconds3 = seconds2.interpolate()
-	seconds3[0] = seconds[0]
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtimes = seconds3+totimestamp(dateobj)
-	# time.mktime(dateobj.timetuple())
-
-
-	hr = self.RP_df['HR']
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':np.zeros(nr_rows),
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' ElapsedTime (sec)':seconds3,
-			  ' lapIdx':lapidx,
-			  })
-	
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-	
-	
-
-
-
-
-class SpeedCoach2Parser:
-    """ Parser for reading CSV files created by SpeedCoach GPS 2
-
-    Use: data = rowingdata.SpeedCoach2Parser("NKGPS2data.csv")
-
-         data.write_csv("NKGPS2data_out.csv")
-
-	 """
-    
-    def __init__(self,NKfile="Speedcoach2example.csv",
-		 row_date=datetime.datetime.utcnow()):
-
-	skiprows = skip_variable_header(NKfile)
-	NK_df = pd.read_csv(NKfile,skiprows=skiprows)
-	self.NK_df = NK_df.drop(NK_df.index[[0]])
-	
-	dateline = get_file_line(4,NKfile)
-	dated = dateline.split(',')[1]
-	self.row_date = parser.parse(dated,fuzzy=True)
-
-    def time_values(self,timecolumn):
-	""" Converts boatcoach style time stamps to Unix time stamps	"""
-
-        row_date = time.mktime(self.row_date.timetuple())
-	# time stamps (ISO)
-	timesecs = timecolumn.apply(lambda x:timestrtosecs2(x))
-	
-        return timesecs
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports RowPro data to the CSV format that I use in rowingdata
-	"""
-
-	# Time,Distance,Pace,Watts,Cals,SPM,HR,DutyCycle,Rowfile_Id
-
-	try:
-            dist2 = pd.to_numeric(self.NK_df['GPS Distance'],errors='coerce')
-	    spm = pd.to_numeric(self.NK_df['Stroke Rate'],errors='coerce')
-	    velo = pd.to_numeric(self.NK_df['GPS Speed'],errors='coerce')
-            power = 0.0*dist2
-            catch  = 0.0*dist2
-            slip = 0.0*dist2
-            finish = 0.0*dist2
-            wash = 0.0*dist2
-            avgforce = 0.0*dist2
-            peakforce = 0.0*dist2
-            peakforceangle = 0.0*dist2
-            driveenergy = 0.0*dist2
-            lat_values = 0.0*dist2
-            long_values = 0.0*dist2
-        except KeyError:
-            dist2 = pd.to_numeric(self.NK_df['Distance (GPS)'],errors='coerce')
-	    spm = pd.to_numeric(self.NK_df['Stroke Rate'],errors='coerce')
-	    velo = pd.to_numeric(self.NK_df['Speed (GPS)'],errors='coerce')
-            power = pd.to_numeric(self.NK_df['Power'],errors='coerce')
-            catch= pd.to_numeric(self.NK_df['Catch'],errors='coerce')
-            slip = pd.to_numeric(self.NK_df['Slip'],errors='coerce')
-            finish = pd.to_numeric(self.NK_df['Finish'],errors='coerce')
-            wash = pd.to_numeric(self.NK_df['Wash'],errors='coerce')
-            avgforce = pd.to_numeric(self.NK_df['Force Avg'],errors='coerce')/lbstoN
-            peakforce = pd.to_numeric(self.NK_df['Force Max'],errors='coerce')/lbstoN
-            peakforceangle = pd.to_numeric(self.NK_df['Max Force Angle'],errors='coerce')
-            driveenergy = pd.to_numeric(self.NK_df['Work'],errors='coerce')
-            lat_values = pd.to_numeric(self.NK_df['GPS Lat.'],errors='coerce')
-            long_values = pd.to_numeric(self.NK_df['GPS Lon.'],errors='coerce')
-	
-	lapidx = pd.to_numeric(self.NK_df['Interval'],errors='coerce')
-
-
-	cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
-	pace = 500./velo
-	pace = pace.replace(np.nan,300)
-
-	timestrings = self.NK_df['Elapsed Time']
-        seconds = self.time_values(timestrings)
-
-        res = make_cumvalues_array(np.array(seconds))
-	seconds3 = res[0]
-	lapidx = res[1]
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtimes = seconds3+totimestamp(dateobj)
-	# time.mktime(dateobj.timetuple())
-
-
-	hr = pd.to_numeric(self.NK_df['Heart Rate'],errors='coerce')
-	nr_rows = len(spm)
-
-
-	# Create data frame with all necessary data to write to csv
-	
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':np.zeros(nr_rows),
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':avgforce,
-			  ' PeakDriveForce (lbs)':peakforce,
-			  ' ElapsedTime (sec)':seconds3,
-			  ' lapIdx':lapidx,
-                          'catch':catch,
-                          'slip':slip,
-                          'finish':finish,
-                          'driveenergy':driveenergy,
-                          'wash':wash,
-                          'peakforceangle':peakforceangle,
-			  ' longitude':long_values,
-			  ' latitude':lat_values,
-                          'cum_dist':cum_dist,
-			  })
-	
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
 
 	
 class TCXParserTester:
@@ -2547,14 +2013,34 @@ class rowingdata:
         except IOError:
             sled_df = pd.read_csv(readFile+'.gz')
 
+        # check for missing column names
+        mandatorynames = [
+            'TimeStamp (sec)',
+	    ' Horizontal (meters)',
+	    ' Cadence (stokes/min)',
+	    ' HRCur (bpm)',
+	    ' Stroke500mPace (sec/500m)',
+	    ' Power (watts)',
+	    ' DriveLength (meters)',
+	    ' StrokeDistance (meters)',
+	    ' DriveTime (ms)',
+	    ' DragFactor',
+	    ' StrokeRecoveryTime (ms)',
+	    ' AverageDriveForce (lbs)',
+	    ' PeakDriveForce (lbs)',
+	    ' lapIdx',
+	    ' ElapsedTime (sec)',
+	]
+
+        for name in mandatorynames:
+            if name not in sled_df.columns:
+                sled_df[name] = 0
+
+        self.dragfactor = sled_df[' DragFactor'].mean()
 	# get the date of the row
 	starttime = sled_df.loc[0,'TimeStamp (sec)']
 	# using UTC time for now
 	self.rowdatetime = datetime.datetime.utcfromtimestamp(starttime)
-	try:
-	    self.dragfactor = sled_df[' DragFactor'].mean()
-	except KeyError:
-	    self.dragfactor = 0
 	    	
 	# remove the start time from the time stamps
 	sled_df['TimeStamp (sec)']=sled_df['TimeStamp (sec)']-sled_df['TimeStamp (sec)'][0]

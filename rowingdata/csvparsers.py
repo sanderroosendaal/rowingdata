@@ -13,6 +13,10 @@ import datetime
 from lxml import objectify,etree
 from fitparse import FitFile
 
+# we're going to plot SI units - convert pound force to Newton
+lbstoN = 4.44822
+
+
 def get_file_type(f):
     fop = open(f,'r')
     extension = f[-3:].lower()
@@ -230,9 +234,12 @@ class CSVParser(object):
         usecols = kwargs.pop('usecols',None)
         sep = kwargs.pop('sep',',')
         engine = kwargs.pop('engine','c')
-            
+        skipfooter = kwargs.pop('skipfooter',None)
+        converters = kwargs.pop('converters',None)
+        
         self.df = pd.read_csv(csvfile,skiprows=skiprows,usecols=usecols,
-                              sep=sep,engine=engine)
+                              sep=sep,engine=engine,skipfooter=skipfooter,
+                              converters=converters)
 
         self.defaultcolumnnames = [
             'TimeStamp (sec)',
@@ -253,6 +260,7 @@ class CSVParser(object):
             ' latitude',
             ' longitude',
 	]
+
 
     def time_values(self,*args,**kwargs):
         timecolumn = kwargs.pop('timecolumn','TimeStamp (sec)')
@@ -279,6 +287,11 @@ class CSVParser(object):
 	data = DataFrame(datadict)
 
 	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
+
+        # drop all-zero columns
+        for c in data.columns:
+            if (data[c] == 0).any():
+                data = data.drop(c,axis=1)
 	
         if gzip:
 	    return data.to_csv(writeFile+'.gz',index_label='index',
@@ -315,6 +328,10 @@ class painsledDesktopParser(CSVParser):
             ' latitude',
             ' longitude',
         ]
+
+        self.cols = [b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
+
 
         self.columns = dict(zip(self.defaultcolumnnames,self.cols))
 
@@ -367,6 +384,9 @@ class BoatCoachParser(CSVParser):
             ' latitude',
             ' longitude',
         ]
+
+        self.cols = [b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
 
         self.columns = dict(zip(self.defaultcolumnnames,self.cols))
 
@@ -428,6 +448,9 @@ class ErgDataParser(CSVParser):
         except KeyError:
             self.cols[4] = 'Pace (seconds per 500m)'
             
+        self.cols = [b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
+
         self.columns = dict(zip(self.defaultcolumnnames,self.cols))
                 
         
@@ -485,6 +508,9 @@ class speedcoachParser(CSVParser):
             ' longitude',
         ]
 
+        self.cols = [b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
+
         self.columns = dict(zip(self.defaultcolumnnames,self.cols))
                 
         
@@ -534,6 +560,9 @@ class ErgStickParser(CSVParser):
             ' latitude',
             ' longitude',
         ]
+
+        self.cols = [b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
 
         self.columns = dict(zip(self.defaultcolumnnames,self.cols))
 
@@ -597,6 +626,8 @@ class MysteryParser(CSVParser):
             'Lon',
         ]
 
+        self.cols = [b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
         self.columns = dict(zip(self.defaultcolumnnames,self.cols))
 
         # calculations
@@ -631,3 +662,247 @@ class MysteryParser(CSVParser):
     def write_csv(self,*args,**kwargs):
         kwargs['columns'] = self.columns
         return super(MysteryParser,self).write_csv(*args,**kwargs)
+
+
+class RowProParser(CSVParser):
+
+    def __init__(self, *args, **kwargs):
+        try:
+            csvfile = args[0]
+        except KeyError:
+            csvfile = kwargs['csvfile']
+            
+        skipfooter = skip_variable_footer(csvfile)
+        kwargs['skipfooter'] = skipfooter
+        kwargs['engine'] = 'python'
+        kwargs['skiprows']=14
+        kwargs['usecols']=None
+
+        super(RowProParser, self).__init__(*args, **kwargs)
+        self.footer = get_rowpro_footer(csvfile)
+        
+        #crude EU format detector
+        try:
+            p = self.df['Pace']*500.
+        except TypeError:
+            converters = {
+		'Distance': \
+                lambda x: float(x.replace('.','').replace(',','.')),
+		'AvgPace': \
+                lambda x: float(x.replace('.','').replace(',','.')),
+		'Pace': \
+                lambda x: float(x.replace('.','').replace(',','.')),
+		'AvgWatts': \
+                lambda x: float(x.replace('.','').replace(',','.')),
+		'Watts': lambda x: float(x.replace('.','').replace(',','.')),
+		'SPM': lambda x: float(x.replace('.','').replace(',','.')),
+		'EndHR': lambda x: float(x.replace('.','').replace(',','.')),
+		}
+            kwargs['converters'] = converters
+            super(RowProParser, self).__init__(*args, **kwargs)
+            self.footer = get_rowpro_footer(csvfile,converters=converters)
+
+	# replace key values
+	footerwork = self.footer[self.footer['Type']<=1]
+	maxindex = self.df.index[-1]
+	endvalue = self.df.loc[maxindex,'Time']
+	#self.df.loc[-1,'Time'] = 0
+	dt = self.df['Time'].diff()
+	therowindex = self.df[dt<0].index
+
+	if len(footerwork)==2*(len(therowindex)+1):
+	    footerwork = self.footer[self.footer['Type']==1]
+	    self.df.loc[-1,'Time'] = 0
+	    dt = self.df['Time'].diff()
+	    therowindex = self.df[dt<0].index
+	    nr = 0
+	    for i in footerwork.index:
+		time = footerwork.ix[i,'Time']
+		distance = footerwork.ix[i,'Distance']
+		avgpace = footerwork.ix[i,'AvgPace']
+		self.df.ix[therowindex[nr],'Time'] = time
+		self.df.ix[therowindex[nr],'Distance'] = distance
+		nr += 1
+	
+	if len(footerwork)==len(therowindex)+1:
+	    self.df.loc[-1,'Time'] = 0
+	    dt = self.df['Time'].diff()
+	    therowindex = self.df[dt<0].index
+	    nr = 0
+	    for i in footerwork.index:
+		time = footerwork.ix[i,'Time']
+		distance = footerwork.ix[i,'Distance']
+		avgpace = footerwork.ix[i,'AvgPace']
+		self.df.ix[therowindex[nr],'Time'] = time
+		self.df.ix[therowindex[nr],'Distance'] = distance
+		nr += 1
+	else:
+	    self.df.loc[maxindex,'Time'] = endvalue
+	    for i in footerwork.index:
+		time = footerwork.ix[i,'Time']
+		distance = footerwork.ix[i,'Distance']
+		avgpace = footerwork.ix[i,'AvgPace']
+		diff = self.df['Time'].apply(lambda z: abs(time-z))
+		diff.sort_values(inplace=True)
+		theindex = diff.index[0]
+		self.df.ix[theindex,'Time'] = time
+		self.df.ix[theindex,'Distance'] = distance
+
+        dateline = get_file_line(11,csvfile)
+        dated = dateline.split(',')[0]
+        dated2 = dateline.split(';')[0]
+        try:
+            self.row_date = parser.parse(dated,fuzzy=True)
+        except ValueError:
+            self.row_date = parser.parse(dated2,fuzzy=True)
+            
+            
+        self.cols = [
+            'Time',
+            'Distance',
+            'SPM',
+            'HR',
+            'Pace',
+            'Watts',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            ' lapIdx',
+            ' ElapsedTime (sec)',
+            ' latitude',
+            ' longitude',
+        ]
+
+        self.cols = [b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
+
+        self.columns = dict(zip(self.defaultcolumnnames,self.cols))
+
+        # calculations
+        self.df[self.columns[' Stroke500mPace (sec/500m)']]*=500.0
+        seconds = self.df[self.columns['TimeStamp (sec)']]/1000.
+        res = make_cumvalues(seconds)
+        seconds2 = res[0]+seconds[0]
+        lapidx = res[1]
+        seconds3 = seconds2.interpolate()
+        seconds3[0] = seconds[0]
+
+        unixtimes = seconds3+totimestamp(self.row_date)
+        self.df[self.columns[' lapIdx']] = lapidx
+        self.df[self.columns['TimeStamp (sec)']] = unixtimes
+        self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
+        self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes.iloc[0]
+
+    def write_csv(self,*args,**kwargs):
+        kwargs['columns'] = self.columns
+        return super(RowProParser,self).write_csv(*args,**kwargs)
+
+class SpeedCoach2Parser(CSVParser):
+
+    def __init__(self, *args, **kwargs):
+        
+
+        try:
+            csvfile = args[0]
+        except KeyError:
+            csvfile = kwargs['csvfile']
+            
+        skiprows = skip_variable_header(csvfile)
+        kwargs['skiprows'] = skiprows
+        super(SpeedCoach2Parser, self).__init__(*args, **kwargs)
+        self.df = self.df.drop(self.df.index[[0]])
+
+        for c in self.df.columns:
+            if c not in ['Elapsed Time']:
+                self.df[c] = pd.to_numeric(self.df[c],errors='coerce')
+        
+        self.cols = [
+            'Elapsed Time',
+            'GPS Distance',
+            'Stroke Rate',
+            'Heart Rate',
+            'Split (GPS)',
+            'Power',
+            '',
+            '',
+            '',
+            '',
+            '',
+            'Force Avg',
+            'Force Max',
+            'Interval',
+            ' ElapsedTime (sec)',
+            'GPS Lat.',
+            'GPS Lon.',
+            'GPS Speed',
+            'Catch',
+            'Slip',
+            'Finish',
+            'Wash',
+            'Work',
+            'Max Force Angle',
+            'cum_dist',
+        ]
+
+        self.defaultcolumnnames += [
+            'GPS Speed',
+            'catch',
+            'slip',
+            'finish',
+            'wash',
+            'driveenergy',
+            'peakforceangle',
+            'cum_dist',
+        ]
+        
+        
+        self.cols = [b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
+
+        self.columns = dict(zip(self.defaultcolumnnames,self.cols))
+
+        try:
+            dist2 = self.df['GPS Distance']
+        except KeyError:
+            dist2 = self.df['Distance (GPS)']
+            self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
+            self.columns['GPS Speed'] = 'Speed (GPS)'
+            self.df[self.columns[' PeakDriveForce (lbs)']]/= lbstoN
+            self.df[self.columns[' AverageDriveForce (lbs)']]/= lbstoN
+
+        
+        cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
+        self.df[self.columns['cum_dist']] = cum_dist
+        velo = self.df[self.columns['GPS Speed']]
+        pace = 500./velo
+        pace = pace.replace(np.nan,300)
+        self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+
+        # get date from header
+        dateline = get_file_line(4,csvfile)
+        dated = dateline.split(',')[1]
+	self.row_date = parser.parse(dated,fuzzy=True)
+
+        timestrings = self.df[self.columns['TimeStamp (sec)']]
+        datum = time.mktime(self.row_date.timetuple())
+        seconds = timestrings.apply(lambda x:timestrtosecs2(x))
+        res = make_cumvalues_array(np.array(seconds))
+        seconds3 = res[0]
+        lapidx = res[1]
+
+        unixtimes = seconds3+totimestamp(self.row_date)
+        self.df[self.columns[' lapIdx']] = lapidx
+        self.df[self.columns['TimeStamp (sec)']] = unixtimes
+        self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
+        self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes[0]
+                              
+
+    def write_csv(self,*args,**kwargs):
+        kwargs['columns'] = self.columns
+        return super(SpeedCoach2Parser,self).write_csv(*args,**kwargs)
+
+
