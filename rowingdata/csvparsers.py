@@ -287,10 +287,13 @@ class CSVParser(object):
 	data = DataFrame(datadict)
 
 	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
+        data = data.fillna(method='ffill')
 
         # drop all-zero columns
         for c in data.columns:
-            if (data[c] == 0).any():
+            if (data[c] == 0).any() and data[c].mean() == 0:
+                print "dropping "+c
+                print (data[c] == 0).any()
                 data = data.drop(c,axis=1)
 	
         if gzip:

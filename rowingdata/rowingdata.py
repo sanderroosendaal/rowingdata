@@ -3,6 +3,7 @@ import numpy as np
 #import pylab
 #import scipy
 import re
+import warnings
 
 try:
     from Tkinter import Tk
