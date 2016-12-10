@@ -5,6 +5,8 @@ import numpy as np
 import re
 import warnings
 
+warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
+
 try:
     from Tkinter import Tk
     tkavail = 1
