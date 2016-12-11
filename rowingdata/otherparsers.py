@@ -15,6 +15,8 @@ from fitparse import FitFile
 
 from utils import *
 
+namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
+
 class fitsummarydata:
     def __init__(self,readFile):
 	self.readFile = readFile
