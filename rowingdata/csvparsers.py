@@ -128,16 +128,18 @@ def get_rowpro_footer(f,converters={}):
 
 def skip_variable_header(f):
     counter = 0
-
+    summaryc = -2
     fop = open(f,'r')
     for line in fop:
+        if line.startswith('Interval Summaries'):
+            summaryc = counter
 	if line.startswith('Session Detail Data') or line.startswith('Per-Stroke Data'):
 	    counter2 = counter
 	else:
 	    counter +=1
 
     fop.close()
-    return counter2+2
+    return counter2+2,summaryc+2
 
 def totimestamp(dt, epoch=datetime.datetime(1970,1,1)):
     td = dt - epoch
@@ -240,7 +242,7 @@ class CSVParser(object):
         self.df = pd.read_csv(csvfile,skiprows=skiprows,usecols=usecols,
                               sep=sep,engine=engine,skipfooter=skipfooter,
                               converters=converters)
-
+        
         self.defaultcolumnnames = [
             'TimeStamp (sec)',
 	    ' Horizontal (meters)',
@@ -261,7 +263,7 @@ class CSVParser(object):
             ' longitude',
 	]
 
-
+        
     def time_values(self,*args,**kwargs):
         timecolumn = kwargs.pop('timecolumn','TimeStamp (sec)')
         unixtimes = self.df[timecolumn]
@@ -278,6 +280,10 @@ class CSVParser(object):
 	unixtimes = self.time_values(timecolumn=columns['TimeStamp (sec)'])
         self.df[columns['TimeStamp (sec)']] = unixtimes
         self.df[columns[' ElapsedTime (sec)']] = unixtimes-unixtimes.iloc[0]
+        # Default calculations
+        pace = self.df[
+            self.columns[' Stroke500mPace (sec/500m)']].replace(0,300)
+        self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
         
         datadict = {name:getcol(self.df,columns[name]) for name in columns}
 
@@ -292,8 +298,6 @@ class CSVParser(object):
         # drop all-zero columns
         for c in data.columns:
             if (data[c] == 0).any() and data[c].mean() == 0:
-                print "dropping "+c
-                print (data[c] == 0).any()
                 data = data.drop(c,axis=1)
 	
         if gzip:
@@ -461,7 +465,9 @@ class ErgDataParser(CSVParser):
         # get date from footer
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']]
         pace = np.clip(pace,0,1e4)
+        pace = pace.replace(0,300)
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+
 
         seconds = self.df[self.columns['TimeStamp (sec)']]
         dt = seconds.diff()
@@ -814,7 +820,7 @@ class SpeedCoach2Parser(CSVParser):
         except KeyError:
             csvfile = kwargs['csvfile']
             
-        skiprows = skip_variable_header(csvfile)
+        skiprows,summaryline = skip_variable_header(csvfile)
         kwargs['skiprows'] = skiprows
         super(SpeedCoach2Parser, self).__init__(*args, **kwargs)
         self.df = self.df.drop(self.df.index[[0]])
@@ -903,7 +909,52 @@ class SpeedCoach2Parser(CSVParser):
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes[0]
                               
+        # Read summary data
+        skipfooter = 7+len(self.df)
+        if summaryline:
+            self.summarydata = pd.read_csv(csvfile,
+                                           skiprows=summaryline,
+                                           skipfooter=skipfooter,
+                                           engine='python')
+            self.summarydata.drop(0,inplace=True)
+        else:
+            self.summarydata = pd.DataFrame()
+            
+    def summary(self,separator='|'):
+        return ''
 
+    def intervalstats(self,separator='|'):
+        stri = "Workout Details\n"
+	stri += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-Pwr-{sep}SPM-{sep}AvgHR{sep}DPS-\n".format(
+	    sep = separator
+	)
+        aantal = len(self.summarydata)
+        for i in range(aantal):
+            sdist = self.summarydata.ix[self.summarydata.index[[i]],'Total Distance (GPS)']
+            split  = self.summarydata.ix[self.summarydata.index[[i]],'Total Elapsed Time']
+            space = self.summarydata.ix[self.summarydata.index[[i]],'Avg Split (GPS)']
+            pwr = self.summarydata.ix[self.summarydata.index[[i]],'Avg Power']
+            spm = self.summarydata.ix[self.summarydata.index[[i]],'Avg Stroke Rate']
+            avghr = self.summarydata.ix[self.summarydata.index[[i]],'Avg Heart Rate']
+            nrstrokes = self.summarydata.ix[self.summarydata.index[[i]],'Total Strokes']
+            dps = float(sdist)/float(nrstrokes)
+            stri += "{i:0>2}{sep}{sdist:0>5}{sep}{split}{sep}{space}{sep} {pwr} {sep}".format(
+                i=i+1,
+                sdist = int(float(sdist.values[0])),
+                split = split.values[0],
+                space = space.values[0],
+                pwr = pwr.values[0],
+                sep = separator,
+                )
+            stri += " {spm} {sep} {avghr:0>3} {sep}{dps:0>4.1f}\n".format(
+                sep = separator,
+                avghr = avghr.values[0],
+                spm = spm.values[0],
+                dps = dps,
+                )
+
+        return stri
+            
     def write_csv(self,*args,**kwargs):
         kwargs['columns'] = self.columns
         return super(SpeedCoach2Parser,self).write_csv(*args,**kwargs)
