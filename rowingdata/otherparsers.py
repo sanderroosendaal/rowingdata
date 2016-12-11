@@ -13,9 +13,7 @@ import datetime
 from lxml import objectify,etree
 from fitparse import FitFile
 
-from csvparsers import (
-    totimestamp,
-    )
+from utils import *
 
 class fitsummarydata:
     def __init__(self,readFile):

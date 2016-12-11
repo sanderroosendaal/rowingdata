@@ -32,6 +32,8 @@ from tqdm import tqdm
 
 from fitparse import FitFile
 
+from utils import *
+
 from csvparsers import (
     painsledDesktopParser,
     BoatCoachParser,
@@ -589,32 +591,6 @@ def format_pace_tick(x,pos=None):
 	template='%d:%s'
 	return template % (min,sec_str)
 
-def format_pace(x,pos=None):
-    if isinf(x) or isnan(x):
-	x=0
-	
-    min=int(x/60)
-    sec=(x-min*60.)
-
-    str1 = "{min:0>2}:{sec:0>4.1f}".format(
-	min = min,
-	sec = sec
-	)
-
-    return str1
-
-def format_time(x,pos=None):
-
-
-    min = int(x/60.)
-    sec = int(x-min*60)
-
-    str1 = "{min:0>2}:{sec:0>4.1f}".format(
-	min=min,
-	sec=sec,
-	)
-
-    return str1
 
 def y_axis_range(ydata,miny=0,padding=.1,ultimate=[-1e9,1e9]):
 

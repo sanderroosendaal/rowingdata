@@ -13,9 +13,10 @@ import datetime
 from lxml import objectify,etree
 from fitparse import FitFile
 
+from utils import *
+
 # we're going to plot SI units - convert pound force to Newton
 lbstoN = 4.44822
-
 
 def get_file_type(f):
     fop = open(f,'r')
@@ -141,11 +142,6 @@ def skip_variable_header(f):
     fop.close()
     return counter2+2,summaryc+2
 
-def totimestamp(dt, epoch=datetime.datetime(1970,1,1)):
-    td = dt - epoch
-    # return td.total_seconds()
-    return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6
-
 def make_cumvalues_array(xvalues):
     """ Takes a Pandas dataframe with one column as input value.
     Tries to create a cumulative series.
@@ -232,12 +228,15 @@ class CSVParser(object):
         except KeyError:
             csvfile = kwargs.pop('csvfile','test.csv')
 
+            
         skiprows = kwargs.pop('skiprows',0)
         usecols = kwargs.pop('usecols',None)
         sep = kwargs.pop('sep',',')
         engine = kwargs.pop('engine','c')
         skipfooter = kwargs.pop('skipfooter',None)
         converters = kwargs.pop('converters',None)
+
+        self.csvfile = csvfile
         
         self.df = pd.read_csv(csvfile,skiprows=skiprows,usecols=usecols,
                               sep=sep,engine=engine,skipfooter=skipfooter,
@@ -919,9 +918,55 @@ class SpeedCoach2Parser(CSVParser):
             self.summarydata.drop(0,inplace=True)
         else:
             self.summarydata = pd.DataFrame()
+
+    def allstats(self,separator='|'):
+        stri = self.summary(separator=separator)+self.intervalstats(separator=separator)
+        return stri
             
     def summary(self,separator='|'):
-        return ''
+        stri1 = "Workout Summary - "+self.csvfile+"\n"
+        stri1 += "--{sep}Total{sep}-Total-{sep}--Avg--{sep}-Avg-{sep}Avg-{sep}-Avg-{sep}-Max-{sep}-Avg\n".format(sep=separator)
+        stri1 += "--{sep}Dist-{sep}-Time--{sep}-Pace--{sep}-Pwr-{sep}SPM-{sep}-HR--{sep}-HR--{sep}-DPS\n".format(sep=separator)
+
+        d = self.df[self.columns['cum_dist']]
+        dist = d.max()-d.min()
+        t = self.df[self.columns['TimeStamp (sec)']]
+        time = t.max()-t.min()
+        pace = self.df[self.columns[' Stroke500mPace (sec/500m)']].mean()
+        pwr = self.df[self.columns[' Power (watts)']].mean()
+        spm = self.df[self.columns[' Cadence (stokes/min)']].mean()
+        avghr = self.df[self.columns[' HRCur (bpm)']].mean()
+        maxhr = self.df[self.columns[' HRCur (bpm)']].max()
+        pacestring = format_pace(pace)
+        timestring = format_time(time)
+        avgdps = self.df['Distance/Stroke (GPS)'].mean()
+
+        stri1 += "--{sep}{dist:0>5.0f}{sep}".format(
+            sep = separator,
+            dist = dist,
+            )
+
+        stri1 += timestring+separator+pacestring
+
+        stri1 += "{sep}{avgpower:0>5.1f}".format(
+            sep = separator,
+            avgpower = pwr,
+        )
+    
+        stri1 += "{sep}{avgsr:2.1f}{sep}{avghr:3.1f}{sep}".format(
+	    avgsr = spm,
+	    sep = separator,
+	    avghr = avghr
+	)
+
+        stri1 += "{maxhr:3.1f}{sep}{avgdps:0>4.1f}\n".format(
+	    sep = separator,
+	    maxhr = maxhr,
+	    avgdps = avgdps
+	)
+
+    
+        return stri1
 
     def intervalstats(self,separator='|'):
         stri = "Workout Details\n"
