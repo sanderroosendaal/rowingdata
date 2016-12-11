@@ -1015,12 +1015,14 @@ class SpeedCoach2Parser(CSVParser):
             dps = float(sdist)/float(nrstrokes)
             splitstring = split.values[0]
             newsplitstring = flexistrftime(flexistrptime(splitstring))
+            pacestring = space.values[0]
+            newpacestring = flexistrftime(flexistrptime(pacestring))
             
             stri += "{i:0>2}{sep}{sdist:0>5}{sep}{split}{sep}{space}{sep} {pwr} {sep}".format(
                 i=i+1,
                 sdist = int(float(sdist.values[0])),
                 split = newsplitstring,
-                space = space.values[0],
+                space = newpacestring,
                 pwr = pwr.values[0],
                 sep = separator,
                 )
