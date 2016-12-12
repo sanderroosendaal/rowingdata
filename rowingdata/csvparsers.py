@@ -292,6 +292,12 @@ class CSVParser(object):
             ' longitude',
 	]
 
+        self.columns  = {c:c for c in self.defaultcolumnnames}
+
+    def to_standard(self,*args,**kwargs):
+        inverted = {value:key for key,value in self.columns.iteritems()}
+        self.df.rename(columns = inverted,inplace=True)
+        self.columns = {c:c for c in self.defaultcolumnnames}
         
     def time_values(self,*args,**kwargs):
         timecolumn = kwargs.pop('timecolumn','TimeStamp (sec)')
@@ -303,20 +309,22 @@ class CSVParser(object):
         gzip = kwargs.pop('gzip',False)
         writeFile = args[0]
         
-        defaultmapping  = {c:c for c in self.defaultcolumnnames}
-        columns = kwargs.pop('columns',defaultmapping)
+        # defaultmapping  = {c:c for c in self.defaultcolumnnames}
+        self.columns = kwargs.pop('columns',self.columns)
 
-	unixtimes = self.time_values(timecolumn=columns['TimeStamp (sec)'])
-        self.df[columns['TimeStamp (sec)']] = unixtimes
-        self.df[columns[' ElapsedTime (sec)']] = unixtimes-unixtimes.iloc[0]
+	unixtimes = self.time_values(
+            timecolumn=self.columns['TimeStamp (sec)'])
+        self.df[self.columns['TimeStamp (sec)']] = unixtimes
+        self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes.iloc[0]
         # Default calculations
         pace = self.df[
             self.columns[' Stroke500mPace (sec/500m)']].replace(0,300)
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
         
-        datadict = {name:getcol(self.df,columns[name]) for name in columns}
+        datadict = {name:getcol(self.df,self.columns[name]) 
+                    for name in self.columns}
 
-	nr_rows = len(self.df[columns[' Cadence (stokes/min)']])
+	nr_rows = len(self.df[self.columns[' Cadence (stokes/min)']])
 
 	# Create data frame with all necessary data to write to csv
 	data = DataFrame(datadict)
@@ -382,11 +390,7 @@ class painsledDesktopParser(CSVParser):
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes.iloc[0]
-
-
-    def write_csv(self,*args,**kwargs):
-        kwargs['columns'] = self.columns
-        return super(painsledDesktopParser,self).write_csv(*args,**kwargs)
+        self.to_standard()
 
 class BoatCoachParser(CSVParser):
 
@@ -447,10 +451,7 @@ class BoatCoachParser(CSVParser):
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']].apply(lambda x:timestrtosecs(x))
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
 
-    def write_csv(self,*args,**kwargs):
-        kwargs['columns'] = self.columns
-        return super(BoatCoachParser,self).write_csv(*args,**kwargs)
-
+        self.to_standard()
 
 
 class ErgDataParser(CSVParser):
@@ -515,11 +516,9 @@ class ErgDataParser(CSVParser):
 
         self.df[self.columns[' lapIdx']] = lapidx
         self.df[self.columns[' Power (watts)']] = power
-        
-    def write_csv(self,*args,**kwargs):
-        kwargs['columns'] = self.columns
-        return super(ErgDataParser,self).write_csv(*args,**kwargs)
 
+        self.to_standard()
+        
 class speedcoachParser(CSVParser):
 
     def __init__(self, *args, **kwargs):
@@ -566,11 +565,7 @@ class speedcoachParser(CSVParser):
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes[0]
 
-
-
-    def write_csv(self,*args,**kwargs):
-        kwargs['columns'] = self.columns
-        return super(speedcoachParser,self).write_csv(*args,**kwargs)
+        self.to_standard()
 
 class ErgStickParser(CSVParser):
 
@@ -627,10 +622,7 @@ class ErgStickParser(CSVParser):
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes.iloc[0]
 
-
-    def write_csv(self,*args,**kwargs):
-        kwargs['columns'] = self.columns
-        return super(ErgStickParser,self).write_csv(*args,**kwargs)
+        self.to_standard()
 
 class MysteryParser(CSVParser):
 
@@ -696,11 +688,7 @@ class MysteryParser(CSVParser):
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes.iloc[0]
         self.df[self.columns[' StrokeDistance (meters)']] = strokelength
 
-
-    def write_csv(self,*args,**kwargs):
-        kwargs['columns'] = self.columns
-        return super(MysteryParser,self).write_csv(*args,**kwargs)
-
+        self.to_standard()
 
 class RowProParser(CSVParser):
 
@@ -835,9 +823,7 @@ class RowProParser(CSVParser):
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes.iloc[0]
 
-    def write_csv(self,*args,**kwargs):
-        kwargs['columns'] = self.columns
-        return super(RowProParser,self).write_csv(*args,**kwargs)
+        self.to_standard()
 
 class SpeedCoach2Parser(CSVParser):
 
@@ -937,7 +923,9 @@ class SpeedCoach2Parser(CSVParser):
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes[0]
-                              
+
+        self.to_standard()
+        
         # Read summary data
         skipfooter = 7+len(self.df)
         if summaryline:
@@ -1035,8 +1023,3 @@ class SpeedCoach2Parser(CSVParser):
 
         return stri
             
-    def write_csv(self,*args,**kwargs):
-        kwargs['columns'] = self.columns
-        return super(SpeedCoach2Parser,self).write_csv(*args,**kwargs)
-
-
