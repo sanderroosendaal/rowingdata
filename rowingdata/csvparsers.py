@@ -18,6 +18,16 @@ from utils import *
 # we're going to plot SI units - convert pound force to Newton
 lbstoN = 4.44822
 
+def clean_nan(x):
+    for i in range(len(x)-1):
+        if np.isnan(x[i+1]):
+            if x[i+2]>x[i]:
+                x[i+1] = 0.5*(x[i]+x[i+2])
+            if x[i+2]<x[i]:
+                x[i+1] = 0
+
+    return x
+
 def flexistrptime(inttime):
     
     try:
@@ -223,7 +233,7 @@ def timestrtosecs(string):
 
     return secs
 
-def timestrtosecs2(timestring):
+def timestrtosecs2(timestring,unknown=0):
     try:
 	h,m,s = timestring.split(':')
 	sval = 3600*int(h)+60.*int(m)+float(s)
@@ -232,7 +242,7 @@ def timestrtosecs2(timestring):
 	    m,s = timestring.split(':')
 	    sval = 60.*int(m)+float(s)
         except ValueError:
-            sval = 0
+            sval = unknown
         
     return sval
 
@@ -913,7 +923,9 @@ class SpeedCoach2Parser(CSVParser):
 
         timestrings = self.df[self.columns['TimeStamp (sec)']]
         datum = time.mktime(self.row_date.timetuple())
-        seconds = timestrings.apply(lambda x:timestrtosecs2(x))
+        seconds = timestrings.apply(lambda x:timestrtosecs2(x,unknown=np.nan))
+        seconds = clean_nan(np.array(seconds))
+        seconds = pd.Series(seconds).fillna(method='ffill').values
         res = make_cumvalues_array(np.array(seconds))
         seconds3 = res[0]
         lapidx = res[1]
