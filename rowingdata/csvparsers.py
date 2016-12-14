@@ -568,10 +568,10 @@ class speedcoachParser(CSVParser):
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
 
         seconds = self.df[self.columns['TimeStamp (sec)']]
-        unixtime = seconds+totimestamp(self.row_date)
+        unixtimes = seconds+totimestamp(self.row_date)
 
 
-        self.df[self.columns['TimeStamp (sec)']] = unixtime
+        self.df[self.columns['TimeStamp (sec)']] = unixtimes
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes[0]
 

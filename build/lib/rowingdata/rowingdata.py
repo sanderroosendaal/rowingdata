@@ -727,9 +727,9 @@ class summarydata:
 
 
 	stri1 = summarystring(totaldistance,totaltime,avgpace,avgsr,
-			     avghr,maxhr,avgdps,
-			     readFile=self.readFile,
-			     separator=separator)
+			      avghr,maxhr,avgdps,0,
+			      readFile=self.readFile,
+			      separator=separator)
 
 	
 	# print stri1+stri2
