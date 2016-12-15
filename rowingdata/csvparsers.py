@@ -263,9 +263,9 @@ class CSVParser(object):
 
     """
     def __init__(self, *args, **kwargs):
-        try:
+        if args:
             csvfile = args[0]
-        except KeyError:
+        else:
             csvfile = kwargs.pop('csvfile','test.csv')
 
             

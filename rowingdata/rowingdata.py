@@ -35,6 +35,7 @@ from fitparse import FitFile
 from utils import *
 
 from csvparsers import (
+    CSVParser,
     painsledDesktopParser,
     BoatCoachParser,
     speedcoachParser,
@@ -1298,25 +1299,48 @@ class rowingdata:
 
     """
     
-    def __init__(self,readFile,
-		 rower=rower(),
-		 rowtype="Indoor Rower"):
+    def __init__(self,*args,**kwargs):
+#                 readFile,
+#		 rower=rower(),
+#		 rowtype="Indoor Rower"):
 
-	try:
-	    self.readfilename = readFile.name
-	except AttributeError:
-	    self.readfilename = readFile
 
+        if 'csvfile' in kwargs:
+            readFile = kwargs['csvfile']
+        else:
+            readFile = 0
+
+        if args:
+            readFile = args[0]
+            warnings.warn("Depreciated. Use rowingdata(csvfile=csvfile)",UserWarning)
+
+        rwr = kwargs.get('rower',rower())
+
+        rowtype = kwargs.get('rowtype','Indoor Rower')
+
+        sled_df = DataFrame()
+        if 'df' in kwargs:
+            sled_df = kwargs['df']
+            readFile = 0
+        elif readFile != 0:
+            try:
+	        sled_df = pd.read_csv(readFile)
+            except IOError:
+                sled_df = pd.read_csv(readFile+'.gz')
+            
+        if readFile != 0:
+	    try:
+	        self.readfilename = readFile.name
+	    except AttributeError:
+	        self.readfilename = readFile
+        else:
+            self.readfilename = 'rowing dataframe'
 
 	
 	self.readFile = readFile
-	self.rower = rower
+	self.rwr = rwr
 	self.rowtype = rowtype
 
-        try:
-	    sled_df = pd.read_csv(readFile)
-        except IOError:
-            sled_df = pd.read_csv(readFile+'.gz')
 
         # check for missing column names
         mandatorynames = [
@@ -1357,15 +1381,15 @@ class rowingdata:
 	self.number_of_rows = number_of_rows
 
 	# add HR zone data to dataframe
-	self.df = addzones(sled_df,self.rower.ut2,
-		      self.rower.ut1,
-		      self.rower.at,
-		      self.rower.tr,
-		      self.rower.an,
-		      self.rower.max
+	self.df = addzones(sled_df,self.rwr.ut2,
+		      self.rwr.ut1,
+		      self.rwr.at,
+		      self.rwr.tr,
+		      self.rwr.an,
+		      self.rwr.max
 		      )
 
-	self.df = addpowerzones(self.df,self.rower.ftp,self.rower.powerperc)
+	self.df = addpowerzones(self.df,self.rwr.ftp,self.rwr.powerperc)
 
     def getvalues(self,keystring):
 	""" Just a tool to get a column of the row data as a numpy array
@@ -2021,7 +2045,7 @@ class rowingdata:
         
 	# creating a rower and rigging for now
         # in future this must come from rowingdata.rower and rowingdata.rigging
-	r = self.rower.rc
+	r = self.rwr.rc
 	r.mc = mc
 
 	# this is slow ... need alternative (read from table)
@@ -2102,7 +2126,7 @@ class rowingdata:
         
 	# creating a rower and rigging for now
 	# in future this must come from rowingdata.rower and rowingdata.rigging
-	r = self.rower.rc
+	r = self.rwr.rc
 	r.mc = mc
 
 	# this is slow ... need alternative (read from table)
@@ -2178,7 +2202,7 @@ class rowingdata:
 
 	# creating a rower and rigging for now
 	# in future this must come from rowingdata.rower and rowingdata.rigging
-	r = self.rower.rc
+	r = self.rwr.rc
 	r.mc = mc
 
 	# this is slow ... need alternative (read from table)
@@ -2242,7 +2266,7 @@ class rowingdata:
 	
 	# creating a rower and rigging for now
 	# in future this must come from rowingdata.rower and rowingdata.rigging
-	r = self.rower.rc
+	r = self.rwr.rc
 	r.mc = mc
 	r.tempo = spm
 	drivetime = 60.*1000./float(spm)  # in milliseconds
@@ -2586,16 +2610,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
 
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
-	ax1.axis([0,end_dist,100,1.1*self.rower.max])
+	ax1.axis([0,end_dist,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(1000,end_dist,1000))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -2763,7 +2787,7 @@ class rowingdata:
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_an'],color='k')
 
 
-	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 
 	ax1.text(5,ut2+1.5,"UT2",size=8)
 	ax1.text(5,ut1+1.5,"UT1",size=8)
@@ -2833,16 +2857,16 @@ class rowingdata:
 	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
 	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
 
-	ax4.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax4.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax4.text(5,self.rower.at+1.5,"AT",size=8)
-	ax4.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax4.text(5,self.rower.an+1.5,"AN",size=8)
-	ax4.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax4.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax4.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax4.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax4.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax4.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax4.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
-	ax4.axis([0,end_dist,100,1.1*self.rower.max])
+	ax4.axis([0,end_dist,100,1.1*self.rwr.max])
 	ax4.set_xticks(range(1000,end_dist,1000))
 	ax4.set_ylabel('BPM')
 	ax4.set_yticks(range(110,200,10))
@@ -2971,16 +2995,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -3162,16 +3186,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
 
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
-	ax1.axis([0,end_dist,100,1.1*self.rower.max])
+	ax1.axis([0,end_dist,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(1000,end_dist,1000))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -3406,15 +3430,15 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,190,10))
@@ -3620,16 +3644,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
 
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
-	ax1.axis([0,end_dist,100,1.1*self.rower.max])
+	ax1.axis([0,end_dist,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(1000,end_dist,1000))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -3690,7 +3714,7 @@ class rowingdata:
 	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_an'],color='k')
 
 
-	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 
 	ax4.text(5,ut2+1.5,"UT2",size=8)
 	ax4.text(5,ut1+1.5,"UT1",size=8)
@@ -3760,16 +3784,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -3840,7 +3864,7 @@ class rowingdata:
 	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_an'],color='k')
 
 
-	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 
 	ax4.text(5,ut2+1.5,"UT2",size=8)
 	ax4.text(5,ut1+1.5,"UT1",size=8)
@@ -3927,16 +3951,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -4070,16 +4094,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -4270,15 +4294,15 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,190,10))
@@ -4337,16 +4361,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
 
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
-	ax1.axis([0,end_dist,100,1.1*self.rower.max])
+	ax1.axis([0,end_dist,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(1000,end_dist,1000))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -4467,15 +4491,15 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,190,10))
@@ -4592,15 +4616,15 @@ class rowingdata:
 	
 	time_in_zone = np.zeros(6)
 	for i in range(number_of_rows):
-	    if df.ix[i,' HRCur (bpm)'] <= self.rower.ut2:
+	    if df.ix[i,' HRCur (bpm)'] <= self.rwr.ut2:
 		time_in_zone[0] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.ut1:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.ut1:
 		time_in_zone[1] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.at:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.at:
 		time_in_zone[2] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.tr:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.tr:
 		time_in_zone[3] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.an:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.an:
 		time_in_zone[4] += time_increments[i]
 	    else:
 		time_in_zone[5] += time_increments[i]
@@ -4659,7 +4683,7 @@ class rowingdata:
 	time_increments[0] = time_increments[1]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 
-	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 	
 	time_in_zone = np.zeros(6)
 	for i in range(number_of_rows):
@@ -4732,7 +4756,7 @@ class rowingdata:
 	time_increments[0] = time_increments[1]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 
-	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 	
 	time_in_zone = np.zeros(6)
 	for i in range(number_of_rows):
@@ -4804,15 +4828,15 @@ class rowingdata:
 	
 	time_in_zone = np.zeros(6)
 	for i in range(number_of_rows):
-	    if df.ix[i,' HRCur (bpm)'] <= self.rower.ut2:
+	    if df.ix[i,' HRCur (bpm)'] <= self.rwr.ut2:
 		time_in_zone[0] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.ut1:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.ut1:
 		time_in_zone[1] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.at:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.at:
 		time_in_zone[2] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.tr:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.tr:
 		time_in_zone[3] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.an:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.an:
 		time_in_zone[4] += time_increments[i]
 	    else:
 		time_in_zone[5] += time_increments[i]
@@ -4890,7 +4914,7 @@ class rowingdata:
 
 
 	# weight
-	if (self.rower.weightcategory.lower()=="lwt"):
+	if (self.rwr.weightcategory.lower()=="lwt"):
 	    weightselect = ["L"]
 	else:
 	    weightselect = ["H"]
@@ -4916,14 +4940,14 @@ class rowingdata:
 	print "login to concept2 log"
 	save_user = "y"
 	save_pass = "y"
-	if self.rower.c2username == "":
+	if self.rwr.c2username == "":
 	    save_user = "n"
-	    self.rower.c2username = raw_input('C2 user name:')
+	    self.rwr.c2username = raw_input('C2 user name:')
 	    save_user = raw_input('Would you like to save your username (y/n)? ')
 	    
-	if self.rower.c2password == "":
+	if self.rwr.c2password == "":
 	    save_pass = "n"
-	    self.rower.c2password = getpass.getpass('C2 password:')
+	    self.rwr.c2password = getpass.getpass('C2 password:')
 	    save_pass = raw_input('Would you like to save your password (y/n)? ')
 
 	# try to log in to logbook
@@ -4934,10 +4958,10 @@ class rowingdata:
 	br.select_form(nr=0)
 	# set user name
 	usercntrl = br.form.find_control("username")
-	usercntrl.value = self.rower.c2username
+	usercntrl.value = self.rwr.c2username
 
 	pwcntrl = br.form.find_control("password")
-	pwcntrl.value = self.rower.c2password
+	pwcntrl.value = self.rwr.c2password
 
 	response = br.submit()
 	if "Incorrect" in response.read():
@@ -4978,7 +5002,7 @@ class rowingdata:
 
 	    br.form['weight_class'] = weightselect
 
-	    print "Setting weight class to "+self.rower.weightcategory+"("+weightselect[0]+")"
+	    print "Setting weight class to "+self.rwr.weightcategory+"("+weightselect[0]+")"
 
 	    commentscontrol = br.form.find_control("comments")
 	    commentscontrol.value = comment
@@ -4997,15 +5021,15 @@ class rowingdata:
 		print "something went wrong"
 
 	if save_user == "n":
-	    self.rower.c2username = ''
+	    self.rwr.c2username = ''
 	    print "forgetting user name"
 	if save_pass == "n":
-	    self.rower.c2password = ''
+	    self.rwr.c2password = ''
 	    print "forgetting password"
 
 
 	if (save_user == "y" or save_pass == "y"):
-	    self.rower.write(rowerFile)
+	    self.rwr.write(rowerFile)
 	    
 
 	print "done"
