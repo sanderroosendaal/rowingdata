@@ -1321,6 +1321,8 @@ class rowingdata:
         sled_df = DataFrame()
         if 'df' in kwargs:
             sled_df = kwargs['df']
+            #new_index = range(len(sled_df))
+            #sled_df = sled_df.reindex(index=new_index)
             readFile = 0
         elif readFile != 0:
             try:
@@ -1367,12 +1369,13 @@ class rowingdata:
 
         self.dragfactor = sled_df[' DragFactor'].mean()
 	# get the date of the row
-	starttime = sled_df.loc[0,'TimeStamp (sec)']
+	starttime = sled_df['TimeStamp (sec)'].values[0]
+
 	# using UTC time for now
 	self.rowdatetime = datetime.datetime.utcfromtimestamp(starttime)
 	    	
 	# remove the start time from the time stamps
-	sled_df['TimeStamp (sec)']=sled_df['TimeStamp (sec)']-sled_df['TimeStamp (sec)'][0]
+	sled_df['TimeStamp (sec)']=sled_df['TimeStamp (sec)']-sled_df['TimeStamp (sec)'].values[0]
 
 	number_of_columns = sled_df.shape[1]
 	number_of_rows = sled_df.shape[0]

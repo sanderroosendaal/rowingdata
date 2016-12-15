@@ -408,9 +408,9 @@ class BoatCoachParser(CSVParser):
         kwargs['skiprows']=1
         kwargs['usecols']=range(25)
 
-        try:
+        if args:
             csvfile = args[0]
-        except KeyError:
+        else:
             csvfile = kwargs['csvfile']
             
         super(BoatCoachParser, self).__init__(*args, **kwargs)
@@ -703,9 +703,10 @@ class MysteryParser(CSVParser):
 class RowProParser(CSVParser):
 
     def __init__(self, *args, **kwargs):
-        try:
+
+        if args:
             csvfile = args[0]
-        except KeyError:
+        else:
             csvfile = kwargs['csvfile']
             
         skipfooter = skip_variable_footer(csvfile)
@@ -839,10 +840,9 @@ class SpeedCoach2Parser(CSVParser):
 
     def __init__(self, *args, **kwargs):
         
-
-        try:
+        if args:
             csvfile = args[0]
-        except KeyError:
+        else:
             csvfile = kwargs['csvfile']
             
         skiprows,summaryline = skip_variable_header(csvfile)

@@ -5,7 +5,7 @@ import datetime
 import numpy as np
 
 class TestBasicRowingData:
-    row = rowingdata.rowingdata('testdata/testdata.csv')
+    row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
 
     def test_basic_rowingdata(self):
         assert_equals(self.row.rowtype,'Indoor Rower')
@@ -35,3 +35,32 @@ class TestBasicRowingData:
         assert_equals(sum,537.0)
                       
         
+class TestErgData:
+    r = rowingdata.ErgDataParser(csvfile='testdata/ergdata_example.csv')
+    row = rowingdata.rowingdata(df=r.df)
+    assert_equals(row.number_of_rows,180)
+    totaldist = row.df['cum_dist'].max()
+    assert_equals(totaldist,1992)
+    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+    assert_equals(totaltime,520)
+
+class TestpainsledDesktopParser:
+    r = rowingdata.painsledDesktopParser(csvfile='testdata/painsled_desktop_example.csv')
+    row = rowingdata.rowingdata(df=r.df)
+    assert_equals(row.number_of_rows,638)
+    totaldist = row.df['cum_dist'].max()
+    assert_equals(totaldist,7097)
+    assert_equals(row.rowdatetime,datetime.datetime(2016,3,29,16,41,27))
+    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+    assert_equals(totaltime,1802)
+
+class TestBoatCoachParser:
+    r = rowingdata.BoatCoachParser(csvfile='testdata/boatcoach.csv')
+    row = rowingdata.rowingdata(df=r.df)
+    assert_equals(row.number_of_rows,132)
+    totaldist = row.df['cum_dist'].max()
+    assert_equals(totaldist,499)
+    assert_equals(row.rowdatetime,datetime.datetime(2016,11,28,7,37,2))
+    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+    assert_equals(totaltime,118)
+    
