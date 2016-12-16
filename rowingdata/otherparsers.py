@@ -185,8 +185,6 @@ class FITParser:
 	self.readFile = readFile
 	self.fitfile = FitFile(readFile,check_crc=False)
 	self.records = self.fitfile.messages
-
-    def write_csv(self,writeFile="fit_o.csv",gzip=False):
 	cadence = []
 	hr = []
 	lat = []
@@ -245,7 +243,7 @@ class FITParser:
 
 	seconds3 = np.array(timestamp)-timestamp[0]
 
-	data = DataFrame({
+	self.df = DataFrame({
 	    'TimeStamp (sec)':timestamp,
 	    ' Horizontal (meters)': distance,
 	    ' Cadence (stokes/min)':cadence,
@@ -265,15 +263,13 @@ class FITParser:
 	    ' lapIdx':lapidx,
 	    })
 
+    def write_csv(self,writeFile="fit_o.csv",gzip=False):
+
         if gzip:
-            return data.to_csv(writeFile+'.gz',index_label='index',
+            return self.df.to_csv(writeFile+'.gz',index_label='index',
                                compression='gzip')
         else:
-	    return data.to_csv(writeFile,index_label='index')
-
-
-
-
+	    return self.df.to_csv(writeFile,index_label='index')
 
 	
 class TCXParserTester:
