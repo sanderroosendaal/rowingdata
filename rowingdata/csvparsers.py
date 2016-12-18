@@ -12,6 +12,7 @@ from dateutil import parser
 import datetime
 from lxml import objectify,etree
 from fitparse import FitFile
+import os
 
 from utils import *
 import zipfile
@@ -126,6 +127,7 @@ def get_file_type(f):
             z = zipfile.ZipFile(f)
             f2 = z.extract(z.namelist()[0])
             tp = get_file_type(f2)
+            os.remove(f2)
             return 'zip',f2,tp
         except:
             return 'unknown'
