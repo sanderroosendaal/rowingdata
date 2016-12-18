@@ -121,7 +121,7 @@ def get_file_type(f):
 
 	return 'fit'
 
-     if extension == 'zip':
+    if extension == 'zip':
         try:
             z = zipfile.ZipFile(f)
             f2 = z.extract(z.namelist()[0])
