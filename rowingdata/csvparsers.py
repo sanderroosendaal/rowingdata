@@ -14,6 +14,7 @@ from lxml import objectify,etree
 from fitparse import FitFile
 
 from utils import *
+import zipfile
 
 # we're going to plot SI units - convert pound force to Newton
 lbstoN = 4.44822
@@ -119,7 +120,16 @@ def get_file_type(f):
 	    return 'unknown'
 
 	return 'fit'
-	    
+
+     if extension == 'zip':
+        try:
+            z = zipfile.ZipFile(f)
+            f2 = z.extract(z.namelist()[0])
+            tp = get_file_type(f2)
+            return 'zip',f2,tp
+        except:
+            return 'unknown'
+    
     return 'unknown'
 	
 
