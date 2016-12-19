@@ -3,6 +3,12 @@ import numpy as np
 #import pylab
 #import scipy
 import re
+import warnings
+import checkdatafiles
+
+#warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
+
+__version__ = "0.93.7"
 
 try:
     from Tkinter import Tk
@@ -28,6 +34,38 @@ import pandas as pd
 from tqdm import tqdm
 
 from fitparse import FitFile
+
+from utils import *
+
+from csvparsers import (
+    CSVParser,
+    painsledDesktopParser,
+    BoatCoachParser,
+    speedcoachParser,
+    ErgDataParser,
+    ErgStickParser,
+    MysteryParser,
+    RowProParser,
+    SpeedCoach2Parser,
+    totimestamp,
+    make_cumvalues_array,
+    make_cumvalues,
+    timestrtosecs,
+    timestrtosecs2,
+    get_file_type,
+    get_file_line,
+    skip_variable_footer,
+    get_rowpro_footer,
+    skip_variable_header,
+    lbstoN,
+    )
+
+from otherparsers import (
+    fitsummarydata,
+    FITParser,
+    TCXParserNoHR,
+    TCXParser,
+    )
 
 weknowphysics = 0
 
@@ -64,12 +102,9 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.93.6"
 
-namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
-# we're going to plot SI units - convert pound force to Newton
-lbstoN = 4.44822
+
 
 def main():
     str = "Executing rowingdata version %s. " % __version__
@@ -86,29 +121,6 @@ def nanstozero(nr):
     else:
 	return nr
 
-def totimestamp(dt, epoch=datetime.datetime(1970,1,1)):
-    td = dt - epoch
-    # return td.total_seconds()
-    return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6
-
-def timestrtosecs(string):
-    dt = parser.parse(string,fuzzy=True)
-    secs = 3600*dt.hour+60*dt.minute+dt.second
-
-    return secs
-
-def timestrtosecs2(timestring):
-    try:
-	h,m,s = timestring.split(':')
-	sval = 3600*int(h)+60.*int(m)+float(s)
-    except ValueError:
-        try:
-	    m,s = timestring.split(':')
-	    sval = 60.*int(m)+float(s)
-        except ValueError:
-            sval = 0
-        
-    return sval
 
 
 def spm_toarray(l):
@@ -118,127 +130,6 @@ def spm_toarray(l):
 
     return o
 
-def get_file_type(f):
-    fop = open(f,'r')
-    extension = f[-3:].lower()
-    if extension == 'csv':
-	# get first and 7th line of file
-	firstline = fop.readline()
-	
-	for i in range(3):
-	    fourthline = fop.readline()
-
-	for i in range(3):
-	    seventhline = fop.readline()
-
-	fop.close()
-
-	if 'SpeedCoach GPS Pro' in fourthline:
-	    return 'speedcoach2'
-
-	if 'Practice Elapsed Time (s)' in firstline:
-	    return 'mystery'
-
-        if 'Club' in firstline:
-            return 'boatcoach'
-        
-	if 'Hair' in seventhline:
-	    return 'rp'
-
-	if 'Total elapsed time (s)' in firstline:
-	    return 'ergstick'
-
-	if 'Stroke Number' in firstline:
-	    return 'ergdata'
-
-	if ' DriveTime (ms)' in firstline:
-	    return 'csv'
-
-	if 'HR' in firstline and 'Interval' in firstline and 'Avg HR' not in firstline:
-	    return 'speedcoach'
-
-	if 'stroke.REVISION' in firstline:
-	    return 'painsleddesktop'
-
-    if extension == 'tcx':
-	try:
-	    tree = objectify.parse(f)
-	    rt = tree.getroot()
-	except:
-	    return 'unknown'
-
-	if 'HeartRateBpm' in etree.tostring(rt):
-	    return 'tcx'
-	else:
-	    return 'tcxnohr'
-
-    if extension =='fit':
-	try:
-	    FitFile(f,check_crc=False).parse()
-	except:
-	    return 'unknown'
-
-	return 'fit'
-	    
-    return 'unknown'
-	
-
-def get_file_line(linenr,f):
-    fop = open(f,'r')
-    for i in range(linenr):
-	line = fop.readline()
-
-    fop.close()
-    return line
-
-
-def skip_variable_footer(f):
-    counter = 0
-    counter2 = 0
-
-    fop = open(f,'r')
-    for line in fop:
-	if line.startswith('Type') and counter>15:
-	    counter2 = counter
-	    counter += 1
-	else:
-	    counter += 1
-
-    fop.close()
-    return counter-counter2+1
-
-def get_rowpro_footer(f,converters={}):
-    counter = 0
-    counter2 = 0
-
-    fop = open(f,'r')
-    for line in fop:
-	if line.startswith('Type') and counter>15:
-	    counter2 = counter
-	    counter += 1
-	else:
-	    counter += 1
-
-    fop.close()
-    
-    return pd.read_csv(f,skiprows=counter2,
-		       converters=converters,
-		       engine='python',
-		       sep=None)
-    
-
-def skip_variable_header(f):
-    counter = 0
-
-    fop = open(f,'r')
-    for line in fop:
-	if line.startswith('Session Detail Data') or line.startswith('Per-Stroke Data'):
-	    counter2 = counter
-	else:
-	    counter +=1
-
-    fop.close()
-    return counter2+2
 
 def make_cumvalues_rowingdata(df):
     """ Takes entire dataframe, calculates cumulative distance
@@ -266,50 +157,6 @@ def make_cumvalues_rowingdata(df):
     return [cummeters,lapidx,cumworkmeters]
 	
 
-def make_cumvalues(xvalues):
-    """ Takes a Pandas dataframe with one column as input value.
-    Tries to create a cumulative series.
-    
-    """
-    
-    newvalues = 0.0*xvalues
-    dx = xvalues.diff()
-    dxpos = dx
-    mask = -xvalues.diff()>0.9*xvalues
-    nrsteps = len(dx.loc[mask])
-    lapidx = np.cumsum((-dx+abs(dx))/(-2*dx))
-    lapidx = lapidx.fillna(value=0)
-    if (nrsteps>0):
-	dxpos[mask] = xvalues[mask]
-	newvalues = np.cumsum(dxpos)+xvalues.ix[0,0]
-	newvalues.ix[0,0] = xvalues.ix[0,0]
-    else:
-	newvalues = xvalues
-
-    newvalues.fillna(method='ffill')
-
-    return [newvalues,lapidx]
-
-def make_cumvalues_array(xvalues):
-    """ Takes a Pandas dataframe with one column as input value.
-    Tries to create a cumulative series.
-    
-    """
-    
-    newvalues = 0.0*xvalues
-    dx = np.diff(xvalues)
-    dxpos = dx
-    nrsteps = len(dxpos[dxpos<0])
-    lapidx = np.append(0,np.cumsum((-dx+abs(dx))/(-2*dx)))
-    if (nrsteps>0):
-	indexes = np.where(dxpos<0)
-	for index in indexes:
-	    dxpos[index] = xvalues[index+1]
-	newvalues = np.append(0,np.cumsum(dxpos))+xvalues[0]
-    else:
-	newvalues = xvalues
-
-    return [newvalues,abs(lapidx)]
 
 def tailwind(bearing,vwind,winddir,vstream=0):
     """ Calculates head-on head/tailwind in direction of rowing
@@ -538,24 +385,6 @@ def cumcpdata(rows):
 
     return df
 
-def ewmovingaverage(interval,window_size):
-    # Experimental code using Exponential Weighted moving average
-
-    intervaldf = DataFrame({'v':interval})
-    idf_ewma1 = intervaldf.ewm(span=window_size)
-    idf_ewma2 = intervaldf[::-1].ewm(span=window_size)
-
-    i_ewma1 = idf_ewma1.mean().ix[:,'v']
-    i_ewma2 = idf_ewma2.mean().ix[:,'v']
-
-    interval2 = np.vstack((i_ewma1,i_ewma2[::-1]))
-    interval2 = np.mean( interval2, axis=0) # average
-
-    return interval2
-
-def movingaverage(interval, window_size):
-    window = np.ones(int(window_size))/float(window_size)
-    return np.convolve(interval, window, 'same')
 
 def interval_string(nr,totaldist,totaltime,avgpace,avgspm,
 		    avghr,maxhr,avgdps,avgpower,
@@ -701,43 +530,6 @@ def summarystring(totaldist,totaltime,avgpace,avgspm,avghr,maxhr,
 
     return stri1
 
-def geo_distance(lat1,lon1,lat2,lon2):
-    """ Approximate distance and bearing between two points
-    defined by lat1,lon1 and lat2,lon2
-    This is a slight underestimate but is close enough for our purposes,
-    We're never moving more than 10 meters between trackpoints
-
-    Bearing calculation fails if one of the points is a pole. 
-    
-    """
-    
-    # radius of earth in km
-    R = 6373.0
-
-    # pi
-    pi = math.pi
-
-    lat1 = math.radians(lat1)
-    lat2 = math.radians(lat2)
-    lon1 = math.radians(lon1)
-    lon2 = math.radians(lon2)
-
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-
-    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
-
-    distance = R * c
-
-    tc1 = atan2(sin(lon2-lon1)*cos(lat2),
-		cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(lon2-lon1))
-
-    tc1 = tc1 % (2*pi)
-
-    bearing = math.degrees(tc1)
-
-    return [distance,bearing]
 
 def format_pace_tick(x,pos=None):
 	min=int(x/60)
@@ -746,32 +538,6 @@ def format_pace_tick(x,pos=None):
 	template='%d:%s'
 	return template % (min,sec_str)
 
-def format_pace(x,pos=None):
-    if isinf(x) or isnan(x):
-	x=0
-	
-    min=int(x/60)
-    sec=(x-min*60.)
-
-    str1 = "{min:0>2}:{sec:0>4.1f}".format(
-	min = min,
-	sec = sec
-	)
-
-    return str1
-
-def format_time(x,pos=None):
-
-
-    min = int(x/60.)
-    sec = int(x-min*60)
-
-    str1 = "{min:0>2}:{sec:0>4.1f}".format(
-	min=min,
-	sec=sec,
-	)
-
-    return str1
 
 def y_axis_range(ydata,miny=0,padding=.1,ultimate=[-1e9,1e9]):
 
@@ -823,168 +589,6 @@ def format_time_tick(x,pos=None):
 	template='%d:%s'
 	return template % (hour,min_str)
 
-class fitsummarydata:
-    def __init__(self,readFile):
-	self.readFile = readFile
-	self.fitfile = FitFile(readFile,check_crc=False)
-	self.records = self.fitfile.messages
-	self.summarytext = 'Work Details\n'
-
-
-    def setsummary(self,separator="|"):
-	lapcount = 0
-	self.summarytext += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-SPM-{sep}AvgHR{sep}MaxHR{sep}DPS-\n".format(
-	    sep = separator
-	    )
-
-	strokecount = 0
-	recordcount = 0
-	totalhr = 0
-	maxhr = 0
-
-	totaldistance = 0
-	totaltime = 0
-	grandhr = 0
-	grandmaxhr = 0
-	
-	for record in self.records:
-	    if record.name == 'record':
-		hr = record.get_value('heart_rate')
-		if hr is None:
-		    hr = 0
-		if hr>maxhr:
-		    maxhr = hr
-
-		if hr>grandmaxhr:
-		    grandmaxhr = hr
-		    
-		totalhr += hr
-
-		grandhr += hr
-		
-		strokecount += 1
-		recordcount += 1
-		
-	    if record.name == 'lap':
-		lapcount += 1
-
-		inthr = int(totalhr/float(strokecount))
-
-		inttime = record.get_value('total_elapsed_time')
-
-		lapmin = int(inttime/60)
-		lapsec = int(int(10*(inttime-lapmin*60.))/10.)
-		laptimestring = str(lapmin)+":"+str(lapsec)
-		
-		intdist = int(record.get_value('total_distance'))
-		intvelo = intdist/inttime
-		intpace = 500./intvelo
-
-		totaldistance += intdist
-		totaltime += inttime
-
-		intspm = 60.*strokecount/inttime
-		intdps = intdist/float(strokecount)
-
-		intmaxhr = maxhr
-
-		pacemin=int(intpace/60)
-		pacesec=int(10*(intpace-pacemin*60.))/10.
-		pacestring = str(pacemin)+":"+str(pacesec)
-
-		strokecount = 0
-		totalhr = 0
-		maxhr = 0
-
-
-		s = "{nr:0>2}{sep}{intdist:0>5d}{sep}".format(
-		    nr = lapcount,
-		    sep = separator,
-		    intdist = intdist
-		    )
-
-		s += " {lapmin:0>2}:{lapsec:0>2} {sep}".format(
-		    lapmin = lapmin,
-		    lapsec = lapsec,
-		    sep = separator,
-		    )
-
-		s+= "{pacemin:0>2}:{pacesec:0>3.1f}".format(
-		    pacemin = pacemin,
-		    pacesec = pacesec,
-		    )
-
-		s += "{sep} {intspm:0>4.1f}{sep}".format(
-		    intspm = intspm,
-		    sep = separator
-		    )
-
-		s += " {inthr:0>3d} {sep}".format(
-		    inthr = inthr,
-		    sep = separator
-		    )
-
-		s += " {intmaxhr:0>3d} {sep}".format(
-		    intmaxhr = intmaxhr,
-		    sep = separator
-		    )
-
-		s += " {dps:0>3.1f}".format(
-		    dps = intdps
-		    )
-
-		s+= "\n"
-		self.summarytext += s
-
-	# add total summary
-	overallvelo = totaldistance/totaltime
-	overallpace = 500./overallvelo
-
-	min=int(overallpace/60)
-	sec=int(10*(overallpace-min*60.))/10.
-	pacestring = str(min)+":"+str(sec)
-
-	totmin = int(totaltime/60)
-	totsec = int(int(10*(totaltime-totmin*60.))/10.)
-	timestring = str(totmin)+":"+str(totsec)
-
-	avghr = grandhr/float(recordcount)
-	avgspm = 60.*recordcount/totaltime
-
-	avgdps = totaldistance/float(recordcount)
-	
-	s = "Workout Summary\n"
-	s += "--{sep}{totaldistance:0>5}{sep}".format(
-	    totaldistance = int(totaldistance),
-	    sep = separator
-	    )
-#	s += " "+timestring
-
-	s += " {totmin:0>2}:{totsec:0>2} {sep} ".format(
-	    totmin = totmin,
-	    totsec = totsec,
-	    sep = separator,
-	    )
-	    
-	s += pacestring+separator
-
-	s += " {avgspm:0>4.1f}{sep}".format(
-	    sep = separator,
-	    avgspm = avgspm
-	    )
-
-	s += " {avghr:0>3} {sep} {grandmaxhr:0>3} {sep}".format(
-	    avghr = int(avghr),
-	    grandmaxhr = int(grandmaxhr),
-	    sep = separator
-	    )
-
-	s += " {avgdps:0>3.1f}".format(
-	    avgdps = avgdps
-	    )
-
-	self.summarytext+=s
-    
 
 class summarydata:
     """ This is used to create nice summary texts from CrewNerd's summary CSV
@@ -1126,9 +730,9 @@ class summarydata:
 
 
 	stri1 = summarystring(totaldistance,totaltime,avgpace,avgsr,
-			     avghr,maxhr,avgdps,
-			     readFile=self.readFile,
-			     separator=separator)
+			      avghr,maxhr,avgdps,0,
+			      readFile=self.readFile,
+			      separator=separator)
 
 	
 	# print stri1+stri2
@@ -1184,1501 +788,6 @@ class summarydata:
 
 	print stri
 	
-
-# Remark. I should write a generic CSV parser which takes a mapping to
-# painsled column labels as input. Then rewrite the ErgData, RowPro, SpeedCoach
-# parsers to use the generic CSV parser. 
-
-class FITParser:
-
-    def __init__(self, readFile):
-	self.readFile = readFile
-	self.fitfile = FitFile(readFile,check_crc=False)
-	self.records = self.fitfile.messages
-
-    def write_csv(self,writeFile="fit_o.csv",gzip=False):
-	cadence = []
-	hr = []
-	lat = []
-	lon = []
-	velo = []
-	timestamp = []
-	distance = []
-	lapidx = []
-	lapcounter = 0
-
-	for record in self.records:
-#	    if record.mesg_type.name == 'record':
-	    if record.name == 'record':
-		# obtain the values
-		s = record.get_value('speed')
-		h = record.get_value('heart_rate')
-		spm = record.get_value('cadence')
-		d = record.get_value('distance')
-		t = record.get_value('timestamp')
-		latva = record.get_value('position_lat')
-		if latva is not None:
-		    latv = record.get_value('position_lat')*(180./2**31)
-		else:
-		    latv = 0
-		lonva = record.get_value('position_long')
-		if lonva is not None:
-		    lonv = record.get_value('position_long')*(180./2**31)
-		else:
-		    lonv = 0
-
-		# get the unit
-
-
-		# add the values to the list
-		if latva is not None and lonva is not None:
-		    velo.append(s)
-		    hr.append(h)
-		    lapidx.append(lapcounter)
-		    lat.append(latv)
-		    lon.append(lonv)
-		    timestamp.append(totimestamp(t))
-		    cadence.append(spm)
-		    distance.append(d)
-#	    if record.mesg_type.name == 'lap':
-	    if record.name == 'lap':
-		lapcounter += 1
-
-	lat = pd.Series(lat)
-	lon = pd.Series(lon)
-
-	velo = pd.Series(velo)
-
-	pace = 500./velo
-
-	nr_rows = len(lat)
-
-	seconds3 = np.array(timestamp)-timestamp[0]
-
-	data = DataFrame({
-	    'TimeStamp (sec)':timestamp,
-	    ' Horizontal (meters)': distance,
-	    ' Cadence (stokes/min)':cadence,
-	    ' HRCur (bpm)':hr,
-	    ' longitude':lon,
-	    ' latitude':lat,
-	    ' Stroke500mPace (sec/500m)':pace,
-	    ' Power (watts)':np.zeros(nr_rows),
-	    ' DriveLength (meters)':np.zeros(nr_rows),
-	    ' StrokeDistance (meters)':np.zeros(nr_rows),
-	    ' DriveTime (ms)':np.zeros(nr_rows),
-	    ' DragFactor':np.zeros(nr_rows),
-	    ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-	    ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-	    ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-	    ' ElapsedTime (sec)':seconds3,
-	    ' lapIdx':lapidx,
-	    })
-
-        if gzip:
-            return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-	    return data.to_csv(writeFile,index_label='index')
-
-
-class RowProParser:
-    """ Parser for reading CSV files created by RowPro
-
-    Use: data = rowingdata.RowProParser("RPdata.csv")
-
-         data.write_csv("RPdata_out.csv")
-
-	 """
-    
-    def __init__(self,RPfile="RPtest.csv",skiprows=14,
-		 row_date=datetime.datetime.utcnow()):
-
-	skipfooter = skip_variable_footer(RPfile)
-	
-	self.RP_df = pd.read_csv(RPfile,skiprows=skiprows,
-				 skipfooter=skipfooter,
-				 engine='python',
-				 sep=None)
-
-	self.footer = get_rowpro_footer(RPfile)
-
-	# crude EU format detector
-	try:
-	    p = self.RP_df['Pace']*500.0
-	except TypeError:
-	    converters = {
-		'Distance': lambda x: float(x.replace('.','').replace(',','.')),
-		'AvgPace': lambda x: float(x.replace('.','').replace(',','.')),
-		'Pace': lambda x: float(x.replace('.','').replace(',','.')),
-		'AvgWatts': lambda x: float(x.replace('.','').replace(',','.')),
-		'Watts': lambda x: float(x.replace('.','').replace(',','.')),
-		'SPM': lambda x: float(x.replace('.','').replace(',','.')),
-		'EndHR': lambda x: float(x.replace('.','').replace(',','.')),
-		}
-	    self.RP_df = pd.read_csv(RPfile,skiprows=skiprows,
-				     skipfooter=skipfooter,
-				     converters=converters,
-				     engine='python',
-				     sep=None)
-	    self.footer = get_rowpro_footer(RPfile,converters=converters)
-
-	# replace key values
-	footerwork = self.footer[self.footer['Type']<=1]
-	maxindex = self.RP_df.index[-1]
-	endvalue = self.RP_df.loc[maxindex,'Time']
-	#self.RP_df.loc[-1,'Time'] = 0
-	dt = self.RP_df['Time'].diff()
-	therowindex = self.RP_df[dt<0].index
-
-	if len(footerwork)==2*(len(therowindex)+1):
-	    footerwork = self.footer[self.footer['Type']==1]
-	    self.RP_df.loc[-1,'Time'] = 0
-	    dt = self.RP_df['Time'].diff()
-	    therowindex = self.RP_df[dt<0].index
-	    nr = 0
-	    for i in footerwork.index:
-		time = footerwork.ix[i,'Time']
-		distance = footerwork.ix[i,'Distance']
-		avgpace = footerwork.ix[i,'AvgPace']
-		self.RP_df.ix[therowindex[nr],'Time'] = time
-		self.RP_df.ix[therowindex[nr],'Distance'] = distance
-		nr += 1
-	
-	if len(footerwork)==len(therowindex)+1:
-	    self.RP_df.loc[-1,'Time'] = 0
-	    dt = self.RP_df['Time'].diff()
-	    therowindex = self.RP_df[dt<0].index
-	    nr = 0
-	    for i in footerwork.index:
-		time = footerwork.ix[i,'Time']
-		distance = footerwork.ix[i,'Distance']
-		avgpace = footerwork.ix[i,'AvgPace']
-		self.RP_df.ix[therowindex[nr],'Time'] = time
-		self.RP_df.ix[therowindex[nr],'Distance'] = distance
-		nr += 1
-	else:
-	    self.RP_df.loc[maxindex,'Time'] = endvalue
-	    for i in footerwork.index:
-		time = footerwork.ix[i,'Time']
-		distance = footerwork.ix[i,'Distance']
-		avgpace = footerwork.ix[i,'AvgPace']
-		diff = self.RP_df['Time'].apply(lambda z: abs(time-z))
-		diff.sort_values(inplace=True)
-		theindex = diff.index[0]
-		self.RP_df.ix[theindex,'Time'] = time
-		self.RP_df.ix[theindex,'Distance'] = distance
-
-	    
-	dateline = get_file_line(11,RPfile)
-
-	dated = dateline.split(',')[0]
-	dated2 = dateline.split(';')[0]
-	try:
-	    self.row_date = parser.parse(dated,fuzzy=True)
-	except ValueError:
-	    self.row_date = parser.parse(dated2,fuzzy=True)
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports RowPro data to the CSV format that I use in rowingdata
-	"""
-
-
-	# Time,Distance,Pace,Watts,Cals,SPM,HR,DutyCycle,Rowfile_Id
-
-	dist2 = self.RP_df['Distance']
-	spm = self.RP_df['SPM']
-	pace = self.RP_df['Pace']*500.0
-	pace = np.clip(pace,0,1e4)
-	power = self.RP_df['Watts']
-	seconds = self.RP_df['Time']/1000.
-
-	res = make_cumvalues(seconds)
-	seconds2 = res[0]+seconds[0]
-	lapidx = res[1]
-	seconds3 = seconds2.interpolate()
-	seconds3[0] = seconds[0]
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtimes = seconds3+totimestamp(dateobj)
-	# time.mktime(dateobj.timetuple())
-
-
-	hr = self.RP_df['HR']
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':np.zeros(nr_rows),
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' ElapsedTime (sec)':seconds3,
-			  ' lapIdx':lapidx,
-			  })
-	
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-	
-	
-
-class painsledDesktopParser:
-    """ Parser for reading CSV files created by Painsled (desktop version)
-
-    Use: data = rowingdata.painsledDesktopParser("sled_data.csv")
-
-         data.write_csv("sled_data_out.csv")
-
-	 """
-    
-    def __init__(self, sled_file="sled_test.csv"):
-	df = pd.read_csv(sled_file)
-	# remove "00 waiting to row"
-	self.sled_df = df[df[' stroke.endWorkoutState'] != ' "00 waiting to row"']
-
-
-
-    def time_values(self):
-	""" Converts painsled style time stamps to Unix time stamps	"""
-	
-	# time stamps (ISO)
-	timestamps = self.sled_df.loc[:,' stroke.driveStartMs'].values
-	
-	# convert to unix style time stamp
-	unixtimes = np.zeros(len(timestamps))
-
-	# there may be a more elegant and faster way with arrays 
-	for i in range(len(timestamps)):
-	    tt = iso8601.parse_date(timestamps[i][2:-1])
-	    # tt = parser.parse(timestamps[i],fuzzy=True)
-	    unixtimes[i] = time.mktime(tt.timetuple())
-
-	return unixtimes
-
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports Painsled (desktop) data to the CSV format that
-	I use in rowingdata
-	"""
-	
-
-	unixtimes = self.time_values()
-
-	
-	dist2 = self.sled_df[' stroke.startWorkoutMeter']
-	spm = self.sled_df[' stroke.strokesPerMin']
-	pace = self.sled_df[' stroke.paceSecPer1k']/2.0
-	pace = np.clip(pace,0,1e4)
-	power = self.sled_df[' stroke.watts']
-	ldrive = self.sled_df[' stroke.driveMeters']
-	strokelength2 = self.sled_df[' stroke.strokeMeters']
-	tdrive = self.sled_df[' stroke.driveMs']
-	trecovery = self.sled_df[' stroke.slideMs']
-	hr = self.sled_df[' stroke.hrBpm']
-	intervalcount = self.sled_df[' stroke.intervalNumber']
-	dragfactor = self.sled_df[' stroke.dragFactor']
-
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':strokelength2,
-			  ' DriveTime (ms)':tdrive,
-			  ' DragFactor':dragfactor,
-			  ' StrokeRecoveryTime (ms)':trecovery,
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' lapIdx':intervalcount,
-			  ' ElapsedTime (sec)':unixtimes-unixtimes[0]
-			  })
-
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-	
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-	
-
-
-class BoatCoachParser:
-    """ Parser for reading CSV files created by Painsled (desktop version)
-
-    Use: data = rowingdata.painsledDesktopParser("sled_data.csv")
-
-         data.write_csv("sled_data_out.csv")
-
-	 """
-    
-    def __init__(self, boatcoach_file="bc_test.csv"):
-        df = pd.read_csv(boatcoach_file,skiprows=1,usecols=range(25))
-	self.boatcoach_df = df[df['workoutType'] != 'none']
-        # get date from footer
-        fop = open(boatcoach_file,'r')
-        line = fop.readline()
-        dated =  re.split('Date:',line)[1][1:-1]
-	self.row_date = parser.parse(dated,fuzzy=True)
-        fop.close()
-
-    def time_values(self,timecolumn):
-	""" Converts boatcoach style time stamps to Unix time stamps	"""
-
-        row_date = time.mktime(self.row_date.timetuple())
-	# time stamps (ISO)
-	timesecs = timecolumn.apply(lambda x:timestrtosecs(x))
-        timesecs = make_cumvalues(timesecs)[0]
-        
-	# convert to unix style time stamp
-	unixtimes = row_date+timesecs
-        
-        return unixtimes
-
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports Painsled (desktop) data to the CSV format that
-	I use in rowingdata
-	"""
-	
-
-	unixtimes = self.time_values(self.boatcoach_df['workTime'])
-
-	
-	dist2 = self.boatcoach_df['workDistance']
-	spm = self.boatcoach_df['strokeRate']
-	pace = self.boatcoach_df['stroke500MPace'].apply(lambda x:timestrtosecs(x))
-	power = self.boatcoach_df['strokePower']
-	ldrive = self.boatcoach_df['strokeLength']
-	tdrive = self.boatcoach_df['strokeDriveTime']
-	hr = self.boatcoach_df['currentHeartRate']
-	intervalcount = self.boatcoach_df['intervalCount']
-	dragfactor = self.boatcoach_df['dragFactor']
-        peakforce = self.boatcoach_df['strokePeakForce']
-        averageforce = self.boatcoach_df['strokeAverageForce']
-
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':ldrive,
-			  ' StrokeDistance (meters)':np.zeros(nr_rows),
-			  ' DriveTime (ms)':tdrive,
-			  ' DragFactor':dragfactor,
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':averageforce,
-			  ' PeakDriveForce (lbs)':peakforce,
-			  ' lapIdx':intervalcount,
-			  ' ElapsedTime (sec)':unixtimes-unixtimes[0]
-			  })
-
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-	
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-
-class SpeedCoach2Parser:
-    """ Parser for reading CSV files created by SpeedCoach GPS 2
-
-    Use: data = rowingdata.SpeedCoach2Parser("NKGPS2data.csv")
-
-         data.write_csv("NKGPS2data_out.csv")
-
-	 """
-    
-    def __init__(self,NKfile="Speedcoach2example.csv",
-		 row_date=datetime.datetime.utcnow()):
-
-	skiprows = skip_variable_header(NKfile)
-	NK_df = pd.read_csv(NKfile,skiprows=skiprows)
-	self.NK_df = NK_df.drop(NK_df.index[[0]])
-	
-	dateline = get_file_line(4,NKfile)
-	dated = dateline.split(',')[1]
-	self.row_date = parser.parse(dated,fuzzy=True)
-
-    def time_values(self,timecolumn):
-	""" Converts boatcoach style time stamps to Unix time stamps	"""
-
-        row_date = time.mktime(self.row_date.timetuple())
-	# time stamps (ISO)
-	timesecs = timecolumn.apply(lambda x:timestrtosecs2(x))
-	
-        return timesecs
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports RowPro data to the CSV format that I use in rowingdata
-	"""
-
-	# Time,Distance,Pace,Watts,Cals,SPM,HR,DutyCycle,Rowfile_Id
-
-	try:
-            dist2 = pd.to_numeric(self.NK_df['GPS Distance'],errors='coerce')
-	    spm = pd.to_numeric(self.NK_df['Stroke Rate'],errors='coerce')
-	    velo = pd.to_numeric(self.NK_df['GPS Speed'],errors='coerce')
-            power = 0.0*dist2
-            catch  = 0.0*dist2
-            slip = 0.0*dist2
-            finish = 0.0*dist2
-            wash = 0.0*dist2
-            avgforce = 0.0*dist2
-            peakforce = 0.0*dist2
-            peakforceangle = 0.0*dist2
-            driveenergy = 0.0*dist2
-            lat_values = 0.0*dist2
-            long_values = 0.0*dist2
-        except KeyError:
-            dist2 = pd.to_numeric(self.NK_df['Distance (GPS)'],errors='coerce')
-	    spm = pd.to_numeric(self.NK_df['Stroke Rate'],errors='coerce')
-	    velo = pd.to_numeric(self.NK_df['Speed (GPS)'],errors='coerce')
-            power = pd.to_numeric(self.NK_df['Power'],errors='coerce')
-            catch= pd.to_numeric(self.NK_df['Catch'],errors='coerce')
-            slip = pd.to_numeric(self.NK_df['Slip'],errors='coerce')
-            finish = pd.to_numeric(self.NK_df['Finish'],errors='coerce')
-            wash = pd.to_numeric(self.NK_df['Wash'],errors='coerce')
-            avgforce = pd.to_numeric(self.NK_df['Force Avg'],errors='coerce')/lbstoN
-            peakforce = pd.to_numeric(self.NK_df['Force Max'],errors='coerce')/lbstoN
-            peakforceangle = pd.to_numeric(self.NK_df['Max Force Angle'],errors='coerce')
-            driveenergy = pd.to_numeric(self.NK_df['Work'],errors='coerce')
-            lat_values = pd.to_numeric(self.NK_df['GPS Lat.'],errors='coerce')
-            long_values = pd.to_numeric(self.NK_df['GPS Lon.'],errors='coerce')
-	
-	lapidx = pd.to_numeric(self.NK_df['Interval'],errors='coerce')
-
-
-	cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
-	pace = 500./velo
-	pace = pace.replace(np.nan,300)
-
-	timestrings = self.NK_df['Elapsed Time']
-        seconds = self.time_values(timestrings)
-
-        res = make_cumvalues_array(np.array(seconds))
-	seconds3 = res[0]
-	lapidx = res[1]
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtimes = seconds3+totimestamp(dateobj)
-	# time.mktime(dateobj.timetuple())
-
-
-	hr = pd.to_numeric(self.NK_df['Heart Rate'],errors='coerce')
-	nr_rows = len(spm)
-
-
-	# Create data frame with all necessary data to write to csv
-	
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':np.zeros(nr_rows),
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':avgforce,
-			  ' PeakDriveForce (lbs)':peakforce,
-			  ' ElapsedTime (sec)':seconds3,
-			  ' lapIdx':lapidx,
-                          'catch':catch,
-                          'slip':slip,
-                          'finish':finish,
-                          'driveenergy':driveenergy,
-                          'wash':wash,
-                          'peakforceangle':peakforceangle,
-			  ' longitude':long_values,
-			  ' latitude':lat_values,
-                          'cum_dist':cum_dist,
-			  })
-	
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-
-	
-	
-
-class MysteryParser:
-    """ Parser for reading CSV files created by CrewNerd interval export
-
-    Use: data = rowingdata.MysteryParser("mystery.csv")
-
-         data.write_csv("mystery.csv")
-
-	 """
-    
-    def __init__(self,Mfile="mystery.csv",
-		 row_date=datetime.datetime.utcnow()):
-
-	M_df = pd.read_csv(Mfile,
-			   engine='python',
-			   sep=None)
-	self.M_df = M_df.drop(M_df.index[[0]])
-	
-	self.row_date = row_date
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports to the CSV format that I use in rowingdata
-	"""
-
-	# Time,Distance,Pace,Watts,Cals,SPM,HR,DutyCycle,Rowfile_Id
-
-	dist2 = self.M_df['Distance (m)']
-	spm = self.M_df['Stroke Rate (SPM)']
-	velo = pd.to_numeric(self.M_df['Speed (m/s)'],errors='coerce')
-	
-	pace = 500./velo
-	pace = pace.replace(np.nan,300)
-
-	seconds = self.M_df['Practice Elapsed Time (s)']
-
-	lat_values = self.M_df['Lat']
-	long_values = self.M_df['Lon']
-
-
-	res = make_cumvalues_array(np.array(seconds))
-	seconds3 = res[0]
-	lapidx = res[1]
-
-	strokelength = velo/(spm/60.)
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtimes = seconds3+totimestamp(dateobj)
-	# time.mktime(dateobj.timetuple())
-
-
-	hr = self.M_df['HR (bpm)']
-	nr_rows = len(spm)
-
-
-	# Create data frame with all necessary data to write to csv
-	
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' longitude':long_values,
-			  ' latitude':lat_values,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':np.zeros(nr_rows),
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':strokelength,
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' ElapsedTime (sec)':seconds3,
-			  ' lapIdx':lapidx,
-			  })
-	
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-
-	
-	
-
-
-class speedcoachParser:
-    """ Parser for reading CSV files created by SpeedCoach
-
-    Use: data = rowingdata.speedcoachParser("speedcoachdata.csv")
-
-         data.write_csv("speedcoach_data_out.csv")
-
-	 """
-    
-    def __init__(self, sc_file="sc_test.csv",row_date=datetime.datetime.utcnow()):
-	df = pd.read_csv(sc_file)
-	self.sc_df = df
-	self.row_date = row_date
-
-
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports SpeedCoach CSV data to the CSV format that
-	I use in rowingdata
-	"""
-
-	seconds = self.sc_df['Time(sec)']
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtime = seconds+totimestamp(dateobj)
-
-	dist2 = self.sc_df['Distance(m)']
-	cum_dist = np.zeros(number_of_rows)
-
-	cum_dist = make_cumvalues(dist2)
-	spm = self.sc_df['Rate']
-	pace = self.sc_df['Split(sec)']
-	pace = np.clip(pace,0,1e4)
-
-	hr = self.sc_df['HR']
-
-
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtime,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':np.zeros(nr_rows),
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':np.zeros(nr_rows),
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' lapIdx':np.zeros(nr_rows),
-			  ' ElapsedTime (sec)':seconds,
-                          'cum_dist':cum_dist,
-			  })
-
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-	
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-
-
-class ErgDataParser:
-    """ Parser for reading CSV files created by ErgData/Concept2 logbook
-
-    Use: data = rowingdata.ErgDataParser("ergdata.csv")
-
-         data.write_csv("speedcoach_data_out.csv")
-
-	 """
-    
-    def __init__(self, ed_file="ed_test.csv",row_date=datetime.datetime.utcnow()):
-	df = pd.read_csv(ed_file)
-	self.ed_df = df
-	self.row_date = row_date
-
-
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports  data to the CSV format that
-	I use in rowingdata
-	"""
-
-	seconds = self.ed_df['Time (seconds)']
-	dt = seconds.diff()
-	nrsteps = len(dt[dt<0])
-
-	res = make_cumvalues(seconds)
-	seconds2 = res[0]+seconds[0]
-	lapidx = res[1]
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtime = seconds2+totimestamp(dateobj)
-
-	dist2 = self.ed_df['Distance (meters)']
-	spm = self.ed_df['Stroke Rate']
-        try:
-	    pace = self.ed_df['Pace (seconds per 500m']
-        except KeyError:
-	    pace = self.ed_df['Pace (seconds per 500m)']
-
-	pace = np.clip(pace,0,1e4)
-
-	hr = self.ed_df['Heart Rate']
-
-	velocity = 500./pace
-	power = 2.8*velocity**3
-
-
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtime,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':np.zeros(nr_rows),
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' lapIdx':lapidx,
-			  ' ElapsedTime (sec)':seconds
-			  })
-
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-	
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-
-
-	
-class ErgStickParser:
-    """ Parser for reading CSV files created by ErgStick
-
-    Use: data = rowingdata.ErgStickParser("ergdata.csv")
-
-         data.write_csv("speedcoach_data_out.csv")
-
-	 """
-    
-    def __init__(self, ed_file="ed_test.csv",row_date=datetime.datetime.utcnow()):
-	df = pd.read_csv(ed_file)
-	self.es_df = df
-	self.row_date = row_date
-
-
-
-    def write_csv(self,writeFile="example.csv",gzip=False):
-	""" Exports  data to the CSV format that
-	I use in rowingdata
-	"""
-
-	seconds = self.es_df['Total elapsed time (s)']
-	res = make_cumvalues(seconds)
-	seconds2 = res[0]+seconds[0]
-	lapidx = res[1]
-
-	
-
-
-	# create unixtime using date
-	dateobj = self.row_date
-	unixtime = seconds2+totimestamp(dateobj)
-
-	dist2 = self.es_df['Total distance (m)']
-	spm = self.es_df['Stroke rate (/min)']
-	pace = self.es_df['Current pace (/500m)']
-	pace = np.clip(pace,0,1e4)
-	dragfactor = self.es_df['Drag factor']
-	drivelength = self.es_df['Drive length (m)']
-	strokedistance = self.es_df['Stroke distance (m)']
-	drivetime = self.es_df['Drive time (s)']*1000.
-	recoverytime = self.es_df['Stroke recovery time (s)']*1000.
-	stroke_av_force = self.es_df['Ave. drive force (lbs)']
-	stroke_peak_force = self.es_df['Peak drive force (lbs)']
-	intervalcount = self.es_df['Interval count']
-
-	hr = self.es_df['Current heart rate (bpm)']
-
-	velocity = 500./pace
-	power = 2.8*velocity**3
-
-
-	nr_rows = len(spm)
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtime,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':power,
-			  ' DriveLength (meters)':drivelength,
-			  ' StrokeDistance (meters)':strokedistance,
-			  ' DriveTime (ms)':drivetime,
-			  ' DragFactor':dragfactor,
-			  ' StrokeRecoveryTime (ms)':recoverytime,
-			  ' AverageDriveForce (lbs)':stroke_av_force,
-			  ' PeakDriveForce (lbs)':stroke_peak_force,
-			  ' lapIdx':intervalcount,
-			  ' ElapsedTime (sec)':seconds2
-			  })
-
-#	data.sort(['TimeStamp (sec)'],ascending=True)
-	data = data.sort_values(by='TimeStamp (sec)',ascending=True)
-	
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-
-class TCXParserTester:
-    def __init__(self, tcx_file):
-        tree = objectify.parse(tcx_file)
-        self.root = tree.getroot()
-        self.activity = self.root.Activities.Activity
-
-	# need to select only trackpoints with Cadence, Distance, Time & HR data 
-	self.selectionstring = '//ns:Trackpoint[descendant::ns:HeartRateBpm]'
-	self.selectionstring +='[descendant::ns:Cadence]'
-	self.selectionstring +='[descendant::ns:DistanceMeters]'
-	self.selectionstring +='[descendant::ns:Time]'
-
-
-	hr_values = self.root.xpath(self.selectionstring
-			       +'//ns:HeartRateBpm/ns:Value',
-			       namespaces={'ns': namespace})
-        
-
-
-        distance_values =  self.root.xpath(self.selectionstring
-			       +'/ns:DistanceMeters',
-			       namespaces={'ns': namespace})
-
-	spm_values = self.root.xpath(self.selectionstring
-			       +'/ns:Cadence',
-			       namespaces={'ns': namespace})
-
-    def getarray(self,str1,str2=''):
-	s = self.selectionstring 
-	s = s+'//ns:'+str1
-	if (str2 != ''):
-	    s = s+'/ns:'+str2
-
-	y = self.root.xpath(s,namespaces={'ns': namespace})
-
-	return y
-	
-
-
-class TCXParser:
-    """ Parser for reading TCX files, e.g. from CrewNerd
-
-    Use: data = rowingdata.TCXParser("crewnerd_data.tcx")
-
-         data.write_csv("crewnerd_data_out.csv")
-
-	 """
-
-    
-    def __init__(self, tcx_file):
-        tree = objectify.parse(tcx_file)
-        self.root = tree.getroot()
-        self.activity = self.root.Activities.Activity
-
-	# need to select only trackpoints with Cadence, Distance, Time & HR data 
-	self.selectionstring = '//ns:Trackpoint[descendant::ns:HeartRateBpm]'
-	self.selectionstring +='[descendant::ns:Cadence]'
-	self.selectionstring +='[descendant::ns:DistanceMeters]'
-	self.selectionstring +='[descendant::ns:Time]'
-
-
-	hr_values = self.root.xpath(self.selectionstring
-			       +'//ns:HeartRateBpm/ns:Value',
-			       namespaces={'ns': namespace})
-        
-
-
-        distance_values =  self.root.xpath(self.selectionstring
-			       +'/ns:DistanceMeters',
-			       namespaces={'ns': namespace})
-
-	spm_values = self.root.xpath(self.selectionstring
-			       +'/ns:Cadence',
-			       namespaces={'ns': namespace})
-
-
-	# time stamps (ISO)
-	timestamps = self.root.xpath(self.selectionstring
-				    +'/ns:Time',
-				    namespaces={'ns': namespace})
-	
-	lat_values = self.root.xpath(self.selectionstring
-					  +'/ns:Position/ns:LatitudeDegrees',
-					  namespaces={'ns':namespace})
-
-	long_values = self.root.xpath(self.selectionstring
-					   +'/ns:Position/ns:LongitudeDegrees',
-					   namespaces={'ns':namespace})
-
-	# and here are the trackpoints for "no stroke" 
-	self.selectionstring2 = '//ns:Trackpoint[descendant::ns:HeartRateBpm]'
-	self.selectionstring2 +='[descendant::ns:DistanceMeters]'
-	self.selectionstring2 +='[descendant::ns:Time]'
-
-	hr_values2 = self.root.xpath(self.selectionstring2
-			       +'//ns:HeartRateBpm/ns:Value',
-			       namespaces={'ns': namespace})
-        
-
-
-        distance_values2 =  self.root.xpath(self.selectionstring2
-			       +'/ns:DistanceMeters',
-			       namespaces={'ns': namespace})
-
-	spm_values2 = np.zeros(len(distance_values2)).tolist()
-
-
-	# time stamps (ISO)
-	timestamps2 = self.root.xpath(self.selectionstring2
-				    +'/ns:Time',
-				    namespaces={'ns': namespace})
-	
-	lat_values2 = self.root.xpath(self.selectionstring2
-					  +'/ns:Position/ns:LatitudeDegrees',
-					  namespaces={'ns':namespace})
-
-	long_values2 = self.root.xpath(self.selectionstring2
-					   +'/ns:Position/ns:LongitudeDegrees',
-					   namespaces={'ns':namespace})
-
-	# merge the two datasets
-
-
-	timestamps = timestamps+timestamps2
-	
-	self.hr_values = hr_values+hr_values2
-	self.distance_values = distance_values+distance_values2
-
-	self.spm_values = spm_values+spm_values2
-
-	self.long_values = long_values+long_values2
-	self.lat_values = lat_values+lat_values2
-
-	# sort the two datasets
-	data = pd.DataFrame({
-	    't':timestamps,
-	    'hr':self.hr_values,
-	    'd':self.distance_values,
-	    'spm':self.spm_values,
-	    'long':self.long_values,
-	    'lat':self.lat_values
-	    })
-
-	data = data.drop_duplicates(subset='t')
-	data = data.sort_values(by='t',ascending = 1)
-
-	timestamps = data.ix[:,'t'].values
-	self.hr_values = data.ix[:,'hr'].values
-	self.distance_values = data.ix[:,'d'].values
-	self.spm_values = data.ix[:,'spm'].values
-	self.long_values = data.ix[:,'long'].values
-	self.lat_values = data.ix[:,'lat'].values
-
-	# convert to unix style time stamp
-	unixtimes = np.zeros(len(timestamps))
-
-	# Activity ID timestamp (start)
-	iso_string = str(self.root.Activities.Activity.Id)
-	startdatetimeobj = iso8601.parse_date(iso_string)
-	
-	# startdatetimeobj = parser.parse(str(self.root.Activities.Activity.Id),fuzzy=True)
-	starttime = time.mktime(startdatetimeobj.timetuple())+startdatetimeobj.microsecond/1.e6
-
-	self.activity_starttime = starttime
-
-	# there may be a more elegant and faster way with arrays 
-	for i in range(len(timestamps)):
-	    s = str(timestamps[i])
-	    tt = iso8601.parse_date(s)
-	    unixtimes[i] = time.mktime(tt.timetuple())+tt.microsecond/1.e6
-
-	self.time_values = unixtimes
-	
-	long = self.long_values
-	lat = self.lat_values
-	spm = self.spm_values
-
-	nr_rows = len(lat)
-	velo = np.zeros(nr_rows)
-	dist2 = np.zeros(nr_rows)
-	strokelength = np.zeros(nr_rows)
-	
-	for i in range(nr_rows-1):
-	    res = geo_distance(lat[i],long[i],lat[i+1],long[i+1])
-	    dl = 1000.*res[0]
-	    dist2[i+1]=dist2[i]+dl
-	    velo[i+1] = dl/(1.0*(unixtimes[i+1]-unixtimes[i]))
-	    if (spm[i]<>0):
-		strokelength[i] = dl*60/spm[i]
-	    else:
-		strokelength[i] = 0.
-
-
-	self.strokelength = strokelength
-	self.dist2 = dist2
-	self.velo = velo
-
-
-
-    def write_csv(self,writeFile='example.csv',window_size=5,gzip=False):
-	""" Exports TCX data to the CSV format that
-	I use in rowingdata
-	"""
-
-	# Time stamps 
-	unixtimes = self.time_values
-
-
-	# Distance Meters
-	d = self.distance_values
-
-	# Stroke Rate
-	spm = self.spm_values
-	
-	# Heart Rate
-	hr = self.hr_values
-
-	long = self.long_values
-	lat = self.lat_values
-
-	nr_rows = len(spm)
-	velo = np.zeros(nr_rows)
-	dist2 = np.zeros(nr_rows)
-	strokelength = np.zeros(nr_rows)
-
-	velo = self.velo
-	strokelength = self.strokelength
-	dist2 = self.dist2
-
-	velo2 = ewmovingaverage(velo,window_size)
-	strokelength2 = ewmovingaverage(strokelength,window_size)
-	
-	pace = 500./velo2
-	pace = np.clip(pace,0,1e4)
-
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' longitude':long,
-			  ' latitude':lat,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':np.zeros(nr_rows),
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':strokelength2,
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' lapIdx':np.zeros(nr_rows),
-			  ' ElapsedTime (sec)':unixtimes-self.activity_starttime
-			  })
-
-	
-	self.data = data
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-	
-
-    def write_nogeo_csv(self,writeFile='example.csv',window_size=5,gzip=False):
-	""" Exports TCX data without position data (indoor)
-	to the CSV format that
-	I use in rowingdata
-	"""
-
-	# Time stamps 
-	unixtimes = self.time_values
-
-
-	# Distance Meters
-	d = self.distance_values
-
-	# Stroke Rate
-	spm = self.spm_values
-	
-	# Heart Rate
-	hr = self.hr_values
-
-
-	nr_rows = len(spm)
-	velo = np.zeros(nr_rows)
-
-	strokelength = np.zeros(nr_rows)
-
-	for i in range(nr_rows-1):
-	    dl = d[i+1]-d[i]
-	    if (unixtimes[i+1]<>unixtimes[i]):
-		velo[i+1] = dl/(unixtimes[i+1]-unixtimes[i])
-	    else:
-		velo[i+1]=0
-
-	    if (spm[i]<>0):
-		strokelength[i] = dl*60/spm[i]
-	    else:
-		strokelength[i] = 0.
-
-
-	velo2 = ewmovingaverage(velo,window_size)
-	strokelength2 = ewmovingaverage(strokelength,window_size)
-	pace = 500./velo2
-
-
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': d,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':np.zeros(nr_rows),
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':strokelength2,
-			  ' DragFactor':dragfactor,
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' lapIdx':np.zeros(nr_rows),
-			  ' ElapsedTime (sec)':unixtimes-self.activity_starttime
-			  })
-	
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-
-
-class TCXParserNoHR:
-    """ Parser for reading TCX files, e.g. from CrewNerd
-
-    Use: data = rowingdata.TCXParser("crewnerd_data.tcx")
-
-         data.write_csv("crewnerd_data_out.csv")
-
-	 """
-
-    
-    def __init__(self, tcx_file):
-        tree = objectify.parse(tcx_file)
-        self.root = tree.getroot()
-        self.activity = self.root.Activities.Activity
-
-	# need to select only trackpoints with Cadence, Distance, Time & HR data 
-	self.selectionstring = '//ns:Trackpoint[descendant::ns:Cadence]'
-	self.selectionstring +='[descendant::ns:DistanceMeters]'
-	self.selectionstring +='[descendant::ns:Time]'
-
-
-        distance_values =  self.root.xpath(self.selectionstring
-			       +'/ns:DistanceMeters',
-			       namespaces={'ns': namespace})
-
-	spm_values = self.root.xpath(self.selectionstring
-			       +'/ns:Cadence',
-			       namespaces={'ns': namespace})
-
-
-	# time stamps (ISO)
-	timestamps = self.root.xpath(self.selectionstring
-				    +'/ns:Time',
-				    namespaces={'ns': namespace})
-	
-	lat_values = self.root.xpath(self.selectionstring
-					  +'/ns:Position/ns:LatitudeDegrees',
-					  namespaces={'ns':namespace})
-
-	long_values = self.root.xpath(self.selectionstring
-					   +'/ns:Position/ns:LongitudeDegrees',
-					   namespaces={'ns':namespace})
-
-	# and here are the trackpoints for "no stroke" 
-	self.selectionstring2 = '//ns:Trackpoint[descendant::ns:DistanceMeters]'
-	self.selectionstring2 +='[descendant::ns:Time]'
-
-
-        distance_values2 =  self.root.xpath(self.selectionstring2
-			       +'/ns:DistanceMeters',
-			       namespaces={'ns': namespace})
-
-	spm_values2 = np.zeros(len(distance_values2)).tolist()
-
-
-	# time stamps (ISO)
-	timestamps2 = self.root.xpath(self.selectionstring2
-				    +'/ns:Time',
-				    namespaces={'ns': namespace})
-	
-	lat_values2 = self.root.xpath(self.selectionstring2
-					  +'/ns:Position/ns:LatitudeDegrees',
-					  namespaces={'ns':namespace})
-
-	long_values2 = self.root.xpath(self.selectionstring2
-					   +'/ns:Position/ns:LongitudeDegrees',
-					   namespaces={'ns':namespace})
-
-	# merge the two datasets
-
-
-	timestamps = timestamps+timestamps2
-	
-	self.distance_values = distance_values+distance_values2
-
-	self.spm_values = spm_values+spm_values2
-
-	self.long_values = long_values+long_values2
-	self.lat_values = lat_values+lat_values2
-
-	# sort the two datasets
-	data = pd.DataFrame({
-	    't':timestamps,
-	    'd':self.distance_values,
-	    'spm':self.spm_values,
-	    'long':self.long_values,
-	    'lat':self.lat_values
-	    })
-
-	data = data.drop_duplicates(subset='t')
-	data = data.sort_values(by='t',ascending = 1)
-
-	timestamps = data.ix[:,'t'].values
-	self.distance_values = data.ix[:,'d'].values
-	self.spm_values = data.ix[:,'spm'].values
-	self.long_values = data.ix[:,'long'].values
-	self.lat_values = data.ix[:,'lat'].values
-
-	# convert to unix style time stamp
-	unixtimes = np.zeros(len(timestamps))
-
-	# Activity ID timestamp (start)
-	iso_string = str(self.root.Activities.Activity.Id)
-	startdatetimeobj = iso8601.parse_date(iso_string)
-
-	starttime = time.mktime(startdatetimeobj.timetuple())+startdatetimeobj.microsecond/1.e6
-
-	self.activity_starttime = starttime
-
-	# there may be a more elegant and faster way with arrays 
-	for i in range(len(timestamps)):
-	    s = str(timestamps[i])
-	    tt = iso8601.parse_date(s)
-	    unixtimes[i] = time.mktime(tt.timetuple())+tt.microsecond/1.e6
-
-	self.time_values = unixtimes
-	
-	long = self.long_values
-	lat = self.lat_values
-	spm = self.spm_values
-
-	nr_rows = len(lat)
-	velo = np.zeros(nr_rows)
-	dist2 = np.zeros(nr_rows)
-	strokelength = np.zeros(nr_rows)
-	
-	for i in range(nr_rows-1):
-	    res = geo_distance(lat[i],long[i],lat[i+1],long[i+1])
-	    dl = 1000.*res[0]
-	    dist2[i+1]=dist2[i]+dl
-	    velo[i+1] = dl/(1.0*(unixtimes[i+1]-unixtimes[i]))
-	    if (spm[i]<>0):
-		strokelength[i] = dl*60/spm[i]
-	    else:
-		strokelength[i] = 0.
-
-
-	self.strokelength = strokelength
-	self.dist2 = dist2
-	self.velo = velo
-
-
-
-    def write_csv(self,writeFile='example.csv',window_size=5,gzip=False):
-	""" Exports TCX data to the CSV format that
-	I use in rowingdata
-	"""
-
-	# Time stamps 
-	unixtimes = self.time_values
-
-
-	# Distance Meters
-	d = self.distance_values
-
-	# Stroke Rate
-	spm = self.spm_values
-	
-	# Heart Rate
-
-	long = self.long_values
-	lat = self.lat_values
-
-	nr_rows = len(spm)
-	velo = np.zeros(nr_rows)
-	dist2 = np.zeros(nr_rows)
-	strokelength = np.zeros(nr_rows)
-
-	velo = self.velo
-	strokelength = self.strokelength
-	dist2 = self.dist2
-
-	velo2 = ewmovingaverage(velo,window_size)
-	strokelength2 = ewmovingaverage(strokelength,window_size)
-	
-	pace = 500./velo2
-	pace = np.clip(pace,0,1e4)
-
-
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': dist2,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':np.zeros(nr_rows),
-			  ' longitude':long,
-			  ' latitude':lat,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':np.zeros(nr_rows),
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':strokelength2,
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' lapIdx':np.zeros(nr_rows),
-			  ' ElapsedTime (sec)':unixtimes-self.activity_starttime
-			  })
-
-	
-	self.data = data
-
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
-
-	
-
-    def write_nogeo_csv(self,writeFile='example.csv',window_size=5,gzip=False):
-	""" Exports TCX data without position data (indoor)
-	to the CSV format that
-	I use in rowingdata
-	"""
-
-	# Time stamps 
-	unixtimes = self.time_values
-
-
-	# Distance Meters
-	d = self.distance_values
-
-	# Stroke Rate
-	spm = self.spm_values
-	
-	# Heart Rate
-	hr = self.hr_values
-
-
-	nr_rows = len(spm)
-	velo = np.zeros(nr_rows)
-
-	strokelength = np.zeros(nr_rows)
-
-	for i in range(nr_rows-1):
-	    dl = d[i+1]-d[i]
-	    if (unixtimes[i+1]<>unixtimes[i]):
-		velo[i+1] = dl/(unixtimes[i+1]-unixtimes[i])
-	    else:
-		velo[i+1]=0
-
-	    if (spm[i]<>0):
-		strokelength[i] = dl*60/spm[i]
-	    else:
-		strokelength[i] = 0.
-
-
-	velo2 = ewmovingaverage(velo,window_size)
-	strokelength2 = ewmovingaverage(strokelength,window_size)
-	pace = 500./velo2
-
-
-
-	# Create data frame with all necessary data to write to csv
-	data = DataFrame({'TimeStamp (sec)':unixtimes,
-			  ' Horizontal (meters)': d,
-			  ' Cadence (stokes/min)':spm,
-			  ' HRCur (bpm)':hr,
-			  ' Stroke500mPace (sec/500m)':pace,
-			  ' Power (watts)':np.zeros(nr_rows),
-			  ' DriveLength (meters)':np.zeros(nr_rows),
-			  ' StrokeDistance (meters)':strokelength2,
-			  ' DragFactor':np.zeros(nr_rows),
-			  ' DriveTime (ms)':np.zeros(nr_rows),
-			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
-			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),
-			  ' PeakDriveForce (lbs)':np.zeros(nr_rows),
-			  ' lapIdx':np.zeros(nr_rows),
-			  ' ElapsedTime (sec)':unixtimes-self.activity_starttime
-			  })
-	
-        if gzip:
-	    return data.to_csv(writeFile+'.gz',index_label='index',
-                               compression='gzip')
-        else:
-            return data.to_csv(writeFile,index_label='index')
 
 
 
@@ -3192,37 +1301,83 @@ class rowingdata:
 
     """
     
-    def __init__(self,readFile,
-		 rower=rower(),
-		 rowtype="Indoor Rower"):
+    def __init__(self,*args,**kwargs):
+#                 readFile,
+#		 rower=rower(),
+#		 rowtype="Indoor Rower"):
 
-	try:
-	    self.readfilename = readFile.name
-	except AttributeError:
-	    self.readfilename = readFile
 
+        if 'csvfile' in kwargs:
+            readFile = kwargs['csvfile']
+        else:
+            readFile = 0
+
+        if args:
+            readFile = args[0]
+            warnings.warn("Depreciated. Use rowingdata(csvfile=csvfile)",UserWarning)
+
+        rwr = kwargs.get('rower',rower())
+
+        rowtype = kwargs.get('rowtype','Indoor Rower')
+
+        sled_df = DataFrame()
+        if 'df' in kwargs:
+            sled_df = kwargs['df']
+            #new_index = range(len(sled_df))
+            #sled_df = sled_df.reindex(index=new_index)
+            readFile = 0
+        elif readFile != 0:
+            try:
+	        sled_df = pd.read_csv(readFile)
+            except IOError:
+                sled_df = pd.read_csv(readFile+'.gz')
+            
+        if readFile != 0:
+	    try:
+	        self.readfilename = readFile.name
+	    except AttributeError:
+	        self.readfilename = readFile
+        else:
+            self.readfilename = 'rowing dataframe'
 
 	
 	self.readFile = readFile
-	self.rower = rower
+	self.rwr = rwr
 	self.rowtype = rowtype
 
-        try:
-	    sled_df = pd.read_csv(readFile)
-        except IOError:
-            sled_df = pd.read_csv(readFile+'.gz')
 
+        # check for missing column names
+        mandatorynames = [
+            'TimeStamp (sec)',
+	    ' Horizontal (meters)',
+	    ' Cadence (stokes/min)',
+	    ' HRCur (bpm)',
+	    ' Stroke500mPace (sec/500m)',
+	    ' Power (watts)',
+	    ' DriveLength (meters)',
+	    ' StrokeDistance (meters)',
+	    ' DriveTime (ms)',
+	    ' DragFactor',
+	    ' StrokeRecoveryTime (ms)',
+	    ' AverageDriveForce (lbs)',
+	    ' PeakDriveForce (lbs)',
+	    ' lapIdx',
+	    ' ElapsedTime (sec)',
+	]
+
+        for name in mandatorynames:
+            if name not in sled_df.columns:
+                sled_df[name] = 0
+
+        self.dragfactor = sled_df[' DragFactor'].mean()
 	# get the date of the row
-	starttime = sled_df.loc[0,'TimeStamp (sec)']
+	starttime = sled_df['TimeStamp (sec)'].values[0]
+
 	# using UTC time for now
 	self.rowdatetime = datetime.datetime.utcfromtimestamp(starttime)
-	try:
-	    self.dragfactor = sled_df[' DragFactor'].mean()
-	except KeyError:
-	    self.dragfactor = 0
 	    	
 	# remove the start time from the time stamps
-	sled_df['TimeStamp (sec)']=sled_df['TimeStamp (sec)']-sled_df['TimeStamp (sec)'][0]
+	sled_df['TimeStamp (sec)']=sled_df['TimeStamp (sec)']-sled_df['TimeStamp (sec)'].values[0]
 
 	number_of_columns = sled_df.shape[1]
 	number_of_rows = sled_df.shape[0]
@@ -3231,15 +1386,15 @@ class rowingdata:
 	self.number_of_rows = number_of_rows
 
 	# add HR zone data to dataframe
-	self.df = addzones(sled_df,self.rower.ut2,
-		      self.rower.ut1,
-		      self.rower.at,
-		      self.rower.tr,
-		      self.rower.an,
-		      self.rower.max
+	self.df = addzones(sled_df,self.rwr.ut2,
+		      self.rwr.ut1,
+		      self.rwr.at,
+		      self.rwr.tr,
+		      self.rwr.an,
+		      self.rwr.max
 		      )
 
-	self.df = addpowerzones(self.df,self.rower.ftp,self.rower.powerperc)
+	self.df = addpowerzones(self.df,self.rwr.ftp,self.rwr.powerperc)
 
     def getvalues(self,keystring):
 	""" Just a tool to get a column of the row data as a numpy array
@@ -3895,7 +2050,7 @@ class rowingdata:
         
 	# creating a rower and rigging for now
         # in future this must come from rowingdata.rower and rowingdata.rigging
-	r = self.rower.rc
+	r = self.rwr.rc
 	r.mc = mc
 
 	# this is slow ... need alternative (read from table)
@@ -3976,7 +2131,7 @@ class rowingdata:
         
 	# creating a rower and rigging for now
 	# in future this must come from rowingdata.rower and rowingdata.rigging
-	r = self.rower.rc
+	r = self.rwr.rc
 	r.mc = mc
 
 	# this is slow ... need alternative (read from table)
@@ -4052,7 +2207,7 @@ class rowingdata:
 
 	# creating a rower and rigging for now
 	# in future this must come from rowingdata.rower and rowingdata.rigging
-	r = self.rower.rc
+	r = self.rwr.rc
 	r.mc = mc
 
 	# this is slow ... need alternative (read from table)
@@ -4116,7 +2271,7 @@ class rowingdata:
 	
 	# creating a rower and rigging for now
 	# in future this must come from rowingdata.rower and rowingdata.rigging
-	r = self.rower.rc
+	r = self.rwr.rc
 	r.mc = mc
 	r.tempo = spm
 	drivetime = 60.*1000./float(spm)  # in milliseconds
@@ -4460,16 +2615,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
 
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
-	ax1.axis([0,end_dist,100,1.1*self.rower.max])
+	ax1.axis([0,end_dist,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(1000,end_dist,1000))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -4637,7 +2792,7 @@ class rowingdata:
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_an'],color='k')
 
 
-	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 
 	ax1.text(5,ut2+1.5,"UT2",size=8)
 	ax1.text(5,ut1+1.5,"UT1",size=8)
@@ -4707,16 +2862,16 @@ class rowingdata:
 	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
 	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
 
-	ax4.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax4.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax4.text(5,self.rower.at+1.5,"AT",size=8)
-	ax4.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax4.text(5,self.rower.an+1.5,"AN",size=8)
-	ax4.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax4.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax4.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax4.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax4.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax4.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax4.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
-	ax4.axis([0,end_dist,100,1.1*self.rower.max])
+	ax4.axis([0,end_dist,100,1.1*self.rwr.max])
 	ax4.set_xticks(range(1000,end_dist,1000))
 	ax4.set_ylabel('BPM')
 	ax4.set_yticks(range(110,200,10))
@@ -4845,16 +3000,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -5036,16 +3191,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
 
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
-	ax1.axis([0,end_dist,100,1.1*self.rower.max])
+	ax1.axis([0,end_dist,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(1000,end_dist,1000))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -5280,15 +3435,15 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,190,10))
@@ -5494,16 +3649,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
 
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
-	ax1.axis([0,end_dist,100,1.1*self.rower.max])
+	ax1.axis([0,end_dist,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(1000,end_dist,1000))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -5564,7 +3719,7 @@ class rowingdata:
 	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_an'],color='k')
 
 
-	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 
 	ax4.text(5,ut2+1.5,"UT2",size=8)
 	ax4.text(5,ut1+1.5,"UT1",size=8)
@@ -5634,16 +3789,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -5714,7 +3869,7 @@ class rowingdata:
 	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_an'],color='k')
 
 
-	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 
 	ax4.text(5,ut2+1.5,"UT2",size=8)
 	ax4.text(5,ut1+1.5,"UT1",size=8)
@@ -5801,16 +3956,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -5944,16 +4099,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -6144,15 +4299,15 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,190,10))
@@ -6211,16 +4366,16 @@ class rowingdata:
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
 
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
-	ax1.axis([0,end_dist,100,1.1*self.rower.max])
+	ax1.axis([0,end_dist,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(1000,end_dist,1000))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,200,10))
@@ -6341,15 +4496,15 @@ class rowingdata:
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
 	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
-	ax1.text(5,self.rower.ut2+1.5,"UT2",size=8)
-	ax1.text(5,self.rower.ut1+1.5,"UT1",size=8)
-	ax1.text(5,self.rower.at+1.5,"AT",size=8)
-	ax1.text(5,self.rower.tr+1.5,"TR",size=8)
-	ax1.text(5,self.rower.an+1.5,"AN",size=8)
-	ax1.text(5,self.rower.max+1.5,"MAX",size=8)
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
 
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
-	ax1.axis([0,end_time,100,1.1*self.rower.max])
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
 	ax1.set_xticks(range(0,end_time,300))
 	ax1.set_ylabel('BPM')
 	ax1.set_yticks(range(110,190,10))
@@ -6466,15 +4621,15 @@ class rowingdata:
 	
 	time_in_zone = np.zeros(6)
 	for i in range(number_of_rows):
-	    if df.ix[i,' HRCur (bpm)'] <= self.rower.ut2:
+	    if df.ix[i,' HRCur (bpm)'] <= self.rwr.ut2:
 		time_in_zone[0] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.ut1:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.ut1:
 		time_in_zone[1] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.at:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.at:
 		time_in_zone[2] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.tr:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.tr:
 		time_in_zone[3] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.an:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.an:
 		time_in_zone[4] += time_increments[i]
 	    else:
 		time_in_zone[5] += time_increments[i]
@@ -6533,7 +4688,7 @@ class rowingdata:
 	time_increments[0] = time_increments[1]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 
-	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 	
 	time_in_zone = np.zeros(6)
 	for i in range(number_of_rows):
@@ -6606,7 +4761,7 @@ class rowingdata:
 	time_increments[0] = time_increments[1]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 
-	ut2,ut1,at,tr,an = self.rower.ftp*np.array(self.rower.powerperc)/100.
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 	
 	time_in_zone = np.zeros(6)
 	for i in range(number_of_rows):
@@ -6678,15 +4833,15 @@ class rowingdata:
 	
 	time_in_zone = np.zeros(6)
 	for i in range(number_of_rows):
-	    if df.ix[i,' HRCur (bpm)'] <= self.rower.ut2:
+	    if df.ix[i,' HRCur (bpm)'] <= self.rwr.ut2:
 		time_in_zone[0] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.ut1:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.ut1:
 		time_in_zone[1] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.at:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.at:
 		time_in_zone[2] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.tr:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.tr:
 		time_in_zone[3] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rower.an:
+	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.an:
 		time_in_zone[4] += time_increments[i]
 	    else:
 		time_in_zone[5] += time_increments[i]
@@ -6764,7 +4919,7 @@ class rowingdata:
 
 
 	# weight
-	if (self.rower.weightcategory.lower()=="lwt"):
+	if (self.rwr.weightcategory.lower()=="lwt"):
 	    weightselect = ["L"]
 	else:
 	    weightselect = ["H"]
@@ -6790,14 +4945,14 @@ class rowingdata:
 	print "login to concept2 log"
 	save_user = "y"
 	save_pass = "y"
-	if self.rower.c2username == "":
+	if self.rwr.c2username == "":
 	    save_user = "n"
-	    self.rower.c2username = raw_input('C2 user name:')
+	    self.rwr.c2username = raw_input('C2 user name:')
 	    save_user = raw_input('Would you like to save your username (y/n)? ')
 	    
-	if self.rower.c2password == "":
+	if self.rwr.c2password == "":
 	    save_pass = "n"
-	    self.rower.c2password = getpass.getpass('C2 password:')
+	    self.rwr.c2password = getpass.getpass('C2 password:')
 	    save_pass = raw_input('Would you like to save your password (y/n)? ')
 
 	# try to log in to logbook
@@ -6808,10 +4963,10 @@ class rowingdata:
 	br.select_form(nr=0)
 	# set user name
 	usercntrl = br.form.find_control("username")
-	usercntrl.value = self.rower.c2username
+	usercntrl.value = self.rwr.c2username
 
 	pwcntrl = br.form.find_control("password")
-	pwcntrl.value = self.rower.c2password
+	pwcntrl.value = self.rwr.c2password
 
 	response = br.submit()
 	if "Incorrect" in response.read():
@@ -6852,7 +5007,7 @@ class rowingdata:
 
 	    br.form['weight_class'] = weightselect
 
-	    print "Setting weight class to "+self.rower.weightcategory+"("+weightselect[0]+")"
+	    print "Setting weight class to "+self.rwr.weightcategory+"("+weightselect[0]+")"
 
 	    commentscontrol = br.form.find_control("comments")
 	    commentscontrol.value = comment
@@ -6871,15 +5026,15 @@ class rowingdata:
 		print "something went wrong"
 
 	if save_user == "n":
-	    self.rower.c2username = ''
+	    self.rwr.c2username = ''
 	    print "forgetting user name"
 	if save_pass == "n":
-	    self.rower.c2password = ''
+	    self.rwr.c2password = ''
 	    print "forgetting password"
 
 
 	if (save_user == "y" or save_pass == "y"):
-	    self.rower.write(rowerFile)
+	    self.rwr.write(rowerFile)
 	    
 
 	print "done"
