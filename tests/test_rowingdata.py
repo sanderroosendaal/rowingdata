@@ -197,7 +197,8 @@ class TestSequence(unittest.TestCase):
         res = rowingdata.checkdatafiles.checkfile(f2)
         if res != 0:
             for key,value in res.iteritems():
-                assert_equals(value,expected[key])        
+                if expected[key] != 0:
+                    assert_equals(value,expected[key])        
 
 
                       

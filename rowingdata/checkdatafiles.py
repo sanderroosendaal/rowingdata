@@ -103,7 +103,7 @@ def checkfile(f2,verbose=False):
         'month':m,
         'day':d,
         'hour':h,
-        'minute':m,
+        'minute':minute,
         'second':sec,
         'dist':int(distmax),
         'seconds':int(timemax),
