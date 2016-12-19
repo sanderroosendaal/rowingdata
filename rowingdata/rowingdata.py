@@ -6,7 +6,9 @@ import re
 import warnings
 import checkdatafiles
 
-warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
+#warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
+
+__version__ = "0.93.7"
 
 try:
     from Tkinter import Tk
@@ -100,7 +102,6 @@ from scipy import interpolate
 from scipy.interpolate import griddata
 
 
-__version__ = "0.93.7d"
 
 
 

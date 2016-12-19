@@ -403,7 +403,7 @@ Painsled iOS
 
 To use with Painsled iOS CSV data, simply do
 
->>> row = rowingdata.rowingdata("testdata.csv",rower=myrower)
+>>> row = rowingdata.rowingdata(csvfile="testdata.csv",rower=myrower)
 >>> row.plotmeters_erg()
 >>> print row.allstats()
 
@@ -412,9 +412,20 @@ RowPro
 
 To use with RowPro CSV data, simply do
 
->>> rp = rowingdata.RowProParser("RP_testdata.csv")
+>>> rp = rowingdata.RowProParser(csvfile="RP_testdata.csv")
+>>> row = rowingdata.rowingdata(df=rp.df)
+>>> row.plotmeters_erg()
+>>> row.plottime_erg()
+>>> print row.summary()
+
+The rp object has a dataframe "df" that you can pass to rowingdata.rowingdata
+using the df keyword. Thus, you avoid storing intermediate results.
+
+Alternatively, you can use:
+
+>>> rp = rowingdata.RowProParser(csvfile="RP_testdata.csv")
 >>> rp.write_csv("example_data.csv")
->>> row = rowingdata.rowingdata("example_data.csv")
+>>> row = rowingdata.rowingdata(csvfile="example_data.csv")
 >>> row.plotmeters_erg()
 >>> row.plottime_erg()
 >>> print row.summary()
@@ -424,9 +435,8 @@ SpeedCoach
 
 To use with SpeedCoach CSV data, simply do
 
->>> sc = rowingdata.speedcoachParser("RP_testdata.csv")
->>> sc.write_csv("example_data.csv")
->>> row = rowingdata.rowingdata(open("example_data.csv"))
+>>> sc = rowingdata.speedcoachParser(csvfile="RP_testdata.csv")
+>>> row = rowingdata.rowingdata(df=sc.df)
 >>> row.plotmeters_erg()
 >>> row.plottime_erg()
 >>> print row.summary()
@@ -436,9 +446,9 @@ CrewNerd (and other TCX)
 
 To use with CrewNerd TCX data, simply do
 
->>> tcx = rowingdata.TCXParser("2016-03-25-0758.tcx")
+>>> tcx = rowingdata.TCXParser(csvfile="2016-03-25-0758.tcx")
 >>> tcx.write_csv("example_data.csv")
->>> row = rowingdata.rowingdata(open("example_data.csv"),rower=myrower)
+>>> row = rowingdata.rowingdata(csvfile=open("example_data.csv"),rower=myrower)
 >>> row.plotmeters_otw()
 >>> row.plottime_otw()
 >>> print row.summary()
@@ -508,6 +518,7 @@ Release Notes:
 ------
 - Added support for Empower Oarlock parameters from the CSV file export from SpeedCoach GPS 2 with Data Pack (LiNK v1.27 and higher)
 - Enabled gzip (through gzip=True in write_csv)
+- Revamped CSV parsers. 
 
 0.92.x
 ------
