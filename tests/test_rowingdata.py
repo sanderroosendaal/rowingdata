@@ -3,6 +3,9 @@ from nose import with_setup
 import rowingdata
 import datetime
 import numpy as np
+import pandas as pd
+from nose_parameterized import parameterized
+import unittest
 
 class TestBasicRowingData:
     row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
@@ -39,129 +42,162 @@ class TestBasicRowingData:
                       
         
 class TestErgData:
-    csvfile = 'testdata/ergdata_example.csv'
-    assert_equals(rowingdata.get_file_type(csvfile),'ergdata')
-    r = rowingdata.ErgDataParser(csvfile=csvfile)
-    row = rowingdata.rowingdata(df=r.df)
-    assert_equals(row.number_of_rows,180)
-    totaldist = row.df['cum_dist'].max()
-    assert_equals(totaldist,1992)
-    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
-    assert_equals(totaltime,520)
+    def testergdata(self):
+        csvfile = 'testdata/ergdata_example.csv'
+        assert_equals(rowingdata.get_file_type(csvfile),'ergdata')
+        r = rowingdata.ErgDataParser(csvfile=csvfile)
+        row = rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,180)
+        totaldist = row.df['cum_dist'].max()
+        assert_equals(totaldist,1992)
+        totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+        assert_equals(totaltime,520)
 
 class TestpainsledDesktopParser:
-    csvfile = 'testdata/painsled_desktop_example.csv'
-    assert_equals(rowingdata.get_file_type(csvfile),'painsleddesktop')
-    r = rowingdata.painsledDesktopParser(csvfile=csvfile)
-    row = rowingdata.rowingdata(df=r.df)
-    assert_equals(row.number_of_rows,638)
-    totaldist = row.df['cum_dist'].max()
-    assert_equals(totaldist,7097)
-    assert_equals(row.rowdatetime,datetime.datetime(2016,3,29,16,41,27))
-    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
-    assert_equals(totaltime,1802)
+    def testpainsleddesktop(self):
+        csvfile = 'testdata/painsled_desktop_example.csv'
+        assert_equals(rowingdata.get_file_type(csvfile),'painsleddesktop')
+        r = rowingdata.painsledDesktopParser(csvfile=csvfile)
+        row = rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,638)
+        totaldist = row.df['cum_dist'].max()
+        assert_equals(totaldist,7097)
+        assert_equals(row.rowdatetime,datetime.datetime(2016,3,29,16,41,27))
+        totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+        assert_equals(totaltime,1802)
 
 class TestBoatCoachParser:
-    csvfile = 'testdata/boatcoach.csv'
-    assert_equals(rowingdata.get_file_type(csvfile),'boatcoach')
-    r = rowingdata.BoatCoachParser(csvfile=csvfile)
-    row = rowingdata.rowingdata(df=r.df)
-    assert_equals(row.number_of_rows,132)
-    totaldist = row.df['cum_dist'].max()
-    assert_equals(totaldist,499)
-    assert_equals(row.rowdatetime,datetime.datetime(2016,11,28,7,37,2))
-    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
-    assert_equals(totaltime,118)
+    def testboatcoach(self):
+        csvfile = 'testdata/boatcoach.csv'
+        assert_equals(rowingdata.get_file_type(csvfile),'boatcoach')
+        r = rowingdata.BoatCoachParser(csvfile=csvfile)
+        row = rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,132)
+        totaldist = row.df['cum_dist'].max()
+        assert_equals(totaldist,499)
+        assert_equals(row.rowdatetime,datetime.datetime(2016,11,28,7,37,2))
+        totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+        assert_equals(totaltime,118)
     
 class TestspeedcoachParser:
-    csvfile = 'testdata/speedcoachexample.csv'
-    assert_equals(rowingdata.get_file_type(csvfile),'speedcoach')
-    r = rowingdata.speedcoachParser(csvfile=csvfile)
-    row = rowingdata.rowingdata(df=r.df)
-    assert_equals(row.number_of_rows,476)
-    totaldist = row.df['cum_dist'].max()
-    assert_equals(totaldist,9520)
-    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
-    assert_equals(totaltime,3176.5)
+    def testspeedcoach(self):
+        csvfile = 'testdata/speedcoachexample.csv'
+        assert_equals(rowingdata.get_file_type(csvfile),'speedcoach')
+        r = rowingdata.speedcoachParser(csvfile=csvfile)
+        row = rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,476)
+        totaldist = row.df['cum_dist'].max()
+        assert_equals(totaldist,9520)
+        totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+        assert_equals(totaltime,3176.5)
     
 class TestErgStickParser:
-    csvfile = 'testdata/ergstick.csv'
-    assert_equals(rowingdata.get_file_type(csvfile),'ergstick')
-    r = rowingdata.ErgStickParser(csvfile=csvfile)
-    row = rowingdata.rowingdata(df=r.df)
-    assert_equals(row.number_of_rows,2400)
-    totaldist = row.df['cum_dist'].max()
-    assert_equals(int(totaldist),4959)
-    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
-    assert_equals(int(totaltime),1201)
+    def testergstick(self):
+        csvfile = 'testdata/ergstick.csv'
+        assert_equals(rowingdata.get_file_type(csvfile),'ergstick')
+        r = rowingdata.ErgStickParser(csvfile=csvfile)
+        row = rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,2400)
+        totaldist = row.df['cum_dist'].max()
+        assert_equals(int(totaldist),4959)
+        totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+        assert_equals(int(totaltime),1201)
     
 class TestMysteryParser:
-    csvfile = 'testdata/mystery.csv'
-    assert_equals(rowingdata.get_file_type(csvfile),'mystery')
-    r = rowingdata.MysteryParser(csvfile=csvfile)
-    row = rowingdata.rowingdata(df=r.df)
-    assert_equals(row.number_of_rows,4550)
-    totaldist = row.df['cum_dist'].max()
-    assert_equals(totaldist,7478)
-    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
-    assert_equals(int(totaltime),2325)
+    def testmystery(self):
+        csvfile = 'testdata/mystery.csv'
+        assert_equals(rowingdata.get_file_type(csvfile),'mystery')
+        r = rowingdata.MysteryParser(csvfile=csvfile)
+        row = rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,4550)
+        totaldist = row.df['cum_dist'].max()
+        assert_equals(totaldist,7478)
+        totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+        assert_equals(int(totaltime),2325)
     
 class TestRowProParser:
-    csvfile = 'testdata/RP_testdata.csv'
-    assert_equals(rowingdata.get_file_type(csvfile),'rp')
-    r = rowingdata.RowProParser(csvfile=csvfile)
-    row = rowingdata.rowingdata(df=r.df)
-    assert_equals(row.number_of_rows,988)
-    totaldist = row.df['cum_dist'].max()
-    assert_equals(totaldist,10000)
-    assert_equals(row.rowdatetime,datetime.datetime(2016,3,15,19,49,48,863000))
-    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
-    assert_equals(int(10*totaltime),22653)
+    def testrowpro(self):
+        csvfile = 'testdata/RP_testdata.csv'
+        assert_equals(rowingdata.get_file_type(csvfile),'rp')
+        r = rowingdata.RowProParser(csvfile=csvfile)
+        row = rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,988)
+        totaldist = row.df['cum_dist'].max()
+        assert_equals(totaldist,10000)
+        assert_equals(row.rowdatetime,datetime.datetime(2016,3,15,19,49,48,863000))
+        totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+        assert_equals(int(10*totaltime),22653)
 
 class TestRowProParserIntervals:
-    csvfile = 'testdata/RP_interval.csv'
-    assert_equals(rowingdata.get_file_type(csvfile),'rp')
-    r = rowingdata.RowProParser(csvfile=csvfile)
-    row = rowingdata.rowingdata(df=r.df)
-    assert_equals(row.number_of_rows,1674)
-    totaldist = row.df['cum_dist'].max()
-    assert_equals(int(totaldist),19026)
-    assert_equals(row.rowdatetime,datetime.datetime(2016,1,12,19,23,10,878000))
-    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
-    assert_equals(totaltime,4800)
+    def testrowprointervals(self):
+        csvfile = 'testdata/RP_interval.csv'
+        assert_equals(rowingdata.get_file_type(csvfile),'rp')
+        r = rowingdata.RowProParser(csvfile=csvfile)
+        row = rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,1674)
+        totaldist = row.df['cum_dist'].max()
+        assert_equals(int(totaldist),19026)
+        assert_equals(row.rowdatetime,datetime.datetime(2016,1,12,19,23,10,878000))
+        totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+        assert_equals(totaltime,4800)
     
 class TestSpeedCoach2Parser:
-    csvfile = 'testdata/SpeedCoach2example.csv'
-    assert_equals(rowingdata.get_file_type(csvfile),'speedcoach2')
-    r = rowingdata.SpeedCoach2Parser(csvfile=csvfile)
-    row = rowingdata.rowingdata(df=r.df)
-    assert_equals(row.number_of_rows,97)
-    totaldist = row.df['cum_dist'].max()
-    assert_equals(int(10*totaldist),7516)
-    assert_equals(row.rowdatetime,datetime.datetime(2016,7,28,11,35,1,500000))
-    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
-    assert_equals(totaltime,170)
+    def testspeedcoach2(self):
+        csvfile = 'testdata/SpeedCoach2example.csv'
+        assert_equals(rowingdata.get_file_type(csvfile),'speedcoach2')
+        r = rowingdata.SpeedCoach2Parser(csvfile=csvfile)
+        row = rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,97)
+        totaldist = row.df['cum_dist'].max()
+        assert_equals(int(10*totaldist),7516)
+        assert_equals(row.rowdatetime,datetime.datetime(2016,7,28,11,35,1,500000))
+        totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+        assert_equals(totaltime,170)
     
 class TestSpeedCoach2_v127Parser:
-    csvfile = 'testdata/SpeedCoach2Linkv1.27.csv'
-    assert_equals(rowingdata.get_file_type(csvfile),'speedcoach2')
-    r = rowingdata.SpeedCoach2Parser(csvfile=csvfile)
-    row = rowingdata.rowingdata(df=r.df)
-    assert_equals(row.number_of_rows,1408)
-    totaldist = row.df['cum_dist'].max()
-    assert_equals(totaldist,14344.5)
-    assert_equals(row.rowdatetime,datetime.datetime(2016,11,5,10,2,3,200000))
-    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
-    assert_equals(int(10*totaltime),45018)
+    def testspeedcoach2v127(self):
+        csvfile = 'testdata/SpeedCoach2Linkv1.27.csv'
+        assert_equals(rowingdata.get_file_type(csvfile),'speedcoach2')
+        r = rowingdata.SpeedCoach2Parser(csvfile=csvfile)
+        row = rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,1408)
+        totaldist = row.df['cum_dist'].max()
+        assert_equals(totaldist,14344.5)
+        assert_equals(row.rowdatetime,datetime.datetime(2016,11,5,10,2,3,200000))
+        totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+        assert_equals(int(10*totaltime),45018)
     
 class TestFITParser:
-    fitfile = 'testdata/3x250m.fit'
-    assert_equals(rowingdata.get_file_type(fitfile),'fit')
-    r = rowingdata.FITParser(fitfile)
-    row = rowingdata.rowingdata(df=r.df)
-    assert_equals(row.number_of_rows,94)
-    totaldist = row.df['cum_dist'].max()
-    assert_equals(int(totaldist),750)
-    assert_equals(row.rowdatetime,datetime.datetime(2016,7,28,9,35,29))
-    totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
-    assert_equals(int(10*totaltime),4870)
+    def testfit(self):
+        fitfile = 'testdata/3x250m.fit'
+        assert_equals(rowingdata.get_file_type(fitfile),'fit')
+        r = rowingdata.FITParser(fitfile)
+        row = rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,94)
+        totaldist = row.df['cum_dist'].max()
+        assert_equals(int(totaldist),750)
+        assert_equals(row.rowdatetime,datetime.datetime(2016,7,28,9,35,29))
+        totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
+        assert_equals(int(10*totaltime),4870)
+
+class TestSequence(unittest.TestCase):
+    list = pd.read_csv('testdata/testdatasummary.csv')
+    lijst = []
+    for i in list.index:
+        filename = list.ix[i,'filename']
+        expected = list.ix[i,1:]
+        lijst.append(
+            (filename,filename,expected)
+            )
+
+    @parameterized.expand(lijst)
+    
+    def test_check(self, name, filename, expected):
+        f2 = 'testdata/'+filename
+        res = rowingdata.checkdatafiles.checkfile(f2)
+        if res != 0:
+            for key,value in res.iteritems():
+                assert_equals(value,expected[key])        
+
+
+                      

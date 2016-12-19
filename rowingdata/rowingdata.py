@@ -4,6 +4,7 @@ import numpy as np
 #import scipy
 import re
 import warnings
+import checkdatafiles
 
 warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
