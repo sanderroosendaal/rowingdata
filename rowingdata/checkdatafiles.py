@@ -30,7 +30,7 @@ def checkfile(f2,verbose=False):
 	if (fileformat ==  'tcx'):
 	    row = rowingdata.TCXParser(f2)
             row.write_csv(f2+'o.csv')
-            row = rowingdata.rowingdata(f2+'o.csv')
+            row = rowingdata.rowingdata(csvfile=f2+'o.csv')
             os.remove(f2+'o.csv')
             notread = 0
 
@@ -42,7 +42,7 @@ def checkfile(f2,verbose=False):
 	if (fileformat == 'tcxnohr'):
 	    row = rowingdata.TCXParserNoHR(f2)
             row.write_csv(f2+'o.csv')
-            row = rowingdata.rowingdata(f2+'o.csv')
+            row = rowingdata.rowingdata(csvfile=f2+'o.csv')
             os.remove(f2+'o.csv')
             notread = 0
 	    
@@ -74,7 +74,7 @@ def checkfile(f2,verbose=False):
 	if (fileformat == 'fit'):
 	    row = rowingdata.FITParser(f2)
             row.write_csv(f2+'o.csv')
-            row = rowingdata.rowingdata(f2+'o.csv')
+            row = rowingdata.rowingdata(csvfile=f2+'o.csv')
             os.remove(f2+'o.csv')
             notread = 0
 
@@ -82,7 +82,7 @@ def checkfile(f2,verbose=False):
             row = rowingdata.rowingdata(df=row.df)
 
     else:
-        row = rowingdata.rowingdata(f2)
+        row = rowingdata.rowingdata(csvfile=f2)
 
     nr_of_rows = row.number_of_rows
     distmax = row.df['cum_dist'].max()
