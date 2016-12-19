@@ -28,7 +28,8 @@ setup(name='rowingdata',
 
       license='MIT',
 
-      packages=['rowingdata'],
+      # packages=['rowingdata'],
+      packages = find_packages(),
 
       keywords = 'rowing ergometer concept2',
       
