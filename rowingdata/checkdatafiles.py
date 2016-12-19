@@ -4,9 +4,11 @@ import rowingdata
 #from rowingdata import MysteryParser
 #from rowingdata import painsledDesktopParser,speedcoachParser,ErgStickParser
 #from rowingdata import SpeedCoach2Parser,FITParser,fitsummarydata
+import os
 
 def checkfile(f2,verbose=False):
     fileformat = rowingdata.get_file_type(f2)
+    notread = 1
     if verbose:
         print fileformat
 
@@ -27,6 +29,10 @@ def checkfile(f2,verbose=False):
 	    # handle TCX
 	if (fileformat ==  'tcx'):
 	    row = rowingdata.TCXParser(f2)
+            row.write_csv(f2+'o.csv')
+            row = rowingdata.rowingdata(f2+'o.csv')
+            os.remove(f2+'o.csv')
+            notread = 0
 
 	# handle Mystery
 	if (fileformat == 'mystery'):
@@ -35,7 +41,11 @@ def checkfile(f2,verbose=False):
 	# handle TCX no HR
 	if (fileformat == 'tcxnohr'):
 	    row = rowingdata.TCXParserNoHR(f2)
-		    
+            row.write_csv(f2+'o.csv')
+            row = rowingdata.rowingdata(f2+'o.csv')
+            os.remove(f2+'o.csv')
+            notread = 0
+	    
 	# handle ErgData
 	if (fileformat == 'ergdata'):
 	    row = rowingdata.ErgDataParser(f2)
@@ -63,8 +73,13 @@ def checkfile(f2,verbose=False):
 	# handle FIT
 	if (fileformat == 'fit'):
 	    row = rowingdata.FITParser(f2)
+            row.write_csv(f2+'o.csv')
+            row = rowingdata.rowingdata(f2+'o.csv')
+            os.remove(f2+'o.csv')
+            notread = 0
 
-        row = rowingdata.rowingdata(df=row.df)
+        if notread:
+            row = rowingdata.rowingdata(df=row.df)
 
     else:
         row = rowingdata.rowingdata(f2)

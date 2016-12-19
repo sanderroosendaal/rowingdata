@@ -13,6 +13,7 @@ import datetime
 from lxml import objectify,etree
 from fitparse import FitFile
 import os
+from pandas.core.indexing import IndexingError
 
 from utils import *
 import zipfile
@@ -228,10 +229,23 @@ def make_cumvalues(xvalues):
     nrsteps = len(dx.loc[mask])
     lapidx = np.cumsum((-dx+abs(dx))/(-2*dx))
     lapidx = lapidx.fillna(value=0)
+    test = len(lapidx.loc[lapidx.diff()<0])
+    if test != 0:
+        lapidx = np.cumsum((-dx+abs(dx))/(-2*dx))
+        lapidx = lapidx.fillna(method='ffill')
+        lapidx.loc[0] = 0
     if (nrsteps>0):
 	dxpos[mask] = xvalues[mask]
-	newvalues = np.cumsum(dxpos)+xvalues.ix[0,0]
-	newvalues.ix[0,0] = xvalues.ix[0,0]
+        try:
+	    newvalues = np.cumsum(dxpos)+xvalues.ix[0,0]
+	    newvalues.ix[0,0] = xvalues.ix[0,0]
+        except IndexingError:
+            try:
+	        newvalues = np.cumsum(dxpos)+xvalues.iloc[0,0]
+                newvalues.iloc[0,0] = xvalues.iloc[0,0]
+            except:
+                newvalues = np.cumsum(dxpos)
+
     else:
 	newvalues = xvalues
 
