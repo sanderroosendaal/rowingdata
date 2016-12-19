@@ -392,7 +392,7 @@ you will have to change the default values for the rower. For example:</p>
 <div class="section" id="painsled-ios">
 <h4>Painsled iOS<a class="headerlink" href="#painsled-ios" title="Permalink to this headline">¶</a></h4>
 <p>To use with Painsled iOS CSV data, simply do</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="s2">&quot;testdata.csv&quot;</span><span class="p">,</span><span class="n">rower</span><span class="o">=</span><span class="n">myrower</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="n">csvfile</span><span class="o">=</span><span class="s2">&quot;testdata.csv&quot;</span><span class="p">,</span><span class="n">rower</span><span class="o">=</span><span class="n">myrower</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plotmeters_erg</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">row</span><span class="o">.</span><span class="n">allstats</span><span class="p">()</span>
 </pre></div>
@@ -401,9 +401,19 @@ you will have to change the default values for the rower. For example:</p>
 <div class="section" id="id1">
 <h4>RowPro<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
 <p>To use with RowPro CSV data, simply do</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rp</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">RowProParser</span><span class="p">(</span><span class="s2">&quot;RP_testdata.csv&quot;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rp</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">RowProParser</span><span class="p">(</span><span class="n">csvfile</span><span class="o">=</span><span class="s2">&quot;RP_testdata.csv&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">rp</span><span class="o">.</span><span class="n">df</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plotmeters_erg</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plottime_erg</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">row</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The rp object has a dataframe &#8220;df&#8221; that you can pass to rowingdata.rowingdata
+using the df keyword. Thus, you avoid storing intermediate results.</p>
+<p>Alternatively, you can use:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">rp</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">RowProParser</span><span class="p">(</span><span class="n">csvfile</span><span class="o">=</span><span class="s2">&quot;RP_testdata.csv&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">rp</span><span class="o">.</span><span class="n">write_csv</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="n">csvfile</span><span class="o">=</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plotmeters_erg</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plottime_erg</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">row</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
@@ -413,9 +423,8 @@ you will have to change the default values for the rower. For example:</p>
 <div class="section" id="speedcoach">
 <h4>SpeedCoach<a class="headerlink" href="#speedcoach" title="Permalink to this headline">¶</a></h4>
 <p>To use with SpeedCoach CSV data, simply do</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sc</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">speedcoachParser</span><span class="p">(</span><span class="s2">&quot;RP_testdata.csv&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sc</span><span class="o">.</span><span class="n">write_csv</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">))</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sc</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">speedcoachParser</span><span class="p">(</span><span class="n">csvfile</span><span class="o">=</span><span class="s2">&quot;RP_testdata.csv&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="n">df</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">df</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plotmeters_erg</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plottime_erg</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">row</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
@@ -425,9 +434,9 @@ you will have to change the default values for the rower. For example:</p>
 <div class="section" id="crewnerd-and-other-tcx">
 <h4>CrewNerd (and other TCX)<a class="headerlink" href="#crewnerd-and-other-tcx" title="Permalink to this headline">¶</a></h4>
 <p>To use with CrewNerd TCX data, simply do</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tcx</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">TCXParser</span><span class="p">(</span><span class="s2">&quot;2016-03-25-0758.tcx&quot;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">tcx</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">TCXParser</span><span class="p">(</span><span class="n">csvfile</span><span class="o">=</span><span class="s2">&quot;2016-03-25-0758.tcx&quot;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">tcx</span><span class="o">.</span><span class="n">write_csv</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">),</span><span class="n">rower</span><span class="o">=</span><span class="n">myrower</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">rowingdata</span><span class="o">.</span><span class="n">rowingdata</span><span class="p">(</span><span class="n">csvfile</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;example_data.csv&quot;</span><span class="p">),</span><span class="n">rower</span><span class="o">=</span><span class="n">myrower</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plotmeters_otw</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">row</span><span class="o">.</span><span class="n">plottime_otw</span><span class="p">()</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">row</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
@@ -496,6 +505,7 @@ useful information.</p>
 <ul class="simple">
 <li>Added support for Empower Oarlock parameters from the CSV file export from SpeedCoach GPS 2 with Data Pack (LiNK v1.27 and higher)</li>
 <li>Enabled gzip (through gzip=True in write_csv)</li>
+<li>Revamped CSV parsers.</li>
 </ul>
 </div>
 <div class="section" id="id2">
