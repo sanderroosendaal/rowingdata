@@ -76,6 +76,9 @@ def get_file_type(f):
 
 	fop.close()
 
+        if 'Concept2 Utility' in firstline:
+            return 'c2log'
+        
 	if 'SpeedCoach GPS Pro' in fourthline:
 	    return 'speedcoach2'
 
@@ -96,6 +99,9 @@ def get_file_type(f):
 
 	if ' DriveTime (ms)' in firstline:
 	    return 'csv'
+
+        if 'ElapsedTime (sec)' in firstline:
+            return 'csv'
 
 	if 'HR' in firstline and 'Interval' in firstline and 'Avg HR' not in firstline:
 	    return 'speedcoach'
