@@ -514,6 +514,11 @@ useful information.
 ================
 Release Notes:
 ================
+0.94.x
+------
+
+- Recognizes C2 logbook summary CSV (which is not supported)
+
 0.93.x
 ------
 - Added support for Empower Oarlock parameters from the CSV file export from SpeedCoach GPS 2 with Data Pack (LiNK v1.27 and higher)
