@@ -511,6 +511,321 @@ The available data fields are
 If imported from TCX, Rowpro, or other tools, some data fields may not contain
 useful information. 
 
+=================
+CSV File Standard
+=================
+
+The basic rowingdata class reads CSV files that adher to the standard
+described here. Any parser implementation should adher to the minimum
+standard as described here.
+
+Please send to me any CSV file that adhers to the standard described here
+but does not parse well in the "rowingdata" module. I will update the module
+and add the file to standard testing. 
+
+Field Names (Columns)
+-----------
+
+The standard field names are:
+
+* 'Timestamp (sec)'
+* ' Horizontal (meters)'
+* ' Cadence (stokes/min'
+* ' HRCur (bpm)'
+* ' Stroke500mPace (sec/500m)'
+* ' Power (watts)'
+* ' DriveLength (meters)'
+* ' StrokeDistance (meters)'
+* ' DriveTime (ms)'
+* ' StrokeRecoveryTime (ms)'
+* ' AverageDriveForce (lbs)'
+* ' PeakDriveForce (lbs)'
+* ' lapIdx'
+* ' ElapsedTime (sec)'
+
+The CSV file adhers to the US conventions, with fields
+separated by a comma (',')
+and using the dot '.' as the decimal symbol. 
+
+The field names are on the first line. There are no header or footer lines
+in the CSV file, to simplify data ingestion.
+
+The field names must match exactly, including use of capitals and
+leading spaces. Please note the space at the beginning
+of some of the field names. If one of the "standard" field names is
+missing, the parser shall create it and set the values for this field to 0 (zero), except foro the 'TimeStamp (sec)' field which is mandatory.
+
+The parser shall not depend on the order of the field names (columns).
+The parser may reorder columns as well as rows, for example reordering
+by the time stamp.
+
+
+Data Fields (Rows)
+--------------
+
+It is recommended that there is one data row per rowing stroke.
+
+Sometimes this is difficult to implement. In that case, a data row at
+regular time intervals (one per second) shall also be parsed well.
+
+For calculating statistics, it is important to be consistent. Rowers may
+use different devices to capture data in different situations. Inconsistencies between the devices may lead to inconsistencies. As a "stroke" is a
+unit that is natural for rowers, we recommend to have one data field
+per stroke.
+
+Unless otherwise stated below, all numerical types shall be parsed by
+the parser, so it is up to the user to implement single, double, decimal
+or integer, and common (en-US) numerical notation shall be parsed well, e.g.
+
+* 234 (integer)
+* 22.1 (float)
+* 6.3e4 (scientific)
+
+Percentages are not guaranteed to be parsed well. Use fractions, e.g.:
+
+* 0.67 (good)
+* 67% (not good)
+  
+Missing Data
+-------------
+
+If a measuring device does not obtain a value during a stroke, this shall
+be indicated in the file. Avoid using dummy values. It will be up to the
+parser and further data processing to "clean" the data.
+
+Recommended values are 'nan' (not a number), or leaving the field empty.
+
+Please not that 'nan' replacing a missing time stamp may lead to
+unpredictable results. 
+
+TimeStamp (sec)
+---------------
+
+Field name: 'TimeStamp (sec)' (no leading space).
+
+This shall be a Unix time stamp (seconds since January 1, 1970, midnight UTC/GMT) in the UTC time zone.
+
+For human readability, it is advised to add a ISO8601 formatted time stamp
+as a separate column called ' ISO8601'. 
+
+The value reported shall be the time at the end of the stroke cycle (i.e.
+the start of the next stroke), or
+at the crossing of the finish line (or lap end distance), whichever
+is first. If this
+is not adhered to, lap times may be inaccurate.
+
+The precision may be up to microseconds, but as a minimum the parser shall
+take into account tenths of seconds.
+
+It is strongly advised to have no "missing data" in the time stamp field.
+
+Distance (m)
+------------
+
+Field name: ' Horizontal (meters)'
+
+This is the distance covered at the end of the stroke since the beginning
+of the workout or lap.
+
+For best results, it is recommended to report the cumulative distance since
+the beginning of the workout, but it is allowed to reset the distance at
+the beginning of each lap.
+
+Cadence (SPM)
+--------------
+
+Field name: ' Cadence (stokes/min)'
+
+Please note the typo in the field name. It is recommended that the parser
+checks for "strokes" if "stokes" is not found, but this is not guaranteed.
+
+Heart Rate
+-----------
+
+Field name: ' HRCur (bpm)'
+
+Heart Rate in beats per minute
+
+Pace
+------
+
+Field name: ' Stroke500mPace (sec/500m)'
+
+Pace in seconds per 500m. Avoid negative values.
+
+When the rower stops, this value goes to infinity. Use empty field, 'nan',
+'inf' or equivalent. Avoid inserting 0, because this will mess
+up speed calculations.
+
+If this field is missing, there must be a possibility to calculate it
+from distance and time fields. If distance and pace fields are missing,
+the parser may throw an error.
+
+Power (watts)
+--------------
+
+Field name: ' Power (watts)'
+
+Power in watts. For erg it should be the power reported by the monitor.
+For OTW rowing, it is recommended that this is the total mechanical
+power exerted by the rower, i.e. power used for propulsion, plus waste
+(puddles, drag), as opposed to the metabolistic power. 
+
+Drive Length
+-------------
+
+Field name: ' DriveLength (meters)'
+Unit: meter
+
+The distance traveled by the handle along the longitudal
+axis of the boat or erg.
+
+For OTW rowing, where the oar or scull rotates around the pin, this
+is not equal to the length trajectory traveled by the hands. It
+is the projection of that trajectory on the longitudal axis. 
+
+Stroke Distance 
+------------------------
+
+Field name: ' StrokeDistance (meters)'
+Unit: meter
+
+The distance traveled during the stroke cycle. 
+
+Drive Time
+-------------
+
+Field name: ' DriveTime (ms)'
+Unit: ms
+
+The duration of the drive part (from catch to finish) of the stroke. For
+OTW rowing it is recommended to measure this as
+the time it takes from the minimum (catch) oar angle to the maximum (finish)
+or angle,
+as opposed to "blade in" to "blade out" times. 
+
+Recovery Time
+---------------
+
+Field name: ' StrokeRecoveryTime (ms)'
+Unit: ms
+
+The duration of the recovery part. See Drive Time for the definition. Drive Time plus Recovery Time should equal the duration of the entire stroke cycle.
+
+Average Drive Force
+--------------------
+
+Field name: ' AverageDriveForce (lbs)' / ' AverageDriveForce (N)'
+Unit: lbs - or N, see below
+
+Currently implemented is only the field name and value in lbs. In the future,
+we will implement ' AverageDriveForce (N)' so we can report in SI units.
+
+This should be the part of the handle force that does actual work.
+
+For dynamic ergs and OTW rowing this is not sufficient to describe the
+complete stroke dynamics, so additional fields can be defined, for example
+' StretcherForce'.
+
+For OTW rowing there are various measurement systems. Some measure at
+or near the handle. Some measure at the pin.
+
+I recommend to either
+* Recalculate to handle force if possible, adding a separate field with the
+  real measured value and a descriptive field name
+* Report the real measured value in this field as well as in a separate
+  field with a descriptive field name
+
+The average should be an average over the working distance of the force,
+as opposed to an average over time or oar angles.
+
+Peak Drive Force
+------------------
+
+Field name: ' PeakDriveForce (lbs)' or ' PeakDriveForce (N)'
+Unit: lbs (currently) or N (supported in the future)
+
+See discusison about measuring forces under Average Drive Force.
+
+Lap Identifier
+-------------------
+
+Field name: ' lapIdx'
+Unit: N/A
+
+A unique identifier identifying the lap. It is recommended to use
+integer numbers, starting at 0, and increasing in time, but the following
+should also parse well:
+
+* 'aap', 'noot', 'mies', 'jet'
+* 'a', 'b', 'c'
+* 'first', 'second', 'third'
+* 'clubtobridge', 'straightkm', etc ..
+
+As long as each identifier is unique. 
+
+Elapsed Time 
+--------------------
+
+Field name: ' ElapsedTime (sec)'
+Unit: Seconds
+
+Elapsed time since start of workout (or interval). The value may
+reset at the start of a new lap. In that case, it should be consistent
+with the lap identifier.
+
+Measured at the end of the stroke cycle or when crossing the finish or lap
+line, whatever comes first. The first reported time in a new lap or workout
+should be at the end of the first stroke cycle.
+
+Seconds in decimal notation. So '32425.2' is good. Other time notations,
+e.g. '34:45.2' may not be parsed.
+
+Workout State
+--------------
+
+Field name: ' WorkoutState'
+
+A number indicating the workout state, following the Concept2 erg convention:
+
+Work strokes: 1, 4, 5, 6, 7, 8, 9
+Rest strokes: 3
+Transitions: 0,2,10,11,12,13
+
+The transitions ("waiting for interval start") are not supported, so a
+parser may simply consider all strokes with a workout state that is not
+equal to 3 as work strokes.
+
+It is not mandatory to record rest (paddle) strokes, but it is recommended.
+
+If this field is not present, the parser shall assume that all strokes
+are work strokes.
+
+Coordinates
+------------
+
+Field names: ' latitude', ' longitude'
+Units: degrees, in decimal notation
+
+For example:
+
+* 52.059876, 5.111655 (good)
+* 52°03'35.5"N, 5°06'42.0"E (bad)
+
+Wind speed and direction
+--------------------------
+
+Field names: 'vwind' and 'winddirection'
+Units: m/s and degrees (0 = North, 90 = East)
+
+Boar bearing
+-------------
+
+Field name: 'bearing'
+Unit: degrees
+
+Boat bearing.
+
 ================
 Release Notes:
 ================
