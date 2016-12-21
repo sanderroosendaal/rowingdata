@@ -524,7 +524,7 @@ but does not parse well in the "rowingdata" module. I will update the module
 and add the file to standard testing. 
 
 Field Names (Columns)
------------
+----------------------
 
 The standard field names are:
 
@@ -561,7 +561,7 @@ by the time stamp.
 
 
 Data Fields (Rows)
---------------
+---------------------
 
 It is recommended that there is one data row per rowing stroke.
 
@@ -603,6 +603,8 @@ TimeStamp (sec)
 
 Field name: 'TimeStamp (sec)' (no leading space).
 
+Unit: seconds
+
 This shall be a Unix time stamp (seconds since January 1, 1970, midnight UTC/GMT) in the UTC time zone.
 
 For human readability, it is advised to add a ISO8601 formatted time stamp
@@ -624,6 +626,8 @@ Distance (m)
 
 Field name: ' Horizontal (meters)'
 
+Unit: meters
+
 This is the distance covered at the end of the stroke since the beginning
 of the workout or lap.
 
@@ -636,6 +640,8 @@ Cadence (SPM)
 
 Field name: ' Cadence (stokes/min)'
 
+Unit: strokes/min
+
 Please note the typo in the field name. It is recommended that the parser
 checks for "strokes" if "stokes" is not found, but this is not guaranteed.
 
@@ -644,12 +650,16 @@ Heart Rate
 
 Field name: ' HRCur (bpm)'
 
+Unit: beats per minute
+
 Heart Rate in beats per minute
 
 Pace
 ------
 
 Field name: ' Stroke500mPace (sec/500m)'
+
+Unit: seconds
 
 Pace in seconds per 500m. Avoid negative values.
 
@@ -666,6 +676,8 @@ Power (watts)
 
 Field name: ' Power (watts)'
 
+Unit: Watt
+
 Power in watts. For erg it should be the power reported by the monitor.
 For OTW rowing, it is recommended that this is the total mechanical
 power exerted by the rower, i.e. power used for propulsion, plus waste
@@ -675,6 +687,7 @@ Drive Length
 -------------
 
 Field name: ' DriveLength (meters)'
+
 Unit: meter
 
 The distance traveled by the handle along the longitudal
@@ -688,6 +701,7 @@ Stroke Distance
 ------------------------
 
 Field name: ' StrokeDistance (meters)'
+
 Unit: meter
 
 The distance traveled during the stroke cycle. 
@@ -696,6 +710,7 @@ Drive Time
 -------------
 
 Field name: ' DriveTime (ms)'
+
 Unit: ms
 
 The duration of the drive part (from catch to finish) of the stroke. For
@@ -708,6 +723,7 @@ Recovery Time
 ---------------
 
 Field name: ' StrokeRecoveryTime (ms)'
+
 Unit: ms
 
 The duration of the recovery part. See Drive Time for the definition. Drive Time plus Recovery Time should equal the duration of the entire stroke cycle.
@@ -716,6 +732,7 @@ Average Drive Force
 --------------------
 
 Field name: ' AverageDriveForce (lbs)' / ' AverageDriveForce (N)'
+
 Unit: lbs - or N, see below
 
 Currently implemented is only the field name and value in lbs. In the future,
@@ -731,8 +748,10 @@ For OTW rowing there are various measurement systems. Some measure at
 or near the handle. Some measure at the pin.
 
 I recommend to either
+
 * Recalculate to handle force if possible, adding a separate field with the
   real measured value and a descriptive field name
+
 * Report the real measured value in this field as well as in a separate
   field with a descriptive field name
 
@@ -743,6 +762,7 @@ Peak Drive Force
 ------------------
 
 Field name: ' PeakDriveForce (lbs)' or ' PeakDriveForce (N)'
+
 Unit: lbs (currently) or N (supported in the future)
 
 See discusison about measuring forces under Average Drive Force.
@@ -751,6 +771,7 @@ Lap Identifier
 -------------------
 
 Field name: ' lapIdx'
+
 Unit: N/A
 
 A unique identifier identifying the lap. It is recommended to use
@@ -768,6 +789,7 @@ Elapsed Time
 --------------------
 
 Field name: ' ElapsedTime (sec)'
+
 Unit: Seconds
 
 Elapsed time since start of workout (or interval). The value may
@@ -805,23 +827,26 @@ Coordinates
 ------------
 
 Field names: ' latitude', ' longitude'
+
 Units: degrees, in decimal notation
 
 For example:
 
 * 52.059876, 5.111655 (good)
-* 52°03'35.5"N, 5°06'42.0"E (bad)
+* 52 03'35.5"N, 5 06'42.0"E (bad)
 
 Wind speed and direction
 --------------------------
 
 Field names: 'vwind' and 'winddirection'
+
 Units: m/s and degrees (0 = North, 90 = East)
 
-Boar bearing
+Boat bearing
 -------------
 
 Field name: 'bearing'
+
 Unit: degrees
 
 Boat bearing.
