@@ -533,18 +533,25 @@ in the CSV file, to simplify data ingestion.</p>
 <p>The field names must match exactly, including use of capitals and
 leading spaces. Please note the space at the beginning
 of some of the field names. If one of the &#8220;standard&#8221; field names is
-missing, the parser shall create it and set the values for this field to 0 (zero), except foro the &#8216;TimeStamp (sec)&#8217; field which is mandatory.</p>
+missing, the parser shall create it and set the values for this field to 0 (zero), except for the &#8216;TimeStamp (sec)&#8217; field which is mandatory.</p>
 <p>The parser shall not depend on the order of the field names (columns).
 The parser may reorder columns as well as rows, for example reordering
 by the time stamp.</p>
 </div>
 <div class="section" id="data-fields-rows">
 <h4>Data Fields (Rows)<a class="headerlink" href="#data-fields-rows" title="Permalink to this headline">¶</a></h4>
-<p>It is recommended that there is one data row per rowing stroke.</p>
-<p>Sometimes this is difficult to implement. In that case, a data row at
-regular time intervals (one per second) shall also be parsed well.</p>
+<p>It is recommended that there is one data record per one rowing stroke.</p>
+<p>Sometimes this is difficult to implement. In that case, the following
+formats are happily parsed as well:</p>
+<ul class="simple">
+<li>One record per N meters traveled</li>
+<li>One record per N seconds</li>
+</ul>
 <p>For calculating statistics, it is important to be consistent. Rowers may
-use different devices to capture data in different situations. Inconsistencies between the devices may lead to inconsistencies. As a &#8220;stroke&#8221; is a
+use different devices to capture data in different situations.
+Inconsistencies between the devices may lead to inconsistencies in aggregrate data, such as (for example) an app that calculates the number of strokes
+taken during a season.
+As a &#8220;stroke&#8221; is a
 unit that is natural for rowers, we recommend to have one data field
 per stroke.</p>
 <p>Unless otherwise stated below, all numerical types shall be parsed by
@@ -722,9 +729,11 @@ e.g. &#8216;34:45.2&#8217; may not be parsed.</p>
 <h4>Workout State<a class="headerlink" href="#workout-state" title="Permalink to this headline">¶</a></h4>
 <p>Field name: &#8216; WorkoutState&#8217;</p>
 <p>A number indicating the workout state, following the Concept2 erg convention:</p>
-<p>Work strokes: 1, 4, 5, 6, 7, 8, 9
-Rest strokes: 3
-Transitions: 0,2,10,11,12,13</p>
+<ul class="simple">
+<li>Work strokes: 1, 4, 5, 6, 7, 8, 9</li>
+<li>Rest strokes: 3</li>
+<li>Transitions: 0,2,10,11,12,13</li>
+</ul>
 <p>The transitions (&#8220;waiting for interval start&#8221;) are not supported, so a
 parser may simply consider all strokes with a workout state that is not
 equal to 3 as work strokes.</p>
