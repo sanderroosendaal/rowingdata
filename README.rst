@@ -553,7 +553,7 @@ in the CSV file, to simplify data ingestion.
 The field names must match exactly, including use of capitals and
 leading spaces. Please note the space at the beginning
 of some of the field names. If one of the "standard" field names is
-missing, the parser shall create it and set the values for this field to 0 (zero), except foro the 'TimeStamp (sec)' field which is mandatory.
+missing, the parser shall create it and set the values for this field to 0 (zero), except for the 'TimeStamp (sec)' field which is mandatory.
 
 The parser shall not depend on the order of the field names (columns).
 The parser may reorder columns as well as rows, for example reordering
@@ -563,13 +563,19 @@ by the time stamp.
 Data Fields (Rows)
 ---------------------
 
-It is recommended that there is one data row per rowing stroke.
+It is recommended that there is one data record per one rowing stroke.
 
-Sometimes this is difficult to implement. In that case, a data row at
-regular time intervals (one per second) shall also be parsed well.
+Sometimes this is difficult to implement. In that case, the following
+formats are happily parsed as well:
+
+* One record per N meters traveled
+* One record per N seconds
 
 For calculating statistics, it is important to be consistent. Rowers may
-use different devices to capture data in different situations. Inconsistencies between the devices may lead to inconsistencies. As a "stroke" is a
+use different devices to capture data in different situations.
+Inconsistencies between the devices may lead to inconsistencies in aggregrate data, such as (for example) an app that calculates the number of strokes
+taken during a season.
+As a "stroke" is a
 unit that is natural for rowers, we recommend to have one data field
 per stroke.
 
@@ -810,9 +816,9 @@ Field name: ' WorkoutState'
 
 A number indicating the workout state, following the Concept2 erg convention:
 
-Work strokes: 1, 4, 5, 6, 7, 8, 9
-Rest strokes: 3
-Transitions: 0,2,10,11,12,13
+* Work strokes: 1, 4, 5, 6, 7, 8, 9
+* Rest strokes: 3
+* Transitions: 0,2,10,11,12,13
 
 The transitions ("waiting for interval start") are not supported, so a
 parser may simply consider all strokes with a workout state that is not
