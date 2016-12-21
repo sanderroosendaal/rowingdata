@@ -524,7 +524,7 @@ but does not parse well in the "rowingdata" module. I will update the module
 and add the file to standard testing. 
 
 Field Names (Columns)
------------
+----------------------
 
 The standard field names are:
 
@@ -553,7 +553,7 @@ in the CSV file, to simplify data ingestion.
 The field names must match exactly, including use of capitals and
 leading spaces. Please note the space at the beginning
 of some of the field names. If one of the "standard" field names is
-missing, the parser shall create it and set the values for this field to 0 (zero), except foro the 'TimeStamp (sec)' field which is mandatory.
+missing, the parser shall create it and set the values for this field to 0 (zero), except for the 'TimeStamp (sec)' field which is mandatory.
 
 The parser shall not depend on the order of the field names (columns).
 The parser may reorder columns as well as rows, for example reordering
@@ -561,15 +561,21 @@ by the time stamp.
 
 
 Data Fields (Rows)
---------------
+---------------------
 
-It is recommended that there is one data row per rowing stroke.
+It is recommended that there is one data record per one rowing stroke.
 
-Sometimes this is difficult to implement. In that case, a data row at
-regular time intervals (one per second) shall also be parsed well.
+Sometimes this is difficult to implement. In that case, the following
+formats are happily parsed as well:
+
+* One record per N meters traveled
+* One record per N seconds
 
 For calculating statistics, it is important to be consistent. Rowers may
-use different devices to capture data in different situations. Inconsistencies between the devices may lead to inconsistencies. As a "stroke" is a
+use different devices to capture data in different situations.
+Inconsistencies between the devices may lead to inconsistencies in aggregrate data, such as (for example) an app that calculates the number of strokes
+taken during a season.
+As a "stroke" is a
 unit that is natural for rowers, we recommend to have one data field
 per stroke.
 
@@ -603,6 +609,8 @@ TimeStamp (sec)
 
 Field name: 'TimeStamp (sec)' (no leading space).
 
+Unit: seconds
+
 This shall be a Unix time stamp (seconds since January 1, 1970, midnight UTC/GMT) in the UTC time zone.
 
 For human readability, it is advised to add a ISO8601 formatted time stamp
@@ -624,6 +632,8 @@ Distance (m)
 
 Field name: ' Horizontal (meters)'
 
+Unit: meters
+
 This is the distance covered at the end of the stroke since the beginning
 of the workout or lap.
 
@@ -636,6 +646,8 @@ Cadence (SPM)
 
 Field name: ' Cadence (stokes/min)'
 
+Unit: strokes/min
+
 Please note the typo in the field name. It is recommended that the parser
 checks for "strokes" if "stokes" is not found, but this is not guaranteed.
 
@@ -644,12 +656,16 @@ Heart Rate
 
 Field name: ' HRCur (bpm)'
 
+Unit: beats per minute
+
 Heart Rate in beats per minute
 
 Pace
 ------
 
 Field name: ' Stroke500mPace (sec/500m)'
+
+Unit: seconds
 
 Pace in seconds per 500m. Avoid negative values.
 
@@ -666,6 +682,8 @@ Power (watts)
 
 Field name: ' Power (watts)'
 
+Unit: Watt
+
 Power in watts. For erg it should be the power reported by the monitor.
 For OTW rowing, it is recommended that this is the total mechanical
 power exerted by the rower, i.e. power used for propulsion, plus waste
@@ -675,6 +693,7 @@ Drive Length
 -------------
 
 Field name: ' DriveLength (meters)'
+
 Unit: meter
 
 The distance traveled by the handle along the longitudal
@@ -688,6 +707,7 @@ Stroke Distance
 ------------------------
 
 Field name: ' StrokeDistance (meters)'
+
 Unit: meter
 
 The distance traveled during the stroke cycle. 
@@ -696,6 +716,7 @@ Drive Time
 -------------
 
 Field name: ' DriveTime (ms)'
+
 Unit: ms
 
 The duration of the drive part (from catch to finish) of the stroke. For
@@ -708,6 +729,7 @@ Recovery Time
 ---------------
 
 Field name: ' StrokeRecoveryTime (ms)'
+
 Unit: ms
 
 The duration of the recovery part. See Drive Time for the definition. Drive Time plus Recovery Time should equal the duration of the entire stroke cycle.
@@ -716,6 +738,7 @@ Average Drive Force
 --------------------
 
 Field name: ' AverageDriveForce (lbs)' / ' AverageDriveForce (N)'
+
 Unit: lbs - or N, see below
 
 Currently implemented is only the field name and value in lbs. In the future,
@@ -731,8 +754,10 @@ For OTW rowing there are various measurement systems. Some measure at
 or near the handle. Some measure at the pin.
 
 I recommend to either
+
 * Recalculate to handle force if possible, adding a separate field with the
   real measured value and a descriptive field name
+
 * Report the real measured value in this field as well as in a separate
   field with a descriptive field name
 
@@ -743,6 +768,7 @@ Peak Drive Force
 ------------------
 
 Field name: ' PeakDriveForce (lbs)' or ' PeakDriveForce (N)'
+
 Unit: lbs (currently) or N (supported in the future)
 
 See discusison about measuring forces under Average Drive Force.
@@ -751,6 +777,7 @@ Lap Identifier
 -------------------
 
 Field name: ' lapIdx'
+
 Unit: N/A
 
 A unique identifier identifying the lap. It is recommended to use
@@ -768,6 +795,7 @@ Elapsed Time
 --------------------
 
 Field name: ' ElapsedTime (sec)'
+
 Unit: Seconds
 
 Elapsed time since start of workout (or interval). The value may
@@ -788,9 +816,9 @@ Field name: ' WorkoutState'
 
 A number indicating the workout state, following the Concept2 erg convention:
 
-Work strokes: 1, 4, 5, 6, 7, 8, 9
-Rest strokes: 3
-Transitions: 0,2,10,11,12,13
+* Work strokes: 1, 4, 5, 6, 7, 8, 9
+* Rest strokes: 3
+* Transitions: 0,2,10,11,12,13
 
 The transitions ("waiting for interval start") are not supported, so a
 parser may simply consider all strokes with a workout state that is not
@@ -805,23 +833,26 @@ Coordinates
 ------------
 
 Field names: ' latitude', ' longitude'
+
 Units: degrees, in decimal notation
 
 For example:
 
 * 52.059876, 5.111655 (good)
-* 52°03'35.5"N, 5°06'42.0"E (bad)
+* 52 03'35.5"N, 5 06'42.0"E (bad)
 
 Wind speed and direction
 --------------------------
 
 Field names: 'vwind' and 'winddirection'
+
 Units: m/s and degrees (0 = North, 90 = East)
 
-Boar bearing
+Boat bearing
 -------------
 
 Field name: 'bearing'
+
 Unit: degrees
 
 Boat bearing.

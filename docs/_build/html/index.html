@@ -498,6 +498,271 @@ including error margin, etc.</p>
 <p>If imported from TCX, Rowpro, or other tools, some data fields may not contain
 useful information.</p>
 </div>
+<div class="section" id="csv-file-standard">
+<h3>CSV File Standard<a class="headerlink" href="#csv-file-standard" title="Permalink to this headline">¶</a></h3>
+<p>The basic rowingdata class reads CSV files that adher to the standard
+described here. Any parser implementation should adher to the minimum
+standard as described here.</p>
+<p>Please send to me any CSV file that adhers to the standard described here
+but does not parse well in the &#8220;rowingdata&#8221; module. I will update the module
+and add the file to standard testing.</p>
+<div class="section" id="field-names-columns">
+<h4>Field Names (Columns)<a class="headerlink" href="#field-names-columns" title="Permalink to this headline">¶</a></h4>
+<p>The standard field names are:</p>
+<ul class="simple">
+<li>&#8216;Timestamp (sec)&#8217;</li>
+<li>&#8216; Horizontal (meters)&#8217;</li>
+<li>&#8216; Cadence (stokes/min&#8217;</li>
+<li>&#8216; HRCur (bpm)&#8217;</li>
+<li>&#8216; Stroke500mPace (sec/500m)&#8217;</li>
+<li>&#8216; Power (watts)&#8217;</li>
+<li>&#8216; DriveLength (meters)&#8217;</li>
+<li>&#8216; StrokeDistance (meters)&#8217;</li>
+<li>&#8216; DriveTime (ms)&#8217;</li>
+<li>&#8216; StrokeRecoveryTime (ms)&#8217;</li>
+<li>&#8216; AverageDriveForce (lbs)&#8217;</li>
+<li>&#8216; PeakDriveForce (lbs)&#8217;</li>
+<li>&#8216; lapIdx&#8217;</li>
+<li>&#8216; ElapsedTime (sec)&#8217;</li>
+</ul>
+<p>The CSV file adhers to the US conventions, with fields
+separated by a comma (&#8216;,&#8217;)
+and using the dot &#8216;.&#8217; as the decimal symbol.</p>
+<p>The field names are on the first line. There are no header or footer lines
+in the CSV file, to simplify data ingestion.</p>
+<p>The field names must match exactly, including use of capitals and
+leading spaces. Please note the space at the beginning
+of some of the field names. If one of the &#8220;standard&#8221; field names is
+missing, the parser shall create it and set the values for this field to 0 (zero), except for the &#8216;TimeStamp (sec)&#8217; field which is mandatory.</p>
+<p>The parser shall not depend on the order of the field names (columns).
+The parser may reorder columns as well as rows, for example reordering
+by the time stamp.</p>
+</div>
+<div class="section" id="data-fields-rows">
+<h4>Data Fields (Rows)<a class="headerlink" href="#data-fields-rows" title="Permalink to this headline">¶</a></h4>
+<p>It is recommended that there is one data record per one rowing stroke.</p>
+<p>Sometimes this is difficult to implement. In that case, the following
+formats are happily parsed as well:</p>
+<ul class="simple">
+<li>One record per N meters traveled</li>
+<li>One record per N seconds</li>
+</ul>
+<p>For calculating statistics, it is important to be consistent. Rowers may
+use different devices to capture data in different situations.
+Inconsistencies between the devices may lead to inconsistencies in aggregrate data, such as (for example) an app that calculates the number of strokes
+taken during a season.
+As a &#8220;stroke&#8221; is a
+unit that is natural for rowers, we recommend to have one data field
+per stroke.</p>
+<p>Unless otherwise stated below, all numerical types shall be parsed by
+the parser, so it is up to the user to implement single, double, decimal
+or integer, and common (en-US) numerical notation shall be parsed well, e.g.</p>
+<ul class="simple">
+<li>234 (integer)</li>
+<li>22.1 (float)</li>
+<li>6.3e4 (scientific)</li>
+</ul>
+<p>Percentages are not guaranteed to be parsed well. Use fractions, e.g.:</p>
+<ul class="simple">
+<li>0.67 (good)</li>
+<li>67% (not good)</li>
+</ul>
+</div>
+<div class="section" id="missing-data">
+<h4>Missing Data<a class="headerlink" href="#missing-data" title="Permalink to this headline">¶</a></h4>
+<p>If a measuring device does not obtain a value during a stroke, this shall
+be indicated in the file. Avoid using dummy values. It will be up to the
+parser and further data processing to &#8220;clean&#8221; the data.</p>
+<p>Recommended values are &#8216;nan&#8217; (not a number), or leaving the field empty.</p>
+<p>Please not that &#8216;nan&#8217; replacing a missing time stamp may lead to
+unpredictable results.</p>
+</div>
+<div class="section" id="timestamp-sec">
+<h4>TimeStamp (sec)<a class="headerlink" href="#timestamp-sec" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216;TimeStamp (sec)&#8217; (no leading space).</p>
+<p>Unit: seconds</p>
+<p>This shall be a Unix time stamp (seconds since January 1, 1970, midnight UTC/GMT) in the UTC time zone.</p>
+<p>For human readability, it is advised to add a ISO8601 formatted time stamp
+as a separate column called &#8216; ISO8601&#8217;.</p>
+<p>The value reported shall be the time at the end of the stroke cycle (i.e.
+the start of the next stroke), or
+at the crossing of the finish line (or lap end distance), whichever
+is first. If this
+is not adhered to, lap times may be inaccurate.</p>
+<p>The precision may be up to microseconds, but as a minimum the parser shall
+take into account tenths of seconds.</p>
+<p>It is strongly advised to have no &#8220;missing data&#8221; in the time stamp field.</p>
+</div>
+<div class="section" id="distance-m">
+<h4>Distance (m)<a class="headerlink" href="#distance-m" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; Horizontal (meters)&#8217;</p>
+<p>Unit: meters</p>
+<p>This is the distance covered at the end of the stroke since the beginning
+of the workout or lap.</p>
+<p>For best results, it is recommended to report the cumulative distance since
+the beginning of the workout, but it is allowed to reset the distance at
+the beginning of each lap.</p>
+</div>
+<div class="section" id="cadence-spm">
+<h4>Cadence (SPM)<a class="headerlink" href="#cadence-spm" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; Cadence (stokes/min)&#8217;</p>
+<p>Unit: strokes/min</p>
+<p>Please note the typo in the field name. It is recommended that the parser
+checks for &#8220;strokes&#8221; if &#8220;stokes&#8221; is not found, but this is not guaranteed.</p>
+</div>
+<div class="section" id="heart-rate">
+<h4>Heart Rate<a class="headerlink" href="#heart-rate" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; HRCur (bpm)&#8217;</p>
+<p>Unit: beats per minute</p>
+<p>Heart Rate in beats per minute</p>
+</div>
+<div class="section" id="pace">
+<h4>Pace<a class="headerlink" href="#pace" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; Stroke500mPace (sec/500m)&#8217;</p>
+<p>Unit: seconds</p>
+<p>Pace in seconds per 500m. Avoid negative values.</p>
+<p>When the rower stops, this value goes to infinity. Use empty field, &#8216;nan&#8217;,
+&#8216;inf&#8217; or equivalent. Avoid inserting 0, because this will mess
+up speed calculations.</p>
+<p>If this field is missing, there must be a possibility to calculate it
+from distance and time fields. If distance and pace fields are missing,
+the parser may throw an error.</p>
+</div>
+<div class="section" id="power-watts">
+<h4>Power (watts)<a class="headerlink" href="#power-watts" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; Power (watts)&#8217;</p>
+<p>Unit: Watt</p>
+<p>Power in watts. For erg it should be the power reported by the monitor.
+For OTW rowing, it is recommended that this is the total mechanical
+power exerted by the rower, i.e. power used for propulsion, plus waste
+(puddles, drag), as opposed to the metabolistic power.</p>
+</div>
+<div class="section" id="drive-length">
+<h4>Drive Length<a class="headerlink" href="#drive-length" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; DriveLength (meters)&#8217;</p>
+<p>Unit: meter</p>
+<p>The distance traveled by the handle along the longitudal
+axis of the boat or erg.</p>
+<p>For OTW rowing, where the oar or scull rotates around the pin, this
+is not equal to the length trajectory traveled by the hands. It
+is the projection of that trajectory on the longitudal axis.</p>
+</div>
+<div class="section" id="stroke-distance">
+<h4>Stroke Distance<a class="headerlink" href="#stroke-distance" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; StrokeDistance (meters)&#8217;</p>
+<p>Unit: meter</p>
+<p>The distance traveled during the stroke cycle.</p>
+</div>
+<div class="section" id="drive-time">
+<h4>Drive Time<a class="headerlink" href="#drive-time" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; DriveTime (ms)&#8217;</p>
+<p>Unit: ms</p>
+<p>The duration of the drive part (from catch to finish) of the stroke. For
+OTW rowing it is recommended to measure this as
+the time it takes from the minimum (catch) oar angle to the maximum (finish)
+or angle,
+as opposed to &#8220;blade in&#8221; to &#8220;blade out&#8221; times.</p>
+</div>
+<div class="section" id="recovery-time">
+<h4>Recovery Time<a class="headerlink" href="#recovery-time" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; StrokeRecoveryTime (ms)&#8217;</p>
+<p>Unit: ms</p>
+<p>The duration of the recovery part. See Drive Time for the definition. Drive Time plus Recovery Time should equal the duration of the entire stroke cycle.</p>
+</div>
+<div class="section" id="average-drive-force">
+<h4>Average Drive Force<a class="headerlink" href="#average-drive-force" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; AverageDriveForce (lbs)&#8217; / &#8216; AverageDriveForce (N)&#8217;</p>
+<p>Unit: lbs - or N, see below</p>
+<p>Currently implemented is only the field name and value in lbs. In the future,
+we will implement &#8216; AverageDriveForce (N)&#8217; so we can report in SI units.</p>
+<p>This should be the part of the handle force that does actual work.</p>
+<p>For dynamic ergs and OTW rowing this is not sufficient to describe the
+complete stroke dynamics, so additional fields can be defined, for example
+&#8216; StretcherForce&#8217;.</p>
+<p>For OTW rowing there are various measurement systems. Some measure at
+or near the handle. Some measure at the pin.</p>
+<p>I recommend to either</p>
+<ul class="simple">
+<li>Recalculate to handle force if possible, adding a separate field with the
+real measured value and a descriptive field name</li>
+<li>Report the real measured value in this field as well as in a separate
+field with a descriptive field name</li>
+</ul>
+<p>The average should be an average over the working distance of the force,
+as opposed to an average over time or oar angles.</p>
+</div>
+<div class="section" id="peak-drive-force">
+<h4>Peak Drive Force<a class="headerlink" href="#peak-drive-force" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; PeakDriveForce (lbs)&#8217; or &#8216; PeakDriveForce (N)&#8217;</p>
+<p>Unit: lbs (currently) or N (supported in the future)</p>
+<p>See discusison about measuring forces under Average Drive Force.</p>
+</div>
+<div class="section" id="lap-identifier">
+<h4>Lap Identifier<a class="headerlink" href="#lap-identifier" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; lapIdx&#8217;</p>
+<p>Unit: N/A</p>
+<p>A unique identifier identifying the lap. It is recommended to use
+integer numbers, starting at 0, and increasing in time, but the following
+should also parse well:</p>
+<ul class="simple">
+<li>&#8216;aap&#8217;, &#8216;noot&#8217;, &#8216;mies&#8217;, &#8216;jet&#8217;</li>
+<li>&#8216;a&#8217;, &#8216;b&#8217;, &#8216;c&#8217;</li>
+<li>&#8216;first&#8217;, &#8216;second&#8217;, &#8216;third&#8217;</li>
+<li>&#8216;clubtobridge&#8217;, &#8216;straightkm&#8217;, etc ..</li>
+</ul>
+<p>As long as each identifier is unique.</p>
+</div>
+<div class="section" id="elapsed-time">
+<h4>Elapsed Time<a class="headerlink" href="#elapsed-time" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; ElapsedTime (sec)&#8217;</p>
+<p>Unit: Seconds</p>
+<p>Elapsed time since start of workout (or interval). The value may
+reset at the start of a new lap. In that case, it should be consistent
+with the lap identifier.</p>
+<p>Measured at the end of the stroke cycle or when crossing the finish or lap
+line, whatever comes first. The first reported time in a new lap or workout
+should be at the end of the first stroke cycle.</p>
+<p>Seconds in decimal notation. So &#8216;32425.2&#8217; is good. Other time notations,
+e.g. &#8216;34:45.2&#8217; may not be parsed.</p>
+</div>
+<div class="section" id="workout-state">
+<h4>Workout State<a class="headerlink" href="#workout-state" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216; WorkoutState&#8217;</p>
+<p>A number indicating the workout state, following the Concept2 erg convention:</p>
+<ul class="simple">
+<li>Work strokes: 1, 4, 5, 6, 7, 8, 9</li>
+<li>Rest strokes: 3</li>
+<li>Transitions: 0,2,10,11,12,13</li>
+</ul>
+<p>The transitions (&#8220;waiting for interval start&#8221;) are not supported, so a
+parser may simply consider all strokes with a workout state that is not
+equal to 3 as work strokes.</p>
+<p>It is not mandatory to record rest (paddle) strokes, but it is recommended.</p>
+<p>If this field is not present, the parser shall assume that all strokes
+are work strokes.</p>
+</div>
+<div class="section" id="coordinates">
+<h4>Coordinates<a class="headerlink" href="#coordinates" title="Permalink to this headline">¶</a></h4>
+<p>Field names: &#8216; latitude&#8217;, &#8216; longitude&#8217;</p>
+<p>Units: degrees, in decimal notation</p>
+<p>For example:</p>
+<ul class="simple">
+<li>52.059876, 5.111655 (good)</li>
+<li>52 03&#8216;35.5&#8221;N, 5 06&#8216;42.0&#8221;E (bad)</li>
+</ul>
+</div>
+<div class="section" id="wind-speed-and-direction">
+<h4>Wind speed and direction<a class="headerlink" href="#wind-speed-and-direction" title="Permalink to this headline">¶</a></h4>
+<p>Field names: &#8216;vwind&#8217; and &#8216;winddirection&#8217;</p>
+<p>Units: m/s and degrees (0 = North, 90 = East)</p>
+</div>
+<div class="section" id="boat-bearing">
+<h4>Boat bearing<a class="headerlink" href="#boat-bearing" title="Permalink to this headline">¶</a></h4>
+<p>Field name: &#8216;bearing&#8217;</p>
+<p>Unit: degrees</p>
+<p>Boat bearing.</p>
+</div>
+</div>
 <div class="section" id="release-notes">
 <h3>Release Notes:<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="x">
@@ -805,6 +1070,30 @@ useful information.</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#data-fields">Data Fields</a></li>
+<li><a class="reference internal" href="#csv-file-standard">CSV File Standard</a><ul>
+<li><a class="reference internal" href="#field-names-columns">Field Names (Columns)</a></li>
+<li><a class="reference internal" href="#data-fields-rows">Data Fields (Rows)</a></li>
+<li><a class="reference internal" href="#missing-data">Missing Data</a></li>
+<li><a class="reference internal" href="#timestamp-sec">TimeStamp (sec)</a></li>
+<li><a class="reference internal" href="#distance-m">Distance (m)</a></li>
+<li><a class="reference internal" href="#cadence-spm">Cadence (SPM)</a></li>
+<li><a class="reference internal" href="#heart-rate">Heart Rate</a></li>
+<li><a class="reference internal" href="#pace">Pace</a></li>
+<li><a class="reference internal" href="#power-watts">Power (watts)</a></li>
+<li><a class="reference internal" href="#drive-length">Drive Length</a></li>
+<li><a class="reference internal" href="#stroke-distance">Stroke Distance</a></li>
+<li><a class="reference internal" href="#drive-time">Drive Time</a></li>
+<li><a class="reference internal" href="#recovery-time">Recovery Time</a></li>
+<li><a class="reference internal" href="#average-drive-force">Average Drive Force</a></li>
+<li><a class="reference internal" href="#peak-drive-force">Peak Drive Force</a></li>
+<li><a class="reference internal" href="#lap-identifier">Lap Identifier</a></li>
+<li><a class="reference internal" href="#elapsed-time">Elapsed Time</a></li>
+<li><a class="reference internal" href="#workout-state">Workout State</a></li>
+<li><a class="reference internal" href="#coordinates">Coordinates</a></li>
+<li><a class="reference internal" href="#wind-speed-and-direction">Wind speed and direction</a></li>
+<li><a class="reference internal" href="#boat-bearing">Boat bearing</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#release-notes">Release Notes:</a><ul>
 <li><a class="reference internal" href="#x">0.94.x</a></li>
 <li><a class="reference internal" href="#id2">0.93.x</a></li>

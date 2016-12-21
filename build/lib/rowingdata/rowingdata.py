@@ -8,7 +8,7 @@ import checkdatafiles
 
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__ = "0.94.1"
+__version__ = "0.94.4"
 
 try:
     from Tkinter import Tk
@@ -392,11 +392,19 @@ def interval_string(nr,totaldist,totaltime,avgpace,avgspm,
     """ Used to create a nifty text string with the data for the interval
     """
 
-    stri = "{nr:0>2.0f}{sep}{td:0>5.0f}{sep}{inttime:0>5}{sep}".format(
-	nr = nr,
-	sep = separator,
-	td = totaldist,
-	inttime = format_pace(totaltime)
+    try:
+        stri = "{nr:0>2.0f}{sep}{td:0>5.0f}{sep}{inttime:0>5}{sep}".format(
+	    nr = nr,
+	    sep = separator,
+	    td = totaldist,
+	    inttime = format_pace(totaltime)
+	)
+    except ValueError:
+        stri = "{nr}{sep}{td:0>5.0f}{sep}{inttime:0>5}{sep}".format(
+	    nr = nr,
+	    sep = separator,
+	    td = totaldist,
+	    inttime = format_pace(totaltime)
 	)
 
     stri += "{tpace:0>7}{sep}{tpower:0>5.1f}{sep}{tspm:0>4.1f}{sep}{thr:3.1f}".format(
@@ -1368,6 +1376,29 @@ class rowingdata:
         for name in mandatorynames:
             if name not in sled_df.columns:
                 sled_df[name] = 0
+                if name==' Stroke500mPace (sec/500m)':
+                    try:
+                        velo = sled_df[' Horizontal (meters)']/sled_df[' ElapsedTime (sec)']
+                        sled_df[name] = 500./velo
+                    except KeyError:
+                        velo = sled_df[' Horizontal (meters)']/sled_df['TimeStamp (sec)']
+                        sled_df[name] = 500./velo
+                if name==' AverageDriveForce (lbs)':
+                    try:
+                        forcen = sled_df[' AverageDriveForce (N)']
+                        sled_df[name] = forcen/lbstoN
+                    except KeyError:
+                        pass
+                if name==' PeakDriveForce (lbs)':
+                    try:
+                        forcen = sled_df[' PeakDriveForce (N)']
+                        sled_df[name] = forcen/lbstoN
+                    except KeyError:
+                        pass
+
+        # add forces in N (for future)
+        sled_df[' AverageDriveForce (N)'] = sled_df[' AverageDriveForce (lbs)']*lbstoN
+        sled_df[' PeakDriveForce (N)'] = sled_df[' PeakDriveForce (lbs)']*lbstoN
 
         self.dragfactor = sled_df[' DragFactor'].mean()
 	# get the date of the row
@@ -1630,7 +1661,7 @@ class rowingdata:
 	    return self.intervalstats()
 
 
-	for idx in intervalnrs:
+	for index,idx in enumerate(intervalnrs):
 	    td = df[df[' lapIdx'] == idx]
 
 	    # get stroke info
@@ -1673,11 +1704,21 @@ class rowingdata:
 		maxhr = 0
 
 	    if intervaldistance != 0:
-		stri += interval_string(idx+1,intervaldistance,intervalduration,
-				    intervalpace,avgspm,
-				        avghr,maxhr,avgdps,avgpower,
-				    separator=separator)
-	    
+                try:
+		    stri += interval_string(intervalnrs[index],
+                                            intervaldistance,
+                                            intervalduration,
+				            intervalpace,avgspm,
+				            avghr,maxhr,avgdps,avgpower,
+				            separator=separator)
+                except IndexError:
+                    stri += interval_string(len(intervalnrs)+1,
+                                            intervaldistance,
+                                            intervalduration,
+				            intervalpace,avgspm,
+				            avghr,maxhr,avgdps,avgpower,
+				            separator=separator)
+	            
 
 
 	return stri
