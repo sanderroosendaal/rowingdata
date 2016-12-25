@@ -864,6 +864,7 @@ Release Notes:
 ------
 
 - Recognizes C2 logbook summary CSV (which is not supported)
+- Added RowPerfect3 Parser
 
 0.93.x
 ------
