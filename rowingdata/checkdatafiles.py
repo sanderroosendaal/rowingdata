@@ -66,6 +66,9 @@ def checkfile(f2,verbose=False):
 	if (fileformat == 'speedcoach2'):
 	    row = rowingdata.SpeedCoach2Parser(f2)
     
+        if (fileformat == 'rowperfect3'):
+            row = rowingdata.RowPerfectParser(f2)
+            
 	# handle ErgStick
         if (fileformat == 'ergstick'):
 	    row = rowingdata.ErgStickParser(f2)

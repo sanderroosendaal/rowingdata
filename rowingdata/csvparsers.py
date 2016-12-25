@@ -88,6 +88,9 @@ def get_file_type(f):
         if 'Club' in firstline:
             return 'boatcoach'
         
+        if 'peak_force_pos' in firstline:
+            return 'rowperfect3'
+        
 	if 'Hair' in seventhline:
 	    return 'rp'
 
@@ -663,6 +666,63 @@ class ErgStickParser(CSVParser):
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes.iloc[0]
+
+        self.to_standard()
+
+class RowPerfectParser(CSVParser):
+
+    
+    def __init__(self, *args, **kwargs):
+        super(RowPerfectParser, self).__init__(*args, **kwargs)
+
+        self.row_date = kwargs.pop('row_date',datetime.datetime.utcnow())
+        self.cols = [
+            'time',
+            'distance',
+            'stroke_rate',
+            'pulse',
+            '',
+            'power',
+            'stroke_length',
+            'distance_per_stroke',
+            'drive_time',
+            '',
+            'recover_time',
+            '',
+            'peak_force',
+            'workout_interval_id',
+            '',
+            ' latitude',
+            ' longitude',
+        ]
+
+        self.cols = [b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
+
+        self.columns = dict(zip(self.defaultcolumnnames,self.cols))
+
+        # calculations
+        self.df[self.columns[' DriveTime (ms)']] *= 1000.
+        self.df[self.columns[' StrokeRecoveryTime (ms)']] *= 1000.
+        
+        power = self.df[self.columns[' Power (watts)']]
+        v = (power/2.8)**(1./3.)
+        pace = 500./v
+ 
+        self.df[' Stroke500mPace (sec/500m)'] = pace
+
+        seconds = self.df[self.columns['TimeStamp (sec)']]
+        dt = seconds.diff()
+        nrsteps = len(dt[dt<0])
+        res = make_cumvalues(seconds)
+        seconds2 = res[0]+seconds[0]
+        lapidx = res[1]
+        unixtime = seconds2+totimestamp(self.row_date)
+
+        self.df[self.columns[' lapIdx']] = lapidx
+        self.df[self.columns['TimeStamp (sec)']] = unixtime
+        self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
+        self.df[self.columns[' ElapsedTime (sec)']] = unixtime-unixtime.iloc[0]
 
         self.to_standard()
 

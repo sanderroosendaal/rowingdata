@@ -46,6 +46,7 @@ from csvparsers import (
     ErgStickParser,
     MysteryParser,
     RowProParser,
+    RowPerfectParser,
     SpeedCoach2Parser,
     totimestamp,
     make_cumvalues_array,
