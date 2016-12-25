@@ -78,6 +78,9 @@ def get_file_type(f):
 
         if 'Concept2 Utility' in firstline:
             return 'c2log'
+
+        if 'Avg Watts' in firstline:
+            return 'c2log'
         
 	if 'SpeedCoach GPS Pro' in fourthline:
 	    return 'speedcoach2'
