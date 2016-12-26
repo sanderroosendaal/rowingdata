@@ -8,7 +8,7 @@ import checkdatafiles
 
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__ = "0.94.6"
+__version__ = "0.94.7"
 
 try:
     from Tkinter import Tk
