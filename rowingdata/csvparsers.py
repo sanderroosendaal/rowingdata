@@ -707,6 +707,16 @@ class RowPerfectParser(CSVParser):
         # calculations
         self.df[self.columns[' DriveTime (ms)']] *= 1000.
         self.df[self.columns[' StrokeRecoveryTime (ms)']] *= 1000.
+        self.df[self.columns[' PeakDriveForce (lbs)']]/= lbstoN
+        self.df[self.columns[' DriveLength (meters)']] /= 100.
+
+        
+        
+        wperstroke = self.df['energy_per_stroke']
+        fav = wperstroke/self.df[self.columns[' DriveLength (meters)']]
+        fav /= lbstoN
+
+        self.df[self.columns[' AverageDriveForce (lbs)']] = fav
         
         power = self.df[self.columns[' Power (watts)']]
         v = (power/2.8)**(1./3.)
