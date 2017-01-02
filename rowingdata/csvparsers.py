@@ -82,6 +82,9 @@ def get_file_type(f):
         if 'Concept2 Utility' in firstline:
             return 'c2log'
 
+        if 'Concept2' in firstline:
+            return 'c2log'
+        
         if 'Avg Watts' in firstline:
             return 'c2log'
         
