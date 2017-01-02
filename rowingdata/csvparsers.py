@@ -76,6 +76,9 @@ def get_file_type(f):
 
 	fop.close()
 
+        if 'RowDate' in firstline:
+            return 'rowprolog'
+        
         if 'Concept2 Utility' in firstline:
             return 'c2log'
 
