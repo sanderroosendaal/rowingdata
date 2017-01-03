@@ -124,9 +124,9 @@ class TestRowProParser:
         assert_equals(row.number_of_rows,988)
         totaldist = row.df['cum_dist'].max()
         assert_equals(totaldist,10000)
-        assert_equals(row.rowdatetime,datetime.datetime(2016,3,15,19,49,48,863000))
+        assert_equals(row.rowdatetime,datetime.datetime(2016,3,15,18,49,48))
         totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
-        assert_equals(int(10*totaltime),22653)
+        assert_equals(int(10*totaltime),22660)
 
 class TestRowProParserIntervals:
     def testrowprointervals(self):
@@ -137,7 +137,7 @@ class TestRowProParserIntervals:
         assert_equals(row.number_of_rows,1674)
         totaldist = row.df['cum_dist'].max()
         assert_equals(int(totaldist),19026)
-        assert_equals(row.rowdatetime,datetime.datetime(2016,1,12,19,23,10,878000))
+        assert_equals(row.rowdatetime,datetime.datetime(2016,1,12,18,23,10))
         totaltime = row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(totaltime,4800)
     
