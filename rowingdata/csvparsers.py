@@ -76,9 +76,15 @@ def get_file_type(f):
 
 	fop.close()
 
+        if 'RowDate' in firstline:
+            return 'rowprolog'
+        
         if 'Concept2 Utility' in firstline:
             return 'c2log'
 
+        if 'Concept2' in firstline:
+            return 'c2log'
+        
         if 'Avg Watts' in firstline:
             return 'c2log'
         
@@ -189,7 +195,7 @@ def get_rowpro_footer(f,converters={}):
     return pd.read_csv(f,skiprows=counter2,
 		       converters=converters,
 		       engine='python',
-		       sep=None)
+		       sep=None,index_col=False)
     
 
 def skip_variable_header(f):
@@ -318,7 +324,7 @@ class CSVParser(object):
         
         self.df = pd.read_csv(csvfile,skiprows=skiprows,usecols=usecols,
                               sep=sep,engine=engine,skipfooter=skipfooter,
-                              converters=converters)
+                              converters=converters,index_col=False)
         
         self.defaultcolumnnames = [
             'TimeStamp (sec)',
@@ -859,10 +865,10 @@ class RowProParser(CSVParser):
 	    therowindex = self.df[dt<0].index
 	    nr = 0
 	    for i in footerwork.index:
-		time = footerwork.ix[i,'Time']
+		ttime = footerwork.ix[i,'Time']
 		distance = footerwork.ix[i,'Distance']
 		avgpace = footerwork.ix[i,'AvgPace']
-		self.df.ix[therowindex[nr],'Time'] = time
+		self.df.ix[therowindex[nr],'Time'] = ttime
 		self.df.ix[therowindex[nr],'Distance'] = distance
 		nr += 1
 	
@@ -872,22 +878,22 @@ class RowProParser(CSVParser):
 	    therowindex = self.df[dt<0].index
 	    nr = 0
 	    for i in footerwork.index:
-		time = footerwork.ix[i,'Time']
+		ttime = footerwork.ix[i,'Time']
 		distance = footerwork.ix[i,'Distance']
 		avgpace = footerwork.ix[i,'AvgPace']
-		self.df.ix[therowindex[nr],'Time'] = time
+		self.df.ix[therowindex[nr],'Time'] = ttime
 		self.df.ix[therowindex[nr],'Distance'] = distance
 		nr += 1
 	else:
 	    self.df.loc[maxindex,'Time'] = endvalue
 	    for i in footerwork.index:
-		time = footerwork.ix[i,'Time']
+		ttime = footerwork.ix[i,'Time']
 		distance = footerwork.ix[i,'Distance']
 		avgpace = footerwork.ix[i,'AvgPace']
-		diff = self.df['Time'].apply(lambda z: abs(time-z))
+		diff = self.df['Time'].apply(lambda z: abs(ttime-z))
 		diff.sort_values(inplace=True)
 		theindex = diff.index[0]
-		self.df.ix[theindex,'Time'] = time
+		self.df.ix[theindex,'Time'] = ttime
 		self.df.ix[theindex,'Distance'] = distance
 
         dateline = get_file_line(11,csvfile)
@@ -897,7 +903,6 @@ class RowProParser(CSVParser):
             self.row_date = parser.parse(dated,fuzzy=True)
         except ValueError:
             self.row_date = parser.parse(dated2,fuzzy=True)
-            
             
         self.cols = [
             'Time',
@@ -932,8 +937,11 @@ class RowProParser(CSVParser):
         lapidx = res[1]
         seconds3 = seconds2.interpolate()
         seconds3[0] = seconds[0]
-
-        unixtimes = seconds3+totimestamp(self.row_date)
+        seconds3 = pd.to_timedelta(seconds3,unit='s')
+        tts = self.row_date+seconds3
+        
+        unixtimes = tts.apply(lambda x:time.mktime(x.timetuple()))
+        # unixtimes = totimestamp(self.row_date+seconds3)
         self.df[self.columns[' lapIdx']] = lapidx
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
