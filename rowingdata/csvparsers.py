@@ -493,7 +493,9 @@ class BoatCoachParser(CSVParser):
 
         try:
             datetime = self.df[self.columns['TimeStamp (sec)']]
-            unixtimes = datetime.apply(lambda x:timestrtosecs(x))
+            row_date = parser.parse(datetime[0],fuzzy=True)
+            datetime = datetime.apply(lambda x:parser.parse(x,fuzzy=True))
+            unixtimes = datetime.apply(lambda x:time.mktime(x.timetuple()))
         except KeyError:
             # calculations
             row_date2 = time.mktime(row_date.timetuple())
