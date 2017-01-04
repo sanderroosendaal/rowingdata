@@ -460,7 +460,7 @@ class BoatCoachParser(CSVParser):
         super(BoatCoachParser, self).__init__(*args, **kwargs)
 
         self.cols = [
-            'workTime',
+            'DateTime',
             'workDistance',
             'strokeRate',
             'currentHeartRate',
@@ -484,18 +484,23 @@ class BoatCoachParser(CSVParser):
 
         self.columns = dict(zip(self.defaultcolumnnames,self.cols))
 
-        # calculations
         # get date from footer
         fop = open(csvfile,'r')
         line = fop.readline()
         dated =  re.split('Date:',line)[1][1:-1]
 	row_date = parser.parse(dated,fuzzy=True)
         fop.close()
-        row_date2 = time.mktime(row_date.timetuple())
-        timecolumn = self.df[self.columns['TimeStamp (sec)']]
-        timesecs = timecolumn.apply(lambda x:timestrtosecs(x))
-        timesecs = make_cumvalues(timesecs)[0]
-        unixtimes = row_date2+timesecs
+
+        try:
+            datetime = self.df[self.columns['TimeStamp (sec)']]
+            unixtimes = datetime.apply(lambda x:timestrtosecs(x))
+        except KeyError:
+            # calculations
+            row_date2 = time.mktime(row_date.timetuple())
+            timecolumn = self.df[self.columns[' ElapsedTime (sec)']]
+            timesecs = timecolumn.apply(lambda x:timestrtosecs(x))
+            timesecs = make_cumvalues(timesecs)[0]
+            unixtimes = row_date2+timesecs
 
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
