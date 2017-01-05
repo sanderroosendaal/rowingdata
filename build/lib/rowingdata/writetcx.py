@@ -35,6 +35,8 @@ def lap_end(f):
 
 
 def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
+    if notes==None:
+        notes="Exported by rowingdata"
     f = open(tcxFile,'w')
     
     totalseconds = int(df[' ElapsedTime (sec)'].max())
