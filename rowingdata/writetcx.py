@@ -38,7 +38,7 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     f = open(tcxFile,'w')
     
     totalseconds = int(df[' ElapsedTime (sec)'].max())
-    totalmeters = int(df[' Horizontal (meters)'].max())
+    totalmeters = int(df['cum_dist'].max())
     avghr = int(df[' HRCur (bpm)'].mean())
     if avghr == 0:
 	avghr = 1
@@ -48,7 +48,7 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     avgspm = int(df[' Cadence (stokes/min)'].mean())
 
     seconds = df['TimeStamp (sec)'].values
-    distancemeters = df[' Horizontal (meters)'].values
+    distancemeters = df['cum_dist'].values
     heartrate = df[' HRCur (bpm)'].values.astype(int)
     cadence = np.round(df[' Cadence (stokes/min)'].values).astype(int)
 
