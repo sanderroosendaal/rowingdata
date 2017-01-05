@@ -361,6 +361,13 @@ class TCXParser:
 					   +'/ns:Position/ns:LongitudeDegrees',
 					   namespaces={'ns':namespace})
 
+        # Some TCX have no lat/lon
+        if not lat_values:
+            lat_values = list(0.0*np.array([int(spm) for spm in spm_values]))
+
+        if not long_values:
+            long_values = list(0.0*np.array([int(spm) for spm in spm_values]))
+
 	# and here are the trackpoints for "no stroke" 
 	self.selectionstring2 = '//ns:Trackpoint[descendant::ns:HeartRateBpm]'
 	self.selectionstring2 +='[descendant::ns:DistanceMeters]'
@@ -392,8 +399,14 @@ class TCXParser:
 					   +'/ns:Position/ns:LongitudeDegrees',
 					   namespaces={'ns':namespace})
 
-	# merge the two datasets
+        # Some TCX have no lat/lon
+        if not lat_values2:
+            lat_values2 = list(0.0*np.array([int(spm) for spm in spm_values2]))
 
+        if not long_values2:
+            long_values2 = list(0.0*np.array([int(spm) for spm in spm_values2]))
+
+	# merge the two datasets
 
 	timestamps = timestamps+timestamps2
 	
@@ -405,6 +418,7 @@ class TCXParser:
 	self.long_values = long_values+long_values2
 	self.lat_values = lat_values+lat_values2
 
+        
 	# sort the two datasets
 	data = pd.DataFrame({
 	    't':timestamps,
@@ -415,7 +429,8 @@ class TCXParser:
 	    'lat':self.lat_values
 	    })
 
-	data = data.drop_duplicates(subset='t')
+
+        data = data.drop_duplicates(subset='t')
 	data = data.sort_values(by='t',ascending = 1)
 
 	timestamps = data.ix[:,'t'].values
@@ -425,7 +440,8 @@ class TCXParser:
 	self.long_values = data.ix[:,'long'].values
 	self.lat_values = data.ix[:,'lat'].values
 
-	# convert to unix style time stamp
+
+        # convert to unix style time stamp
 	unixtimes = np.zeros(len(timestamps))
 
 	# Activity ID timestamp (start)
@@ -469,9 +485,24 @@ class TCXParser:
 	self.dist2 = dist2
 	self.velo = velo
 
-
-
     def write_csv(self,writeFile='example.csv',window_size=5,gzip=False):
+        # determine if geo data
+        lat = pd.Series(self.lat_values)
+        lon = pd.Series(self.long_values)
+
+        if lat.std() or lon.std():
+            print "geo data"
+            self.write_geo_csv(writeFile=writeFile,
+                               window_size=window_size,
+                               gzip=gzip)
+        else:
+            self.write_nogeo_csv(writeFile=writeFile,
+                                 window_size=window_size,
+                                 gzip=gzip)
+
+            
+
+    def write_geo_csv(self,writeFile='example.csv',window_size=5,gzip=False):
 	""" Exports TCX data to the CSV format that
 	I use in rowingdata
 	"""
@@ -592,7 +623,7 @@ class TCXParser:
 			  ' Power (watts)':np.zeros(nr_rows),
 			  ' DriveLength (meters)':np.zeros(nr_rows),
 			  ' StrokeDistance (meters)':strokelength2,
-			  ' DragFactor':dragfactor,
+			  ' DragFactor':np.zeros(nr_rows),
 			  ' DriveTime (ms)':np.zeros(nr_rows),
 			  ' StrokeRecoveryTime (ms)':np.zeros(nr_rows),
 			  ' AverageDriveForce (lbs)':np.zeros(nr_rows),

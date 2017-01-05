@@ -8,7 +8,7 @@ import checkdatafiles
 
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__ = "0.94.9"
+__version__ = "0.95.1"
 
 try:
     from Tkinter import Tk
@@ -1319,7 +1319,7 @@ class rowingdata:
         if 'csvfile' in kwargs:
             readFile = kwargs['csvfile']
         else:
-            readFile = 0
+            readFile = None
 
         if args:
             readFile = args[0]
@@ -1335,13 +1335,13 @@ class rowingdata:
             #new_index = range(len(sled_df))
             #sled_df = sled_df.reindex(index=new_index)
             readFile = 0
-        elif readFile != 0:
+        elif readFile:
             try:
 	        sled_df = pd.read_csv(readFile)
             except IOError:
                 sled_df = pd.read_csv(readFile+'.gz')
             
-        if readFile != 0:
+        if readFile:
 	    try:
 	        self.readfilename = readFile.name
 	    except AttributeError:
@@ -2369,7 +2369,7 @@ class rowingdata:
 
 	stri = summarystring(totaldist,totaltime,avgpace,avgspm,
 			     avghr,maxhr,avgdps,avgpower,
-			     readFile=self.readFile,
+			     readFile=self.readfilename,
 			     separator=separator)
 
 
