@@ -42,7 +42,36 @@ def parse(s,debug=0):
 
     s = s.strip()
 
-    # first check for nx(aap noot)/5min
+    # check for nx(aap noot) + mies
+    p = re.compile('([0-9]+)x\((.+)\)\+(.+)')
+    m = p.match(s)
+    if m != None:
+        n = int(m.group(1))
+        piece = m.group(2)
+        secondpiece = m.group(3)
+        if n>1:
+            newstring = str(n-1)+"x("+piece+")"
+            return parse(piece,debug=debug)+parse(newstring,debug=debug)+parse(secondpiece,debug=debug)
+        if n==1:
+            return parse(piece,debug=debug)+parse(secondpiece,debug=debug)
+    
+    # check for nx(aap noot)/mies + jet
+    p = re.compile('([0-9]+)x\((.+?)\)\/(.+?)\+(.+)')
+    m = p.match(s)
+    if m != None:
+        n = int(m.group(1))
+        piece = m.group(2)
+        rest = pieceparse(m.group(3))
+        secondpiece = m.group(4)
+        if n>1:
+            newstring = str(n-1)+"x("+piece+")/"+m.group(3)
+            piecestring = piece+"/"+m.group(3)
+            return parse(piecestring,debug=debug)+parse(newstring,debug=debug)+parse(secondpiece,debug=debug)
+        if n==1:
+            return parse(piece+"/"+m.group(3),debug=debug)+parse(secondpiece,debug=debug)
+
+    
+    # check for nx(aap noot)/5min
     p = re.compile('([0-9]+)x\((.+)\)\/(.+)')
     m = p.match(s)
     if m != None:
