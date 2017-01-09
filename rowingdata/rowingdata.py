@@ -408,7 +408,7 @@ def interval_string(nr,totaldist,totaltime,avgpace,avgspm,
 	    inttime = format_pace(totaltime)
 	)
 
-    stri += "{tpace:0>7}{sep}{tpower:0>5.1f}{sep}{tspm:0>4.1f}{sep}{thr:3.1f}".format(
+    stri += "{tpace:0>7}{sep}{tpower:0>5.1f}{sep}{tspm:0>4.1f}{sep}{thr:0>5.1f}".format(
 	tpace=format_pace(avgpace),
 	sep=separator,
 	tspm=avgspm,
