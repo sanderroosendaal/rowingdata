@@ -8,7 +8,7 @@ import checkdatafiles
 
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__ = "0.95.2"
+__version__ = "0.95.3"
 
 try:
     from Tkinter import Tk
@@ -408,7 +408,7 @@ def interval_string(nr,totaldist,totaltime,avgpace,avgspm,
 	    inttime = format_pace(totaltime)
 	)
 
-    stri += "{tpace:0>7}{sep}{tpower:0>5.1f}{sep}{tspm:0>4.1f}{sep}{thr:3.1f}".format(
+    stri += "{tpace:0>7}{sep}{tpower:0>5.1f}{sep}{tspm:0>4.1f}{sep}{thr:0>5.1f}".format(
 	tpace=format_pace(avgpace),
 	sep=separator,
 	tspm=avgspm,
@@ -470,7 +470,7 @@ def workstring(totaldist,totaltime,avgpace,avgspm,avghr,maxhr,avgdps,
 	avghr = avghr
 	)
 
-    stri1 += "{maxhr:3.1f}{sep}{avgdps:0>4.1f}\n".format(
+    stri1 += "{maxhr:0>5.1f}{sep}{avgdps:0>4.1f}\n".format(
 	sep = separator,
 	maxhr = maxhr,
 	avgdps = avgdps
@@ -531,7 +531,7 @@ def summarystring(totaldist,totaltime,avgpace,avgspm,avghr,maxhr,
 	avghr = avghr
 	)
 
-    stri1 += "{maxhr:3.1f}{sep}{avgdps:0>4.1f}\n".format(
+    stri1 += "{maxhr:0>5.1f}{sep}{avgdps:0>4.1f}\n".format(
 	sep = separator,
 	maxhr = maxhr,
 	avgdps = avgdps

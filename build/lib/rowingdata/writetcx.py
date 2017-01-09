@@ -77,7 +77,7 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     tt = ps.parse(s)
     timezero = time.mktime(tt.timetuple())
     if seconds[0]<timezero:
-	print "Taking Row_Date ",row_date
+	# print "Taking Row_Date ",row_date
 	dateobj = ps.parse(row_date)
 	unixtimes = seconds+time.mktime(dateobj.timetuple())
 

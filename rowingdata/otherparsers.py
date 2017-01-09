@@ -491,7 +491,6 @@ class TCXParser:
         lon = pd.Series(self.long_values)
 
         if lat.std() or lon.std():
-            print "geo data"
             self.write_geo_csv(writeFile=writeFile,
                                window_size=window_size,
                                gzip=gzip)
