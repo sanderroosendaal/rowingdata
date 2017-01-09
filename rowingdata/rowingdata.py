@@ -470,7 +470,7 @@ def workstring(totaldist,totaltime,avgpace,avgspm,avghr,maxhr,avgdps,
 	avghr = avghr
 	)
 
-    stri1 += "{maxhr:3.1f}{sep}{avgdps:0>4.1f}\n".format(
+    stri1 += "{maxhr:0>5.1f}{sep}{avgdps:0>4.1f}\n".format(
 	sep = separator,
 	maxhr = maxhr,
 	avgdps = avgdps
