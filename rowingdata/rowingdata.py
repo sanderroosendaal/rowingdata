@@ -1813,14 +1813,15 @@ class rowingdata:
 
 		try:
 		    res = iresults[i]
-		    mask2 = (df['cum_dist'] == recordedmaxmeters)
-		    if res == 0:
-			raise IndexError
-		    deltatime = res-df.loc[mask2,' ElapsedTime (sec)']
-		    mask2 = (df['cum_dist']==recordedmaxmeters)
-		    df.loc[mask2,' ElapsedTime (sec)'] = res
-		    df.loc[mask2,'TimeStamp (sec)'] += deltatime
-		    df.loc[mask2,' Horizontal (meters)'] += deltadist
+                    if not np.isnan(res):
+		        mask2 = (df['cum_dist'] == recordedmaxmeters)
+		        if res == 0:
+			    raise IndexError
+		        deltatime = res-df.loc[mask2,' ElapsedTime (sec)']
+		        mask2 = (df['cum_dist']==recordedmaxmeters)
+		        df.loc[mask2,' ElapsedTime (sec)'] = res
+		        df.loc[mask2,'TimeStamp (sec)'] += deltatime
+		        df.loc[mask2,' Horizontal (meters)'] += deltadist
 		except IndexError:
 		    if deltadist>25:
 			deltadist = 0
@@ -1857,15 +1858,16 @@ class rowingdata:
 		deltatime = endseconds-recordedmaxtime
 		try:
 		    res = iresults[i]
-		    mask2 = (df['TimeStamp (sec)']==recordedmaxtime)
-		    deltadist = res-df.loc[mask2,' Horizontal (meters)']
-		    if res == 0:
-			raise IndexError
-		    mask2 = (df['TimeStamp (sec)']==recordedmaxtime)
-		    df.loc[mask2,' ElapsedTime (sec)'] += deltatime
-		    df.loc[mask2,' Horizontal (meters)'] = res
-		    df.loc[mask2,'TimeStamp (sec)'] += deltatime
-		    df.loc[mask2,'cum_dist'] += deltadist
+                    if not np.isnan(res):
+		        mask2 = (df['TimeStamp (sec)']==recordedmaxtime)
+		        deltadist = res-df.loc[mask2,' Horizontal (meters)']
+		        if res == 0:
+			    raise IndexError
+		        mask2 = (df['TimeStamp (sec)']==recordedmaxtime)
+		        df.loc[mask2,' ElapsedTime (sec)'] += deltatime
+		        df.loc[mask2,' Horizontal (meters)'] = res
+		        df.loc[mask2,'TimeStamp (sec)'] += deltatime
+		        df.loc[mask2,'cum_dist'] += deltadist
 		except IndexError:
 		    if deltatime>6 and thetype != 'rest':
 			deltatime = 0
