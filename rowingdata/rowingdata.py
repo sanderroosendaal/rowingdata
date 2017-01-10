@@ -1428,6 +1428,36 @@ class rowingdata:
 
 	self.df = addpowerzones(self.df,self.rwr.ftp,self.rwr.powerperc)
 
+    def __add__(self,other):
+        self_df = self.df.copy()
+        other_df = other.df.copy()
+        starttimeunix = time.mktime(self.rowdatetime.timetuple())
+        
+	self_df['TimeStamp (sec)'] = self_df['TimeStamp (sec)']+starttimeunix
+        starttimeunix = time.mktime(other.rowdatetime.timetuple())
+	other.df['TimeStamp (sec)'] = other.df['TimeStamp (sec)']+starttimeunix
+        
+        lapids = self_df[' lapIdx'].unique()
+        otherlapids = other.df[' lapIdx'].unique()
+        overlapping = list(set(lapids) & set(otherlapids))
+        while overlapping:
+            try:
+                other.df[' lapIdx'] = other.df[' lapIdx'].apply(lambda n:n+1)
+            except TypeError:
+                other.df[' lapIdx'] = other.df[' lapIdx'].apply(lambda s:'i'+s)
+            otherlapids = other.df[' lapIdx'].unique()
+            overlapping = list(set(lapids) & set(otherlapids))
+
+        self_df = pd.merge(self_df,other.df,how='outer')
+        self_df = self_df.sort_values(by='TimeStamp (sec)',ascending=1)
+        self_df = self_df.fillna(method='ffill')
+
+        # recalc cum_dist
+        self_df['cum_dist'] = make_cumvalues(self_df[' Horizontal (meters)'])[0]
+        
+        return rowingdata(df = self_df,rower = self.rwr,
+                          rowtype = self.rowtype)
+                
     def getvalues(self,keystring):
 	""" Just a tool to get a column of the row data as a numpy array
 
