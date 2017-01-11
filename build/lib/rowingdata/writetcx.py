@@ -39,7 +39,7 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
         notes="Exported by rowingdata"
     f = open(tcxFile,'w')
     
-    totalseconds = int(df[' ElapsedTime (sec)'].max())
+    totalseconds = int(df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min())
     totalmeters = int(df['cum_dist'].max())
     avghr = int(df[' HRCur (bpm)'].mean())
     if avghr == 0:

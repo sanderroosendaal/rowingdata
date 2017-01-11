@@ -860,6 +860,11 @@ Boat bearing.
 ================
 Release Notes:
 ================
+0.95.x
+------
+
+- Bug fixes on TCX export
+
 0.94.x
 ------
 
