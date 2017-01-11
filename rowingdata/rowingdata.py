@@ -1382,7 +1382,7 @@ class rowingdata:
                         velo = sled_df[' Horizontal (meters)']/sled_df[' ElapsedTime (sec)']
                         sled_df[name] = 500./velo
                     except KeyError:
-                        velo = sled_df[' Horizontal (meters)']/sled_df['TimeStamp (sec)']
+                        velo = sled_df[' Horizontal (meters)']/(sled_df['TimeStamp (sec)']-sled_df['TimeStamp (sec)'].min())
                         sled_df[name] = 500./velo
                 if name==' AverageDriveForce (lbs)':
                     try:
@@ -1409,7 +1409,7 @@ class rowingdata:
 	self.rowdatetime = datetime.datetime.utcfromtimestamp(starttime)
 	    	
 	# remove the start time from the time stamps
-	sled_df['TimeStamp (sec)']=sled_df['TimeStamp (sec)']-sled_df['TimeStamp (sec)'].values[0]
+	#sled_df['TimeStamp (sec)']=sled_df['TimeStamp (sec)']-sled_df['TimeStamp (sec)'].values[0]
 
 	number_of_columns = sled_df.shape[1]
 	number_of_rows = sled_df.shape[0]
@@ -1431,30 +1431,29 @@ class rowingdata:
     def __add__(self,other):
         self_df = self.df.copy()
         other_df = other.df.copy()
-        starttimeunix = time.mktime(self.rowdatetime.timetuple())
-        
-	self_df['TimeStamp (sec)'] = self_df['TimeStamp (sec)']+starttimeunix
-        starttimeunix = time.mktime(other.rowdatetime.timetuple())
-	other.df['TimeStamp (sec)'] = other.df['TimeStamp (sec)']+starttimeunix
         
         lapids = self_df[' lapIdx'].unique()
-        otherlapids = other.df[' lapIdx'].unique()
+        otherlapids = other_df[' lapIdx'].unique()
         overlapping = list(set(lapids) & set(otherlapids))
         while overlapping:
             try:
-                other.df[' lapIdx'] = other.df[' lapIdx'].apply(lambda n:n+1)
+                other_df[' lapIdx'] = other_df[' lapIdx'].apply(lambda n:n+1)
             except TypeError:
-                other.df[' lapIdx'] = other.df[' lapIdx'].apply(lambda s:'i'+s)
-            otherlapids = other.df[' lapIdx'].unique()
+                other_df[' lapIdx'] = other_df[' lapIdx'].apply(lambda s:'i'+s)
+            otherlapids = other_df[' lapIdx'].unique()
             overlapping = list(set(lapids) & set(otherlapids))
 
-        self_df = pd.merge(self_df,other.df,how='outer')
+        self_df = pd.merge(self_df,other_df,how='outer')
         self_df = self_df.sort_values(by='TimeStamp (sec)',ascending=1)
         self_df = self_df.fillna(method='ffill')
 
         # recalc cum_dist
         self_df['cum_dist'] = make_cumvalues(self_df[' Horizontal (meters)'])[0]
-        
+        # drop duplicates
+        self_df.drop_duplicates(subset='TimeStamp (sec)',
+                                keep='first',inplace=True)
+
+        self_df.to_csv('C:/Downloads/debug.csv')
         return rowingdata(df = self_df,rower = self.rwr,
                           rowtype = self.rowtype)
                 
@@ -1498,8 +1497,8 @@ class rowingdata:
 	    
 
 	# add time stamp to
-	starttimeunix = time.mktime(self.rowdatetime.timetuple())
-	data['TimeStamp (sec)'] = data['TimeStamp (sec)']+starttimeunix
+	#starttimeunix = time.mktime(self.rowdatetime.timetuple())
+	#data['TimeStamp (sec)'] = data['TimeStamp (sec)']+starttimeunix
 
         if gzip:
             return data.to_csv(writeFile+'.gz',index_label='index',
@@ -1508,7 +1507,7 @@ class rowingdata:
 	    return data.to_csv(writeFile,index_label='index')
 
     def spm_fromtimestamps(self):
-	df = self.df
+	df = self.df.copy()
 	dt = (df[' DriveTime (ms)']+df[' StrokeRecoveryTime (ms)'])/1000.
 	spm = 60./dt
 	df[' Cadence (stokes/min)'] = spm
@@ -1516,14 +1515,14 @@ class rowingdata:
 
 
     def erg_recalculatepower(self):
-	df = self.df
+	df = self.df.copy()
 	velo = df[' Speed (m/sec)']
 	pwr = 2.8*velo**3
 	df[' Power (watts)'] = pwr
 	self.df = df
 
     def exporttotcx(self,fileName,notes="Exported by Rowingdata"):
-	df = self.df
+	df = self.df.copy()
 
 	writetcx.write_tcx(fileName,df,row_date=self.rowdatetime.isoformat(),notes=notes)
 
@@ -1538,7 +1537,7 @@ class rowingdata:
 
 	"""
 	
-	df = self.df
+	df = self.df.copy()
 
 	workoutstateswork = [1,4,5,8,9,6,7]
 	workoutstatesrest = [3]
@@ -1552,7 +1551,8 @@ class rowingdata:
 	    )
 
 	previousdist = 0.0
-	previoustime = 0.0
+	# previoustime = 0.0
+        previoustime = df['TimeStamp (sec)'].min()
 
 	for idx in intervalnrs:
 	    td = df[df[' lapIdx'] == idx]
@@ -1598,7 +1598,7 @@ class rowingdata:
 
 	"""
 
-	df = self.df
+	df = self.df.copy()
 
 	workoutstateswork = [1,4,5,8,9,6,7]
 	workoutstatesrest = [3]
@@ -1611,7 +1611,8 @@ class rowingdata:
 	itype = []
 
 	previousdist = 0.0
-	previoustime = 0.0
+	# previoustime = 0.0
+        previoustime = df['TimeStamp (sec)'].min()
 
 	try:
 	    test = df[' WorkoutState']
@@ -1670,7 +1671,7 @@ class rowingdata:
 
 	"""
 
-	df = self.df
+	df = self.df.copy()
 
 	workoutstateswork = [1,4,5,8,9,6,7]
 	workoutstatesrest = [3]
@@ -1684,8 +1685,9 @@ class rowingdata:
 	    )
 
 	previousdist = 0.0
-	previoustime = 0.0
-
+	# previoustime = 0.0
+        previoustime = df['TimeStamp (sec)'].min()
+        
 	try:
 	    test = df[' WorkoutState']
 	except KeyError:
@@ -1780,7 +1782,7 @@ class rowingdata:
 	types = ['work','rest','work','rest']
 	"""
 	
-	df = self.df
+	df = self.df.copy()
 	try:
 	    origdist = df['orig_dist']
 	    df[' Horizontal (meters)'] = df['orig_dist']
@@ -1940,7 +1942,7 @@ class rowingdata:
 
 	"""
 	nr_of_rows = self.df.shape[0]
-	df = self.df
+	df = self.df.copy()
 
 	bearing = np.zeros(nr_of_rows)
 	
@@ -1979,7 +1981,7 @@ class rowingdata:
 	if (units == 'p'):
 	    stream = stream*8/500.
 
-	df = self.df
+	df = self.df.copy()
 
 	df['vstream'] = vstream
 
@@ -2002,7 +2004,7 @@ class rowingdata:
 	if (units == 'mph'):
 	    vwind = 0.44704*vwind
 
-	df = self.df
+	df = self.df.copy()
 
 	df['vwind'] = vwind
 	df['winddirection'] = winddirection
@@ -2015,7 +2017,7 @@ class rowingdata:
 	except KeyError:
 	    self.add_stream(0)
 
-	df = self.df
+	df = self.df.copy()
 
 	# foot/second
 	if (units == 'f'):
@@ -2057,7 +2059,7 @@ class rowingdata:
 	except KeyError:
 	    self.add_wind(0,0)
 	
-	df = self.df
+	df = self.df.copy()
 	
 	# beaufort
 	if (units == 'b'):
@@ -2115,7 +2117,7 @@ class rowingdata:
 	
 	nr_of_rows = self.number_of_rows
 	rows_mod = skiprows+1
-	df = self.df
+	df = self.df.copy()
 	df['nowindpace'] = 300
 	df['equivergpower']= 0
 	df['power (model)']= 0
@@ -2196,7 +2198,7 @@ class rowingdata:
 
 	nr_of_rows = self.number_of_rows
 	rows_mod = skiprows+1
-	df = self.df
+	df = self.df.copy()
 	df['nowindpace'] = 300
 	df['equivergpower']= 0
         df['power (model)'] = 0 
@@ -2272,7 +2274,7 @@ class rowingdata:
 	
 	nr_of_rows = self.number_of_rows
 	rows_mod = skiprows+1
-	df = self.df
+	df = self.df.copy()
 	df['nowindpace'] = 300
 	df['equivergpower']= 0
 	df['power (model)']= 0
@@ -2378,7 +2380,7 @@ class rowingdata:
 
 	"""
 	
-	df = self.df
+	df = self.df.copy()
 
 	# total dist, total time, avg pace, avg hr, max hr, avg dps
 
@@ -2418,8 +2420,9 @@ class rowingdata:
 	intervalnrs = pd.unique(df[' lapIdx'])
 
 	previousdist = 0.0
-	previoustime = 0.0
-
+	# previoustime = 0.0
+        previoustime = df['TimeStamp (sec)'].min()
+        
 	workttot = 0.0
 	workdtot = 0.0
 
@@ -2628,7 +2631,7 @@ class rowingdata:
 	
 
     def plototwergpower(self):
-	df = self.df
+	df = self.df.copy()
 	pe = df['equivergpower']
 	pw = df[' Power (watts)']
 
@@ -2650,7 +2653,7 @@ class rowingdata:
 
 	"""
 	
-	df = self.df
+	df = self.df.copy()
 
 	# distance increments for bar chart
 	dist_increments = -df.ix[:,'cum_dist'].diff()
@@ -2826,7 +2829,7 @@ class rowingdata:
 
 	"""
 	
-	df = self.df
+	df = self.df.copy()
 
 	# distance increments for bar chart
 	dist_increments = -df.ix[:,'cum_dist'].diff()
@@ -3034,8 +3037,9 @@ class rowingdata:
 
 	"""
 
-	df = self.df
-
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
+        
 	# time increments for bar chart
 	time_increments = df.ix[:,' ElapsedTime (sec)'].diff()
 	time_increments[0] = time_increments[1]
@@ -3226,7 +3230,8 @@ class rowingdata:
 	
 
     def get_metersplot_otw(self,title):
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# distance increments for bar chart
 	dist_increments = -df.ix[:,'cum_dist'].diff()
@@ -3314,7 +3319,8 @@ class rowingdata:
 	return fig1
 
     def get_metersplot_erg2(self,title):
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 	fig2 = plt.figure(figsize=(12,10))
 	fig_title = title
@@ -3387,7 +3393,8 @@ class rowingdata:
 	return fig2
 
     def get_timeplot_erg2(self,title):
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 	fig2 = plt.figure(figsize=(12,10))
 	fig_title = title
@@ -3470,7 +3477,8 @@ class rowingdata:
 	return fig2
 
     def get_timeplot_otw(self,title):
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# time increments for bar chart
 	time_increments = df.ix[:,' ElapsedTime (sec)'].diff()
@@ -3569,7 +3577,8 @@ class rowingdata:
 	return fig1
 
     def get_pacehrplot(self,title):
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	t = df.ix[:,' ElapsedTime (sec)']
 	p = df.ix[:,' Stroke500mPace (sec/500m)']
@@ -3614,7 +3623,8 @@ class rowingdata:
 	return fig
 
     def bokehpaceplot(self):
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# time increments for bar chart
 	time_increments = df.ix[:,'TimeStamp (sec)'].diff()
@@ -3632,7 +3642,8 @@ class rowingdata:
 	return 1
 
     def get_paceplot(self,title):
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# time increments for bar chart
 	time_increments = df.ix[:,'TimeStamp (sec)'].diff()
@@ -3683,7 +3694,8 @@ class rowingdata:
 
     def get_metersplot_erg(self,title):
 
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# distance increments for bar chart
 	dist_increments = df.ix[:,'cum_dist'].diff()
@@ -3822,7 +3834,8 @@ class rowingdata:
     def get_timeplot_erg(self,title):
 
 
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# time increments for bar chart
 	time_increments = df.ix[:,' ElapsedTime (sec)'].diff()
@@ -3972,7 +3985,8 @@ class rowingdata:
 	return(fig1)
 
     def get_time_otwpower(self,title):
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 	# calculate erg power
 
 	try:
@@ -4127,7 +4141,8 @@ class rowingdata:
 
 	"""
 
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# calculate erg power
 	pp = df['equivergpower']
@@ -4355,7 +4370,8 @@ class rowingdata:
 
 	"""
 	
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 	fig1 = plt.figure(figsize=(12,10))
 	fig_title = "Input File:  "+self.readfilename+" --- HR "
 
@@ -4402,7 +4418,8 @@ class rowingdata:
 
 	"""
 
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# distance increments for bar chart
 	dist_increments = -df.ix[:,'cum_dist'].diff()
@@ -4533,7 +4550,8 @@ class rowingdata:
 
 	"""
 	
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# time increments for bar chart
 	time_increments = df.ix[:,' ElapsedTime (sec)'].diff()
@@ -4684,7 +4702,8 @@ class rowingdata:
 
 	"""
 
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 #	df.sort_values(by=' ElapsedTime (sec)',ascending = 1)
 	df.sort_values(by='TimeStamp (sec)',ascending = 1)
 	number_of_rows = self.number_of_rows
@@ -4753,7 +4772,8 @@ class rowingdata:
 
 	"""
 
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 #	df.sort_values(by=' ElapsedTime (sec)',ascending = 1)
 	df.sort_values(by='TimeStamp (sec)',ascending = 1)
 	number_of_rows = self.number_of_rows
@@ -4826,7 +4846,8 @@ class rowingdata:
 
 	"""
 
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 #	df.sort_values(by=' ElapsedTime (sec)',ascending = 1)
 	df.sort_values(by='TimeStamp (sec)',ascending = 1)
 	number_of_rows = self.number_of_rows
@@ -4898,7 +4919,8 @@ class rowingdata:
 
 	"""
 
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 	number_of_rows = self.number_of_rows
 
 	time_increments = df.ix[:,'TimeStamp (sec)'].diff()
@@ -4998,7 +5020,8 @@ class rowingdata:
 	else:
 	    weightselect = ["H"]
 
-	df = self.df
+	df = self.df.copy()
+        df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# total dist, total time, avg pace, avg hr, max hr, avg dps
 
