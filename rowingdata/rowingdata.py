@@ -1301,9 +1301,17 @@ class rowingdata:
     kinds
     of cool stuff with it.
 
-    Usage: row = rowingdata.rowingdata("testdata.csv",rowtype = "Indoor Rower")
-           row.plotmeters_all()
-	   
+    Usage: row = rowingdata.rowingdata(csvfile="testdata.csv",
+                                       rowtype = "Indoor Rower",
+                                       absolutetimestamps = False,
+                                       rower = rr,
+                                       )
+    
+
+    If absolutetimestamps is set to True, the time stamp info in the 
+    main dataframe will be seconds since 1-1-1970. The default is 
+    seconds since workout start. 
+
     The default rower looks for a defaultrower.txt file. If it is not found,
     it reverts to some arbitrary rower.
     
@@ -1441,6 +1449,7 @@ class rowingdata:
         if not self.absolutetimestamps:
 	    starttimeunix = time.mktime(self.rowdatetime.timetuple())
 	    self_df['TimeStamp (sec)'] = self_df['TimeStamp (sec)']+starttimeunix
+        if not other.absolutetimestamps:
 	    starttimeunix = time.mktime(other.rowdatetime.timetuple())
 	    other_df['TimeStamp (sec)'] = other_df['TimeStamp (sec)']+starttimeunix
             
@@ -1458,18 +1467,24 @@ class rowingdata:
             overlapping = list(set(lapids) & set(otherlapids))
 
         self_df = pd.merge(self_df,other_df,how='outer')
-        self_df = self_df.sort_values(by='TimeStamp (sec)',ascending=1)
-        self_df = self_df.fillna(method='ffill')
-
-        # recalc cum_dist
-        self_df['cum_dist'] = make_cumvalues(self_df[' Horizontal (meters)'])[0]
         # drop duplicates
         self_df.drop_duplicates(subset='TimeStamp (sec)',
                                 keep='first',inplace=True)
+        self_df = self_df.sort_values(by='TimeStamp (sec)',ascending=1)
+        self_df = self_df.fillna(method='ffill')
+        self_df.reset_index(inplace=True)
+
+        
+
+        # recalc cum_dist
+        # this needs improvement. If Elapsed Distance is measured
+        # inconsistently across the two dataframes, it least to errors.
+        self_df['cum_dist'] = make_cumvalues(self_df[' Horizontal (meters)'])[0]
 
         # self_df.to_csv('C:/Downloads/debug.csv')
         return rowingdata(df = self_df,rower = self.rwr,
-                          rowtype = self.rowtype)
+                          rowtype = self.rowtype,
+                          absolutetimestamps=self.absolutetimestamps)
                 
     def getvalues(self,keystring):
 	""" Just a tool to get a column of the row data as a numpy array
@@ -3053,7 +3068,7 @@ class rowingdata:
 	"""
 
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
         
 	# time increments for bar chart
@@ -3336,7 +3351,7 @@ class rowingdata:
 
     def get_metersplot_erg2(self,title):
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 	fig2 = plt.figure(figsize=(12,10))
@@ -3411,7 +3426,7 @@ class rowingdata:
 
     def get_timeplot_erg2(self,title):
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 	fig2 = plt.figure(figsize=(12,10))
@@ -3496,7 +3511,7 @@ class rowingdata:
 
     def get_timeplot_otw(self,title):
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# time increments for bar chart
@@ -3597,7 +3612,7 @@ class rowingdata:
 
     def get_pacehrplot(self,title):
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	t = df.ix[:,' ElapsedTime (sec)']
@@ -3644,7 +3659,7 @@ class rowingdata:
 
     def bokehpaceplot(self):
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# time increments for bar chart
@@ -3664,7 +3679,7 @@ class rowingdata:
 
     def get_paceplot(self,title):
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# time increments for bar chart
@@ -3717,7 +3732,7 @@ class rowingdata:
     def get_metersplot_erg(self,title):
 
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# distance increments for bar chart
@@ -3858,7 +3873,7 @@ class rowingdata:
 
 
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# time increments for bar chart
@@ -4010,7 +4025,7 @@ class rowingdata:
 
     def get_time_otwpower(self,title):
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 	# calculate erg power
 
@@ -4167,7 +4182,7 @@ class rowingdata:
 	"""
 
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# calculate erg power
@@ -4397,7 +4412,7 @@ class rowingdata:
 	"""
 	
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
             
 	fig1 = plt.figure(figsize=(12,10))
@@ -4447,7 +4462,7 @@ class rowingdata:
 	"""
 
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# distance increments for bar chart
@@ -4580,7 +4595,7 @@ class rowingdata:
 	"""
 	
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# time increments for bar chart
@@ -4733,7 +4748,7 @@ class rowingdata:
 	"""
 
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 #	df.sort_values(by=' ElapsedTime (sec)',ascending = 1)
 	df.sort_values(by='TimeStamp (sec)',ascending = 1)
@@ -4804,7 +4819,7 @@ class rowingdata:
 	"""
 
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
             
 #	df.sort_values(by=' ElapsedTime (sec)',ascending = 1)
@@ -4880,7 +4895,7 @@ class rowingdata:
 	"""
 
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 #	df.sort_values(by=' ElapsedTime (sec)',ascending = 1)
 	df.sort_values(by='TimeStamp (sec)',ascending = 1)
@@ -4954,7 +4969,7 @@ class rowingdata:
 	"""
 
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 	number_of_rows = self.number_of_rows
 
@@ -5056,7 +5071,7 @@ class rowingdata:
 	    weightselect = ["H"]
 
 	df = self.df
-        if not self.absolutetimestamps:
+        if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# total dist, total time, avg pace, avg hr, max hr, avg dps
