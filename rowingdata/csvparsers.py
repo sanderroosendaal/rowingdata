@@ -572,6 +572,7 @@ class ErgDataParser(CSVParser):
 
 
         seconds = self.df[self.columns['TimeStamp (sec)']]
+        firststrokeoffset = seconds.values[0]
         dt = seconds.diff()
         nrsteps = len(dt[dt<0])
         res = make_cumvalues(seconds)
@@ -585,6 +586,7 @@ class ErgDataParser(CSVParser):
         self.df[self.columns['TimeStamp (sec)']] = unixtime
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
         self.df[self.columns[' ElapsedTime (sec)']] = unixtime-unixtime[0]
+        self.df[self.columns[' ElapsedTime (sec)']] += firststrokeoffset
 
         self.df[self.columns[' lapIdx']] = lapidx
         self.df[self.columns[' Power (watts)']] = power
