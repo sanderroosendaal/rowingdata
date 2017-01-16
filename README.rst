@@ -874,6 +874,9 @@ Release Notes:
 ------
 
 - Bug fixes on TCX export
+- Added addition method to rowingdata object
+- ErgData parser: Offset ElapsedTime by the value of the first stroke
+- BoatCoach parser: Calculate RecoveryTime
 
 0.94.x
 ------
