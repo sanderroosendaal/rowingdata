@@ -407,6 +407,8 @@ To use with Painsled iOS CSV data, simply do
 >>> row.plotmeters_erg()
 >>> print row.allstats()
 
+The rowingdata object is the basic object containing your rowing data.
+
 RowPro
 -----------------
 
@@ -487,6 +489,14 @@ Export or re-export to a tcx file is done with
 With the package at your full disposal, the sky is the limit. You can do any 
 plot you like or do other statistics, like calculate your average stroke length
 including error margin, etc.
+
+You can add two rowingdata objects and obtain a new one:
+
+>>> row = row1+row2
+
+This is an experimental feature and it may lead to unexpected results.
+The addition will merge the two dataframes and sort them by time stamp,
+removing duplicate time stamps. 
 
 ==============
 Data Fields
@@ -864,6 +874,9 @@ Release Notes:
 ------
 
 - Bug fixes on TCX export
+- Added addition method to rowingdata object
+- ErgData parser: Offset ElapsedTime by the value of the first stroke
+- BoatCoach parser: Calculate RecoveryTime
 
 0.94.x
 ------

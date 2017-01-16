@@ -397,6 +397,7 @@ you will have to change the default values for the rower. For example:</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">row</span><span class="o">.</span><span class="n">allstats</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>The rowingdata object is the basic object containing your rowing data.</p>
 </div>
 <div class="section" id="id1">
 <h4>RowPro<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h4>
@@ -475,6 +476,13 @@ category and row type.</p>
 <p>With the package at your full disposal, the sky is the limit. You can do any
 plot you like or do other statistics, like calculate your average stroke length
 including error margin, etc.</p>
+<p>You can add two rowingdata objects and obtain a new one:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">row1</span><span class="o">+</span><span class="n">row2</span>
+</pre></div>
+</div>
+<p>This is an experimental feature and it may lead to unexpected results.
+The addition will merge the two dataframes and sort them by time stamp,
+removing duplicate time stamps.</p>
 </div>
 </div>
 <div class="section" id="data-fields">
@@ -769,6 +777,9 @@ are work strokes.</p>
 <h4>0.95.x<a class="headerlink" href="#x" title="Permalink to this headline">¶</a></h4>
 <ul class="simple">
 <li>Bug fixes on TCX export</li>
+<li>Added addition method to rowingdata object</li>
+<li>ErgData parser: Offset ElapsedTime by the value of the first stroke</li>
+<li>BoatCoach parser: Calculate RecoveryTime</li>
 </ul>
 </div>
 <div class="section" id="id2">
