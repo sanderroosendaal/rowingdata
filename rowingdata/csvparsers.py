@@ -470,7 +470,7 @@ class BoatCoachParser(CSVParser):
             '',
             'strokeDriveTime',
             'dragFactor',
-            '',
+            ' StrokeRecoveryTime (ms)',
             'strokeAverageForce',
             'strokePeakForce',
             'intervalCount',
@@ -511,6 +511,17 @@ class BoatCoachParser(CSVParser):
         
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']].apply(lambda x:timestrtosecs(x))
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+
+        self.df[self.columns[' DriveTime (ms)']] = 1.0e3*self.df[self.columns[' DriveTime (ms)']]
+        
+        drivetime = self.df[self.columns[' DriveTime (ms)']]
+        stroketime = 60.*1000./(1.0*self.df[self.columns[' Cadence (stokes/min)']])
+        recoverytime = stroketime-drivetime
+        recoverytime.replace(np.inf,np.nan)    
+        recoverytime.replace(-np.inf,np.nan)
+        recoverytime = recoverytime.fillna(method='bfill')
+
+        self.df[self.columns[' StrokeRecoveryTime (ms)']] = recoverytime
 
         self.to_standard()
 
