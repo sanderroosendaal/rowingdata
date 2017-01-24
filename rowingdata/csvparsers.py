@@ -94,6 +94,9 @@ def get_file_type(f):
 	if 'Practice Elapsed Time (s)' in firstline:
 	    return 'mystery'
 
+        if 'Mike' in firstline and 'process' in firstline:
+            return 'bcmike'
+        
         if 'Club' in firstline:
             return 'boatcoach'
         
@@ -267,8 +270,9 @@ def make_cumvalues(xvalues):
     else:
 	newvalues = xvalues
 
-    newvalues.fillna(method='ffill')
-
+    newvalues.fillna(method='ffill',inplace=True)
+    lapidx.fillna(method='bfill',inplace=True)
+    
     return [newvalues,lapidx]
 
 def timestrtosecs(string):
@@ -526,6 +530,118 @@ class BoatCoachParser(CSVParser):
         self.to_standard()
 
 
+class BoatCoachAdvancedParser(CSVParser):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['skiprows']=1
+        kwargs['usecols']=range(25)
+
+        if args:
+            csvfile = args[0]
+        else:
+            csvfile = kwargs['csvfile']
+            
+        super(BoatCoachAdvancedParser, self).__init__(*args, **kwargs)
+
+        self.cols = [
+            'DateTime',
+            'workDistance',
+            'strokeRate',
+            'currentHeartRate',
+            'stroke500MPace',
+            'strokePower',
+            'strokeLength',
+            '',
+            'strokeDriveTime',
+            'dragFactor',
+            ' StrokeRecoveryTime (ms)',
+            'strokeAverageForce',
+            'strokePeakForce',
+            'intervalCount',
+            'workTime',
+            ' latitude',
+            ' longitude',
+        ]
+
+        self.cols = [b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
+
+        self.columns = dict(zip(self.defaultcolumnnames,self.cols))
+
+        # get date from footer
+        fop = open(csvfile,'r')
+        line = fop.readline()
+        dated =  re.split('Date:',line)[1][1:-1]
+	row_date = parser.parse(dated,fuzzy=True)
+        fop.close()
+
+        try:
+            datetime = self.df[self.columns['TimeStamp (sec)']]
+            row_date = parser.parse(datetime[0],fuzzy=True)
+            datetime = datetime.apply(lambda x:parser.parse(x,fuzzy=True))
+            unixtimes = datetime.apply(lambda x:time.mktime(x.timetuple()))
+        except KeyError:
+            # calculations
+            row_date2 = time.mktime(row_date.timetuple())
+            timecolumn = self.df[self.columns[' ElapsedTime (sec)']]
+            timesecs = timecolumn.apply(lambda x:timestrtosecs(x))
+            timesecs = make_cumvalues(timesecs)[0]
+            unixtimes = row_date2+timesecs
+
+        self.df[self.columns['TimeStamp (sec)']] = unixtimes
+        self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
+
+        self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-unixtimes[0]
+        
+        pace = self.df[self.columns[' Stroke500mPace (sec/500m)']].apply(lambda x:timestrtosecs(x))
+        self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+
+        self.df[self.columns[' DriveTime (ms)']] = 1.0e3*self.df[self.columns[' DriveTime (ms)']]
+
+        # Calculate Recovery Time
+        drivetime = self.df[self.columns[' DriveTime (ms)']]
+        stroketime = 60.*1000./(1.0*self.df[self.columns[' Cadence (stokes/min)']])
+        recoverytime = stroketime-drivetime
+        recoverytime.replace(np.inf,np.nan)    
+        recoverytime.replace(-np.inf,np.nan)
+        recoverytime = recoverytime.fillna(method='bfill')
+        self.df[self.columns[' StrokeRecoveryTime (ms)']] = recoverytime
+
+        # Reset Interval Count by StrokeCount
+        res = make_cumvalues(self.df['strokeCount'])
+        lapidx = res[1]
+        strokecount = res[0]
+        self.df['strokeCount'] = strokecount
+        self.df[self.columns[' lapIdx']] = lapidx
+
+        # Recalculate power
+        pace = self.df[self.columns[' Stroke500mPace (sec/500m)']]
+        pace = np.clip(pace,0,1e4)
+        pace = pace.replace(0,300)
+        self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+        velocity = 500./pace
+        power = 2.8*velocity**3
+        self.df[self.columns[' Power (watts)']] = power
+
+        # Calculate Stroke Rate during rest
+        mask = (self.df['intervalType']=='Rest')
+        for strokenr in self.df.loc[mask,'strokeCount'].unique():
+            mask2 = self.df['strokeCount'] == strokenr
+            strokes = self.df.loc[mask2,'strokeCount']
+            timestamps = self.df.loc[mask2,self.columns['TimeStamp (sec)']]
+            strokeduration = len(strokes)*timestamps.diff().mean()
+            spm = 60./strokeduration
+            self.df.loc[mask2,self.columns[' Cadence (stokes/min)']] = spm
+        
+        # dump empty lines at end
+        maxdist = self.df[self.columns[' Horizontal (meters)']].max()
+        mask = (self.df[self.columns[' Horizontal (meters)']] == maxdist)
+        self.df.drop(self.df.index[mask],inplace=True)
+
+        self.to_standard()
+
+
+        
 class ErgDataParser(CSVParser):
 
     def __init__(self, *args, **kwargs):
