@@ -643,7 +643,7 @@ class BoatCoachAdvancedParser(CSVParser):
 
         maxdist = self.df[self.columns[' Horizontal (meters)']].max()
         mask = (self.df[self.columns[' Horizontal (meters)']] == maxdist)
-        while len(self.df[mask]) > 1:
+        while len(self.df[mask]) > 2:
             mask = (self.df[self.columns[' Horizontal (meters)']] == maxdist)
             self.df.drop(self.df.index[-1],inplace=True)
             
