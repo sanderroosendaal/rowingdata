@@ -41,6 +41,7 @@ from csvparsers import (
     CSVParser,
     painsledDesktopParser,
     BoatCoachParser,
+    BoatCoachAdvancedParser,
     speedcoachParser,
     ErgDataParser,
     ErgStickParser,
