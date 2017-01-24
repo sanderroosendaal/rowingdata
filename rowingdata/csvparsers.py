@@ -986,7 +986,7 @@ class SpeedCoach2Parser(CSVParser):
         for c in self.df.columns:
             if c not in ['Elapsed Time']:
                 self.df[c] = pd.to_numeric(self.df[c],errors='coerce')
-        
+
         self.cols = [
             'Elapsed Time',
             'GPS Distance',
@@ -1035,13 +1035,23 @@ class SpeedCoach2Parser(CSVParser):
         try:
             dist2 = self.df['GPS Distance']
         except KeyError:
-            dist2 = self.df['Distance (GPS)']
-            self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
-            self.columns['GPS Speed'] = 'Speed (GPS)'
-            self.df[self.columns[' PeakDriveForce (lbs)']]/= lbstoN
-            self.df[self.columns[' AverageDriveForce (lbs)']]/= lbstoN
+            try:
+                dist2 = self.df['Distance (GPS)']
+                self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
+                self.columns['GPS Speed'] = 'Speed (GPS)'
+                self.df[self.columns[' PeakDriveForce (lbs)']]/= lbstoN
+                self.df[self.columns[' AverageDriveForce (lbs)']]/= lbstoN
+            except KeyError:
+                dist2 = self.df['Imp Distance']
+                self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
+                self.columns[' Stroke500mPace (sec/500m)'] = 'Imp Split'
+                self.df[self.columns[' PeakDriveForce (lbs)']]/= lbstoN
+                self.df[self.columns[' AverageDriveForce (lbs)']]/= lbstoN
+                self.columns[' Power (watts)'] = 'Work'
+                self.columns['Work'] = 'Power'
+                self.columns['GPS Speed'] = 'Imp Speed'
 
-        
+            
         cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
         self.df[self.columns['cum_dist']] = cum_dist
         velo = self.df[self.columns['GPS Speed']]

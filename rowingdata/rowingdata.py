@@ -8,7 +8,7 @@ import checkdatafiles
 
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__ = "0.95.5"
+__version__ = "0.95.6"
 
 try:
     from Tkinter import Tk
@@ -1441,6 +1441,7 @@ class rowingdata:
 		      )
 
 	self.df = addpowerzones(self.df,self.rwr.ftp,self.rwr.powerperc)
+        self.index = self.df.index
 
     def __add__(self,other):
         self_df = self.df.copy()
@@ -3073,7 +3074,7 @@ class rowingdata:
         
 	# time increments for bar chart
 	time_increments = df.ix[:,' ElapsedTime (sec)'].diff()
-	time_increments[0] = time_increments[1]
+	time_increments[self.index[0]] = time_increments[self.index[1]]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 
 
@@ -3516,7 +3517,7 @@ class rowingdata:
 
 	# time increments for bar chart
 	time_increments = df.ix[:,' ElapsedTime (sec)'].diff()
-	time_increments[0] = time_increments[1]
+	time_increments[self.index[0]] = time_increments[self.index[1]]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 	
 
@@ -3664,7 +3665,7 @@ class rowingdata:
 
 	# time increments for bar chart
 	time_increments = df.ix[:,'TimeStamp (sec)'].diff()
-	time_increments[0] = time_increments[1]
+	time_increments[self.index[0]] = time_increments[self.index[1]]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 	
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
@@ -3684,7 +3685,7 @@ class rowingdata:
 
 	# time increments for bar chart
 	time_increments = df.ix[:,'TimeStamp (sec)'].diff()
-	time_increments[0] = time_increments[1]
+	time_increments[self.index[0]] = time_increments[self.index[1]]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 	
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
@@ -3878,7 +3879,7 @@ class rowingdata:
 
 	# time increments for bar chart
 	time_increments = df.ix[:,' ElapsedTime (sec)'].diff()
-	time_increments[0] = time_increments[1]
+	time_increments[self.index[0]] = time_increments[self.index[1]]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 	
 
@@ -4048,7 +4049,7 @@ class rowingdata:
 
 	# time increments for bar chart
 	time_increments = df.ix[:,' ElapsedTime (sec)'].diff()
-	time_increments[0] = time_increments[1]
+	time_increments[self.index[0]] = time_increments[self.index[1]]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 	
 
@@ -4193,7 +4194,7 @@ class rowingdata:
 
 	# time increments for bar chart
 	time_increments = df.ix[:,' ElapsedTime (sec)'].diff()
-	time_increments[0] = time_increments[1]
+	time_increments[self.index[0]] = time_increments[self.index[1]]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 	
 
@@ -4600,7 +4601,7 @@ class rowingdata:
 
 	# time increments for bar chart
 	time_increments = df.ix[:,' ElapsedTime (sec)'].diff()
-	time_increments[0] = time_increments[1]
+	time_increments[self.index[0]] = time_increments[self.index[1]]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 
 
@@ -4755,23 +4756,23 @@ class rowingdata:
 	number_of_rows = self.number_of_rows
 
 	time_increments = df.ix[:,'TimeStamp (sec)'].diff()
-	time_increments[0] = time_increments[1]
+	time_increments[self.index[0]] = time_increments[self.index[1]]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 	
 	time_in_zone = np.zeros(6)
 	for i in range(number_of_rows):
-	    if df.ix[i,' HRCur (bpm)'] <= self.rwr.ut2:
-		time_in_zone[0] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.ut1:
-		time_in_zone[1] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.at:
-		time_in_zone[2] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.tr:
-		time_in_zone[3] += time_increments[i]
-	    elif df.ix[i,' HRCur (bpm)'] <= self.rwr.an:
-		time_in_zone[4] += time_increments[i]
+	    if df.ix[self.index[i],' HRCur (bpm)'] <= self.rwr.ut2:
+		time_in_zone[0] += time_increments[self.index[i]]
+	    elif df.ix[self.index[i],' HRCur (bpm)'] <= self.rwr.ut1:
+		time_in_zone[1] += time_increments[self.index[i]]
+	    elif df.ix[self.index[i],' HRCur (bpm)'] <= self.rwr.at:
+		time_in_zone[2] += time_increments[self.index[i]]
+	    elif df.ix[self.index[i],' HRCur (bpm)'] <= self.rwr.tr:
+		time_in_zone[3] += time_increments[self.index[i]]
+	    elif df.ix[self.index[i],' HRCur (bpm)'] <= self.rwr.an:
+		time_in_zone[4] += time_increments[self.index[i]]
 	    else:
-		time_in_zone[5] += time_increments[i]
+		time_in_zone[5] += time_increments[self.index[i]]
 		
 	# print(time_in_zone)
 	wedge_labels = ['<ut2','ut2','ut1','at','tr','an']
@@ -4827,7 +4828,7 @@ class rowingdata:
 	number_of_rows = self.number_of_rows
 
 	time_increments = df.ix[:,'TimeStamp (sec)'].diff()
-	time_increments[0] = time_increments[1]
+	time_increments[self.index[0]] = time_increments[self.index[1]]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 
 	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
@@ -4902,7 +4903,7 @@ class rowingdata:
 	number_of_rows = self.number_of_rows
 
 	time_increments = df.ix[:,'TimeStamp (sec)'].diff()
-	time_increments[0] = time_increments[1]
+	time_increments[self.index[0]] = time_increments[self.index[1]]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 
 	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
@@ -4974,7 +4975,7 @@ class rowingdata:
 	number_of_rows = self.number_of_rows
 
 	time_increments = df.ix[:,'TimeStamp (sec)'].diff()
-	time_increments[0] = time_increments[1]
+	time_increments[self.index[0]] = time_increments[self.index[1]]
 	time_increments = 0.5*(abs(time_increments)+(time_increments))
 	
 	time_in_zone = np.zeros(6)

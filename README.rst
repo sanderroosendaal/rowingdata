@@ -877,6 +877,7 @@ Release Notes:
 - Added addition method to rowingdata object
 - ErgData parser: Offset ElapsedTime by the value of the first stroke
 - BoatCoach parser: Calculate RecoveryTime
+- Added support for NK SpeedCoach set to impeller
 
 0.94.x
 ------
