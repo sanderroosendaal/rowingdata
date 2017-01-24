@@ -634,10 +634,20 @@ class BoatCoachAdvancedParser(CSVParser):
             self.df.loc[mask2,self.columns[' Cadence (stokes/min)']] = spm
         
         # dump empty lines at end
+        endhorizontal = self.df.loc[self.df.index[-1],
+                                    self.columns[' Horizontal (meters)']]
+
+        if endhorizontal == 0:
+            self.df.drop(self.df.index[-1],inplace=True)
+            
+
         maxdist = self.df[self.columns[' Horizontal (meters)']].max()
         mask = (self.df[self.columns[' Horizontal (meters)']] == maxdist)
-        self.df.drop(self.df.index[mask],inplace=True)
-
+        while len(self.df[mask]) > 1:
+            mask = (self.df[self.columns[' Horizontal (meters)']] == maxdist)
+            self.df.drop(self.df.index[-1],inplace=True)
+            print len(self.df[mask])
+            
         self.to_standard()
 
 
