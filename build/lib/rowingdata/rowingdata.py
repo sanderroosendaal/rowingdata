@@ -8,7 +8,7 @@ import checkdatafiles
 
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__ = "0.95.7"
+__version__ = "0.95.8"
 
 try:
     from Tkinter import Tk
@@ -799,7 +799,7 @@ class summarydata:
 	print stri
 	
 
-
+ftppowerperc = [55,75,90,105,120]
 
 class rower:
     """ This class contains all the personal data about the rower
@@ -819,7 +819,7 @@ class rower:
 		 weightcategory="hwt",
 		 mc=72.5,
 		 strokelength=1.35,ftp=226,
-		 powerperc=[55,75,90,105,120]):
+		 powerperc=ftppowerperc):
 	self.ut2=hrut2
 	self.ut1=hrut1
 	self.at=hrat
@@ -1417,13 +1417,16 @@ class rowingdata:
 
         self.dragfactor = sled_df[' DragFactor'].mean()
 	# get the date of the row
-	starttime = sled_df['TimeStamp (sec)'].values[0]
+        try:
+	    starttime = sled_df['TimeStamp (sec)'].values[0]
+        except IndexError:
+            starttime = 0
 
 	# using UTC time for now
 	self.rowdatetime = datetime.datetime.utcfromtimestamp(starttime)
 	    	
 	# remove the start time from the time stamps
-        if not self.absolutetimestamps:
+        if not self.absolutetimestamps and len(sled_df):
 	    sled_df['TimeStamp (sec)']=sled_df['TimeStamp (sec)']-sled_df['TimeStamp (sec)'].values[0]
 
 	number_of_columns = sled_df.shape[1]
