@@ -640,11 +640,12 @@ class BoatCoachAdvancedParser(CSVParser):
         if endhorizontal == 0:
             self.df.drop(self.df.index[-1],inplace=True)
             
-
-        maxdist = self.df[self.columns[' Horizontal (meters)']].max()
-        mask = (self.df[self.columns[' Horizontal (meters)']] == maxdist)
+        res = make_cumvalues(self.df[self.columns[' Horizontal (meters)']])
+        self.df['cumdist'] = res[0]
+        maxdist = self.df['cumdist'].max()
+        mask = (self.df['cumdist'] == maxdist)
         while len(self.df[mask]) > 2:
-            mask = (self.df[self.columns[' Horizontal (meters)']] == maxdist)
+            mask = (self.df['cumdist'] == maxdist)
             self.df.drop(self.df.index[-1],inplace=True)
             
         self.to_standard()
