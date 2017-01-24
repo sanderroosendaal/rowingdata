@@ -1417,13 +1417,16 @@ class rowingdata:
 
         self.dragfactor = sled_df[' DragFactor'].mean()
 	# get the date of the row
-	starttime = sled_df['TimeStamp (sec)'].values[0]
+        try:
+	    starttime = sled_df['TimeStamp (sec)'].values[0]
+        except IndexError:
+            starttime = 0
 
 	# using UTC time for now
 	self.rowdatetime = datetime.datetime.utcfromtimestamp(starttime)
 	    	
 	# remove the start time from the time stamps
-        if not self.absolutetimestamps:
+        if not self.absolutetimestamps and len(sled_df):
 	    sled_df['TimeStamp (sec)']=sled_df['TimeStamp (sec)']-sled_df['TimeStamp (sec)'].values[0]
 
 	number_of_columns = sled_df.shape[1]
