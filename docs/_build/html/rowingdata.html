@@ -236,7 +236,7 @@ Usage: john = rowingdata.read_obj(&#8220;john.txt&#8221;)</p>
 
 <dl class="class">
 <dt id="rowingdata.rowingdata.rower">
-<em class="property">class </em><code class="descclassname">rowingdata.rowingdata.</code><code class="descname">rower</code><span class="sig-paren">(</span><em>hrut2=142, hrut1=146, hrat=160, hrtr=167, hran=180, hrmax=192, c2username='', c2password='', weightcategory='hwt', mc=72.5, strokelength=1.35, ftp=226, powerperc=[55, 75, 90, 105, 120]</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rower" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">rowingdata.rowingdata.</code><code class="descname">rower</code><span class="sig-paren">(</span><em>hrut2=142, hrut1=146, hrat=160, hrtr=167, hran=180, hrmax=192, c2username='', c2password='', weightcategory='hwt', mc=72.5, strokelength=1.35, ftp=226, powerperc=[55, 75, 90, 105, 120], powerzones=['UT3', 'UT2', 'UT1', 'AT', 'TR', 'AN']</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rower" title="Permalink to this definition">¶</a></dt>
 <dd><p>This class contains all the personal data about the rower</p>
 <ul class="simple">
 <li>HR threshold values</li>
@@ -421,28 +421,28 @@ the lapIdx column</p>
 
 <dl class="method">
 <dt id="rowingdata.rowingdata.rowingdata.otw_setpower">
-<code class="descname">otw_setpower</code><span class="sig-paren">(</span><em>skiprows=0</em>, <em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C0B7D88&gt;</em>, <em>mc=70.0</em>, <em>powermeasured=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_setpower" title="Permalink to this definition">¶</a></dt>
+<code class="descname">otw_setpower</code><span class="sig-paren">(</span><em>skiprows=0</em>, <em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C00DE48&gt;</em>, <em>mc=70.0</em>, <em>powermeasured=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_setpower" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds power from rowing physics calculations to OTW result</p>
 <p>For now, works only in singles</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="rowingdata.rowingdata.rowingdata.otw_setpower_silent">
-<code class="descname">otw_setpower_silent</code><span class="sig-paren">(</span><em>skiprows=0</em>, <em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C0B7DC8&gt;</em>, <em>mc=70.0</em>, <em>powermeasured=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_setpower_silent" title="Permalink to this definition">¶</a></dt>
+<code class="descname">otw_setpower_silent</code><span class="sig-paren">(</span><em>skiprows=0</em>, <em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C00DE88&gt;</em>, <em>mc=70.0</em>, <em>powermeasured=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_setpower_silent" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds power from rowing physics calculations to OTW result</p>
 <p>For now, works only in singles</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="rowingdata.rowingdata.rowingdata.otw_setpower_verbose">
-<code class="descname">otw_setpower_verbose</code><span class="sig-paren">(</span><em>skiprows=0</em>, <em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C0B7E08&gt;</em>, <em>mc=70.0</em>, <em>powermeasured=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_setpower_verbose" title="Permalink to this definition">¶</a></dt>
+<code class="descname">otw_setpower_verbose</code><span class="sig-paren">(</span><em>skiprows=0</em>, <em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C00DEC8&gt;</em>, <em>mc=70.0</em>, <em>powermeasured=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_setpower_verbose" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds power from rowing physics calculations to OTW result</p>
 <p>For now, works only in singles</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="rowingdata.rowingdata.rowingdata.otw_testphysics">
-<code class="descname">otw_testphysics</code><span class="sig-paren">(</span><em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C0B7E48&gt;</em>, <em>mc=70.0</em>, <em>p=120.0</em>, <em>spm=30.0</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_testphysics" title="Permalink to this definition">¶</a></dt>
+<code class="descname">otw_testphysics</code><span class="sig-paren">(</span><em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C00DF08&gt;</em>, <em>mc=70.0</em>, <em>p=120.0</em>, <em>spm=30.0</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_testphysics" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if erg pace is in right order</p>
 <p>For now, works only in singles</p>
 </dd></dl>
