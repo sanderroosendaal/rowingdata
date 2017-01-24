@@ -799,7 +799,7 @@ class summarydata:
 	print stri
 	
 
-
+ftppowerperc = [55,75,90,105,120]
 
 class rower:
     """ This class contains all the personal data about the rower
@@ -819,7 +819,7 @@ class rower:
 		 weightcategory="hwt",
 		 mc=72.5,
 		 strokelength=1.35,ftp=226,
-		 powerperc=[55,75,90,105,120]):
+		 powerperc=ftppowerperc):
 	self.ut2=hrut2
 	self.ut1=hrut1
 	self.at=hrat
