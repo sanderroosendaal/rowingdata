@@ -527,6 +527,48 @@ class BoatCoachParser(CSVParser):
 
         self.df[self.columns[' StrokeRecoveryTime (ms)']] = recoverytime
 
+        # Reset Interval Count by StrokeCount
+        res = make_cumvalues(self.df['strokeCount'])
+        lapidx = res[1]
+        strokecount = res[0]
+        self.df['strokeCount'] = strokecount
+        self.df[self.columns[' lapIdx']] = lapidx
+
+        # Recalculate power
+        pace = self.df[self.columns[' Stroke500mPace (sec/500m)']]
+        pace = np.clip(pace,0,1e4)
+        pace = pace.replace(0,300)
+        self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+        velocity = 500./pace
+        power = 2.8*velocity**3
+        self.df[self.columns[' Power (watts)']] = power
+
+        # Calculate Stroke Rate during rest
+        mask = (self.df['intervalType']=='Rest')
+        for strokenr in self.df.loc[mask,'strokeCount'].unique():
+            mask2 = self.df['strokeCount'] == strokenr
+            strokes = self.df.loc[mask2,'strokeCount']
+            timestamps = self.df.loc[mask2,self.columns['TimeStamp (sec)']]
+            strokeduration = len(strokes)*timestamps.diff().mean()
+            spm = 60./strokeduration
+            self.df.loc[mask2,self.columns[' Cadence (stokes/min)']] = spm
+        
+        # dump empty lines at end
+        endhorizontal = self.df.loc[self.df.index[-1],
+                                    self.columns[' Horizontal (meters)']]
+
+        if endhorizontal == 0:
+            self.df.drop(self.df.index[-1],inplace=True)
+            
+        res = make_cumvalues(self.df[self.columns[' Horizontal (meters)']])
+        self.df['cumdist'] = res[0]
+        maxdist = self.df['cumdist'].max()
+        mask = (self.df['cumdist'] == maxdist)
+        while len(self.df[mask]) > 2:
+            mask = (self.df['cumdist'] == maxdist)
+            self.df.drop(self.df.index[-1],inplace=True)
+
+        
         self.to_standard()
 
 

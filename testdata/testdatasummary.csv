@@ -4,7 +4,7 @@ filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrinterval
 2x20min_o.csv,csv,895,2016,3,31,16,48,29,9812,2458,2,1199,4902
 3km_cd_o.csv,csv,276,2016,3,31,17,31,2,2996,756,1,756,2996
 3x250m.fit,fit,94,2016,7,28,9,35,29,750,487,3,55,248
-boatcoach.csv,boatcoach,132,2016,11,28,7,37,2,499,118,3,58,246
+boatcoach.csv,boatcoach,119,2016,11,28,7,37,2,499,118,1,118,499
 crewnerd_interval.csv,mystery,16388,0,0,0,0,0,0,6007,1641,1,1641,6007
 crewnerddata.CSV,unknown,0,0,0,0,0,0,0,0,0,0,0,0
 crewnerddata.tcx,tcx,3374,2016,4,2,9,15,9,10465,3923,1,3923,10465
