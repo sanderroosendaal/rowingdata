@@ -8,7 +8,7 @@ import checkdatafiles
 
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__ = "0.96.0"
+__version__ = "0.96.1"
 
 try:
     from Tkinter import Tk
@@ -800,6 +800,7 @@ class summarydata:
 	
 
 ftppowerperc = [55,75,90,105,120]
+ftppowernames = ['UT3','UT2','UT1','AT','TR','AN']
 
 class rower:
     """ This class contains all the personal data about the rower
@@ -819,7 +820,8 @@ class rower:
 		 weightcategory="hwt",
 		 mc=72.5,
 		 strokelength=1.35,ftp=226,
-		 powerperc=ftppowerperc):
+		 powerperc=ftppowerperc,
+                 powerzones=ftppowernames):
 	self.ut2=hrut2
 	self.ut1=hrut1
 	self.at=hrat
@@ -830,6 +832,7 @@ class rower:
 	self.c2password=c2password
 	self.ftp = ftp
 	self.powerperc = powerperc
+        self.powerzones = powerzones
 	if (weknowphysics==1):
 	    self.rc = rowingphysics.crew(mc=mc,strokelength=strokelength)
 	else:
@@ -2906,11 +2909,11 @@ class rowingdata:
 
 	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 
-	ax1.text(5,ut2+1.5,"UT2",size=8)
-	ax1.text(5,ut1+1.5,"UT1",size=8)
-	ax1.text(5,at+1.5,"AT",size=8)
-	ax1.text(5,tr+1.5,"TR",size=8)
-	ax1.text(5,an+1.5,"AN",size=8)
+	ax1.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
+	ax1.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
+	ax1.text(5,at+1.5,self.rwr.powerzones[3],size=8)
+	ax1.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
+	ax1.text(5,an+1.5,self.rwr.powerzones[5],size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
@@ -3850,11 +3853,11 @@ class rowingdata:
 
 	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 
-	ax4.text(5,ut2+1.5,"UT2",size=8)
-	ax4.text(5,ut1+1.5,"UT1",size=8)
-	ax4.text(5,at+1.5,"AT",size=8)
-	ax4.text(5,tr+1.5,"TR",size=8)
-	ax4.text(5,an+1.5,"AN",size=8)
+	ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
+	ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
+	ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
+	ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
+	ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
@@ -4002,11 +4005,11 @@ class rowingdata:
 
 	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
 
-	ax4.text(5,ut2+1.5,"UT2",size=8)
-	ax4.text(5,ut1+1.5,"UT1",size=8)
-	ax4.text(5,at+1.5,"AT",size=8)
-	ax4.text(5,tr+1.5,"TR",size=8)
-	ax4.text(5,an+1.5,"AN",size=8)
+	ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
+	ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
+	ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
+	ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
+	ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
 
 	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
 
@@ -4853,8 +4856,9 @@ class rowingdata:
 		time_in_zone[5] += time_increments[i]
 		
 	# print(time_in_zone)
-	wedge_labels = ['power<ut2','power ut2','power ut1','power at',
-			'power tr','power an']
+	wedge_labels = list(self.rwr.powerzones)
+        #['power<ut2','power ut2','power ut1','power at',
+	#		'power tr','power an']
 
 	totaltime = time_in_zone.sum()
         perc = 100.*time_in_zone/totaltime
@@ -4928,8 +4932,10 @@ class rowingdata:
 		time_in_zone[5] += time_increments[i]
 		
 	# print(time_in_zone)
-	wedge_labels = ['power<ut2','power ut2','power ut1','power at',
-			'power tr','power an']
+	wedge_labels = list(self.rwr.powerzones)
+
+        #['power<ut2','power ut2','power ut1','power at',
+	#		'power tr','power an']
 
 	totaltime = time_in_zone.sum()
         perc = 100.*time_in_zone/totaltime
