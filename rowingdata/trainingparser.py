@@ -46,6 +46,8 @@ def parse(s,debug=0):
     p = re.compile('([0-9]+)x\((.+)\)\+(.+)')
     m = p.match(s)
     if m != None:
+        if debug:
+            print "1st match"
         n = int(m.group(1))
         piece = m.group(2)
         secondpiece = m.group(3)
@@ -59,6 +61,8 @@ def parse(s,debug=0):
     p = re.compile('([0-9]+)x\((.+?)\)\/(.+?)\+(.+)')
     m = p.match(s)
     if m != None:
+        if debug:
+            print "2nd match"
         n = int(m.group(1))
         piece = m.group(2)
         rest = pieceparse(m.group(3))
@@ -75,6 +79,8 @@ def parse(s,debug=0):
     p = re.compile('([0-9]+)x\((.+)\)\/(.+)')
     m = p.match(s)
     if m != None:
+        if debug:
+            print "3rd match"
 	n = int(m.group(1))
 	piece = m.group(2)
 	rest = pieceparse(m.group(3))
@@ -89,6 +95,8 @@ def parse(s,debug=0):
     p = re.compile('([0-9]+)x\((.+)\)')
     m = p.match(s)
     if m != None:
+        if debug:
+            print "4th match"
 	n = int(m.group(1))
 	piece = m.group(2)
 	if n>1:
@@ -104,6 +112,8 @@ def parse(s,debug=0):
     p = re.compile('([0-9]+)x(.+)\/(.+)')
     m = p.match(s)
     if m != None:
+        if debug:
+            print "5th match"
 	n = int(m.group(1))
 	piece = m.group(2)
 	rest = pieceparse(m.group(3))
@@ -118,12 +128,16 @@ def parse(s,debug=0):
     p = re.compile('(.+)\+(.+)')
     m = p.match(s)
     if m != None:
+        if debug:
+            print "6th match"
 	return parse(m.group(1),debug=debug)+parse(m.group(2),debug=debug)
 
     # now check for aap/noot
     p = re.compile('(.+)\/(.+)')
     m = p.match(s)
     if m != None:
+        if debug:
+            print "7th match"
 	w = pieceparse(m.group(1))
 	r = pieceparse(m.group(2))
 	return [w[0],w[1],'work',r[0],r[1],'rest']
@@ -132,6 +146,8 @@ def parse(s,debug=0):
     p = re.compile('([0-9]+)x(.+)')
     m = p.match(s)
     if m != None:
+        if debug:
+            print "8th match"
 	n = int(m.group(1))
 	if n>=2:
 	    return parse(str(n-1)+"x"+m.group(2))+parse(m.group(2))
@@ -142,6 +158,8 @@ def parse(s,debug=0):
     p = re.compile('([0-9]*)\:([0-9]+)([A-Za-wyz]+)')
     m = p.match(s)
     if m != None:
+        if debug:
+            print "9th match"
 	unit = 'seconds'
 	value1 = float(m.group(1))
 	value2 = float(m.group(2))
@@ -158,6 +176,8 @@ def parse(s,debug=0):
     p = re.compile('([0-9]*\.?[0-9]+)([A-Za-wyz]+)')
     m = p.match(s)
     if m != None:
+        if debug:
+            print "10th match"
 	unit = 'seconds'
 	value = float(m.group(1))
 	units = m.group(2)
