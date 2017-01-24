@@ -646,7 +646,6 @@ class BoatCoachAdvancedParser(CSVParser):
         while len(self.df[mask]) > 1:
             mask = (self.df[self.columns[' Horizontal (meters)']] == maxdist)
             self.df.drop(self.df.index[-1],inplace=True)
-            print len(self.df[mask])
             
         self.to_standard()
 
