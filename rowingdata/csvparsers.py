@@ -532,7 +532,10 @@ class BoatCoachParser(CSVParser):
         lapidx = res[1]
         strokecount = res[0]
         self.df['strokeCount'] = strokecount
-        self.df[self.columns[' lapIdx']] = lapidx
+        if lapidx.max()>1:
+            self.df[self.columns[' lapIdx']] = lapidx
+
+        lapmax = self.df[self.columns[' lapIdx']].max()
 
         # Recalculate power
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']]
@@ -564,6 +567,7 @@ class BoatCoachParser(CSVParser):
         self.df['cumdist'] = res[0]
         maxdist = self.df['cumdist'].max()
         mask = (self.df['cumdist'] == maxdist)
+        self.df.loc[mask,self.columns[' lapIdx']] = lapmax-1
         while len(self.df[mask]) > 2:
             mask = (self.df['cumdist'] == maxdist)
             self.df.drop(self.df.index[-1],inplace=True)
@@ -654,8 +658,11 @@ class BoatCoachAdvancedParser(CSVParser):
         lapidx = res[1]
         strokecount = res[0]
         self.df['strokeCount'] = strokecount
-        self.df[self.columns[' lapIdx']] = lapidx
+        if lapidx.max()>1:
+            self.df[self.columns[' lapIdx']] = lapidx
 
+        lapmax = self.df[self.columns[' lapIdx']].max()
+            
         # Recalculate power
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']]
         pace = np.clip(pace,0,1e4)
@@ -686,6 +693,7 @@ class BoatCoachAdvancedParser(CSVParser):
         self.df['cumdist'] = res[0]
         maxdist = self.df['cumdist'].max()
         mask = (self.df['cumdist'] == maxdist)
+        self.df.loc[mask,self.columns[' lapIdx']] = lapmax-1
         while len(self.df[mask]) > 2:
             mask = (self.df['cumdist'] == maxdist)
             self.df.drop(self.df.index[-1],inplace=True)
