@@ -567,11 +567,12 @@ class BoatCoachParser(CSVParser):
         self.df['cumdist'] = res[0]
         maxdist = self.df['cumdist'].max()
         mask = (self.df['cumdist'] == maxdist)
-        self.df.loc[mask,self.columns[' lapIdx']] = lapmax-1
         while len(self.df[mask]) > 2:
             mask = (self.df['cumdist'] == maxdist)
             self.df.drop(self.df.index[-1],inplace=True)
 
+        mask = (self.df['cumdist'] == maxdist)
+        self.df.loc[mask,self.columns[' lapIdx']] = self.df.loc[self.df.index[-3],self.columns[' lapIdx']]
         
         self.to_standard()
 
@@ -693,10 +694,13 @@ class BoatCoachAdvancedParser(CSVParser):
         self.df['cumdist'] = res[0]
         maxdist = self.df['cumdist'].max()
         mask = (self.df['cumdist'] == maxdist)
-        self.df.loc[mask,self.columns[' lapIdx']] = lapmax-1
         while len(self.df[mask]) > 2:
             mask = (self.df['cumdist'] == maxdist)
             self.df.drop(self.df.index[-1],inplace=True)
+
+        
+        mask = (self.df['cumdist'] == maxdist)
+        self.df.loc[mask,self.columns[' lapIdx']] = self.df.loc[self.df.index[-3],self.columns[' lapIdx']]
             
         self.to_standard()
 
