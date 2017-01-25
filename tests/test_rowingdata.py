@@ -72,7 +72,7 @@ class TestBoatCoachParser:
         assert_equals(rowingdata.get_file_type(csvfile),'boatcoach')
         r = rowingdata.BoatCoachParser(csvfile=csvfile)
         row = rowingdata.rowingdata(df=r.df)
-        assert_equals(row.number_of_rows,132)
+        assert_equals(row.number_of_rows,119)
         totaldist = row.df['cum_dist'].max()
         assert_equals(totaldist,499)
         assert_equals(row.rowdatetime,datetime.datetime(2016,11,28,7,37,2))
