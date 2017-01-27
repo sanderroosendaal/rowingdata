@@ -870,6 +870,12 @@ Boat bearing.
 ================
 Release Notes:
 ================
+
+0.96.x
+------
+
+- Improved Interval String Parser
+
 0.95.x
 ------
 
