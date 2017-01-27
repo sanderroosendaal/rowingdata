@@ -38,12 +38,12 @@ def pieceparse(r):
 def parse(s,debug=0):
     if debug == 1:
 	print s
-	print ""
+        raw_input()
 
     s = s.strip()
 
     # check for nx(aap noot) + mies
-    p = re.compile('([0-9]+)x\((.+)\)\+(.+)')
+    p = re.compile('([0-9]+)x\((.+?)\)\+(.+)')
     m = p.match(s)
     if m != None:
         if debug:
@@ -58,7 +58,7 @@ def parse(s,debug=0):
             return parse(piece,debug=debug)+parse(secondpiece,debug=debug)
     
     # check for nx(aap noot)/mies + jet
-    p = re.compile('([0-9]+)x\((.+?)\)\/(.+?)\+(.+)')
+    p = re.compile('([0-9]+)x\((.+?)\)\/(.+)\+(.+)')
     m = p.match(s)
     if m != None:
         if debug:
@@ -76,7 +76,7 @@ def parse(s,debug=0):
 
     
     # check for nx(aap noot)/5min
-    p = re.compile('([0-9]+)x\((.+)\)\/(.+)')
+    p = re.compile('([0-9]+)x\((.+?)\)\/(.+)')
     m = p.match(s)
     if m != None:
         if debug:
@@ -106,10 +106,24 @@ def parse(s,debug=0):
 	if n==1:
 	    return parse(piece,debug=debug)
 
-    
+    # check for nxaap/noot+mies
+    p = re.compile('([0-9]+)x(.+?)\+(.+)')
+    m = p.match(s)
+    if m != None:
+        if debug:
+            print "4.5th match"
+        n = int(m.group(1))
+        piece1 = m.group(2)
+        piece2 = m.group(3)
+        if n>1:
+            newstring = str(n-1)+"x"+piece1+"+"+piece2
+            return parse(piece1,debug=debug)+parse(newstring,debug=debug)
+
+        if n==1:
+            return parse(piece1+"+"+piece2,debug=debug)
 
     # now check for nxaap/5min
-    p = re.compile('([0-9]+)x(.+)\/(.+)')
+    p = re.compile('([0-9]+)x(.+?)\/(.+)')
     m = p.match(s)
     if m != None:
         if debug:
@@ -150,9 +164,9 @@ def parse(s,debug=0):
             print "8th match"
 	n = int(m.group(1))
 	if n>=2:
-	    return parse(str(n-1)+"x"+m.group(2))+parse(m.group(2))
+	    return parse(str(n-1)+"x"+m.group(2),debug=debug)+parse(m.group(2),debug=debug)
 	if n == 1:
-	    return parse(m.group(2))
+	    return parse(m.group(2),debug=debug)
 
     # now check for 2:30min
     p = re.compile('([0-9]*)\:([0-9]+)([A-Za-wyz]+)')
