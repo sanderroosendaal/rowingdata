@@ -40,6 +40,62 @@ class TestBasicRowingData:
         sum = int(10*np.array(ts).sum())/10.
         assert_equals(sum,537.0)
                       
+class TestStringParser:
+    def teststringparser(self):
+        s1 = '8x500m/2min'
+        s2 = '10km'
+        s3 = '3min/3min+3min'
+        s4 = '3min/3min + 3min'
+        s5 = '4x(500m+500m)/2min'
+        s6 = '2x500m/500m'
+        s7 = '4x30sec/30sec+5min/1min+2x10min'
+
+        r1 = [500,'meters','work',120,'seconds','rest',
+              500,'meters','work',120,'seconds','rest',
+              500,'meters','work',120,'seconds','rest',
+              500,'meters','work',120,'seconds','rest',
+              500,'meters','work',120,'seconds','rest',
+              500,'meters','work',120,'seconds','rest',
+              500,'meters','work',120,'seconds','rest',
+              500,'meters','work',120,'seconds','rest'
+        ]
+
+        r2 = [10000,'meters','work']
+
+        r3 = [180,'seconds','work',180,'seconds','rest',180,'seconds','work']
+        r4 = [180,'seconds','work',180,'seconds','rest',180,'seconds','work']
+
+        r5 = [500,'meters','work',500,'meters','work',120,'seconds','rest',
+              500,'meters','work',500,'meters','work',120,'seconds','rest',
+              500,'meters','work',500,'meters','work',120,'seconds','rest',
+              500,'meters','work',500,'meters','work',120,'seconds','rest'
+        ]
+
+        r6 = [500,'meters','work',500,'meters','rest',
+              500,'meters','work',500,'meters','rest']
+
+        r7 = [30,'seconds','work',30,'seconds','rest',
+              30,'seconds','work',30,'seconds','rest',
+              30,'seconds','work',30,'seconds','rest',
+              30,'seconds','work',30,'seconds','rest',
+              300,'seconds','work',60,'seconds','rest',
+              600,'seconds','work',600,'seconds','work']
+
+        t1 = rowingdata.trainingparser.parse(s1)
+        t2 = rowingdata.trainingparser.parse(s2)
+        t3 = rowingdata.trainingparser.parse(s3)
+        t4 = rowingdata.trainingparser.parse(s4)
+        t5 = rowingdata.trainingparser.parse(s5)
+        t6 = rowingdata.trainingparser.parse(s6)
+        t7 = rowingdata.trainingparser.parse(s7)
+
+        assert_equals(t1,r1)
+        assert_equals(t2,r2)
+        assert_equals(t3,r3)
+        assert_equals(t4,r4)
+        assert_equals(t5,r5)
+        assert_equals(t6,r6)
+        assert_equals(t7,r7)
         
 class TestErgData:
     def testergdata(self):
