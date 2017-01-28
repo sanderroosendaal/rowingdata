@@ -8,7 +8,7 @@ import checkdatafiles
 
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__ = "0.96.6"
+__version__ = "0.96.7"
 
 try:
     from Tkinter import Tk
@@ -2582,7 +2582,7 @@ class rowingdata:
 	if workdtot != 0:
 	    avgworkpace = 500.*workttot/workdtot
 	else:
-	    avgworkpace = 500.*workttot/workdtot
+	    avgworkpace = 1000.
 
 	stri += workstring(workdtot,workttot,avgworkpace,workspmavg,
 			   workhravg,workhrmax,workdpsavg,workpoweravg,
