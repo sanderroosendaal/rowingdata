@@ -67,10 +67,10 @@ def get_file_type(f):
     if extension == 'csv':
 	# get first and 7th line of file
 	firstline = fop.readline()
+        secondline = fop.readline()
+        thirdline = fop.readline()
+        fourthline = fop.readline()
 	
-	for i in range(3):
-	    fourthline = fop.readline()
-
 	for i in range(3):
 	    seventhline = fop.readline()
 
@@ -91,6 +91,9 @@ def get_file_type(f):
 	if 'SpeedCoach GPS Pro' in fourthline:
 	    return 'speedcoach2'
 
+        if 'SpeedCoach GPS Pro' in thirdline:
+            return 'speedcoach2'
+        
 	if 'Practice Elapsed Time (s)' in firstline:
 	    return 'mystery'
 
@@ -158,11 +161,11 @@ def get_file_type(f):
 	
 
 def get_file_line(linenr,f):
-    fop = open(f,'r')
-    for i in range(linenr):
-	line = fop.readline()
+    line = ''
+    with open(f,'r') as fop:
+        for i in range(linenr):
+	    line = fop.readline()
 
-    fop.close()
     return line
 
 
@@ -214,7 +217,16 @@ def skip_variable_header(f):
 	    counter +=1
 
     fop.close()
-    return counter2+2,summaryc+2
+    # test for blank line
+    l = get_file_line(counter2+2,f)
+    if 'Interval' in l:
+        counter2 = counter2-1
+        summaryc = summaryc-1
+        blanklines = 0
+    else:
+        blanklines = 1
+        
+    return counter2+2,summaryc+2,blanklines
 
 def make_cumvalues_array(xvalues):
     """ Takes a Pandas dataframe with one column as input value.
@@ -329,6 +341,8 @@ class CSVParser(object):
         self.df = pd.read_csv(csvfile,skiprows=skiprows,usecols=usecols,
                               sep=sep,engine=engine,skipfooter=skipfooter,
                               converters=converters,index_col=False)
+
+        self.df = self.df.fillna(method='ffill')
         
         self.defaultcolumnnames = [
             'TimeStamp (sec)',
@@ -1158,7 +1172,7 @@ class SpeedCoach2Parser(CSVParser):
         else:
             csvfile = kwargs['csvfile']
             
-        skiprows,summaryline = skip_variable_header(csvfile)
+        skiprows,summaryline,blanklines = skip_variable_header(csvfile)
         kwargs['skiprows'] = skiprows
         super(SpeedCoach2Parser, self).__init__(*args, **kwargs)
         self.df = self.df.drop(self.df.index[[0]])
@@ -1219,17 +1233,24 @@ class SpeedCoach2Parser(CSVParser):
                 dist2 = self.df['Distance (GPS)']
                 self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
                 self.columns['GPS Speed'] = 'Speed (GPS)'
-                self.df[self.columns[' PeakDriveForce (lbs)']]/= lbstoN
-                self.df[self.columns[' AverageDriveForce (lbs)']]/= lbstoN
+                try:
+                    self.df[self.columns[' PeakDriveForce (lbs)']]/= lbstoN
+                    self.df[self.columns[' AverageDriveForce (lbs)']]/= lbstoN
+                except KeyError:
+                    pass
             except KeyError:
                 dist2 = self.df['Imp Distance']
                 self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
                 self.columns[' Stroke500mPace (sec/500m)'] = 'Imp Split'
-                self.df[self.columns[' PeakDriveForce (lbs)']]/= lbstoN
-                self.df[self.columns[' AverageDriveForce (lbs)']]/= lbstoN
                 self.columns[' Power (watts)'] = 'Work'
                 self.columns['Work'] = 'Power'
                 self.columns['GPS Speed'] = 'Imp Speed'
+                try:
+                    self.df[self.columns[' PeakDriveForce (lbs)']]/= lbstoN
+                    self.df[self.columns[' AverageDriveForce (lbs)']]/= lbstoN
+                except KeyError:
+                    pass
+
 
             
         cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
@@ -1240,9 +1261,15 @@ class SpeedCoach2Parser(CSVParser):
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
 
         # get date from header
-        dateline = get_file_line(4,csvfile)
-        dated = dateline.split(',')[1]
-	self.row_date = parser.parse(dated,fuzzy=True)
+        try:
+            dateline = get_file_line(4,csvfile)
+            dated = dateline.split(',')[1]
+	    self.row_date = parser.parse(dated,fuzzy=True)
+        except ValueError:
+            dateline = get_file_line(3,csvfile)
+            dated = dateline.split(',')[1]
+	    self.row_date = parser.parse(dated,fuzzy=True)
+
 
         timestrings = self.df[self.columns['TimeStamp (sec)']]
         datum = time.mktime(self.row_date.timetuple())
@@ -1263,6 +1290,8 @@ class SpeedCoach2Parser(CSVParser):
         
         # Read summary data
         skipfooter = 7+len(self.df)
+        if not blanklines:
+            skipfooter = skipfooter-3
         if summaryline:
             self.summarydata = pd.read_csv(csvfile,
                                            skiprows=summaryline,
@@ -1286,10 +1315,19 @@ class SpeedCoach2Parser(CSVParser):
         t = self.df[self.columns['TimeStamp (sec)']]
         time = t.max()-t.min()
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']].mean()
-        pwr = self.df[self.columns[' Power (watts)']].mean()
+        try:
+            pwr = self.df[self.columns[' Power (watts)']].mean()
+        except KeyError:
+            pwr = 0
+            
         spm = self.df[self.columns[' Cadence (stokes/min)']].mean()
-        avghr = self.df[self.columns[' HRCur (bpm)']].mean()
-        maxhr = self.df[self.columns[' HRCur (bpm)']].max()
+        try:
+            avghr = self.df[self.columns[' HRCur (bpm)']].mean()
+            maxhr = self.df[self.columns[' HRCur (bpm)']].max()
+        except KeyError:
+            avghr = 0
+            maxhr = 0
+            
         pacestring = format_pace(pace)
         timestring = format_time(time)
         avgdps = self.df['Distance/Stroke (GPS)'].mean()
@@ -1306,13 +1344,13 @@ class SpeedCoach2Parser(CSVParser):
             avgpower = pwr,
         )
     
-        stri1 += "{sep}{avgsr:2.1f}{sep}{avghr:3.1f}{sep}".format(
+        stri1 += "{sep}{avgsr:2.1f}{sep}{avghr:0>5.1f}{sep}".format(
 	    avgsr = spm,
 	    sep = separator,
 	    avghr = avghr
 	)
 
-        stri1 += "{maxhr:3.1f}{sep}{avgdps:0>4.1f}\n".format(
+        stri1 += "{maxhr:0>5.1f}{sep}{avgdps:0>4.1f}\n".format(
 	    sep = separator,
 	    maxhr = maxhr,
 	    avgdps = avgdps
@@ -1331,9 +1369,17 @@ class SpeedCoach2Parser(CSVParser):
             sdist = self.summarydata.ix[self.summarydata.index[[i]],'Total Distance (GPS)']
             split  = self.summarydata.ix[self.summarydata.index[[i]],'Total Elapsed Time']
             space = self.summarydata.ix[self.summarydata.index[[i]],'Avg Split (GPS)']
-            pwr = self.summarydata.ix[self.summarydata.index[[i]],'Avg Power']
+            try:
+                pwr = self.summarydata.ix[self.summarydata.index[[i]],'Avg Power']
+            except KeyError:
+                pwr = 0*space
+                
             spm = self.summarydata.ix[self.summarydata.index[[i]],'Avg Stroke Rate']
-            avghr = self.summarydata.ix[self.summarydata.index[[i]],'Avg Heart Rate']
+            try:
+                avghr = self.summarydata.ix[self.summarydata.index[[i]],'Avg Heart Rate']
+            except KeyError:
+                avghr = 0*space
+                
             nrstrokes = self.summarydata.ix[self.summarydata.index[[i]],'Total Strokes']
             dps = float(sdist)/float(nrstrokes)
             splitstring = split.values[0]
@@ -1341,7 +1387,7 @@ class SpeedCoach2Parser(CSVParser):
             pacestring = space.values[0]
             newpacestring = flexistrftime(flexistrptime(pacestring))
             
-            stri += "{i:0>2}{sep}{sdist:0>5}{sep}{split}{sep}{space}{sep} {pwr} {sep}".format(
+            stri += "{i:0>2}{sep}{sdist:0>5}{sep}{split}{sep}{space}{sep} {pwr:0>3} {sep}".format(
                 i=i+1,
                 sdist = int(float(sdist.values[0])),
                 split = newsplitstring,
