@@ -282,6 +282,8 @@ def make_cumvalues(xvalues):
     else:
 	newvalues = xvalues
 
+    newvalues = newvalues.replace([-np.inf,np.inf],np.nan)
+
     newvalues.fillna(method='ffill',inplace=True)
     lapidx.fillna(method='bfill',inplace=True)
     

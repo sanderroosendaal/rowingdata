@@ -2,6 +2,17 @@ import numpy as np
 import string
 import re
 
+def matched(str):
+    count = 0
+    for i in str:
+        if i == "(":
+            count += 1
+        elif i == ")":
+            count -= 1
+        if count < 0:
+            return False
+    return count == 0
+
 def pieceparse(r):
     value = 0
     unit = 'seconds'
@@ -37,11 +48,20 @@ def pieceparse(r):
 
 def parse(s,debug=0):
     if debug == 1:
+        print "-----------------"
 	print s
         raw_input()
 
     s = s.strip()
 
+    # replace (aap noot) + mies with 1x(aap noot) + mies
+    p = re.compile('\((.+?)\)(.+)')
+    m = p.match(s)
+    if m != None:
+        if debug:
+            print "adding 1x to parenthesized group"
+        return parse("1x("+m.group(1)+")"+m.group(2),debug=debug)
+                   
     # check for nx(aap noot) + mies
     p = re.compile('([0-9]+)x\((.+?)\)\+(.+)')
     m = p.match(s)
@@ -139,19 +159,36 @@ def parse(s,debug=0):
 	    return parse(piece+"/"+m.group(3),debug=debug)
 
     # now check for aap+noot
-    p = re.compile('(.+)\+(.+)')
+    p = re.compile('([0-9]+.+)\+(.+)')
+    m = p.match(s)
+    if m != None:
+        if matched(m.group(1)) and matched(m.group(2)):
+            if debug:
+                print "6th match"
+	    return parse(m.group(1),debug=debug)+parse(m.group(2),debug=debug)
+        else:
+            if debug:
+                print "unmatched parentheses (6th match)"
+
+    # now check for aap/noot+mies
+    p = re.compile('([0-9]+.+)\/([0-9]+.+?)\+(.+)')
     m = p.match(s)
     if m != None:
         if debug:
-            print "6th match"
-	return parse(m.group(1),debug=debug)+parse(m.group(2),debug=debug)
-
+            print "6.5th match"
+            print m.group(1)
+            print m.group(2)
+            print m.group(3)
+        return parse(m.group(1)+"/"+m.group(2))+parse(m.group(3),debug=debug)
+                
     # now check for aap/noot
-    p = re.compile('(.+)\/(.+)')
+    p = re.compile('([0-9]+.+)\/([0-9]+.+)')
     m = p.match(s)
     if m != None:
         if debug:
             print "7th match"
+            print m.group(1)
+            print m.group(2)
 	w = pieceparse(m.group(1))
 	r = pieceparse(m.group(2))
 	return [w[0],w[1],'work',r[0],r[1],'rest']
