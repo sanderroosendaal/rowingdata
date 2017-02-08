@@ -179,7 +179,7 @@ def parse(s,debug=0):
             print m.group(1)
             print m.group(2)
             print m.group(3)
-        return parse(m.group(1)+"/"+m.group(2))+parse(m.group(3))
+        return parse(m.group(1)+"/"+m.group(2))+parse(m.group(3),debug=debug)
                 
     # now check for aap/noot
     p = re.compile('([0-9]+.+)\/([0-9]+.+)')
