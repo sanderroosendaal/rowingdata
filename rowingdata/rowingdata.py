@@ -1488,7 +1488,6 @@ class rowingdata:
         # this needs improvement. If Elapsed Distance is measured
         # inconsistently across the two dataframes, it least to errors.
         self_df['cum_dist'] = make_cumvalues(self_df[' Horizontal (meters)'])[0]
-
         # self_df.to_csv('C:/Downloads/debug.csv')
         return rowingdata(df = self_df,rower = self.rwr,
                           rowtype = self.rowtype,
@@ -1670,7 +1669,6 @@ class rowingdata:
 	    except IndexError:
 		workoutstate = 4
 					
-
 	    intervaldistance = tdwork['cum_dist'].max()-previousdist
 	    if isnan(intervaldistance) or isinf(intervaldistance):
 		intervaldistance = 0
