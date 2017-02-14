@@ -13,6 +13,7 @@ import datetime
 from lxml import objectify,etree
 from fitparse import FitFile
 import os
+import gzip
 from pandas.core.indexing import IndexingError
 
 from utils import *
@@ -61,91 +62,100 @@ def flexistrftime(t):
 
     return string
 
+def csvtests(fop):
+    # get first and 7th line of file
+    firstline = fop.readline()
+    secondline = fop.readline()
+    thirdline = fop.readline()
+    fourthline = fop.readline()
+
+    for i in range(3):
+        seventhline = fop.readline()
+
+    fop.close()
+
+    if 'RowDate' in firstline:
+        return 'rowprolog'
+
+    if 'Concept2 Utility' in firstline:
+        return 'c2log'
+
+    if 'Concept2' in firstline:
+        return 'c2log'
+
+    if 'Avg Watts' in firstline:
+        return 'c2log'
+
+    if 'SpeedCoach GPS Pro' in fourthline:
+        return 'speedcoach2'
+
+    if 'SpeedCoach GPS Pro' in thirdline:
+        return 'speedcoach2'
+
+    if 'Practice Elapsed Time (s)' in firstline:
+        return 'mystery'
+
+    if 'Mike' in firstline and 'process' in firstline:
+        return 'bcmike'
+
+    if 'Club' in firstline:
+        return 'boatcoach'
+
+    if 'peak_force_pos' in firstline:
+        return 'rowperfect3'
+
+    if 'Hair' in seventhline:
+        return 'rp'
+
+    if 'Total elapsed time (s)' in firstline:
+        return 'ergstick'
+
+    if 'Stroke Number' in firstline:
+        return 'ergdata'
+
+    if ' DriveTime (ms)' in firstline:
+        return 'csv'
+
+    if 'ElapsedTime (sec)' in firstline:
+        return 'csv'
+
+    if 'HR' in firstline and 'Interval' in firstline and 'Avg HR' not in firstline:
+        return 'speedcoach'
+
+    if 'stroke.REVISION' in firstline:
+        return 'painsleddesktop'
+
+    return 'unknown'
+
 def get_file_type(f):
-    fop = open(f,'r')
     extension = f[-3:].lower()
+    if extension == '.gz':
+        extension = f[-6:-3].lower()
+        with gzip.open(f,'r') as f:
+            return csvtests(f)
     if extension == 'csv':
-	# get first and 7th line of file
-	firstline = fop.readline()
-        secondline = fop.readline()
-        thirdline = fop.readline()
-        fourthline = fop.readline()
-	
-	for i in range(3):
-	    seventhline = fop.readline()
-
-	fop.close()
-
-        if 'RowDate' in firstline:
-            return 'rowprolog'
-        
-        if 'Concept2 Utility' in firstline:
-            return 'c2log'
-
-        if 'Concept2' in firstline:
-            return 'c2log'
-        
-        if 'Avg Watts' in firstline:
-            return 'c2log'
-        
-	if 'SpeedCoach GPS Pro' in fourthline:
-	    return 'speedcoach2'
-
-        if 'SpeedCoach GPS Pro' in thirdline:
-            return 'speedcoach2'
-        
-	if 'Practice Elapsed Time (s)' in firstline:
-	    return 'mystery'
-
-        if 'Mike' in firstline and 'process' in firstline:
-            return 'bcmike'
-        
-        if 'Club' in firstline:
-            return 'boatcoach'
-        
-        if 'peak_force_pos' in firstline:
-            return 'rowperfect3'
-        
-	if 'Hair' in seventhline:
-	    return 'rp'
-
-	if 'Total elapsed time (s)' in firstline:
-	    return 'ergstick'
-
-	if 'Stroke Number' in firstline:
-	    return 'ergdata'
-
-	if ' DriveTime (ms)' in firstline:
-	    return 'csv'
-
-        if 'ElapsedTime (sec)' in firstline:
-            return 'csv'
-
-	if 'HR' in firstline and 'Interval' in firstline and 'Avg HR' not in firstline:
-	    return 'speedcoach'
-
-	if 'stroke.REVISION' in firstline:
-	    return 'painsleddesktop'
+        with open(f,'r') as fop:
+            return csvtests(fop)
 
     if extension == 'tcx':
-	try:
-	    tree = objectify.parse(f)
-	    rt = tree.getroot()
-	except:
-	    return 'unknown'
+        try:
+            tree = objectify.parse(f)
+            rt = tree.getroot()
+        except:
+            return 'unknown'
 
-	if 'HeartRateBpm' in etree.tostring(rt):
-	    return 'tcx'
-	else:
-	    return 'tcxnohr'
+        if 'HeartRateBpm' in etree.tostring(rt):
+            return 'tcx'
+        else:
+            return 'tcxnohr'
 
     if extension =='fit':
-	try:
-	    FitFile(f,check_crc=False).parse()
-	except:
-	    return 'unknown'
+        try:
+            FitFile(f,check_crc=False).parse()
+        except:
+            return 'unknown'
 
-	return 'fit'
+        return 'fit'
 
     if extension == 'zip':
         try:
