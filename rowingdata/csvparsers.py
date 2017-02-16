@@ -909,7 +909,8 @@ class RowPerfectParser(CSVParser):
     
     def __init__(self, *args, **kwargs):
         super(RowPerfectParser, self).__init__(*args, **kwargs)
-
+        self.df.sort_values(by=['workout_interval_id','stroke_number'],
+                            ascending=[True,True],inplace=True)
         self.row_date = kwargs.pop('row_date',datetime.datetime.utcnow())
         self.cols = [
             'time',
@@ -921,12 +922,12 @@ class RowPerfectParser(CSVParser):
             'stroke_length',
             'distance_per_stroke',
             'drive_time',
-            '',
+            'k',
             'recover_time',
             '',
             'peak_force',
             'workout_interval_id',
-            '',
+            'time',
             ' latitude',
             ' longitude',
         ]
