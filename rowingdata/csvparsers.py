@@ -909,7 +909,8 @@ class RowPerfectParser(CSVParser):
     
     def __init__(self, *args, **kwargs):
         super(RowPerfectParser, self).__init__(*args, **kwargs)
-
+        self.df.sort_values(by=['workout_interval_id','stroke_number'],
+                            ascending=[True,True],inplace=True)
         self.row_date = kwargs.pop('row_date',datetime.datetime.utcnow())
         self.cols = [
             'time',
@@ -921,12 +922,12 @@ class RowPerfectParser(CSVParser):
             'stroke_length',
             'distance_per_stroke',
             'drive_time',
-            '',
+            'k',
             'recover_time',
             '',
             'peak_force',
             'workout_interval_id',
-            '',
+            'time',
             ' latitude',
             ' longitude',
         ]
@@ -936,6 +937,16 @@ class RowPerfectParser(CSVParser):
 
         self.columns = dict(zip(self.defaultcolumnnames,self.cols))
 
+        # time values
+        seconds = self.df[self.columns[' ElapsedTime (sec)']]
+        res = make_cumvalues(seconds)
+        seconds2 = res[0]+seconds[0]
+        # lapidx = res[1]
+        unixtime = seconds2+totimestamp(self.row_date)
+        self.df[self.columns['TimeStamp (sec)']] = unixtime
+        # self.df[self.columns[' lapIdx']] = lapidx
+
+        
         # calculations
         self.df[self.columns[' DriveTime (ms)']] *= 1000.
         self.df[self.columns[' StrokeRecoveryTime (ms)']] *= 1000.
