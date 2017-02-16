@@ -941,10 +941,10 @@ class RowPerfectParser(CSVParser):
         seconds = self.df[self.columns[' ElapsedTime (sec)']]
         res = make_cumvalues(seconds)
         seconds2 = res[0]+seconds[0]
-        # lapidx = res[1]
+        lapidx = res[1]
         unixtime = seconds2+totimestamp(self.row_date)
         self.df[self.columns['TimeStamp (sec)']] = unixtime
-        # self.df[self.columns[' lapIdx']] = lapidx
+        self.df[self.columns[' lapIdx']] = lapidx
 
         
         # calculations
