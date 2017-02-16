@@ -937,16 +937,6 @@ class RowPerfectParser(CSVParser):
 
         self.columns = dict(zip(self.defaultcolumnnames,self.cols))
 
-        # time values
-        #seconds = self.df[self.columns[' ElapsedTime (sec)']]
-        #res = make_cumvalues(seconds)
-        #seconds2 = res[0]+seconds[0]
-        #lapidx = res[1]
-        #unixtime = seconds2+totimestamp(self.row_date)
-        #self.df[self.columns['TimeStamp (sec)']] = unixtime
-        #self.df[self.columns[' lapIdx']] = lapidx
-
-        
         # calculations
         self.df[self.columns[' DriveTime (ms)']] *= 1000.
         self.df[self.columns[' StrokeRecoveryTime (ms)']] *= 1000.
