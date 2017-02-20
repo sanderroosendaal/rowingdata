@@ -449,7 +449,7 @@ class TCXParser:
 	startdatetimeobj = iso8601.parse_date(iso_string)
 	
 	# startdatetimeobj = parser.parse(str(self.root.Activities.Activity.Id),fuzzy=True)
-	starttime = time.mktime(startdatetimeobj.timetuple())+startdatetimeobj.microsecond/1.e6
+	starttime = time.mktime(startdatetimeobj.utctimetuple())+startdatetimeobj.microsecond/1.e6
 
 	self.activity_starttime = starttime
 
@@ -457,7 +457,7 @@ class TCXParser:
 	for i in range(len(timestamps)):
 	    s = str(timestamps[i])
 	    tt = iso8601.parse_date(s)
-	    unixtimes[i] = time.mktime(tt.timetuple())+tt.microsecond/1.e6
+	    unixtimes[i] = time.mktime(tt.utctimetuple())+tt.microsecond/1.e6
 
 	self.time_values = unixtimes
 	
@@ -744,7 +744,7 @@ class TCXParserNoHR:
 	iso_string = str(self.root.Activities.Activity.Id)
 	startdatetimeobj = iso8601.parse_date(iso_string)
 
-	starttime = time.mktime(startdatetimeobj.timetuple())+startdatetimeobj.microsecond/1.e6
+	starttime = time.mktime(startdatetimeobj.utctimetuple())+startdatetimeobj.microsecond/1.e6
 
 	self.activity_starttime = starttime
 
@@ -752,7 +752,7 @@ class TCXParserNoHR:
 	for i in range(len(timestamps)):
 	    s = str(timestamps[i])
 	    tt = iso8601.parse_date(s)
-	    unixtimes[i] = time.mktime(tt.timetuple())+tt.microsecond/1.e6
+	    unixtimes[i] = time.mktime(tt.utctimetuple())+tt.microsecond/1.e6
 
 	self.time_values = unixtimes
 	
