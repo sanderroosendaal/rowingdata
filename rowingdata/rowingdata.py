@@ -1455,10 +1455,10 @@ class rowingdata:
         other_df = other.df.copy()
         
         if not self.absolutetimestamps:
-	    starttimeunix = time.mktime(self.rowdatetime.timetuple())
+	    starttimeunix = time.mktime(self.rowdatetime.utctimetuple())
 	    self_df['TimeStamp (sec)'] = self_df['TimeStamp (sec)']+starttimeunix
         if not other.absolutetimestamps:
-	    starttimeunix = time.mktime(other.rowdatetime.timetuple())
+	    starttimeunix = time.mktime(other.rowdatetime.utctimetuple())
 	    other_df['TimeStamp (sec)'] = other_df['TimeStamp (sec)']+starttimeunix
             
             
@@ -1534,7 +1534,7 @@ class rowingdata:
 
 	# add time stamp to
         if not self.absolutetimestamps:
-	    starttimeunix = time.mktime(self.rowdatetime.timetuple())
+	    starttimeunix = time.mktime(self.rowdatetime.utctimetuple())
 	    data['TimeStamp (sec)'] = data['TimeStamp (sec)']+starttimeunix
 
         if gzip:
