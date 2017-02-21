@@ -871,6 +871,11 @@ Boat bearing.
 Release Notes:
 ================
 
+0.97.x
+------
+
+- Improved time zone awareness
+
 0.96.x
 ------
 
