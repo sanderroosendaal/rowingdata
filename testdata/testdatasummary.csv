@@ -7,7 +7,7 @@ filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrinterval
 boatcoach.csv,boatcoach,119,2016,11,28,7,37,2,499,118,2,58,246
 crewnerd_interval.csv,mystery,16388,0,0,0,0,0,0,6007,1641,1,1641,6007
 crewnerddata.CSV,unknown,0,0,0,0,0,0,0,0,0,0,0,0
-crewnerddata.tcx,tcx,3374,2016,4,2,9,15,9,10465,3923,1,3923,10465
+crewnerddata.tcx,tcx,3374,2016,4,2,7,15,9,10465,3923,1,3923,10465
 crewnerddata_o.CSV,csv,3374,2016,4,2,9,15,9,10465,3923,1,3923,10465
 ergdata_example.csv,ergdata,180,0,0,0,0,0,0,1992,520,1,520,1992
 ergstick.csv,ergstick,2400,0,0,0,0,0,0,4959,1201,3,598,2481
@@ -16,7 +16,7 @@ example.csv,csv,3337,2016,3,26,9,33,25,10782,3513,1,3513,10782
 example_data.csv,csv,3266,2016,3,25,6,58,30,10697,3484,1,3484,10697
 faketcx.tcx,unknown,0,0,0,0,0,0,0,0,0,0,0,0
 mystery.csv,mystery,4550,0,0,0,0,0,0,7478,2325,1,2325,7478
-NoHR.tcx,tcxnohr,6190,2016,6,18,6,53,5,4327,1317,1,1317,4327
+NoHR.tcx,tcxnohr,6190,2016,6,18,10,53,5,4327,1317,1,1317,4327
 painsled_desktop_example.csv,painsleddesktop,638,2016,3,29,16,41,27,7097,1802,1,1802,7097
 painsled_out_data.csv,csv,662,2016,3,29,16,41,8,7118,1843,1,1843,7118
 painsled_to_csv_20160221-105218_erg-400150318_760465m.csv,painsleddesktop,1434,2016,2,21,8,53,20,15207,4067,3,4067,15207
@@ -35,6 +35,6 @@ testdata.csv,csv,191,2016,5,20,13,41,26,2000,537,4,139,510
 tim.csv,csv,605,2016,6,3,16,55,18,6063,1942,5,0,7
 testlapidx.csv,csv,191,2016,5,20,13,41,27,2000,537,3,140,510
 rowperfect.csv,rowperfect3,1263,0,0,0,0,0,0,18152,5698,3,2698,11440
-rowpro5.csv,rp,35,2017,1,1,15,50,6,469,120,1,120,469
+rowpro5.csv,rp,35,2017,1,1,20,50,6,469,120,1,120,469
 NKEmporfromgreg.csv,speedcoach2,582,2016,9,21,6,32,1,5000,1229,5,238,1000
 SpeedCoach2v2.12.csv,speedcoach2,115,2017,1,19,7,38,6,991,184,1,184,991
