@@ -134,6 +134,9 @@ def get_file_type(f):
         with gzip.open(f,'r') as f:
             return csvtests(f)
     if extension == 'csv':
+        if get_file_linecount(f) <= 2:
+            return 'nostrokes'
+        
         with open(f,'r') as fop:
             return csvtests(fop)
 
@@ -169,6 +172,11 @@ def get_file_type(f):
     
     return 'unknown'
 	
+def get_file_linecount(f):
+    with open(f,'r') as fop:
+        count = sum(1 for line in fop if line.rstrip('\n'))
+
+    return count
 
 def get_file_line(linenr,f):
     line = ''
@@ -216,6 +224,7 @@ def get_rowpro_footer(f,converters={}):
 
 def skip_variable_header(f):
     counter = 0
+    counter2 = 0
     summaryc = -2
     fop = open(f,'r')
     for line in fop:
