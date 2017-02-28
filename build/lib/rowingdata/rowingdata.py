@@ -8,7 +8,7 @@ import checkdatafiles
 
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__ = "0.97.2"
+__version__ = "0.97.3"
 
 try:
     from Tkinter import Tk
@@ -3874,6 +3874,284 @@ class rowingdata:
 
 	return(fig1)
 
+    def get_metersplot_otwempower(self,title):
+
+	df = self.df
+        if self.absolutetimestamps:
+            df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
+
+	# distance increments for bar chart
+	dist_increments = df.ix[:,'cum_dist'].diff()
+	dist_increments[0] = dist_increments[1]
+	dist_increments = 0.5*(dist_increments+abs(dist_increments))
+
+	fig1 = plt.figure(figsize=(12,10))
+
+	fig_title = title
+	fig_title += " Drag %d" % self.dragfactor
+
+	# First panel, hr
+	ax1 = fig1.add_subplot(4,1,1)
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_ut2'],
+		width = dist_increments,
+		color='gray', ec='gray')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_ut1'],
+		width = dist_increments,
+		color='y',ec='y')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_at'],
+		width = dist_increments,
+		color='g',ec='g')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_tr'],
+		width = dist_increments,
+		color='blue',ec='blue')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_an'],
+		width = dist_increments,
+		color='violet',ec='violet')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_max'],
+		width = dist_increments,
+		color='r',ec='r')
+
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_ut2'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_ut1'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_at'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_tr'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
+
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
+
+	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
+
+	ax1.axis([0,end_dist,100,1.1*self.rwr.max])
+	ax1.set_xticks(range(1000,end_dist,1000))
+	ax1.set_ylabel('BPM')
+	ax1.set_yticks(range(110,200,10))
+	ax1.set_title(fig_title)
+
+	grid(True)
+
+	# Second Panel, Pace
+	ax2 = fig1.add_subplot(4,1,2)
+	ax2.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
+	yrange = y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
+			      ultimate = [85,190])
+	ax2.axis([0,end_dist,yrange[1],yrange[0]])
+	ax2.set_xticks(range(1000,end_dist,1000))
+	ax2.set_ylabel('(sec/500)')
+#	ax2.set_yticks(range(145,95,-5))
+	grid(True)
+	majorTickFormatter = FuncFormatter(format_pace_tick)
+	majorLocator = (5)
+	ax2.yaxis.set_major_formatter(majorTickFormatter)
+
+	# Third Panel, rate
+	ax3 = fig1.add_subplot(4,1,3)
+	ax3.plot(df.ix[:,'cum_dist'],df.ix[:,' Cadence (stokes/min)'])
+	ax3.axis([0,end_dist,14,40])
+	ax3.set_xticks(range(1000,end_dist,1000))
+	ax3.set_ylabel('SPM')
+	ax3.set_yticks(range(16,40,2))
+
+	grid(True)
+
+	# Fourth Panel, watts
+	ax4 = fig1.add_subplot(4,1,4)
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_ut2'],
+		width = dist_increments,
+		color='gray', ec='gray')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_ut1'],
+		width = dist_increments,
+		color='y',ec='y')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_at'],
+		width = dist_increments,
+		color='g',ec='g')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_tr'],
+		width = dist_increments,
+		color='blue',ec='blue')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_an'],
+		width = dist_increments,
+		color='violet',ec='violet')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_max'],
+		width = dist_increments,
+		color='r',ec='r')
+
+
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_ut2'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_ut1'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_at'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_tr'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_an'],color='k')
+
+
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
+
+	ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
+	ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
+	ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
+	ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
+	ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
+
+	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
+
+	yrange = y_axis_range(df.ix[:,' Power (watts)'],
+			      ultimate=[50,555])
+	ax4.axis([0,end_dist,yrange[0],yrange[1]])
+	ax4.set_xticks(range(1000,end_dist,1000))
+	ax4.set_xlabel('Dist (m)')
+	ax4.set_ylabel('Power (Watts)')
+#	ax4.set_yticks(range(110,200,10))
+
+
+	grid(True)
+
+	plt.subplots_adjust(hspace=0)
+
+	return(fig1)
+
+    def get_metersplot_otwpower(self,title):
+
+	df = self.df
+        if self.absolutetimestamps:
+            df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
+
+	# distance increments for bar chart
+	dist_increments = df.ix[:,'cum_dist'].diff()
+	dist_increments[0] = dist_increments[1]
+	dist_increments = 0.5*(dist_increments+abs(dist_increments))
+
+	fig1 = plt.figure(figsize=(12,10))
+
+	fig_title = title
+	fig_title += " Drag %d" % self.dragfactor
+
+	# First panel, hr
+	ax1 = fig1.add_subplot(4,1,1)
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_ut2'],
+		width = dist_increments,
+		color='gray', ec='gray')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_ut1'],
+		width = dist_increments,
+		color='y',ec='y')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_at'],
+		width = dist_increments,
+		color='g',ec='g')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_tr'],
+		width = dist_increments,
+		color='blue',ec='blue')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_an'],
+		width = dist_increments,
+		color='violet',ec='violet')
+	ax1.bar(df.ix[:,'cum_dist'],df.ix[:,'hr_max'],
+		width = dist_increments,
+		color='r',ec='r')
+
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_ut2'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_ut1'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_at'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_tr'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_an'],color='k')
+	ax1.plot(df.ix[:,'cum_dist'],df.ix[:,'lim_max'],color='k')
+
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
+
+	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
+
+	ax1.axis([0,end_dist,100,1.1*self.rwr.max])
+	ax1.set_xticks(range(1000,end_dist,1000))
+	ax1.set_ylabel('BPM')
+	ax1.set_yticks(range(110,200,10))
+	ax1.set_title(fig_title)
+
+	grid(True)
+
+	# Second Panel, Pace
+	ax2 = fig1.add_subplot(4,1,2)
+	ax2.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
+	yrange = y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
+			      ultimate = [85,190])
+	ax2.axis([0,end_dist,yrange[1],yrange[0]])
+	ax2.set_xticks(range(1000,end_dist,1000))
+	ax2.set_ylabel('(sec/500)')
+#	ax2.set_yticks(range(145,95,-5))
+	grid(True)
+	majorTickFormatter = FuncFormatter(format_pace_tick)
+	majorLocator = (5)
+	ax2.yaxis.set_major_formatter(majorTickFormatter)
+
+	# Third Panel, rate
+	ax3 = fig1.add_subplot(4,1,3)
+	ax3.plot(df.ix[:,'cum_dist'],df.ix[:,' Cadence (stokes/min)'])
+	ax3.axis([0,end_dist,14,40])
+	ax3.set_xticks(range(1000,end_dist,1000))
+	ax3.set_ylabel('SPM')
+	ax3.set_yticks(range(16,40,2))
+
+	grid(True)
+
+	# Fourth Panel, watts
+	ax4 = fig1.add_subplot(4,1,4)
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_ut2'],
+		width = dist_increments,
+		color='gray', ec='gray')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_ut1'],
+		width = dist_increments,
+		color='y',ec='y')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_at'],
+		width = dist_increments,
+		color='g',ec='g')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_tr'],
+		width = dist_increments,
+		color='blue',ec='blue')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_an'],
+		width = dist_increments,
+		color='violet',ec='violet')
+	ax4.bar(df.ix[:,'cum_dist'],df.ix[:,'pw_max'],
+		width = dist_increments,
+		color='r',ec='r')
+
+
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_ut2'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_ut1'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_at'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_tr'],color='k')
+	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_an'],color='k')
+
+
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
+
+	ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
+	ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
+	ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
+	ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
+	ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
+
+	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
+
+	yrange = y_axis_range(df.ix[:,' Power (watts)'],
+			      ultimate=[50,555])
+	ax4.axis([0,end_dist,yrange[0],yrange[1]])
+	ax4.set_xticks(range(1000,end_dist,1000))
+	ax4.set_xlabel('Dist (m)')
+	ax4.set_ylabel('Power (Watts)')
+#	ax4.set_yticks(range(110,200,10))
+
+
+	grid(True)
+
+	plt.subplots_adjust(hspace=0)
+
+	return(fig1)
+
 
     def get_timeplot_erg(self,title):
 
@@ -4028,6 +4306,162 @@ class rowingdata:
 	
 
 	return(fig1)
+
+
+    def get_timeplot_otwempower(self,title):
+
+
+	df = self.df
+        if self.absolutetimestamps:
+            df['TimeStamp (sec)'] = df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
+
+	# time increments for bar chart
+	time_increments = df.ix[:,' ElapsedTime (sec)'].diff()
+	time_increments[self.index[0]] = time_increments[self.index[1]]
+	time_increments = 0.5*(abs(time_increments)+(time_increments))
+	
+
+
+	fig1 = plt.figure(figsize=(12,10))
+	
+	fig_title = title
+	fig_title += " Drag %d" % self.dragfactor
+
+	# First panel, hr
+	ax1 = fig1.add_subplot(4,1,1)
+	ax1.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'hr_ut2'],
+		width=time_increments,
+		color='gray', ec='gray')
+	ax1.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'hr_ut1'],
+		width=time_increments,
+		color='y',ec='y')
+	ax1.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'hr_at'],
+		width=time_increments,
+		color='g',ec='g')
+	ax1.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'hr_tr'],
+		width=time_increments,
+		color='blue',ec='blue')
+	ax1.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'hr_an'],
+		width=time_increments,
+		color='violet',ec='violet')
+	ax1.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'hr_max'],
+		width=time_increments,
+		color='r',ec='r')
+
+	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_ut2'],color='k')
+	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_ut1'],color='k')
+	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_at'],color='k')
+	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_tr'],color='k')
+	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_an'],color='k')
+	ax1.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'lim_max'],color='k')
+	ax1.text(5,self.rwr.ut2+1.5,"UT2",size=8)
+	ax1.text(5,self.rwr.ut1+1.5,"UT1",size=8)
+	ax1.text(5,self.rwr.at+1.5,"AT",size=8)
+	ax1.text(5,self.rwr.tr+1.5,"TR",size=8)
+	ax1.text(5,self.rwr.an+1.5,"AN",size=8)
+	ax1.text(5,self.rwr.max+1.5,"MAX",size=8)
+
+	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
+
+	ax1.axis([0,end_time,100,1.1*self.rwr.max])
+	ax1.set_xticks(range(0,end_time,300))
+	ax1.set_ylabel('BPM')
+	ax1.set_yticks(range(110,200,10))
+	ax1.set_title(fig_title)
+	timeTickFormatter = NullFormatter()
+	ax1.xaxis.set_major_formatter(timeTickFormatter)
+
+	grid(True)
+
+	# Second Panel, Pace
+	ax2 = fig1.add_subplot(4,1,2)
+	ax2.plot(df.ix[:,'TimeStamp (sec)'],
+		 df.ix[:,' Stroke500mPace (sec/500m)'])
+
+	end_time = int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
+	yrange = y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
+			      ultimate = [85,190])
+	ax2.axis([0,end_time,yrange[1],yrange[0]])
+	ax2.set_xticks(range(0,end_time,300))
+	ax2.set_ylabel('(sec/500)')
+#	ax2.set_yticks(range(145,90,-5))
+	# ax2.set_title('Pace')
+	grid(True)
+	majorFormatter = FuncFormatter(format_pace_tick)
+	majorLocator = (5)
+	ax2.xaxis.set_major_formatter(timeTickFormatter)
+	ax2.yaxis.set_major_formatter(majorFormatter)
+
+	# Third Panel, rate
+	ax3 = fig1.add_subplot(4,1,3)
+	ax3.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,' Cadence (stokes/min)'])
+#	rate_ewma = pd.ewma
+	ax3.axis([0,end_time,14,40])
+	ax3.set_xticks(range(0,end_time,300))
+	ax3.set_xlabel('Time (sec)')
+	ax3.set_ylabel('SPM')
+	ax3.set_yticks(range(16,40,2))
+	# ax3.set_title('Rate')
+	ax3.xaxis.set_major_formatter(timeTickFormatter)
+	grid(True)
+
+	# Fourth Panel, watts
+	ax4 = fig1.add_subplot(4,1,4)
+	ax4.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'pw_ut2'],
+		width = time_increments,
+		color='gray', ec='gray')
+	ax4.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'pw_ut1'],
+		width = time_increments,
+		color='y',ec='y')
+	ax4.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'pw_at'],
+		width = time_increments,
+		color='g',ec='g')
+	ax4.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'pw_tr'],
+		width = time_increments,
+		color='blue',ec='blue')
+	ax4.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'pw_an'],
+		width = time_increments,
+		color='violet',ec='violet')
+	ax4.bar(df.ix[:,'TimeStamp (sec)'],df.ix[:,'pw_max'],
+		width = time_increments,
+		color='r',ec='r')
+
+
+	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_ut2'],color='k')
+	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_ut1'],color='k')
+	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_at'],color='k')
+	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_tr'],color='k')
+	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_an'],color='k')
+
+
+	ut2,ut1,at,tr,an = self.rwr.ftp*np.array(self.rwr.powerperc)/100.
+
+	ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
+	ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
+	ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
+	ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
+	ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
+
+	end_dist = int(df.ix[df.shape[0]-1,'cum_dist'])
+
+	yrange = y_axis_range(df.ix[:,' Power (watts)'],
+			      ultimate=[50,555])
+	ax4.axis([0,end_time,yrange[0],yrange[1]])
+	ax4.set_xticks(range(0,end_time,300))
+	ax4.set_xlabel('Time (h:m)')
+	ax4.set_ylabel('Watts')
+#	ax4.set_yticks(range(150,450,50))
+	# ax4.set_title('Power')
+	grid(True)
+	majorTimeFormatter = FuncFormatter(format_time_tick)
+	majorLocator = (15*60)
+	ax4.xaxis.set_major_formatter(majorTimeFormatter)
+
+	plt.subplots_adjust(hspace=0)
+	
+
+	return(fig1)
+
 
     def get_time_otwpower(self,title):
 	df = self.df
