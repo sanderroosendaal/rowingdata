@@ -195,17 +195,17 @@ def getinboard(line):
     return inboard
 
 def get_empower_rigging(f):
-    oarlength = 0
-    inboard = 0
+    oarlength = 289.
+    inboard = 88.
+    line = '1'
     with open(f,'r') as fop:
-        while not oarlength or not inboard:
-            line = fop.readline()
+        for line in fop:   
             if 'Oar Length' in line:
                 oarlength = getoarlength(line)
             if 'Inboard' in line:
                 inboard = getinboard(line)
 
-    return oarlength,inboard
+    return oarlength/100.,inboard/100.
 
 def skip_variable_footer(f):
     counter = 0
