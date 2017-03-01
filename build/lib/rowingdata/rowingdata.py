@@ -40,6 +40,7 @@ from utils import *
 from csvparsers import (
     CSVParser,
     painsledDesktopParser,
+    get_empower_rigging,
     BoatCoachParser,
     BoatCoachAdvancedParser,
     speedcoachParser,
