@@ -186,6 +186,26 @@ def get_file_line(linenr,f):
 
     return line
 
+def getoarlength(line):
+    l =  float(line.split(',')[-1])
+    return l
+
+def getinboard(line):
+    inboard = float(line.split(',')[-1])
+    return inboard
+
+def get_empower_rigging(f):
+    oarlength = 0
+    inboard = 0
+    with open(f,'r') as fop:
+        while not oarlength or not inboard:
+            line = fop.readline()
+            if 'Oar Length' in line:
+                oarlength = getoarlength(line)
+            if 'Inboard' in line:
+                inboard = getinboard(line)
+
+    return oarlength,inboard
 
 def skip_variable_footer(f):
     counter = 0
