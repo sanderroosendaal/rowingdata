@@ -23,7 +23,7 @@ import zipfile
 lbstoN = 4.44822
 
 def clean_nan(x):
-    for i in range(len(x)-1):
+    for i in range(len(x)-2):
         if np.isnan(x[i+1]):
             if x[i+2]>x[i]:
                 x[i+1] = 0.5*(x[i]+x[i+2])
