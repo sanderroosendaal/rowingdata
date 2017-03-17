@@ -1397,7 +1397,7 @@ class rowingdata:
             if name not in sled_df.columns:
                 sled_df[name] = 0
                 if name==' WorkoutState':
-                    sled_df[name] = 5
+                    sled_df[name] = 4
                 if name==' Stroke500mPace (sec/500m)':
                     try:
                         velo = sled_df[' Horizontal (meters)']/sled_df[' ElapsedTime (sec)']
