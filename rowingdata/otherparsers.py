@@ -430,15 +430,27 @@ class TCXParser:
 	        'lat':self.lat_values
 	    })
         except ValueError:
-	    data = pd.DataFrame({
-	        't':timestamps,
-	        'hr':self.hr_values,
-	        'd':self.distance_values,
-	        'spm':self.spm_values,
-                'long': 0*timestamps,
-                'lat': 0*timestamps
-	    })
-            
+            try:
+                surro = 0*np.arange(len(timestamps))
+	        data = pd.DataFrame({
+	            't':timestamps,
+	            'hr':self.hr_values,
+	            'd':self.distance_values,
+	            'spm':self.spm_values,
+                    'long': surro,
+                    'lat': surro
+	        })
+            except ValueError:
+	        data = pd.DataFrame({
+	            't':timestamps,
+	            'hr':self.hr_values,
+	            'd':self.distance_values,
+	            'spm':surro,
+                    'long': surro,
+                    'lat': surro,
+	        })
+                
+                
 
 
         data = data.drop_duplicates(subset='t')
