@@ -420,14 +420,25 @@ class TCXParser:
 
         
 	# sort the two datasets
-	data = pd.DataFrame({
-	    't':timestamps,
-	    'hr':self.hr_values,
-	    'd':self.distance_values,
-	    'spm':self.spm_values,
-	    'long':self.long_values,
-	    'lat':self.lat_values
+        try:
+	    data = pd.DataFrame({
+	        't':timestamps,
+	        'hr':self.hr_values,
+	        'd':self.distance_values,
+	        'spm':self.spm_values,
+	        'long':self.long_values,
+	        'lat':self.lat_values
 	    })
+        except ValueError:
+	    data = pd.DataFrame({
+	        't':timestamps,
+	        'hr':self.hr_values,
+	        'd':self.distance_values,
+	        'spm':self.spm_values,
+                'long': 0*timestamps,
+                'lat': 0*timestamps
+	    })
+            
 
 
         data = data.drop_duplicates(subset='t')
