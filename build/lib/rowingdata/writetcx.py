@@ -124,7 +124,7 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
 	if haspower:
 	    f.write('            <Extensions>\n')
 	    f.write('              <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">\n')
-	    f.write('                <Watts>{p}</Watts>\n'.format(p=power[i]))
+	    f.write('                <Watts>{p}</Watts>\n'.format(p=int(power[i])))
 	    f.write('              </TPX>\n')
 	    f.write('            </Extensions>\n')
 	f.write('          </Trackpoint>\n')
