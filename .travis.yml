@@ -77,6 +77,6 @@ install:
   - python setup.py install
 script:
  - nosetests
-sudo: false
+sudo: required
 after_success:
   - coveralls --config_file .coveragerc
