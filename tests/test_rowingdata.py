@@ -199,7 +199,7 @@ class TestRowProParserIntervals:
     
 class TestSpeedCoach2Parser:
     def testspeedcoach2(self):
-        csvfile = 'testdata/SpeedCoach2example.csv'
+        csvfile = 'testdata/Speedcoach2example.csv'
         assert_equals(rowingdata.get_file_type(csvfile),'speedcoach2')
         r = rowingdata.SpeedCoach2Parser(csvfile=csvfile)
         row = rowingdata.rowingdata(df=r.df)
