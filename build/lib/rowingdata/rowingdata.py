@@ -1924,7 +1924,6 @@ class rowingdata:
 
 		mask = (df['TimeStamp (sec)']<=endseconds)
 
-
 		# correction for missing part of last stroke
 		recordedmaxtime = df.loc[mask,'TimeStamp (sec)'].max()
 		deltatime = endseconds-recordedmaxtime

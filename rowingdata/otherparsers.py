@@ -61,7 +61,7 @@ class fitsummarydata:
 		
 	    if record.name == 'lap':
 		lapcount += 1
-
+                
 		inthr = int(totalhr/float(strokecount))
 
 		inttime = record.get_value('total_elapsed_time')
@@ -324,7 +324,10 @@ class TCXParser:
     def __init__(self, tcx_file):
         tree = objectify.parse(tcx_file)
         self.root = tree.getroot()
-        self.activity = self.root.Activities.Activity
+        try:
+            self.activity = self.root.Activities.Activity
+        except AttributeError:
+            self.activity = self.root.Courses.Course.Track
 
 	# need to select only trackpoints with Cadence, Distance, Time & HR data 
 	self.selectionstring = '//ns:Trackpoint[descendant::ns:HeartRateBpm]'
@@ -468,11 +471,18 @@ class TCXParser:
 	unixtimes = np.zeros(len(timestamps))
 
 	# Activity ID timestamp (start)
-	iso_string = str(self.root.Activities.Activity.Id)
-	startdatetimeobj = iso8601.parse_date(iso_string)
-	
+        try:
+	    iso_string = str(self.root.Activities.Activity.Id)
+	    startdatetimeobj = iso8601.parse_date(iso_string)
+	    starttime = time.mktime(startdatetimeobj.utctimetuple())+startdatetimeobj.microsecond/1.e6
+        except AttributeError:
+            startdatetimeobj = iso8601.parse_date(str(timestamps[0]))
+            starttime = time.mktime(startdatetimeobj.utctimetuple())+startdatetimeobj.microsecond/1.e6
+
+
+        print starttime,'aap'
 	# startdatetimeobj = parser.parse(str(self.root.Activities.Activity.Id),fuzzy=True)
-	starttime = time.mktime(startdatetimeobj.utctimetuple())+startdatetimeobj.microsecond/1.e6
+
 
 	self.activity_starttime = starttime
 
