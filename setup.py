@@ -59,12 +59,13 @@ setup(name='rowingdata',
 	      'example.csv',
 	      'painsled_desktop_example.csv',
 	      'RP_testdata.csv',
+              'SpeedCoach2example.csv',
 	      'testdata.csv'
 	      ],
 	  'bin':[
 	      'testdata.csv',
 	      'crewnerddata.csv',
-	      'crewnerddata.tcx'
+	      'crewnerddata.tcx',
 	      ],
 	  'rigging':[
 	      '1x.txt',
