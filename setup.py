@@ -45,7 +45,8 @@ setup(name='rowingdata',
 	  'tqdm',
 	  'rowingphysics>=0.2.3',
 	  'iso8601',
-          'lxml'
+          'lxml',
+          'nose_parameterized',
 	  ],
 
       zip_safe=False,
