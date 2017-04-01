@@ -70,8 +70,9 @@ before_install:
   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
-  - pip install fitparse==0.0.1.dev0
 install:
+  - git clone https://github.com/dtcooper/python-fitparse.git
+  - cp -R python-fitparse/fitparse `python -c "from distutils.sysconfig import get_python_lib; 
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels
   - python setup.py install
 script:
