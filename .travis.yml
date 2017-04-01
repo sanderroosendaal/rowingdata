@@ -71,7 +71,7 @@ before_install:
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
 install:
-  - git clone https://github.com/dtcooper/python-fitparse.git
+  - git clone -b ng https://github.com/dtcooper/python-fitparse.git
   - cd python-fitparse
   - python setup.py install
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels
