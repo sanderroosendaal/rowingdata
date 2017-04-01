@@ -8,7 +8,7 @@ import checkdatafiles
 
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__ = "0.97.7"
+__version__ = "0.97.8"
 
 try:
     from Tkinter import Tk
@@ -1923,7 +1923,6 @@ class rowingdata:
 		df.loc[mask,' Horizontal (meters)'] = df.loc[mask,'cum_dist']-startmeters
 
 		mask = (df['TimeStamp (sec)']<=endseconds)
-
 
 		# correction for missing part of last stroke
 		recordedmaxtime = df.loc[mask,'TimeStamp (sec)'].max()
