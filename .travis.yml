@@ -1,8 +1,5 @@
 language: python
 env:
-  global:
-    - PYTHONUNBUFFERED=yes
-    - secure: "TyC3F7uBmd4iWLpUyhIDkpRfbhPUmRqFeFhr12VSHfzODQfeLBqB9hHMhhjVLlk1gsQwIXzNDY2X82U83d4gG0X+SEPDUpTimuWc/GJoJLQL4+uyfpS8seQWnxa7ZXkZrUdKb2owHtx+0ESzZwfOg+pd0OxoMenK9bcGo3hZtkk="
 
 # apt-get is only available to the Ubuntu tests (os: linux)
 # the other tests (os: osx) uses Homebrew to install shell
@@ -28,55 +25,30 @@ before_cache:
   - rm -f $HOME/.cache/pip/log/debug.log
 
 
-matrix:
-  include:
-    - env: PYTHON_VERSION=3.6 SUDO=true
-      sudo: true
-      language: generic
-      os: linux
-    - env: PYTHON_VERSION=3.4
-      sudo: false
-      language: generic
-      os: linux
-    - env: PYTHON_VERSION=2.7
-      sudo: false
-      language: generic
-      os: linux
-    - env: FLAKE8=true
-      sudo: false
-      language: python
-      python: '3.5'
-      os: linux
-    - env: PYTHON_VERSION=3.6
-      sudo: false
-      language: generic
-      os: osx
-    - env: PYTHON_VERSION=3.6 CONDA_BUILD=2.1.3
-      sudo: false
-      language: generic
-      os: linux
-  allow_failures:
-    - os: osx
 python:
- - "2.7"
+ - "2.7.10"
 notifications:
  email: false
 cache: pip
 before_install:
+  - export TZ=Europe/Prague
   - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda/bin:$PATH
+  - export PATH=/home/travis/miniconda2/bin:$PATH
   # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
 install:
+  - git clone -b ng https://github.com/dtcooper/python-fitparse.git
+  - cd python-fitparse
+  - python setup.py install
+  - cd ..
   - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels
-  # Coverage packages are on my binstar channel
-  - conda install --yes -c dan_blanchard python-coveralls nose-cov
   - python setup.py install
 script:
- - nosetests
-sudo: false
+ - nosetests tests/testparser.py
+ - nosetests tests/test_rowingdata.py
+sudo: required
 after_success:
   - coveralls --config_file .coveragerc
