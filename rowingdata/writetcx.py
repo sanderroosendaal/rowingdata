@@ -8,7 +8,7 @@ from lxml import etree, objectify
 from lxml.etree import XMLSyntaxError
 import urllib2
 
-namespace = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
+namespace='http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
 def lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds):
     f.write('        <Lap StartTime="{s}">\n'.format(s=datetimestring))
@@ -37,49 +37,49 @@ def lap_end(f):
 def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     if notes==None:
         notes="Exported by rowingdata"
-    f = open(tcxFile,'w')
+    f=open(tcxFile,'w')
     
-    totalseconds = int(df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min())
-    totalmeters = int(df['cum_dist'].max())
-    avghr = int(df[' HRCur (bpm)'].mean())
+    totalseconds=int(df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min())
+    totalmeters=int(df['cum_dist'].max())
+    avghr=int(df[' HRCur (bpm)'].mean())
     if avghr == 0:
-	avghr = 1
-    maxhr = int(df[' HRCur (bpm)'].max())
+	avghr=1
+    maxhr=int(df[' HRCur (bpm)'].max())
     if maxhr == 0:
-	maxhr = 1
-    avgspm = int(df[' Cadence (stokes/min)'].mean())
+	maxhr=1
+    avgspm=int(df[' Cadence (stokes/min)'].mean())
 
-    seconds = df['TimeStamp (sec)'].values
-    distancemeters = df['cum_dist'].values
-    heartrate = df[' HRCur (bpm)'].values.astype(int)
-    cadence = np.round(df[' Cadence (stokes/min)'].values).astype(int)
+    seconds=df['TimeStamp (sec)'].values
+    distancemeters=df['cum_dist'].values
+    heartrate=df[' HRCur (bpm)'].values.astype(int)
+    cadence=np.round(df[' Cadence (stokes/min)'].values).astype(int)
 
-    nr_rows = len(seconds)
-
-    try:
-	lat = df[' latitude'].values
-    except KeyError:
-	lat = np.zeros(nr_rows)
+    nr_rows=len(seconds)
 
     try:
-	long = df[' longitude'].values
+	lat=df[' latitude'].values
     except KeyError:
-	long = np.zeros(nr_rows)
-
-    haspower = 1
+	lat=np.zeros(nr_rows)
 
     try:
-	power = df[' Power (watts)'].values
+	long=df[' longitude'].values
     except KeyError:
-	haspower = 0
+	long=np.zeros(nr_rows)
+
+    haspower=1
+
+    try:
+	power=df[' Power (watts)'].values
+    except KeyError:
+	haspower=0
 	
-    s = "2000-01-01"
-    tt = ps.parse(s)
-    timezero = time.mktime(tt.timetuple())
+    s="2000-01-01"
+    tt=ps.parse(s)
+    timezero=time.mktime(tt.timetuple())
     if seconds[0]<timezero:
 	# print "Taking Row_Date ",row_date
-	dateobj = ps.parse(row_date)
-	unixtimes = seconds+time.mktime(dateobj.timetuple())
+	dateobj=ps.parse(row_date)
+	unixtimes=seconds+time.mktime(dateobj.timetuple())
 
 
     
@@ -92,18 +92,18 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     f.write('  <Activities>\n')
     f.write('    <Activity Sport="Other">\n')
 
-    datetimestring = row_date
+    datetimestring=row_date
 
     f.write('      <Id>{s}</Id>\n'.format(s=datetimestring))
 
     lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds)
 
     for i in range(nr_rows):
-	hri = heartrate[i]
+	hri=heartrate[i]
 	if hri == 0:
-	    hri = 1
+	    hri=1
 	f.write('          <Trackpoint>\n')
-	s = datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
+	s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
 	f.write('            <Time>{s}</Time>\n'.format(s=s))
 	if (lat[i] != 0) & (long[i] != 0 ):
 	    f.write('            <Position>\n')
@@ -152,24 +152,24 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
 
     f.close()
 
-    file = open(tcxFile,'r')
+    file=open(tcxFile,'r')
     
-    some_xml_string = file.read()
+    some_xml_string=file.read()
 
     file.close()
     
     try:
 	xsd_file=urllib2.urlopen("https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd")
-	output = open('TrainingCenterDatabasev2.xsd','w') 
+	output=open('TrainingCenterDatabasev2.xsd','w') 
 	output.write(xsd_file.read().replace('\n',''))
 	output.close()
-	xsd_filename = "TrainingCenterDatabasev2.xsd"
+	xsd_filename="TrainingCenterDatabasev2.xsd"
 
 	# Run some tests
-	tree = objectify.parse(tcxFile)
+	tree=objectify.parse(tcxFile)
 	try:
-	    schema = etree.XMLSchema(file=xsd_filename)
-	    parser = objectify.makeparser(schema=schema)
+	    schema=etree.XMLSchema(file=xsd_filename)
+	    parser=objectify.makeparser(schema=schema)
 	    objectify.fromstring(some_xml_string, parser)
 	    # print "YEAH!, your xml file has validated"
 	except XMLSyntaxError:

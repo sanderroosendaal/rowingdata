@@ -3,16 +3,16 @@ import rowingdata
 from sys import argv
 
 def main():
-    readFile = argv[1]
+    readFile=argv[1]
 
     try:
-	rowerFile = argv[2]
+	rowerFile=argv[2]
     except IndexError:
-	rowerFile = "defaultrower.txt"
+	rowerFile="defaultrower.txt"
 
-    rower = rowingdata.getrower(rowerFile)
+    rower=rowingdata.getrower(rowerFile)
 
-    row = rowingdata.rowingdata(readFile,rower=rower)
+    row=rowingdata.rowingdata(readFile,rower=rower)
 
     row.uploadtoc2(rowerFile=rowerFile)
 

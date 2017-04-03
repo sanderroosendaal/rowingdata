@@ -4,28 +4,28 @@ import time
 from sys import argv
 
 def main():
-    readFile = argv[1]
+    readFile=argv[1]
 
     try:
-	rowerFile = argv[2]
+	rowerFile=argv[2]
     except IndexError:
-	rowerFile = "defaultrower.txt"
+	rowerFile="defaultrower.txt"
 
     try:
-	datestring = argv[3]
+	datestring=argv[3]
     except IndexError:
-	datestring = time.strftime("%c")
+	datestring=time.strftime("%c")
 
-    rower = rowingdata.getrower(rowerFile)
+    rower=rowingdata.getrower(rowerFile)
 	
 
-    res = rowingdata.speedcoachParser(readFile,row_date=datestring)
+    res=rowingdata.speedcoachParser(readFile,row_date=datestring)
 
-    file2 = readFile+"_o.csv"
+    file2=readFile+"_o.csv"
 
     res.write_csv(file2)
 
-    row = rowingdata.rowingdata(file2,rowtype="On-water",rower=rower)
+    row=rowingdata.rowingdata(file2,rowtype="On-water",rower=rower)
 
     row.uploadtoc2(rowerFile=rowerFile)
 
