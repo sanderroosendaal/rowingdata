@@ -10,7 +10,7 @@ def checkfile(f2,verbose=False):
     fileformat=rowingdata.get_file_type(f2)
     notread=1
     if verbose:
-        print fileformat
+        print(fileformat)
 
     if len(fileformat)==3 and fileformat[0]=='zip':
         with zipfile.ZipFile(f2) as z:
@@ -93,19 +93,19 @@ def checkfile(f2,verbose=False):
     nrintervals=len(row.df[' lapIdx'].unique())
     
     if verbose:
-        print "nr lines",row.number_of_rows
-        print "data ",row.rowdatetime
-        print "dist ",distmax
-        print "Time ",timemax
-        print "Nr intervals ",nrintervals
+        print("nr lines",row.number_of_rows)
+        print("data ",row.rowdatetime)
+        print("dist ",distmax)
+        print("Time ",timemax)
+        print("Nr intervals ",nrintervals)
 
     res= row.intervalstats_values()
     int1time=res[0][0]
     int1dist=res[1][0]
 
     if verbose:
-        print "Interval 1 time ",int1time
-        print "Interval 1 dist ",int1dist
+        print("Interval 1 time ",int1time)
+        print("Interval 1 dist ",int1dist)
 
     y=row.rowdatetime.year
     m=row.rowdatetime.month

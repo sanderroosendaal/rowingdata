@@ -8,6 +8,6 @@ def main():
     except IndexError:
 	rowerFile="defaultrower.txt"
 
-    print rowingdata.roweredit(rowerFile)
+    print(rowingdata.roweredit(rowerFile))
 
-    print "done"
+    print("done")

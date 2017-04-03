@@ -22,8 +22,8 @@ def main():
 
     res.plotmeters_otw()
 
-    print res.allstats()
+    print(res.allstats())
 
 
 
-    print "done "+readFile
+    print("done "+readFile)

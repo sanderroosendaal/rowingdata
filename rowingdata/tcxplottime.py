@@ -21,11 +21,11 @@ def main():
     res=rowingdata.rowingdata(csvoutput,rowtype="On-water",
 				rower=rower)
 
-    print res.allstats()
+    print(res.allstats())
     rowingdata.copytocb(res.allstats())
 
 
     res.plottime_otw()
 
 
-    print "done "+readFile
+    print("done "+readFile)

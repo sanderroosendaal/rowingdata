@@ -9,7 +9,7 @@ y2=x2*2-1
 def test():
     x=np.concatenate((x1,x2))
     y=np.concatenate((y1,y2))
-    print len(x),len(y)
+    print(len(x),len(y))
     data=pd.DataFrame({'x':x,
 			 'y':y})
     data=data.drop_duplicates(subset='x').sort('x',ascending=1)

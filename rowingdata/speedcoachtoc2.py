@@ -31,4 +31,4 @@ def main():
 
 
 
-    print "done "+readFile
+    print("done "+readFile)

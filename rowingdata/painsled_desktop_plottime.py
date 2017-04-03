@@ -20,8 +20,8 @@ row=rowingdata.rowingdata(outfile,rowtype="Indoor Rower",rower=rower)
 
 row.plottime_erg()
 
-print row.allstats()
+print(row.allstats())
 
 
 
-print "done "+readFile
+print("done "+readFile)

@@ -8,6 +8,6 @@ def main():
     except IndexError:
 	boatFile="my1x.txt"
 
-    print rowingdata.boatedit(boatFile)
+    print(rowingdata.boatedit(boatFile))
 
-    print "done"
+    print("done")

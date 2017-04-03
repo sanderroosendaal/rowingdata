@@ -77,7 +77,7 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     tt=ps.parse(s)
     timezero=time.mktime(tt.timetuple())
     if seconds[0]<timezero:
-	# print "Taking Row_Date ",row_date
+	# print("Taking Row_Date ",row_date)
 	dateobj=ps.parse(row_date)
 	unixtimes=seconds+time.mktime(dateobj.timetuple())
 
@@ -171,15 +171,15 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
 	    schema=etree.XMLSchema(file=xsd_filename)
 	    parser=objectify.makeparser(schema=schema)
 	    objectify.fromstring(some_xml_string, parser)
-	    # print "YEAH!, your xml file has validated"
+	    # print("YEAH!, your xml file has validated")
 	except XMLSyntaxError:
         
-	    print "Oh NO!, your xml file does not validate"
+	    print("Oh NO!, your xml file does not validate")
 	    pass
 	
     except urllib2.URLError:
-	print "cannot download TCX schema"
-	print "your TCX file is unvalidated. Good luck"
+	print("cannot download TCX schema")
+	print("your TCX file is unvalidated. Good luck")
 
     
 	    

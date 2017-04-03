@@ -42,4 +42,4 @@ def main():
     res.plottime_otwpower()
 
 
-    print "done "+readFile
+    print("done "+readFile)

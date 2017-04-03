@@ -186,13 +186,13 @@ def copytocb(s):
 	    r.clipboard_clear()
 	    r.clipboard_append(s)
 	    r.destroy
-	    print "Summary copied to clipboard"
+	    print("Summary copied to clipboard")
 
 	else:
 	    res="Your platform {pl} is not supported".format(
 		pl=_platform
 		)
-	    print res
+	    print(res)
 
 def phys_getpower(velo,rower,rigging,bearing,vwind,winddirection,vstream=0):
     power=0
@@ -254,8 +254,8 @@ def getrigging(fileName="my1x.txt"):
 	rg=pickle.load(open(fileName))
     except (IOError,ImportError,ValueError):
 	if __name__ == '__main__':
-	    print "Getrigging: File doesn't exist or is not valid. Creating new"
-	    print fileName
+	    print("Getrigging: File doesn't exist or is not valid. Creating new")
+	    print(fileName)
 	if (weknowphysics == 1):
 	    rg=rowingphysics.rigging()
 	else:
@@ -272,7 +272,7 @@ def getrower(fileName="defaultrower.txt",mc=70.0):
 	r=pickle.load(open(fileName))
     except (IOError,ImportError):
 	if __name__ == '__main__':
-	    print "Getrower: Default rower file doesn't exist. Create new rower"
+	    print("Getrower: Default rower file doesn't exist. Create new rower")
 	r=rower(mc=mc)
 
     return r
@@ -746,7 +746,7 @@ class summarydata:
 			      separator=separator)
 
 	
-	# print stri1+stri2
+	# print(stri1+stri2)
 
 	copytocb(stri1+stri2)
 
@@ -797,7 +797,7 @@ class summarydata:
 
 	copytocb(stri)
 
-	print stri
+	print(stri)
 	
 
 ftppowerperc=[55,75,90,105,120]
@@ -839,7 +839,7 @@ class rower:
 	else:
 	    self.rc=0
 	if (weightcategory <> "hwt") and (weightcategory <> "lwt"):
-	    print "Weightcategory unrecognized. Set to hwt"
+	    print("Weightcategory unrecognized. Set to hwt")
 	    weightcategory="hwt"
 	    
 	self.weightcategory=weightcategory
@@ -857,10 +857,10 @@ def roweredit(fileName="defaultrower.txt"):
     try:
 	r=pickle.load(open(fileName))
     except IOError:
-	print "Roweredit: File does not exist. Reverting to defaultrower.txt"
+	print("Roweredit: File does not exist. Reverting to defaultrower.txt")
 	r=getrower()
     except ImportError:
-	print "Roweredit: File is not valid. Reverting to defaultrower.txt"
+	print("Roweredit: File is not valid. Reverting to defaultrower.txt")
 	r=getrower()
 
     try:
@@ -876,117 +876,117 @@ def roweredit(fileName="defaultrower.txt"):
     except AttributeError:
 	ftp=225
 
-    print "Functional Threshold Power"
-    print "Your Functional Threshold Power is set to {ftp}".format(
+    print("Functional Threshold Power")
+    print("Your Functional Threshold Power is set to {ftp}".format(
 	ftp=ftp
-	)
+	))
     strin=raw_input('Enter new FTP (just ENTER to keep {ftp}:'.format(ftp=ftp))
     if (strin <> ""):
 	try:
 	    r.ftp=int(strin)
 	except ValueError:
-	    print "Not a valid number. Keeping original value"
+	    print("Not a valid number. Keeping original value")
 	    
 
-    print "Heart Rate Training Bands"
+    print("Heart Rate Training Bands")
     # hrmax
-    print "Your HR max is set to {hrmax} bpm".format(
+    print("Your HR max is set to {hrmax} bpm".format(
 	hrmax=r.max
-	)
+	))
     strin=raw_input('Enter HR max (just ENTER to keep {hrmax}):'.format(hrmax=r.max))
     if (strin <> ""):
 	try:
 	    r.max=int(strin)
 	except ValueError:
-	    print "Not a valid number. Keeping original value"
+	    print("Not a valid number. Keeping original value")
 
     
     # hrut2, hrut1
-    print "UT2 zone is between {hrut2} and {hrut1} bpm ({percut2:2.0f}-{percut1:2.0f}% of max HR)".format(
+    print("UT2 zone is between {hrut2} and {hrut1} bpm ({percut2:2.0f}-{percut1:2.0f}% of max HR)".format(
 	hrut2=r.ut2,
 	hrut1=r.ut1,
 	percut2=100.*r.ut2/r.max,
 	percut1=100.*r.ut1/r.max
-	)
+	))
     strin=raw_input('Enter UT2 band lower value (ENTER to keep {hrut2}):'.format(hrut2=r.ut2))
     if (strin <> ""):
 	try:
 	    r.ut2=int(strin)
 	except ValueError:
-    	    print "Not a valid number. Keeping original value"
+    	    print("Not a valid number. Keeping original value")
 
     strin=raw_input('Enter UT2 band upper value (ENTER to keep {hrut1}):'.format(hrut1=r.ut1))
     if (strin <> ""):
 	try:
 	    r.ut1=int(strin)
 	except ValueError:
-    	    print "Not a valid number. Keeping original value"
+    	    print("Not a valid number. Keeping original value")
 
     
-    print "UT1 zone is between {val1} and {val2} bpm ({perc1:2.0f}-{perc2:2.0f}% of max HR)".format(
+    print("UT1 zone is between {val1} and {val2} bpm ({perc1:2.0f}-{perc2:2.0f}% of max HR)".format(
 	val1=r.ut1,
 	val2=r.at,
 	perc1=100.*r.ut1/r.max,
 	perc2=100.*r.at/r.max
-	)
+	))
 
     strin=raw_input('Enter UT1 band upper value (ENTER to keep {hrat}):'.format(hrat=r.at))
     if (strin <> ""):
 	try:
 	    r.at=int(strin)
 	except ValueError:
-    	    print "Not a valid number. Keeping original value"
+    	    print("Not a valid number. Keeping original value")
 
     
-    print "AT zone is between {val1} and {val2} bpm ({perc1:2.0f}-{perc2:2.0f}% of max HR)".format(
+    print("AT zone is between {val1} and {val2} bpm ({perc1:2.0f}-{perc2:2.0f}% of max HR)".format(
 	val1=r.at,
 	val2=r.tr,
 	perc1=100.*r.at/r.max,
 	perc2=100.*r.tr/r.max
-	)
+	))
 
     strin=raw_input('Enter AT band upper value (ENTER to keep {hrtr}):'.format(hrtr=r.tr))
     if (strin <> ""):
 	try:
 	    r.tr=int(strin)
 	except ValueError:
-    	    print "Not a valid number. Keeping original value"
+    	    print("Not a valid number. Keeping original value")
 
     
     
-    print "TR zone is between {val1} and {val2} bpm ({perc1:2.0f}-{perc2:2.0f}% of max HR)".format(
+    print("TR zone is between {val1} and {val2} bpm ({perc1:2.0f}-{perc2:2.0f}% of max HR)".format(
 	val1=r.tr,
 	val2=r.an,
 	perc1=100.*r.tr/r.max,
 	perc2=100.*r.an/r.max
-	)
+	))
 
     strin=raw_input('Enter TR band upper value (ENTER to keep {hran}):'.format(hran=r.an))
     if (strin <> ""):
 	try:
 	    r.an=int(strin)
 	except ValueError:
-    	    print "Not a valid number. Keeping original value"
+    	    print("Not a valid number. Keeping original value")
 
 
-    print ""
+    print("")
 
     # weightcategory    
-    print "Your weight category is set to {weightcategory}.".format(
+    print("Your weight category is set to {weightcategory}.".format(
 	weightcategory=r.weightcategory
-	)
+	))
     strin=raw_input('Enter lwt for Light Weight, hwt for Heavy Weight, or just ENTER: ')
     if (strin <> ""):
 	if (strin == 'lwt'):
 	    r.weightcategory=strin
-	    print "Setting to "+strin
+	    print("Setting to "+strin)
 	elif (strin == 'hwt'):
 	    r.weightcategory=strin
-	    print "Setting to "+strin
+	    print("Setting to "+strin)
 	else:
-	    print "Value not recognized"
+	    print("Value not recognized")
 
-    print ""
+    print("")
 
 
     mc=rc.mc
@@ -1008,9 +1008,9 @@ def roweredit(fileName="defaultrower.txt"):
 
     # c2username
     if (r.c2username <> ""):
-	print "Your Concept2 username is set to {c2username}.".format(
+	print("Your Concept2 username is set to {c2username}.".format(
 	    c2username=r.c2username
-	)
+	))
 	strin=raw_input('Enter new username (or just ENTER to keep): ')
 	if (strin <> ""):
 	    r.c2username=strin
@@ -1018,13 +1018,13 @@ def roweredit(fileName="defaultrower.txt"):
 
     # c2password
     if (r.c2username == ""):
-	print "We don't know your Concept2 username"
+	print("We don't know your Concept2 username")
 	strin=raw_input('Enter new username (or ENTER to skip): ')
 	r.c2username=strin
 
     if (r.c2username <> ""):
 	if (r.c2password <> ""):
-	    print "We have your Concept2 password."
+	    print("We have your Concept2 password.")
 	    changeyesno=raw_input('Do you want to change/erase your password (y/n)')
 	    if changeyesno == "y":
 		strin1=getpass.getpass('Enter new password (or ENTER to erase):')
@@ -1033,26 +1033,26 @@ def roweredit(fileName="defaultrower.txt"):
 		    if (strin1 == strin2):
 			r.c2password=strin1
 		    else:
-			print "Error. Not the same."
+			print("Error. Not the same.")
 		if (strin1 == ""):
-			print "Forgetting your password"
+			print("Forgetting your password")
 			r.c2password=""
 	elif (r.c2password == ""):
-	    print "We don't have your Concept2 password yet."
+	    print("We don't have your Concept2 password yet.")
 	    strin1=getpass.getpass('Concept2 password (or ENTER to skip):')
 	    if (strin1 <> ""):
 		strin2=getpass.getpass('Repeat password:')
 		if (strin1 == strin2):
 		    r.c2password=strin1
 		else:
-		    print "Error. Not the same."
+		    print("Error. Not the same.")
     
     
 
 
     r.write(fileName)
     
-    print "Done"
+    print("Done")
     return 1
 
 def boatedit(fileName="my1x.txt"):
@@ -1064,17 +1064,17 @@ def boatedit(fileName="my1x.txt"):
     try:
 	rg=pickle.load(open(fileName))
     except IOError:
-	print "Boatedit: File does not exist. Reverting to my1x.txt"
+	print("Boatedit: File does not exist. Reverting to my1x.txt")
 	rg=getrigging()
     except (ImportError,ValueError):
-	print "Boatedit: File is not valid. Reverting to my1x.txt"
+	print("Boatedit: File is not valid. Reverting to my1x.txt")
 	rg=getrigging()
 
-    print "Number of rowers"
+    print("Number of rowers")
     # Lin
-    print "Your boat has {Nrowers} seats".format(
+    print("Your boat has {Nrowers} seats.".format(
 	Nrowers=rg.Nrowers
-	)
+	))
     strin=raw_input('Enter number of seats (just ENTER to keep {Nrowers}):'.format(
 	Nrowers=rg.Nrowers
 	))
@@ -1082,9 +1082,9 @@ def boatedit(fileName="my1x.txt"):
 	try:
 	    rg.Nrowers=int(strin)
 	except ValueError:
-	    print "Not a valid number. Keeping original value"
+	    print("Not a valid number. Keeping original value")
 
-    print "Rowing or sculling"
+    print("Rowing or sculling")
     # roworscull
     strin=raw_input('Row (r) or scull (s) - ENTER to keep {roworscull}:'.format(
 	roworscull=rg.roworscull
@@ -1095,12 +1095,12 @@ def boatedit(fileName="my1x.txt"):
 	rg.roworscull='row'
     
 
-    print "Boat weight"
+    print("Boat weight")
     # mb
-    print "Your {Nrowers} boat weighs {mb} kg".format(
+    print("Your {Nrowers} boat weighs {mb} kg".format(
 	Nrowers=rg.Nrowers,
 	mb=rg.mb
-	)
+	))
     strin=raw_input('Enter boat weight including cox (just ENTER to keep {mb}):'.format(
 	mb=rg.mb
 	))
@@ -1108,13 +1108,13 @@ def boatedit(fileName="my1x.txt"):
 	try:
 	    rg.mb=float(strin)
 	except ValueError:
-	    print "Not a valid number. Keeping original value"
+	    print("Not a valid number. Keeping original value")
 
-    print "Rigging Data"
+    print("Rigging Data")
     # Lin
-    print "Your inboard is set to {lin} m".format(
+    print("Your inboard is set to {lin} m".format(
 	lin=rg.lin
-	)
+	))
     strin=raw_input('Enter inboard (just ENTER to keep {lin} m):'.format(
 	lin=rg.lin
 	))
@@ -1122,12 +1122,12 @@ def boatedit(fileName="my1x.txt"):
 	try:
 	    rg.lin=float(strin)
 	except ValueError:
-	    print "Not a valid number. Keeping original value"
+	    print("Not a valid number. Keeping original value")
 
-    print "Your scull/oar length is set to {lscull} m".format(
+    print("Your scull/oar length is set to {lscull} m".format(
 	lscull=rg.lscull
-	)
-    print "For this number, you need to subtract half of the blade length from the classical oar/scull length measurement"
+	))
+    print("For this number, you need to subtract half of the blade length from the classical oar/scull length measurement")
     strin=raw_input('Enter length (subtract half of blade length, just ENTER to keep {lscull}):'.format(
 	lscull=rg.lscull
 	))
@@ -1135,13 +1135,13 @@ def boatedit(fileName="my1x.txt"):
 	try:
 	    rg.lscull=float(strin)
 	except ValueError:
-	    print "Not a valid number. Keeping original value"
+	    print("Not a valid number. Keeping original value")
 
 
     if (rg.roworscull == 'row'):
-	print "Your spread is set to {spread} m".format(
+	print("Your spread is set to {spread} m".format(
 	    spread=rg.spread
-	    )
+	    ))
 	strin=raw_input('Enter new spread (or ENTER to keep {spread} m):'.format(
 	    spread=rg.spread
 	    ))
@@ -1149,11 +1149,11 @@ def boatedit(fileName="my1x.txt"):
 	    try:
 		rg.spread=float(spread)
 	    except ValueError:
-		print "Not a valid number. Keeping original value"
+		print("Not a valid number. Keeping original value")
     else:
-	print "Your span is set to {span} m".format(
+	print("Your span is set to {span} m".format(
 	    span=rg.span
-	    )
+	    ))
 	strin=raw_input('Enter new span (or ENTER to keep {span} m):'.format(
 	    span=rg.span
 	    ))
@@ -1161,12 +1161,12 @@ def boatedit(fileName="my1x.txt"):
 	    try:
 		rg.span=float(span)
 	    except ValueError:
-		print "Not a valid number. Keeping original value"
+		print("Not a valid number. Keeping original value")
 	
     # Blade Area
-    print "Your blade area is set to {bladearea} m2 (total blade area per rower, take two blades for scullers)".format(
+    print("Your blade area is set to {bladearea} m2 (total blade area per rower, take two blades for scullers)".format(
 	bladearea=rg.bladearea
-	)
+	))
     strin=raw_input('Enter blade area (just ENTER to keep {bladearea} m2):'.format(
 	bladearea=rg.bladearea
 	))
@@ -1174,16 +1174,16 @@ def boatedit(fileName="my1x.txt"):
 	try:
 	    rg.bladearea=float(strin)
 	except ValueError:
-	    print "Not a valid number. Keeping original value"
+	    print("Not a valid number. Keeping original value")
 
     # Catch angle
     catchangledeg=-np.degrees(rg.catchangle)
 
-    print "We define catch angle as follows."
-    print " - 0 degrees is a catch with oar shaft perpendicular to the boat"
-    print " - 90 degrees is a catch with oar shaft parallel to the boat"
-    print " - Use positive values for normal catch angles"
-    print "Your catch angle is {catchangledeg} degrees."
+    print("We define catch angle as follows.")
+    print(" - 0 degrees is a catch with oar shaft perpendicular to the boat")
+    print(" - 90 degrees is a catch with oar shaft parallel to the boat")
+    print(" - Use positive values for normal catch angles")
+    print("Your catch angle is {catchangledeg} degrees.")
     strin=raw_input('Enter catch angle in degrees (or ENTER to keep {catchangledeg}):'.format(
 	catchangledeg=catchangledeg
 	))
@@ -1191,11 +1191,11 @@ def boatedit(fileName="my1x.txt"):
 	try:
 	    rg.catchangle=-np.radians(float(strin))
 	except ValueError:
-	    print "Not a valid number. Keeping original value"
+	    print("Not a valid number. Keeping original value")
 
     write_obj(rg,fileName)
     
-    print "Done"
+    print("Done")
     return 1
 
 def addpowerzones(df,ftp,powerperc):
@@ -2152,7 +2152,7 @@ class rowingdata:
 
 	"""
 
-	print "EXPERIMENTAL"
+	print("EXPERIMENTAL")
 	
 	nr_of_rows=self.number_of_rows
 	rows_mod=skiprows+1
@@ -2209,11 +2209,11 @@ class rowingdata:
 		df.ix[i,'equivergpower']=res[4]
 
 		if res[4]>res[0]:
-		    print "Power ",res[0]
-		    print "Equiv erg Power ",res[4]
-		    print "Boat speed (m/s) ",velo
-		    print "Stroke rate ",r.tempo
-		    print "ratio ",res[1]
+		    print("Power ",res[0])
+		    print("Equiv erg Power ",res[4])
+		    print("Boat speed (m/s) ",velo)
+		    print("Stroke rate ",r.tempo)
+		    print("ratio ",res[1])
 		# update_progress(i,nr_of_rows)
 
 	    else:
@@ -2309,7 +2309,7 @@ class rowingdata:
 
 	"""
 
-	print "EXPERIMENTAL"
+	print("EXPERIMENTAL")
 	
 	nr_of_rows=self.number_of_rows
 	rows_mod=skiprows+1
@@ -2353,7 +2353,7 @@ class rowingdata:
 		    try:
 			res=phys_getpower(velo,r,rg,bearing,vwind,winddirection,
 					    vstream)
-			print i, r.tempo, p,res[0],res[3],res[4]
+			print(i, r.tempo, p,res[0],res[3],res[4])
 		    except KeyError:
 			res=[np.nan,np.nan,np.nan,np.nan,np.nan]
 		else:
@@ -2382,7 +2382,7 @@ class rowingdata:
 
 	"""
 
-	print "EXPERIMENTAL"
+	print("EXPERIMENTAL")
 	
 	# creating a rower and rigging for now
 	# in future this must come from rowingdata.rower and rowingdata.rigging
@@ -2399,14 +2399,14 @@ class rowingdata:
 	    res=phys_getpower(velo,r,rg,bearing,vwind,winddirection,
 				vstream)
 
-	    print 'Pace ',p
-	    print 'Power (watts)', res[0]
-	    print 'Average Drive Force (N)',res[2]
-	    print ' DriveTime (ms)',res[1]*drivetime
-	    print ' StrokeRecoveryTime (ms)', (1-res[1])*drivetime
-	    print ' DriveLength (meters)', r.strokelength
-	    print 'nowindpace', res[3]
-	    print 'equivergpower',  res[4]
+	    print('Pace ',p)
+	    print('Power (watts)', res[0])
+	    print('Average Drive Force (N)',res[2])
+	    print(' DriveTime (ms)',res[1]*drivetime)
+	    print(' StrokeRecoveryTime (ms)', (1-res[1])*drivetime)
+	    print(' DriveLength (meters)', r.strokelength)
+	    print('nowindpace', res[3])
+	    print('equivergpower',  res[4])
 
 	else:
 	    velo=0.0
@@ -2855,7 +2855,7 @@ class rowingdata:
 	plt.subplots_adjust(hspace=0)
 
 	plt.show()
-	print "done"
+	print("done")
 
 
     def plotmeters_powerzones_erg(self):
@@ -4847,7 +4847,7 @@ class rowingdata:
 
 	self.piechart()
 	
-	print "done"
+	print("done")
 
     def plottime_hr(self):
 	""" Creates a HR vs time plot
@@ -5024,7 +5024,7 @@ class rowingdata:
 	plt.subplots_adjust(hspace=0)
 
 	plt.show()
-	print "done"
+	print("done")
     
 
     def plottime_otw(self):
@@ -5179,7 +5179,7 @@ class rowingdata:
 
 	self.piechart()
 	
-	print "done"
+	print("done")
 
     def piechart(self):
 	""" Figure 3 - Heart Rate Time in band.
@@ -5536,7 +5536,7 @@ class rowingdata:
 	tenth=int(10*(totaltime-hour*3600.-min*60.-sec))
 
 	# log in to concept2 log, ask for password if it isn't known
-	print "login to concept2 log"
+	print("login to concept2 log")
 	save_user="y"
 	save_pass="y"
 	if self.rwr.c2username == "":
@@ -5564,24 +5564,24 @@ class rowingdata:
 
 	response=br.submit()
 	if "Incorrect" in response.read():
-	    print "Incorrect username/password combination"
-	    print ""
+	    print("Incorrect username/password combination")
+	    print("")
 	else:
 	    # continue
-	    print "login successful"
-	    print ""
+	    print("login successful")
+	    print("")
 	    br.select_form(nr=0)
 
 	    br.form['type']=rowtypenr
-	    print "setting type to "+self.rowtype
+	    print("setting type to "+self.rowtype)
 
 	    datecntrl=br.form.find_control("date")
 	    datecntrl.value=datestring
-	    print "setting date to "+datestring
+	    print("setting date to "+datestring)
 
 	    distcntrl=br.form.find_control("distance")
 	    distcntrl.value=str(int(totaldist))
-	    print "setting distance to "+str(int(totaldist))
+	    print("setting distance to "+str(int(totaldist)))
 
 	    hrscntrl=br.form.find_control("hours")
 	    hrscntrl.value=str(hour)
@@ -5592,46 +5592,46 @@ class rowingdata:
 	    tenthscntrl=br.form.find_control("tenths")
 	    tenthscntrl.value=str(tenth)
 
-	    print "setting duration to {hour} hours, {min} minutes, {sec} seconds, {tenth} tenths".format(
+	    print("setting duration to {hour} hours, {min} minutes, {sec} seconds, {tenth} tenths".format(
 		hour=hour,
 		min=min,
 		sec =sec,
 		tenth=tenth
-		)
+		))
 
 	    br.form['weight_class']=weightselect
 
-	    print "Setting weight class to "+self.rwr.weightcategory+"("+weightselect[0]+")"
+	    print("Setting weight class to "+self.rwr.weightcategory+"("+weightselect[0]+")")
 
 	    commentscontrol=br.form.find_control("comments")
 	    commentscontrol.value=comment
-	    print "Setting comment to:"
-	    print comment
+	    print("Setting comment to:")
+	    print(comment)
 
-	    print ""
+	    print("")
 
 	    res=br.submit()
 
 	    if "New workout added" in res.read():
 
 		# workout added
-		print "workout added"
+		print("workout added")
 	    else:
-		print "something went wrong"
+		print("something went wrong")
 
 	if save_user == "n":
 	    self.rwr.c2username=''
-	    print "forgetting user name"
+	    print("forgetting user name")
 	if save_pass == "n":
 	    self.rwr.c2password=''
-	    print "forgetting password"
+	    print("forgetting password")
 
 
 	if (save_user == "y" or save_pass == "y"):
 	    self.rwr.write(rowerFile)
 	    
 
-	print "done"
+	print("done")
 
 
 def dorowall(readFile="testdata",window_size=20):

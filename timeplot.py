@@ -252,5 +252,5 @@ ax8.xaxis.set_major_formatter(majorTimeFormatter)
 plt.subplots_adjust(hspace=0)
 
 plt.show()
-print "done"
+print("done")
 
