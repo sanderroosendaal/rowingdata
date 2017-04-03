@@ -6,7 +6,7 @@ from pandas import DataFrame
 from lxml import objectify
 from fitparse import FitFile
 
-from .utils import totimestamp, geo_distance, ewmovingaverage
+from utils import totimestamp, geo_distance, ewmovingaverage
 
 NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 

@@ -1,4 +1,5 @@
 import math
+import csv
 import numpy as np
 import re
 import time
@@ -186,6 +187,18 @@ def get_file_line(linenr,f):
 
     return line
 
+def get_separator(linenr,f):
+    line = ''
+    with open(f,'r') as fop:
+        for i in range(linenr):
+            line = fop.readline()
+
+    sep = ','
+    sniffer = csv.Sniffer()
+    sep = sniffer.sniff(line).delimiter
+
+    return sep
+
 def getoarlength(line):
     l= float(line.split(',')[-1])
     return l
@@ -368,7 +381,6 @@ class CSVParser(object):
             csvfile=args[0]
         else:
             csvfile=kwargs.pop('csvfile','test.csv')
-
             
         skiprows=kwargs.pop('skiprows',0)
         usecols=kwargs.pop('usecols',None)
@@ -1075,12 +1087,15 @@ class RowProParser(CSVParser):
             csvfile=args[0]
         else:
             csvfile=kwargs['csvfile']
+
+        separator = get_separator(17,csvfile)
             
         skipfooter=skip_variable_footer(csvfile)
         kwargs['skipfooter']=skipfooter
         kwargs['engine']='python'
         kwargs['skiprows']=14
         kwargs['usecols']=None
+        kwargs['sep'] = separator
 
         super(RowProParser, self).__init__(*args, **kwargs)
         self.footer=get_rowpro_footer(csvfile)
