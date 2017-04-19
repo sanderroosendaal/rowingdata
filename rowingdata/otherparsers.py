@@ -10,6 +10,11 @@ from utils import totimestamp, geo_distance, ewmovingaverage
 
 NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
+def fitsummarydata(*args, **kwargs):
+    from warnings import warn
+    warn("fitsummarydata was renamed to FitSummaryData")
+    return FitSummaryData(*args,**kwargs)
+
 class FitSummaryData(object):
     def __init__(self, readfile):
         self.readfile = readfile
@@ -126,8 +131,9 @@ class FitSummaryData(object):
         overallvelo = totaldistance/totaltime
         overallpace = 500./overallvelo
 
+
         minutes = int(overallpace/60)
-        sec = int(10*(overallpace-min*60.))/10.
+        sec = int(10*(overallpace-minutes*60.))/10.
         pacestring = str(minutes)+":"+str(sec)
 
         totmin = int(totaltime/60)

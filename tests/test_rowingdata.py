@@ -236,6 +236,12 @@ class TestFITParser:
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(int(10*totaltime),4870)
 
+    def testfitsummary(self):
+        fitfile='testdata/3x250m.fit'
+        r = rowingdata.FitSummaryData(fitfile)
+        r.setsummary()
+        assert_equals(r.summarytext[66:69],'250')
+
 class TestSequence(unittest.TestCase):
     list=pd.read_csv('testdata/testdatasummary.csv')
     lijst=[]
