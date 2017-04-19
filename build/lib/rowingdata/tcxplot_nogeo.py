@@ -3,25 +3,25 @@ import rowingdata
 from sys import argv
 
 def main():
-    readFile = argv[1]
+    readFile=argv[1]
 
     try:
-	rowerFile = argv[2]
+	rowerFile=argv[2]
     except IndexError:
-	rowerFile = "defaultrower.txt"
+	rowerFile="defaultrower.txt"
 
-    rower = rowingdata.getrower(rowerFile)
+    rower=rowingdata.getrower(rowerFile)
 
-    tcxFile = readFile
-    csvoutput = readFile+"_o.CSV"
+    tcxFile=readFile
+    csvoutput=readFile+"_o.CSV"
 
-    tcx = rowingdata.TCXParser(tcxFile)
+    tcx=rowingdata.TCXParser(tcxFile)
     tcx.write_nogeo_csv(csvoutput,window_size=20)
 
-    res = rowingdata.rowingdata(csvoutput,rowtype="On-water",
+    res=rowingdata.rowingdata(csvoutput,rowtype="On-water",
 				rower=rower)
 
-    print res.allstats()
+    print(res.allstats())
     rowingdata.copytocb(res.allstats())
 
 
@@ -33,4 +33,4 @@ def main():
 
 
 
-    print "done "+readFile
+    print("done "+readFile)

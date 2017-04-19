@@ -11,7 +11,7 @@ import urllib2
 namespace='http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
 def lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds):
-    f.write('        <Lap StartTime="{s}">\n'.format(s=datetimestring))
+    f.write('        <Lap StartTime="{s}Z">\n'.format(s=datetimestring))
     f.write('          <TotalTimeSeconds>{s}</TotalTimeSeconds>\n'.format(s=totalseconds))
     f.write('          <DistanceMeters>{s}</DistanceMeters>\n'.format(s=totalmeters))
     f.write('          <Calories>1</Calories>\n')
@@ -94,7 +94,7 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
 
     datetimestring=row_date
 
-    f.write('      <Id>{s}</Id>\n'.format(s=datetimestring))
+    f.write('      <Id>{s}Z</Id>\n'.format(s=datetimestring))
 
     lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds)
 
@@ -104,7 +104,7 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
 	    hri=1
 	f.write('          <Trackpoint>\n')
 	s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
-	f.write('            <Time>{s}</Time>\n'.format(s=s))
+	f.write('            <Time>{s}Z</Time>\n'.format(s=s))
 	if (lat[i] != 0) & (long[i] != 0 ):
 	    f.write('            <Position>\n')
 	    f.write('              <LatitudeDegrees>{lat}</LatitudeDegrees>\n'.format(
