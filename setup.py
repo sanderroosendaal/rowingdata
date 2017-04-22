@@ -1,3 +1,4 @@
+
 from setuptools import setup, find_packages
 
 import re
@@ -35,7 +36,7 @@ setup(name='rowingdata',
 	  'scipy',
 	  'matplotlib',
 	  'pandas',
-          'fitparse',
+#          'fitparse',
 	  'mechanize',
 	  'python-dateutil',
 	  'docopt',

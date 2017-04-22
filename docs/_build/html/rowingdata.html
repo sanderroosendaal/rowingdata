@@ -231,7 +231,7 @@ and cumulative work distance</p>
 <dt id="rowingdata.rowingdata.read_obj">
 <code class="descclassname">rowingdata.rowingdata.</code><code class="descname">read_obj</code><span class="sig-paren">(</span><em>filename</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.read_obj" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read an object (e.g. your rower, including passwords) from a file
-Usage: john = rowingdata.read_obj(&#8220;john.txt&#8221;)</p>
+Usage: john=rowingdata.read_obj(&#8220;john.txt&#8221;)</p>
 </dd></dl>
 
 <dl class="class">
@@ -264,10 +264,10 @@ Mainly for using from the windows command line</p>
 kinds
 of cool stuff with it.</p>
 <dl class="docutils">
-<dt>Usage: row = rowingdata.rowingdata(csvfile=&#8221;testdata.csv&#8221;,</dt>
-<dd>rowtype = &#8220;Indoor Rower&#8221;,
-absolutetimestamps = False,
-rower = rr,
+<dt>Usage: row=rowingdata.rowingdata(csvfile=&#8221;testdata.csv&#8221;,</dt>
+<dd>rowtype=&#8221;Indoor Rower&#8221;,
+absolutetimestamps=False,
+rower=rr,
 )</dd>
 </dl>
 <p>If absolutetimestamps is set to True, the time stamp info in the 
@@ -436,28 +436,28 @@ the lapIdx column</p>
 
 <dl class="method">
 <dt id="rowingdata.rowingdata.rowingdata.otw_setpower">
-<code class="descname">otw_setpower</code><span class="sig-paren">(</span><em>skiprows=0</em>, <em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C0F5408&gt;</em>, <em>mc=70.0</em>, <em>powermeasured=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_setpower" title="Permalink to this definition">¶</a></dt>
+<code class="descname">otw_setpower</code><span class="sig-paren">(</span><em>skiprows=0</em>, <em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C094088&gt;</em>, <em>mc=70.0</em>, <em>powermeasured=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_setpower" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds power from rowing physics calculations to OTW result</p>
 <p>For now, works only in singles</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="rowingdata.rowingdata.rowingdata.otw_setpower_silent">
-<code class="descname">otw_setpower_silent</code><span class="sig-paren">(</span><em>skiprows=0</em>, <em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C0F5448&gt;</em>, <em>mc=70.0</em>, <em>powermeasured=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_setpower_silent" title="Permalink to this definition">¶</a></dt>
+<code class="descname">otw_setpower_silent</code><span class="sig-paren">(</span><em>skiprows=0</em>, <em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C0940C8&gt;</em>, <em>mc=70.0</em>, <em>powermeasured=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_setpower_silent" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds power from rowing physics calculations to OTW result</p>
 <p>For now, works only in singles</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="rowingdata.rowingdata.rowingdata.otw_setpower_verbose">
-<code class="descname">otw_setpower_verbose</code><span class="sig-paren">(</span><em>skiprows=0</em>, <em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C0F5488&gt;</em>, <em>mc=70.0</em>, <em>powermeasured=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_setpower_verbose" title="Permalink to this definition">¶</a></dt>
+<code class="descname">otw_setpower_verbose</code><span class="sig-paren">(</span><em>skiprows=0</em>, <em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C094108&gt;</em>, <em>mc=70.0</em>, <em>powermeasured=False</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_setpower_verbose" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds power from rowing physics calculations to OTW result</p>
 <p>For now, works only in singles</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="rowingdata.rowingdata.rowingdata.otw_testphysics">
-<code class="descname">otw_testphysics</code><span class="sig-paren">(</span><em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C0F54C8&gt;</em>, <em>mc=70.0</em>, <em>p=120.0</em>, <em>spm=30.0</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_testphysics" title="Permalink to this definition">¶</a></dt>
+<code class="descname">otw_testphysics</code><span class="sig-paren">(</span><em>rg=&lt;rowingphysics.rigging.rigging instance at 0x000000000C094148&gt;</em>, <em>mc=70.0</em>, <em>p=120.0</em>, <em>spm=30.0</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.otw_testphysics" title="Permalink to this definition">¶</a></dt>
 <dd><p>Check if erg pace is in right order</p>
 <p>For now, works only in singles</p>
 </dd></dl>
@@ -582,9 +582,9 @@ and copies it to the clipboard</p>
 <dt id="rowingdata.rowingdata.rowingdata.updateintervaldata">
 <code class="descname">updateintervaldata</code><span class="sig-paren">(</span><em>ivalues</em>, <em>iunits</em>, <em>itypes</em>, <em>iresults=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.rowingdata.updateintervaldata" title="Permalink to this definition">¶</a></dt>
 <dd><p>Edits the intervaldata. For example a 2x2000m
-values = [2000,120,2000,120]
-units = [&#8216;meters&#8217;,&#8217;seconds&#8217;,&#8217;meters&#8217;,&#8217;seconds&#8217;]
-types = [&#8216;work&#8217;,&#8217;rest&#8217;,&#8217;work&#8217;,&#8217;rest&#8217;]</p>
+values=[2000,120,2000,120]
+units=[&#8216;meters&#8217;,&#8217;seconds&#8217;,&#8217;meters&#8217;,&#8217;seconds&#8217;]
+types=[&#8216;work&#8217;,&#8217;rest&#8217;,&#8217;work&#8217;,&#8217;rest&#8217;]</p>
 </dd></dl>
 
 <dl class="method">
@@ -619,7 +619,7 @@ changes their website. I am waiting for a Concept2 Logbook API</p>
 <dt id="rowingdata.rowingdata.summarydata">
 <em class="property">class </em><code class="descclassname">rowingdata.rowingdata.</code><code class="descname">summarydata</code><span class="sig-paren">(</span><em>readFile</em><span class="sig-paren">)</span><a class="headerlink" href="#rowingdata.rowingdata.summarydata" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is used to create nice summary texts from CrewNerd&#8217;s summary CSV</p>
-<p>Usage: sumd = rowingdata.summarydata(&#8220;crewnerdsummary.CSV&#8221;)</p>
+<p>Usage: sumd=rowingdata.summarydata(&#8220;crewnerdsummary.CSV&#8221;)</p>
 <blockquote>
 <div><p>sumd.allstats()</p>
 <p>sumd.shortstats()</p>
