@@ -8,7 +8,7 @@ import checkdatafiles
 
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__="1.00.1"
+__version__="1.00.2"
 
 try:
     from Tkinter import Tk
@@ -4555,17 +4555,16 @@ class rowingdata:
 	ax2.plot(df.ix[:,'TimeStamp (sec)'],
 		 df.ix[:,'nowindpace'])
 
-	ax2.plot(df.ix[:,'TimeStamp (sec)'],
-		 ergpace)
+	#ax2.plot(df.ix[:,'TimeStamp (sec)'],
+	#	 ergpace)
 
-	ax2.legend(['Pace','Wind corrected pace','Erg Pace'],
+	ax2.legend(['Pace','Wind corrected pace'],
 		   prop={'size':10},loc=0)
 	
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 
 	s=np.concatenate((df.ix[:,' Stroke500mPace (sec/500m)'].values,
-			    df.ix[:,'nowindpace'].values,
-			    ergpace))
+			    df.ix[:,'nowindpace'].values))
 	
 	yrange=y_axis_range(s,ultimate=[90,210])
 
@@ -4596,8 +4595,8 @@ class rowingdata:
 	# Fourth Panel, watts
 	ax4=fig1.add_subplot(4,1,4)
 	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,' Power (watts)'])
-	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'equivergpower'])
-	ax4.legend(['Power','Erg display power'],prop={'size':10})
+	# ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'equivergpower'])
+	ax4.legend(['Power'],prop={'size':10})
 	yrange=y_axis_range(df.ix[:,' Power (watts)'],
 			      ultimate=[50,555])
 	ax4.axis([0,end_time,yrange[0],yrange[1]])
@@ -4700,10 +4699,10 @@ class rowingdata:
 	ax2.plot(df.ix[:,'TimeStamp (sec)'],
 		 df.ix[:,'nowindpace'])
 
-	ax2.plot(df.ix[:,'TimeStamp (sec)'],
-		 ergpace)
+        #	ax2.plot(df.ix[:,'TimeStamp (sec)'],
+	#	 ergpace)
 
-	ax2.legend(['Pace','Wind corrected pace','Erg Pace'],
+	ax2.legend(['Pace','Wind corrected pace'],
 		   prop={'size':10},loc=0)
 	
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
@@ -4739,8 +4738,8 @@ class rowingdata:
 	# Fourth Panel, watts
 	ax4=fig1.add_subplot(4,1,4)
 	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,' Power (watts)'])
-	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'equivergpower'])
-	ax4.legend(['Power','Erg display power'],prop={'size':10})
+	# ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'equivergpower'])
+	ax4.legend(['Power'],prop={'size':10})
 	yrange=y_axis_range(df.ix[:,' Power (watts)'],
 			      ultimate=[50,555])
 	ax4.axis([0,end_time,yrange[0],yrange[1]])
@@ -4767,10 +4766,10 @@ class rowingdata:
 	ax5.plot(df.ix[:,'TimeStamp (sec)'],
 		 df.ix[:,'nowindpace'])
 
-	ax5.plot(df.ix[:,'TimeStamp (sec)'],
-		 ergpace)
+	#ax5.plot(df.ix[:,'TimeStamp (sec)'],
+	#	 ergpace)
 
-	ax5.legend(['Pace','Wind corrected pace','erg pace'],
+	ax5.legend(['Pace','Wind corrected pace'],
 		   prop={'size':10},loc=0)
 
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
