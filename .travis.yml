@@ -55,6 +55,7 @@ after_success:
   - coveralls --config_file .coveragerc
 
 before_deploy:
+  - python setup.py develop install
   - python setup.py sdist
 
 deploy:
@@ -65,7 +66,4 @@ deploy:
   on:
     branch: master
     repo: sanderroosendaal/rowingdata
-    distributions: sdist bdist_wheel
-
-after_deploy:
-  - python setup.py build_sphinx -E
+    distributions: sdist wheel bdist_wheel
