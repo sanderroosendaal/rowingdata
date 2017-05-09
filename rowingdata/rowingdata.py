@@ -1539,7 +1539,10 @@ class rowingdata:
 
 	# add time stamp to
         if not self.absolutetimestamps:
-	    starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
+            try:
+	        starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
+            except:
+                starttimeunix = time.mktime(datetime.datetime.now().utctimetuple())
 	    data['TimeStamp (sec)']=data['TimeStamp (sec)']+starttimeunix
 
         if gzip:
