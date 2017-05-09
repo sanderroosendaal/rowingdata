@@ -8,11 +8,7 @@ import checkdatafiles
 
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-<<<<<<< HEAD
-__version__="1.00.1"
-=======
 __version__="1.00.2"
->>>>>>> release/v1.00.2
 
 try:
     from Tkinter import Tk
@@ -1543,7 +1539,10 @@ class rowingdata:
 
 	# add time stamp to
         if not self.absolutetimestamps:
-	    starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
+            try:
+	        starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
+            except:
+                starttimeunix = time.mktime(datetime.datetime.now().utctimetuple())
 	    data['TimeStamp (sec)']=data['TimeStamp (sec)']+starttimeunix
 
         if gzip:
