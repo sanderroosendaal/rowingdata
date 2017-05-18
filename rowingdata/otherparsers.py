@@ -53,14 +53,16 @@ class FitSummaryData(object):
                 totalhr += heartrate
 
                 grandhr += heartrate
-
                 strokecount += 1
                 recordcount += 1
 
             if record.name == 'lap':
                 lapcount += 1
 
-                inthr = int(totalhr/float(strokecount))
+                try:
+                    inthr = int(totalhr/float(strokecount))
+                except ZeroDivisionError:
+                    inthr = 0
 
                 inttime = record.get_value('total_elapsed_time')
 
@@ -68,14 +70,25 @@ class FitSummaryData(object):
                 lapsec = int(int(10*(inttime-lapmin*60.))/10.)
 
                 intdist = int(record.get_value('total_distance'))
-                intvelo = intdist/inttime
+                try:
+                    intvelo = intdist/inttime
+                except ZeroDivisionError:
+                    intvelo = 1.0
+                    
                 intpace = 500./intvelo
 
                 totaldistance += intdist
                 totaltime += inttime
 
-                intspm = 60.*strokecount/inttime
-                intdps = intdist/float(strokecount)
+                try:
+                    intspm = 60.*strokecount/inttime
+                except ZeroDivisionError:
+                    intspm = 1.0
+
+                try:
+                    intdps = intdist/float(strokecount)
+                except ZeroDivisionError:
+                    intdps = 0.0
 
                 intmaxhr = maxhr
 
@@ -128,7 +141,11 @@ class FitSummaryData(object):
                 self.summarytext += summarystring
 
         # add total summary
-        overallvelo = totaldistance/totaltime
+        try:
+            overallvelo = totaldistance/totaltime
+        except ZeroDivisionError:
+            overallvelo = 1.0
+            
         overallpace = 500./overallvelo
 
 
@@ -140,7 +157,10 @@ class FitSummaryData(object):
         totsec = int(int(10*(totaltime-totmin*60.))/10.)
 
         avghr = grandhr/float(recordcount)
-        avgspm = 60.*recordcount/totaltime
+        try:
+            avgspm = 60.*recordcount/totaltime
+        except ZeroDivisionError:
+            avgspm = 1.0
 
         avgdps = totaldistance/float(recordcount)
 
