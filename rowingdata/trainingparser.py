@@ -46,6 +46,17 @@ def pieceparse(r):
 
     return [value,unit]
 
+def cleanzeros(values):
+    newlist = []
+    oldlist = values
+    while oldlist:
+        interval = oldlist[0:3]
+        if interval[0] != 0:
+            newlist += interval
+        oldlist = oldlist[3:]
+
+    return newlist
+
 def parse(s,debug=0):
     if debug == 1:
         print("-----------------")

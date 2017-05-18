@@ -1688,10 +1688,18 @@ class rowingdata:
 	    # previoustime=tdrest[' ElapsedTime (sec)'].max()
 	    previoustime=td['TimeStamp (sec)'].max()
 
+            
             intervalduration=nanstozero(intervalduration)
-	    restdistance=nanstozero(tdrest['cum_dist'].max()-tdwork['cum_dist'].max())
+	    restdistance=nanstozero(tdrest['cum_dist'].max())
+            restdistance = restdistance-nanstozero(tdwork['cum_dist'].max())
 
-	    restduration=nanstozero(tdrest['TimeStamp (sec)'].max()-tdwork['TimeStamp (sec)'].max())
+            if restdistance < 0:
+                restdistance = 0
+
+	    restduration=nanstozero(tdrest['TimeStamp (sec)'].max())
+            restduration = restduration-nanstozero(tdwork['TimeStamp (sec)'].max())
+            if restduration < 0:
+                restduration = 0
 
 
 	    
@@ -1863,8 +1871,9 @@ class rowingdata:
 	    theunit=iunits[i]
 	    thetype=itypes[i]
 
-	    if thetype == 'rest':
+	    if thetype == 'rest' and intervalnr != 0:
 		intervalnr=intervalnr - 1
+
 
 	    workouttype=1
 	    if theunit == 'meters' and thevalue>0:
@@ -1920,7 +1929,10 @@ class rowingdata:
 		    workouttype=3
 
 		endseconds=startseconds+thevalue
+
 		mask=(df['TimeStamp (sec)']>startseconds)
+                if startseconds == 0:
+                    mask = (df['TimeStamp (sec)'] >= startseconds)
 		df.loc[mask,' lapIdx']=intervalnr
 		df.loc[mask,' WorkoutState']=workouttype
 		df.loc[mask,' ElapsedTime (sec)']=df.loc[mask,'TimeStamp (sec)']-startseconds
@@ -1973,6 +1985,7 @@ class rowingdata:
 
     def updateinterval_string(self,s):
 	res=trainingparser.parse(s)
+        res = trainingparser.cleanzeros(res)
 	values=trainingparser.getlist(res)
 	units=trainingparser.getlist(res,sel='unit')
 	typ=trainingparser.getlist(res,sel='type')
