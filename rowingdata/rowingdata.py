@@ -1827,6 +1827,7 @@ class rowingdata:
 			   iunits,
 			   itypes,
 			   iresults=[],
+                           debug=False,
 			   ):
 	""" Edits the intervaldata. For example a 2x2000m
 	values=[2000,120,2000,120]
@@ -1860,6 +1861,9 @@ class rowingdata:
 	endseconds=startseconds
 	endmeters=startmeters
 
+        if debug:
+            print 'Duration',df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min()
+        
 	# erase existing lap data
 	df[' lapIdx']=0
 	df[' WorkoutState']=1
@@ -1871,6 +1875,9 @@ class rowingdata:
 	    theunit=iunits[i]
 	    thetype=itypes[i]
 
+            if debug:
+                print thevalue,theunit,thetype
+            
 	    if thetype == 'rest' and intervalnr != 0:
 		intervalnr=intervalnr - 1
 
@@ -1940,6 +1947,7 @@ class rowingdata:
 
 		mask=(df['TimeStamp (sec)']<=endseconds)
 
+
 		# correction for missing part of last stroke
 		recordedmaxtime=df.loc[mask,'TimeStamp (sec)'].max()
 		deltatime=endseconds-recordedmaxtime
@@ -1978,19 +1986,22 @@ class rowingdata:
 
 	    startseconds=endseconds
 	    startmeters=endmeters
+            
+            if debug:
+                print intervalnr,startseconds,startmeters
         
 	self.df=df
 
 
 
-    def updateinterval_string(self,s):
+    def updateinterval_string(self,s,debug=False):
 	res=trainingparser.parse(s)
         res = trainingparser.cleanzeros(res)
 	values=trainingparser.getlist(res)
 	units=trainingparser.getlist(res,sel='unit')
 	typ=trainingparser.getlist(res,sel='type')
 
-	self.updateintervaldata(values,units,typ)
+	self.updateintervaldata(values,units,typ,debug=debug)
 
 
     def add_bearing(self,window_size=20):
