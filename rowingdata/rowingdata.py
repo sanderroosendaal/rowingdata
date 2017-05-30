@@ -5,10 +5,10 @@ import numpy as np
 import re
 import warnings
 import checkdatafiles
-
+from scipy import integrate
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__="1.00.7"
+__version__="1.00.8"
 
 try:
     from Tkinter import Tk
@@ -1507,6 +1507,35 @@ class rowingdata:
 	
 	return self.df[keystring].values
 
+    def check_consistency(self):
+        data = self.df
+
+        result = {}
+        
+        # velocity integrated over time must equal total distance
+        velo = 500./data[' Stroke500mPace (sec/500m)']
+        time = data['TimeStamp (sec)']
+        totaldfromvelo = integrate.trapz(velo,x=time)
+        totaldfromcumdist = data['cum_dist'].max()
+
+        testresult = totaldfromvelo*0.95 <= totaldfromcumdist <= totaldfromvelo*1.05
+        result['velo_time_distance'] = testresult
+
+        return result
+
+    def repair(self):
+        data = self.df
+
+        checks = self.check_consistency()
+
+        if not checks['velo_time_distance']:
+            velo = 500./data[' Stroke500mPace (sec/500m)']
+            time = data['TimeStamp (sec)']
+            dt = np.nan_to_num(time.diff())
+            distance = np.cumsum(dt*velo)
+            data['cum_dist'] = distance
+        
+    
     def write_csv(self,writeFile,gzip=False):
 	data=self.df
 	data=data.drop(['index',
@@ -1827,6 +1856,7 @@ class rowingdata:
 			   iunits,
 			   itypes,
 			   iresults=[],
+                           debug=False,
 			   ):
 	""" Edits the intervaldata. For example a 2x2000m
 	values=[2000,120,2000,120]
@@ -1860,6 +1890,9 @@ class rowingdata:
 	endseconds=startseconds
 	endmeters=startmeters
 
+        if debug:
+            print 'Duration',df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min()
+        
 	# erase existing lap data
 	df[' lapIdx']=0
 	df[' WorkoutState']=1
@@ -1871,6 +1904,9 @@ class rowingdata:
 	    theunit=iunits[i]
 	    thetype=itypes[i]
 
+            if debug:
+                print thevalue,theunit,thetype
+            
 	    if thetype == 'rest' and intervalnr != 0:
 		intervalnr=intervalnr - 1
 
@@ -1940,6 +1976,7 @@ class rowingdata:
 
 		mask=(df['TimeStamp (sec)']<=endseconds)
 
+
 		# correction for missing part of last stroke
 		recordedmaxtime=df.loc[mask,'TimeStamp (sec)'].max()
 		deltatime=endseconds-recordedmaxtime
@@ -1978,19 +2015,22 @@ class rowingdata:
 
 	    startseconds=endseconds
 	    startmeters=endmeters
+            
+            if debug:
+                print intervalnr,startseconds,startmeters
         
 	self.df=df
 
 
 
-    def updateinterval_string(self,s):
+    def updateinterval_string(self,s,debug=False):
 	res=trainingparser.parse(s)
         res = trainingparser.cleanzeros(res)
 	values=trainingparser.getlist(res)
 	units=trainingparser.getlist(res,sel='unit')
 	typ=trainingparser.getlist(res,sel='type')
 
-	self.updateintervaldata(values,units,typ)
+	self.updateintervaldata(values,units,typ,debug=debug)
 
 
     def add_bearing(self,window_size=20):
