@@ -41,7 +41,7 @@ before_install:
   - sudo rm -rf /dev/shm
   - sudo ln -s /run/shm /dev/shm
 install:
-  - git clone -b ng https://github.com/dtcooper/python-fitparse.git
+  - git clone -b master https://github.com/dtcooper/python-fitparse.git
   - cd python-fitparse
   - python setup.py install
   - cd ..
