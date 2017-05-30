@@ -8,7 +8,7 @@ import checkdatafiles
 from scipy import integrate
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__="1.00.8"
+__version__="1.00.14"
 
 try:
     from Tkinter import Tk
@@ -1507,7 +1507,7 @@ class rowingdata:
 	
 	return self.df[keystring].values
 
-    def check_consistency(self):
+    def check_consistency(self,threshold=20):
         data = self.df
 
         result = {}
@@ -1518,7 +1518,15 @@ class rowingdata:
         totaldfromvelo = integrate.trapz(velo,x=time)
         totaldfromcumdist = data['cum_dist'].max()
 
-        testresult = totaldfromvelo*0.95 <= totaldfromcumdist <= totaldfromvelo*1.05
+        r1 = (100.-threshold)/100.
+        r2 = (100.+threshold)/100.
+        
+        if np.isfinite(totaldfromvelo):
+            testresult = totaldfromvelo*r1 <= totaldfromcumdist <= totaldfromvelo*r2
+        else:
+            testresult = True
+
+            
         result['velo_time_distance'] = testresult
 
         return result
@@ -1534,7 +1542,7 @@ class rowingdata:
             dt = np.nan_to_num(time.diff())
             distance = np.cumsum(dt*velo)
             data['cum_dist'] = distance
-        
+            self.df = data
     
     def write_csv(self,writeFile,gzip=False):
 	data=self.df
