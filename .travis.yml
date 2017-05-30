@@ -55,6 +55,7 @@ after_success:
   - coveralls --config_file .coveragerc
 
 before_deploy:
+  - pip install twine
   - python setup.py develop install
   - python setup.py sdist
   - twine upload --skip-existing dist/*

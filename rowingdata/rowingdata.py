@@ -1534,7 +1534,7 @@ class rowingdata:
             dt = np.nan_to_num(time.diff())
             distance = np.cumsum(dt*velo)
             data['cum_dist'] = distance
-        
+            self.df = data
     
     def write_csv(self,writeFile,gzip=False):
 	data=self.df
