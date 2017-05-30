@@ -5,7 +5,7 @@ import numpy as np
 import re
 import warnings
 import checkdatafiles
-
+from scipy import integrate
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
 __version__="1.00.7"
@@ -1507,6 +1507,35 @@ class rowingdata:
 	
 	return self.df[keystring].values
 
+    def check_consistency(self):
+        data = self.df
+
+        result = {}
+        
+        # velocity integrated over time must equal total distance
+        velo = 500./data[' Stroke500mPace (sec/500m)']
+        time = data['TimeStamp (sec)']
+        totaldfromvelo = integrate.trapz(velo,x=time)
+        totaldfromcumdist = data['cum_dist'].max()
+
+        testresult = totaldfromvelo*0.95 <= totaldfromcumdist <= totaldfromvelo*1.05
+        result['velo_time_distance'] = testresult
+
+        return result
+
+    def repair(self):
+        data = self.df
+
+        checks = self.check_consistency()
+
+        if not checks['velo_time_distance']:
+            velo = 500./data[' Stroke500mPace (sec/500m)']
+            time = data['TimeStamp (sec)']
+            dt = np.nan_to_num(time.diff())
+            distance = np.cumsum(dt*velo)
+            data['cum_dist'] = distance
+        
+    
     def write_csv(self,writeFile,gzip=False):
 	data=self.df
 	data=data.drop(['index',
