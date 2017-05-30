@@ -58,7 +58,6 @@ after_success:
 before_deploy:
   - python setup.py develop install
   - python setup.py sdist
-  - twine upload --skip-existing dist/*
 
 deploy:
   provider: pypi
