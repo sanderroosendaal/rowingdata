@@ -42,6 +42,7 @@ before_install:
   - sudo ln -s /run/shm /dev/shm
 install:
   - git clone -b master https://github.com/dtcooper/python-fitparse.git
+  - pip install -U twine
   - cd python-fitparse
   - python setup.py install
   - cd ..
@@ -55,7 +56,6 @@ after_success:
   - coveralls --config_file .coveragerc
 
 before_deploy:
-  - pip install twine
   - python setup.py develop install
   - python setup.py sdist
   - twine upload --skip-existing dist/*
