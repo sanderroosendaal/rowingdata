@@ -13,17 +13,8 @@ namespace='http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
 def lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds):
     f.write('<?xml version="1.0" encoding="UTF-8" standalone="no" ?>')
+    f.write('<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" creator="Oregon 400t" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd"><metadata><link href="http://www.garmin.com"><text>Garmin International</text></link>')
 
-<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" creator="Oregon 400t" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd">
-  <metadata>
-    <link href="http://www.garmin.com">
-      <text>Garmin International</text>
-    </link>
-    <time>2009-10-17T22:58:43Z</time>
-  </metadata>
-  <trk>
-    <name>Example GPX Document</name>
-    <trkseg>
 
 def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     if notes==None:
@@ -73,76 +64,34 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
 	unixtimes=seconds+time.mktime(dateobj.timetuple())
 
 
-    
-    f.write('<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n')
-    f.write('<TrainingCenterDatabase')
-    f.write('  xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"\n')
-    f.write('  xmlns:ax="http://www.garmin.com/xmlschemas/ActivityExtension/v2"\n')
-    f.write('  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n')
-    f.write('xsi:schemaLocation="http://www.garmin.com/xmlschemas/ActivityExtension/v2 http://www.garmin.com/xmlschemas/ActivityExtensionv2.xsd http://www.garmin.com/xmlschemas/FatCalories/v1 http://www.garmin.com/xmlschemas/fatcalorieextensionv1.xsd http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd">\n')
-    f.write('  <Activities>\n')
-    f.write('    <Activity Sport="Other">\n')
 
     datetimestring=row_date
 
-    f.write('      <Id>{s}Z</Id>\n'.format(s=datetimestring))
-
     lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds)
 
+    ts = datetime.datetime.fromtimestamp(unixtimes[0]).isoformat()
+    s = '<time>{ts}</time></metadata><trk><name>Export by rowingdata</name><trkseg>'.format(
+        ts=ts,
+        )
+    
+    f.write(s)
+
+    
     for i in range(nr_rows):
-	hri=heartrate[i]
-	if hri == 0:
-	    hri=1
-	f.write('          <Trackpoint>\n')
+        s = '          <trkpt lat="{lat}" lon="{lon}">\n'.format(
+            lat=lat[i],
+            lon=long[i]
+            )
+	f.write(s)
 	s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
-	f.write('            <Time>{s}Z</Time>\n'.format(s=s))
-	if (lat[i] != 0) & (long[i] != 0 ):
-	    f.write('            <Position>\n')
-	    f.write('              <LatitudeDegrees>{lat}</LatitudeDegrees>\n'.format(
-		lat=lat[i]
-		))
-	    f.write('              <LongitudeDegrees>{long}</LongitudeDegrees>\n'.format(
-		long=long[i]
-		))
-	    f.write('            </Position>\n')
-	f.write('            <DistanceMeters>{d}</DistanceMeters>\n'.format(
-	    d=distancemeters[i]
-	    ))
-	f.write('            <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">\n')
-	f.write('              <Value>{h}</Value>\n'.format(h=hri))
-	f.write('            </HeartRateBpm>\n')
-	f.write('            <Cadence>{c}</Cadence>\n'.format(c=cadence[i]))
-	if haspower:
-	    f.write('            <Extensions>\n')
-	    f.write('              <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">\n')
-	    f.write('                <Watts>{p}</Watts>\n'.format(p=int(power[i])))
-	    f.write('              </TPX>\n')
-	    f.write('            </Extensions>\n')
-	f.write('          </Trackpoint>\n')
+	f.write('            <time>{s}Z</time>\n'.format(s=s))
+	f.write('          </trkpt>\n')
 
 
 
-    f.write('          </Track>\n')
-    f.write('        </Lap>\n')
-    f.write('      <Notes>'+notes+'</Notes>\n')
-    f.write('    </Activity>\n')
-    f.write('  </Activities>\n')
-    f.write('  <Creator>\n')
-    f.write('    <Name>rowsandall.com/rowingdata</Name>\n')
-    f.write('  </Creator>\n')
-    f.write('  <Author xsi:type="Application_t">\n')
-    f.write('    <Name>rowingdata</Name>\n')
-    f.write('    <Build>\n')
-    f.write('      <Version>\n')
-    f.write('        <VersionMajor>0</VersionMajor>\n')
-    f.write('        <VersionMinor>75</VersionMinor>\n')
-    f.write('      </Version>\n')
-    f.write('      <Type>Release</Type>\n')
-    f.write('    </Build>\n')
-    f.write('    <LangID>EN</LangID>\n')
-    f.write('    <PartNumber>000-00000-00</PartNumber>\n')
-    f.write('  </Author>\n')
-    f.write('</TrainingCenterDatabase>\n')
+    f.write('</trkseg>')
+    f.write('</trk>')
+    f.write('</gpx>')
 
     f.close()
 
@@ -153,11 +102,11 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     file.close()
     
     try:
-	xsd_file=urllib2.urlopen("https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd")
-	output=open('TrainingCenterDatabasev2.xsd','w') 
+	xsd_file=urllib2.urlopen("http://www.topografix.com/GPX/1/1/gpx.xsd")
+	output=open('gpx.xsd','w') 
 	output.write(xsd_file.read().replace('\n',''))
 	output.close()
-	xsd_filename="TrainingCenterDatabasev2.xsd"
+	xsd_filename="gpx.xsd"
 
 	# Run some tests
 	tree=objectify.parse(gpxFile)

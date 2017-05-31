@@ -8,7 +8,7 @@ import checkdatafiles
 from scipy import integrate
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__="1.00.14"
+__version__="1.00.15"
 
 try:
     from Tkinter import Tk
@@ -89,6 +89,7 @@ from pytz import timezone as tz,utc
 
 import dateutil
 import writetcx
+import gpxwrite
 import trainingparser
 
 from dateutil import parser
@@ -1507,13 +1508,17 @@ class rowingdata:
 	
 	return self.df[keystring].values
 
-    def check_consistency(self,threshold=20):
+    def check_consistency(self,threshold=20,velovariation=1.e-3):
         data = self.df
 
         result = {}
         
         # velocity integrated over time must equal total distance
         velo = 500./data[' Stroke500mPace (sec/500m)']
+
+        # clip extreme values
+        velo = velo.clip_upper(10.0)
+        
         time = data['TimeStamp (sec)']
         totaldfromvelo = integrate.trapz(velo,x=time)
         totaldfromcumdist = data['cum_dist'].max()
@@ -1529,6 +1534,10 @@ class rowingdata:
             
         result['velo_time_distance'] = testresult
 
+
+        # standard deviation of velocity must be non-zero
+        result['velo_valid'] = (velo.std()/velo.mean() >= velovariation)
+        
         return result
 
     def repair(self):
@@ -1536,14 +1545,22 @@ class rowingdata:
 
         checks = self.check_consistency()
 
-        if not checks['velo_time_distance']:
+        if not checks['velo_time_distance'] and checks['velo_valid']:
+            # calculate distance from velocity and time
             velo = 500./data[' Stroke500mPace (sec/500m)']
             time = data['TimeStamp (sec)']
             dt = np.nan_to_num(time.diff())
             distance = np.cumsum(dt*velo)
             data['cum_dist'] = distance
             self.df = data
-    
+        elif not checks['velo_valid']:
+            time = data['TimeStamp (sec)']
+            distance = data[' Horizontal (meters)']
+            dt = np.nan_to_num(time.diff())
+            dx = np.nan_to_num(distance.diff())
+            pace = 500.*dt/dx
+            data[' Stroke500mPace (sec/500m)'] = pace
+            
     def write_csv(self,writeFile,gzip=False):
 	data=self.df
 	data=data.drop(['index',
@@ -1609,6 +1626,13 @@ class rowingdata:
 	writetcx.write_tcx(fileName,df,row_date=self.rowdatetime.isoformat(),notes=notes)
 
 
+    def exporttogpx(self,fileName,notes="Exported by Rowingdata"):
+        df = self.df
+        gpxwrite.write_gpx(fileName,
+                           df,
+                           row_date=self.rowdatetime.isoformat(),
+                           notes=notes)
+        
     def intervalstats(self,separator='|'):
 	""" Used to create a nifty text summary, one row for each interval
 
