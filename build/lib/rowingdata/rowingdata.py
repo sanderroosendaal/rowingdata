@@ -8,7 +8,7 @@ import checkdatafiles
 from scipy import integrate
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__="1.00.14"
+__version__="1.00.15"
 
 try:
     from Tkinter import Tk
@@ -1418,6 +1418,13 @@ class rowingdata:
                         sled_df[name]=forcen/lbstoN
                     except KeyError:
                         pass
+                if name==' Cadence (stokes/min)':
+                    try:
+                        spm = sled_df[' Cadence (strokes/min)']
+                        sled_df[name] = spm
+                    except KeyError:
+                        pass
+
 
         # add forces in N (for future)
         sled_df[' AverageDriveForce (N)']=sled_df[' AverageDriveForce (lbs)']*lbstoN
