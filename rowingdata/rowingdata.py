@@ -1418,6 +1418,13 @@ class rowingdata:
                         sled_df[name]=forcen/lbstoN
                     except KeyError:
                         pass
+                if name==' Cadence (stokes/min)':
+                    try:
+                        spm = sled_df[' Cadence (strokes/min)']
+                        sled_df[name] = spm
+                    except KeyError:
+                        pass
+
 
         # add forces in N (for future)
         sled_df[' AverageDriveForce (N)']=sled_df[' AverageDriveForce (lbs)']*lbstoN

@@ -97,6 +97,28 @@ class TestStringParser:
         assert_equals(t6,r6)
         assert_equals(t7,r7)
         
+class TestCorrectedRowingData:
+    row=rowingdata.rowingdata(csvfile='testdata/correctedpainsled.csv')
+
+    def test_filetype(self):
+        assert_equals(rowingdata.get_file_type('testdata/testdata.csv'),'csv')
+    
+    def test_basic_rowingdata(self):
+        assert_equals(self.row.rowtype,'Indoor Rower')
+        assert_equals(self.row.dragfactor,95.8808988764045)
+        assert_equals(self.row.number_of_rows,445)
+        assert_equals(self.row.rowdatetime,datetime.datetime(2017,5,30,19,4,16,383211))
+        totaldist=self.row.df['cum_dist'].max()
+        totaltime=self.row.df['TimeStamp (sec)'].max()-self.row.df['TimeStamp (sec)'].min()
+        totaltime=totaltime+self.row.df.ix[0,' ElapsedTime (sec)']
+        assert_equals(totaltime, 1309.9480600738525)
+        assert_equals(totaldist, 5000)
+        assert_equals(
+            self.row.df[' Cadence (stokes/min)'].mean(),
+            20.339325842696628
+        )
+
+                      
 class TestErgData:
     def testergdata(self):
         csvfile='testdata/ergdata_example.csv'

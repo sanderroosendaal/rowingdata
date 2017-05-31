@@ -392,8 +392,8 @@ class CSVParser(object):
         self.csvfile=csvfile
         
         self.df=pd.read_csv(csvfile,skiprows=skiprows,usecols=usecols,
-                              sep=sep,engine=engine,skipfooter=skipfooter,
-                              converters=converters,index_col=False)
+                            sep=sep,engine=engine,skipfooter=skipfooter,
+                            converters=converters,index_col=False)
 
         self.df=self.df.fillna(method='ffill')
         
