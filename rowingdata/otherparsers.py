@@ -763,6 +763,12 @@ class TCXParserNoHR(object):
         self.long_values = long_values+long_values2
         self.lat_values = lat_values+lat_values2
 
+        # correct lat, long if empty
+        if not len(self.lat_values):
+            self.lat_values = np.zeros(len(self.spm_values))
+            self.long_values = np.zeros(len(self.spm_values))
+            
+
         # sort the two datasets
         data = pd.DataFrame({
             't':timestamps,
@@ -827,8 +833,22 @@ class TCXParserNoHR(object):
         self.velo = velo
 
 
-
     def write_csv(self, writefile='example.csv', window_size=5, gzip=False):
+        # determine if geo data
+        lat = pd.Series(self.lat_values)
+        lon = pd.Series(self.long_values)
+
+        if lat.std() or lon.std():
+            self.write_geo_csv(writefile=writefile,
+                               window_size=window_size,
+                               gzip=gzip)
+        else:
+            self.write_nogeo_csv(writefile=writefile,
+                                 window_size=window_size,
+                                 gzip=gzip)
+
+
+    def write_geo_csv(self, writefile='example.csv', window_size=5, gzip=False):
         """ Exports TCX data to the CSV format that
         I use in rowingdata
         """
@@ -887,6 +907,7 @@ class TCXParserNoHR(object):
         self.data = data
 
         if gzip:
+
             return data.to_csv(writefile+'.gz', index_label='index',
                                compression='gzip')
         else:
@@ -909,9 +930,6 @@ class TCXParserNoHR(object):
 
         # Stroke Rate
         spm = self.spm_values
-
-        # Heart Rate
-        heartrate = self.hr_values
 
 
         nr_rows = len(spm)
@@ -943,7 +961,7 @@ class TCXParserNoHR(object):
             'TimeStamp (sec)':unixtimes,
             ' Horizontal (meters)': distance,
             ' Cadence (stokes/min)':spm,
-            ' HRCur (bpm)':heartrate,
+            ' HRCur (bpm)':np.zeros(nr_rows),
             ' Stroke500mPace (sec/500m)':pace,
             ' Power (watts)':np.zeros(nr_rows),
             ' DriveLength (meters)':np.zeros(nr_rows),

@@ -23,6 +23,9 @@ class TestBasicRowingData:
         totaltime=totaltime+self.row.df.ix[0,' ElapsedTime (sec)']
         assert_equals(totaltime, 540.04236011505122)
         assert_equals(totaldist, 2000)
+        checks = self.row.check_consistency()
+        assert_equals(checks['velo_time_distance'],True)
+        assert_equals(checks['velo_valid'],True)
 
     def test_intervals_rowingdata(self):
         ts,ds,st=self.row.intervalstats_values()
@@ -130,6 +133,9 @@ class TestErgData:
         assert_equals(totaldist,1992)
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(totaltime,520)
+        checks = row.check_consistency()
+        assert_equals(checks['velo_time_distance'],True)
+        assert_equals(checks['velo_valid'],True)
 
 class TestpainsledDesktopParser:
     def testpainsleddesktop(self):
@@ -143,6 +149,9 @@ class TestpainsledDesktopParser:
         assert_equals(row.rowdatetime,datetime.datetime(2016,3,29,16,41,27))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(totaltime,1802)
+        checks = row.check_consistency()
+        assert_equals(checks['velo_time_distance'],True)
+        assert_equals(checks['velo_valid'],True)
 
 class TestBoatCoachParser:
     def testboatcoach(self):
@@ -156,7 +165,10 @@ class TestBoatCoachParser:
         assert_equals(row.rowdatetime,datetime.datetime(2016,11,28,7,37,2))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(totaltime,118)
-    
+        checks = row.check_consistency()
+        assert_equals(checks['velo_time_distance'],True)
+        assert_equals(checks['velo_valid'],True)
+        
 class TestspeedcoachParser:
     def testspeedcoach(self):
         csvfile='testdata/speedcoachexample.csv'
@@ -168,7 +180,10 @@ class TestspeedcoachParser:
         assert_equals(totaldist,9520)
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(totaltime,3176.5)
-    
+        checks = row.check_consistency()
+        assert_equals(checks['velo_time_distance'],True)
+        assert_equals(checks['velo_valid'],True)
+        
 class TestErgStickParser:
     def testergstick(self):
         csvfile='testdata/ergstick.csv'
@@ -180,7 +195,10 @@ class TestErgStickParser:
         assert_equals(int(totaldist),4959)
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(int(totaltime),1201)
-    
+        checks = row.check_consistency()
+        assert_equals(checks['velo_time_distance'],True)
+        assert_equals(checks['velo_valid'],True)
+        
 class TestMysteryParser:
     def testmystery(self):
         csvfile='testdata/mystery.csv'
@@ -192,7 +210,10 @@ class TestMysteryParser:
         assert_equals(totaldist,7478)
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(int(totaltime),2325)
-    
+        checks = row.check_consistency()
+        assert_equals(checks['velo_time_distance'],True)
+        assert_equals(checks['velo_valid'],True)
+        
 class TestRowProParser:
     def testrowpro(self):
         csvfile='testdata/RP_testdata.csv'
@@ -205,7 +226,10 @@ class TestRowProParser:
         assert_equals(row.rowdatetime,datetime.datetime(2016,3,15,18,49,48))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(int(10*totaltime),22660)
-
+        checks = row.check_consistency()
+        assert_equals(checks['velo_time_distance'],True)
+        assert_equals(checks['velo_valid'],True)
+        
 class TestRowProParserIntervals:
     def testrowprointervals(self):
         csvfile='testdata/RP_interval.csv'
@@ -218,7 +242,10 @@ class TestRowProParserIntervals:
         assert_equals(row.rowdatetime,datetime.datetime(2016,1,12,18,23,10))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(totaltime,4800)
-    
+        checks = row.check_consistency()
+        assert_equals(checks['velo_time_distance'],True)
+        assert_equals(checks['velo_valid'],True)
+        
 class TestSpeedCoach2Parser:
     def testspeedcoach2(self):
         csvfile='testdata/Speedcoach2example.csv'
@@ -231,7 +258,10 @@ class TestSpeedCoach2Parser:
         assert_equals(row.rowdatetime,datetime.datetime(2016,7,28,11,35,1,500000))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(totaltime,170)
-    
+        checks = row.check_consistency()
+        assert_equals(checks['velo_time_distance'],True)
+        assert_equals(checks['velo_valid'],True)
+        
 class TestSpeedCoach2_v127Parser:
     def testspeedcoach2v127(self):
         csvfile='testdata/SpeedCoach2Linkv1.27.csv'
@@ -244,7 +274,10 @@ class TestSpeedCoach2_v127Parser:
         assert_equals(row.rowdatetime,datetime.datetime(2016,11,5,10,2,3,200000))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(int(10*totaltime),45018)
-    
+        checks = row.check_consistency()
+        assert_equals(checks['velo_time_distance'],True)
+        assert_equals(checks['velo_valid'],True)
+        
 class TestFITParser:
     def testfit(self):
         fitfile='testdata/3x250m.fit'
@@ -257,7 +290,10 @@ class TestFITParser:
         assert_equals(row.rowdatetime,datetime.datetime(2016,7,28,9,35,29))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(int(10*totaltime),4870)
-
+        checks = row.check_consistency()
+        assert_equals(checks['velo_time_distance'],False)
+        assert_equals(checks['velo_valid'],True)
+        
     def testfitsummary(self):
         fitfile='testdata/3x250m.fit'
         r = rowingdata.FitSummaryData(fitfile)
