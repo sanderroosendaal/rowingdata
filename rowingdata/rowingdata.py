@@ -1330,6 +1330,12 @@ class rowingdata:
 #		 rower=rower(),
 #		 rowtype="Indoor Rower"):
 
+        if 'debug' in kwargs:
+            debug = kwargs['debug']
+        else:
+            debug = False
+
+        self.debug = debug
 
         if 'csvfile' in kwargs:
             readFile=kwargs['csvfile']
@@ -1397,6 +1403,8 @@ class rowingdata:
 
         for name in mandatorynames:
             if name not in sled_df.columns:
+                if debug:
+                    print name+' is not found in file'
                 sled_df[name]=0
                 if name==' WorkoutState':
                     sled_df[name]=4
@@ -1422,6 +1430,8 @@ class rowingdata:
                 if name==' Cadence (stokes/min)':
                     try:
                         spm = sled_df[' Cadence (strokes/min)']
+                        if debug:
+                            print 'Cadence found'
                         sled_df[name] = spm
                     except KeyError:
                         pass
