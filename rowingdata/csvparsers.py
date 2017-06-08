@@ -126,6 +126,9 @@ def csvtests(fop):
     if 'stroke.REVISION' in firstline:
         return 'painsleddesktop'
 
+    if 'Date' in firstline and 'Latitude' in firstline and 'Heart rate' in firstline:
+        return 'kinomap'
+    
     return 'unknown'
 
 def get_file_type(f):
@@ -346,6 +349,16 @@ def timestrtosecs(string):
     secs=3600*dt.hour+60*dt.minute+dt.second
 
     return secs
+
+def speedtopace(v,unit='ms'):
+    if unit=='kmh':
+        v = v*1000/3600.
+    if v>0:
+        p = 500./v
+    else:
+        p = np.nan
+
+    return p
 
 def timestrtosecs2(timestring,unknown=0):
     try:
@@ -640,6 +653,71 @@ class BoatCoachParser(CSVParser):
 
         mask=(self.df['cumdist'] == maxdist)
         self.df.loc[mask,self.columns[' lapIdx']]=self.df.loc[self.df.index[-3],self.columns[' lapIdx']]
+        
+        self.to_standard()
+
+class KinoMapParser(CSVParser):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['skiprows']=0
+        #kwargs['usecols']=range(25)
+
+        if args:
+            csvfile=args[0]
+        else:
+            csvfile=kwargs['csvfile']
+            
+        super(KinoMapParser, self).__init__(*args, **kwargs)
+
+        self.cols=[
+            'Date',
+            'Distance',
+            'Cadence',
+            'Heart rate',
+            'Speed',
+            'Power',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            'Latitude',
+            'Longitude',
+        ]
+
+        self.cols=[b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
+
+        self.columns=dict(zip(self.defaultcolumnnames,self.cols))
+
+
+        datetime=self.df[self.columns['TimeStamp (sec)']]
+        row_date=parser.parse(datetime[0],fuzzy=True)
+        datetime=datetime.apply(lambda x:parser.parse(x,fuzzy=True))
+        unixtimes=datetime.apply(lambda x:time.mktime(x.utctimetuple()))
+
+        self.df[self.columns['TimeStamp (sec)']]=unixtimes
+        self.columns[' ElapsedTime (sec)']=' ElapsedTime (sec)'
+
+        self.df[self.columns[' ElapsedTime (sec)']]=unixtimes-unixtimes[0]
+        
+        pace=self.df[self.columns[' Stroke500mPace (sec/500m)']].apply(lambda x:speedtopace(x,unit='kmh'))
+        self.df[self.columns[' Stroke500mPace (sec/500m)']]=pace
+
+            
+        res=make_cumvalues(self.df[self.columns[' Horizontal (meters)']])
+        self.df['cumdist']=res[0]
+        maxdist=self.df['cumdist'].max()
+        mask=(self.df['cumdist'] == maxdist)
+        while len(self.df[mask]) > 2:
+            mask=(self.df['cumdist'] == maxdist)
+            self.df.drop(self.df.index[-1],inplace=True)
+
+        mask=(self.df['cumdist'] == maxdist)
         
         self.to_standard()
 
