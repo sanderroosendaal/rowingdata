@@ -1,6 +1,6 @@
 import rowingdata
 #from rowingdata import TCXParser,RowProParser,ErgDataParser,TCXParserNoHR
-#from rowingdata import BoatCoachParser
+#from rowingdata import BoatCoachParser,KinoMapParser
 #from rowingdata import MysteryParser
 #from rowingdata import painsledDesktopParser,speedcoachParser,ErgStickParser
 #from rowingdata import SpeedCoach2Parser,FITParser,fitsummarydata
@@ -72,7 +72,11 @@ def checkfile(f2,verbose=False):
 	# handle ErgStick
         if (fileformat == 'ergstick'):
 	    row=rowingdata.ErgStickParser(f2)
-		    
+
+        # handle Kinomap
+        if (fileformat == 'kinomap'):
+            row = rowingdata.KinoMapParser(f2)
+            
 	# handle FIT
 	if (fileformat == 'fit'):
 	    row=rowingdata.FITParser(f2)
