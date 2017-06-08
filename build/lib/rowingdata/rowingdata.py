@@ -8,7 +8,7 @@ import checkdatafiles
 from scipy import integrate
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__="1.00.16"
+__version__="1.00.17"
 
 try:
     from Tkinter import Tk
@@ -45,6 +45,7 @@ from csvparsers import (
     BoatCoachAdvancedParser,
     speedcoachParser,
     ErgDataParser,
+    KinoMapParser,
     ErgStickParser,
     MysteryParser,
     RowProParser,
@@ -1330,6 +1331,12 @@ class rowingdata:
 #		 rower=rower(),
 #		 rowtype="Indoor Rower"):
 
+        if 'debug' in kwargs:
+            debug = kwargs['debug']
+        else:
+            debug = False
+
+        self.debug = debug
 
         if 'csvfile' in kwargs:
             readFile=kwargs['csvfile']
@@ -1397,6 +1404,8 @@ class rowingdata:
 
         for name in mandatorynames:
             if name not in sled_df.columns:
+                if debug:
+                    print name+' is not found in file'
                 sled_df[name]=0
                 if name==' WorkoutState':
                     sled_df[name]=4
@@ -1422,6 +1431,8 @@ class rowingdata:
                 if name==' Cadence (stokes/min)':
                     try:
                         spm = sled_df[' Cadence (strokes/min)']
+                        if debug:
+                            print 'Cadence found'
                         sled_df[name] = spm
                     except KeyError:
                         pass
