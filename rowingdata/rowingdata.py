@@ -1554,8 +1554,11 @@ class rowingdata:
 
 
         # standard deviation of velocity must be non-zero
-        result['velo_valid'] = (velo.std()/velo.mean() >= velovariation)
-        
+        try:
+            result['velo_valid'] = (velo.std()/velo.mean() >= velovariation)
+        except ZeroDivisionError:
+            result['velo_valid'] = True
+            
         return result
 
     def repair(self):
