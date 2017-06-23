@@ -1308,6 +1308,12 @@ class SpeedCoach2Parser(CSVParser):
             csvfile=kwargs['csvfile']
             
         skiprows,summaryline,blanklines=skip_variable_header(csvfile)
+        unitrow = get_file_line(skiprows+2,csvfile)
+        velo_unit = 'ms'
+        if 'KPH' in unitrow:
+            velo_unit = 'kph'
+
+
         kwargs['skiprows']=skiprows
         super(SpeedCoach2Parser, self).__init__(*args, **kwargs)
         self.df=self.df.drop(self.df.index[[0]])
@@ -1391,6 +1397,9 @@ class SpeedCoach2Parser(CSVParser):
         cum_dist=make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
         self.df[self.columns['cum_dist']]=cum_dist
         velo=self.df[self.columns['GPS Speed']]
+        if velo_unit == 'kph':
+            velo = velo/3.6
+            
         pace=500./velo
         pace=pace.replace(np.nan,300)
         self.df[self.columns[' Stroke500mPace (sec/500m)']]=pace
