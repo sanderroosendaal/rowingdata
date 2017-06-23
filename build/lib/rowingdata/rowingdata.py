@@ -8,7 +8,7 @@ import checkdatafiles
 from scipy import integrate
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__="1.00.17"
+__version__="1.00.18"
 
 try:
     from Tkinter import Tk
@@ -1554,8 +1554,11 @@ class rowingdata:
 
 
         # standard deviation of velocity must be non-zero
-        result['velo_valid'] = (velo.std()/velo.mean() >= velovariation)
-        
+        try:
+            result['velo_valid'] = (velo.std()/velo.mean() >= velovariation)
+        except ZeroDivisionError:
+            result['velo_valid'] = True
+            
         return result
 
     def repair(self):
