@@ -58,6 +58,7 @@ def cleanzeros(values):
     return newlist
 
 def parse(s,debug=0):
+    s = s.replace('*','x')
     if debug == 1:
         print("-----------------")
 	print(s)
