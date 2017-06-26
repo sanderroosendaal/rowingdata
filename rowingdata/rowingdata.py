@@ -8,7 +8,7 @@ import checkdatafiles
 from scipy import integrate
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__="1.00.18"
+__version__="1.00.19"
 
 try:
     from Tkinter import Tk
@@ -553,14 +553,31 @@ def format_pace_tick(x,pos=None):
 	return template % (min,sec_str)
 
 
-def y_axis_range(ydata,miny=0,padding=.1,ultimate=[-1e9,1e9]):
+def y_axis_range(ydata,**kwargs):
+    # ydata,miny=0,padding=.1,ultimate=[-1e9,1e9]):
 
+
+    if 'miny' in kwargs:
+        ymin = kwargs['miny']
+    else:
+        ymin=np.ma.masked_invalid(ydata).min()
+
+    if not 'ultimate' in kwargs:
+        ultimate = [-1e9,1e9]
+    else:
+        ultimate = kwargs['ultimate']
+
+    if not 'padding' in kwargs:
+        padding = .1
+    else:
+        padding = kwargs['padding']
+        
     # ydata must by a numpy array
 
-    ymin=np.ma.masked_invalid(ydata).min()
+
     ymax=np.ma.masked_invalid(ydata).max()
 
-
+    
     yrange=ymax-ymin
     yrangemin=ymin
     yrangemax=ymax
@@ -568,16 +585,23 @@ def y_axis_range(ydata,miny=0,padding=.1,ultimate=[-1e9,1e9]):
 
 
     if (yrange == 0):
-	if ymin == 0:
-	    yrangemin=-padding
-	else:
-	    yrangemin=ymin-ymin*padding
+        if not 'miny' in kwargs:
+	    if ymin == 0:
+	        yrangemin=-padding
+	    else:
+	        yrangemin=ymin-ymin*padding
+        else:
+            yrangemin = ymin
 	if ymax == 0:
 	    yrangemax=padding
 	else:
 	    yrangemax=ymax+ymax*padding
     else:
-	yrangemin=ymin-padding*yrange
+        if not 'miny' in kwargs:
+	    yrangemin=ymin-padding*yrange
+        else:
+            yrangemin = ymin
+            
 	yrangemax=ymax+padding*yrange
 
     if (yrangemin < ultimate[0]):
@@ -3284,7 +3308,7 @@ class rowingdata:
 	ax4=fig1.add_subplot(4,1,4)
 	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,' Power (watts)'])
 	yrange=y_axis_range(df.ix[:,' Power (watts)'],
-			      ultimate=[50,555])
+			      ultimate=[0,555],miny=0)
 	ax4.axis([0,end_time,yrange[0],yrange[1]])
 	ax4.set_xticks(range(0,end_time,300))
 	ax4.set_xlabel('Time (h:m)')
@@ -3441,7 +3465,7 @@ class rowingdata:
 	ax2=fig1.add_subplot(3,1,2)
 	ax2.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,190])
+			      ultimate=[85,360])
 	
 	ax2.axis([0,end_dist,yrange[1],yrange[0]])
 	ax2.set_xticks(range(1000,end_dist,1000))
@@ -3693,7 +3717,7 @@ class rowingdata:
 	ax2.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,190])
+			      ultimate=[85,360])
 	ax2.axis([0,end_time,yrange[1],yrange[0]])
 	ax2.set_xticks(range(0,end_time,300))
 	ax2.set_ylabel('(sec/500)')
@@ -3746,7 +3770,7 @@ class rowingdata:
 	ax1.set_ylabel('(sec/500)')
 
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,190])
+			      ultimate=[85,360])
 	plt.axis([0,end_time,yrange[1],yrange[0]])
 
 	ax1.set_xticks(range(1000,end_time,1000))
@@ -3820,7 +3844,7 @@ class rowingdata:
 	ax1.set_ylabel('Pace (sec/500)')
 
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,190])
+			      ultimate=[85,360])
 	plt.axis([0,end_time,yrange[1],yrange[0]])
 
 	ax1.set_xticks(range(1000,end_time,1000))
@@ -3962,19 +3986,27 @@ class rowingdata:
 	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_an'],color='k')
 
 
-	ut2,ut1,at,tr,an=self.rwr.ftp*np.array(self.rwr.powerperc)/100.
-
-	ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
-	ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
-	ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
-	ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
-	ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
 
 	end_dist=int(df.ix[df.shape[0]-1,'cum_dist'])
 
 	yrange=y_axis_range(df.ix[:,' Power (watts)'],
-			      ultimate=[50,555])
-	ax4.axis([0,end_dist,yrange[0],yrange[1]])
+			      ultimate=[0,555],miny=0)
+        ax4.axis([0,end_dist,yrange[0],yrange[1]])
+
+        ut2,ut1,at,tr,an=self.rwr.ftp*np.array(self.rwr.powerperc)/100.
+
+        if ut2+1.5<yrange[1] and ut2+1.5>yrange[0]:
+	    ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
+        if ut1+1.5<yrange[1] and ut1+1.5>yrange[0]:
+	    ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
+        if at+1.5<yrange[1] and at+1.5>yrange[0]:
+	    ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
+        if tr+1.5<yrange[1] and tr+1.5>yrange[0]:
+	    ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
+        if an+1.5<yrange[1] and an+1.5>yrange[0]:
+	    ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
+
+        
 	ax4.set_xticks(range(1000,end_dist,1000))
 	ax4.set_xlabel('Dist (m)')
 	ax4.set_ylabel('Power (Watts)')
@@ -4052,7 +4084,7 @@ class rowingdata:
 	ax2=fig1.add_subplot(4,1,2)
 	ax2.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,190])
+			      ultimate=[85,360])
 	ax2.axis([0,end_dist,yrange[1],yrange[0]])
 	ax2.set_xticks(range(1000,end_dist,1000))
 	ax2.set_ylabel('(sec/500)')
@@ -4101,19 +4133,26 @@ class rowingdata:
 	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_an'],color='k')
 
 
-	ut2,ut1,at,tr,an=self.rwr.ftp*np.array(self.rwr.powerperc)/100.
-
-	ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
-	ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
-	ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
-	ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
-	ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
-
 	end_dist=int(df.ix[df.shape[0]-1,'cum_dist'])
 
 	yrange=y_axis_range(df.ix[:,' Power (watts)'],
-			      ultimate=[50,555])
+			      ultimate=[0,555],miny=0)
 	ax4.axis([0,end_dist,yrange[0],yrange[1]])
+
+        ut2,ut1,at,tr,an=self.rwr.ftp*np.array(self.rwr.powerperc)/100.
+
+        if ut2+1.5<yrange[1] and ut2+1.5>yrange[0]:
+	    ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
+        if ut1+1.5<yrange[1] and ut1+1.5>yrange[0]:
+	    ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
+        if at+1.5<yrange[1] and at+1.5>yrange[0]:
+	    ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
+        if tr+1.5<yrange[1] and tr+1.5>yrange[0]:
+	    ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
+        if an+1.5<yrange[1] and an+1.5>yrange[0]:
+	    ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
+
+        
 	ax4.set_xticks(range(1000,end_dist,1000))
 	ax4.set_xlabel('Dist (m)')
 	ax4.set_ylabel('Power (Watts)')
@@ -4191,7 +4230,7 @@ class rowingdata:
 	ax2=fig1.add_subplot(4,1,2)
 	ax2.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,190])
+			      ultimate=[85,360])
 	ax2.axis([0,end_dist,yrange[1],yrange[0]])
 	ax2.set_xticks(range(1000,end_dist,1000))
 	ax2.set_ylabel('(sec/500)')
@@ -4240,19 +4279,27 @@ class rowingdata:
 	ax4.plot(df.ix[:,'cum_dist'],df.ix[:,'limpw_an'],color='k')
 
 
-	ut2,ut1,at,tr,an=self.rwr.ftp*np.array(self.rwr.powerperc)/100.
-
-	ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
-	ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
-	ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
-	ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
-	ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
 
 	end_dist=int(df.ix[df.shape[0]-1,'cum_dist'])
 
 	yrange=y_axis_range(df.ix[:,' Power (watts)'],
-			      ultimate=[50,555])
+			      ultimate=[0,555],miny=0)
 	ax4.axis([0,end_dist,yrange[0],yrange[1]])
+
+        ut2,ut1,at,tr,an=self.rwr.ftp*np.array(self.rwr.powerperc)/100.
+
+        if ut2+1.5<yrange[1] and ut2+1.5>yrange[0]:
+	    ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
+        if ut1+1.5<yrange[1] and ut1+1.5>yrange[0]:
+	    ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
+        if at+1.5<yrange[1] and at+1.5>yrange[0]:
+	    ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
+        if tr+1.5<yrange[1] and tr+1.5>yrange[0]:
+	    ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
+        if an+1.5<yrange[1] and an+1.5>yrange[0]:
+	    ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
+        
+        
 	ax4.set_xticks(range(1000,end_dist,1000))
 	ax4.set_xlabel('Dist (m)')
 	ax4.set_ylabel('Power (Watts)')
@@ -4392,19 +4439,27 @@ class rowingdata:
 	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_an'],color='k')
 
 
-	ut2,ut1,at,tr,an=self.rwr.ftp*np.array(self.rwr.powerperc)/100.
-
-	ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
-	ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
-	ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
-	ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
-	ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
 
 	end_dist=int(df.ix[df.shape[0]-1,'cum_dist'])
 
 	yrange=y_axis_range(df.ix[:,' Power (watts)'],
-			      ultimate=[50,555])
+			      ultimate=[0,555],miny=0)
 	ax4.axis([0,end_time,yrange[0],yrange[1]])
+
+        ut2,ut1,at,tr,an=self.rwr.ftp*np.array(self.rwr.powerperc)/100.
+
+        if ut2+1.5<yrange[1] and ut2+1.5>yrange[0]:
+	    ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
+        if ut1+1.5<yrange[1] and ut1+1.5>yrange[0]:
+	    ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
+        if at+1.5<yrange[1] and at+1.5>yrange[0]:
+	    ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
+        if tr+1.5<yrange[1] and tr+1.5>yrange[0]:
+	    ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
+        if an+1.5<yrange[1] and an+1.5>yrange[0]:
+	    ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
+
+        
 	ax4.set_xticks(range(0,end_time,300))
 	ax4.set_xlabel('Time (h:m)')
 	ax4.set_ylabel('Watts')
@@ -4493,7 +4548,7 @@ class rowingdata:
 
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,190])
+			      ultimate=[85,360])
 	ax2.axis([0,end_time,yrange[1],yrange[0]])
 	ax2.set_xticks(range(0,end_time,300))
 	ax2.set_ylabel('(sec/500)')
@@ -4547,19 +4602,26 @@ class rowingdata:
 	ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'limpw_an'],color='k')
 
 
-	ut2,ut1,at,tr,an=self.rwr.ftp*np.array(self.rwr.powerperc)/100.
-
-	ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
-	ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
-	ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
-	ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
-	ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
-
 	end_dist=int(df.ix[df.shape[0]-1,'cum_dist'])
 
 	yrange=y_axis_range(df.ix[:,' Power (watts)'],
-			      ultimate=[50,555])
+			      ultimate=[0,555],miny=0)
 	ax4.axis([0,end_time,yrange[0],yrange[1]])
+
+        ut2,ut1,at,tr,an=self.rwr.ftp*np.array(self.rwr.powerperc)/100.
+
+        if ut2+1.5<yrange[1] and ut2+1.5>yrange[0]:
+	    ax4.text(5,ut2+1.5,self.rwr.powerzones[1],size=8)
+        if ut1+1.5<yrange[1] and ut1+1.5>yrange[0]:
+	    ax4.text(5,ut1+1.5,self.rwr.powerzones[2],size=8)
+        if at+1.5<yrange[1] and at+1.5>yrange[0]:
+	    ax4.text(5,at+1.5,self.rwr.powerzones[3],size=8)
+        if tr+1.5<yrange[1] and tr+1.5>yrange[0]:
+	    ax4.text(5,tr+1.5,self.rwr.powerzones[4],size=8)
+        if an+1.5<yrange[1] and an+1.5>yrange[0]:
+	    ax4.text(5,an+1.5,self.rwr.powerzones[5],size=8)
+
+        
 	ax4.set_xticks(range(0,end_time,300))
 	ax4.set_xlabel('Time (h:m)')
 	ax4.set_ylabel('Watts')
@@ -4707,8 +4769,11 @@ class rowingdata:
 	# ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'equivergpower'])
 	ax4.legend(['Power'],prop={'size':10})
 	yrange=y_axis_range(df.ix[:,' Power (watts)'],
-			      ultimate=[50,555])
+			      ultimate=[0,555],miny=0)
 	ax4.axis([0,end_time,yrange[0],yrange[1]])
+
+
+        
 	ax4.set_xticks(range(0,end_time,300))
 	ax4.set_xlabel('Time (h:m)')
 	ax4.set_ylabel('Watts')
@@ -4850,7 +4915,7 @@ class rowingdata:
 	# ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'equivergpower'])
 	ax4.legend(['Power'],prop={'size':10})
 	yrange=y_axis_range(df.ix[:,' Power (watts)'],
-			      ultimate=[50,555])
+			      ultimate=[0,555],miny=0)
 	ax4.axis([0,end_time,yrange[0],yrange[1]])
 	ax4.set_xticks(range(0,end_time,300))
 	ax4.set_xlabel('Time (h:m)')
@@ -5074,7 +5139,7 @@ class rowingdata:
 	ax2=fig1.add_subplot(3,1,2)
 	ax2.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,190])
+			      ultimate=[85,360])
 	
 	ax2.axis([0,end_dist,yrange[1],yrange[0]])
 	ax2.set_xticks(range(1000,end_dist,1000))
@@ -5106,7 +5171,7 @@ class rowingdata:
 	ax5=fig2.add_subplot(2,1,1)
 	ax5.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,190])
+			      ultimate=[85,360])
 	ax5.axis([0,end_dist,yrange[1],yrange[0]])
 	ax5.set_xticks(range(1000,end_dist,1000))
 	ax5.set_ylabel('(sec/500)')
@@ -5208,7 +5273,7 @@ class rowingdata:
 	ax2.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,190])
+			      ultimate=[85,360])
 	ax2.axis([0,end_time,yrange[1],yrange[0]])
 	ax2.set_xticks(range(0,end_time,300))
 	ax2.set_ylabel('(sec/500)')
@@ -5249,7 +5314,7 @@ class rowingdata:
 	ax5=fig2.add_subplot(2,1,1)
 	ax5.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,190])
+			      ultimate=[85,360])
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 	ax5.axis([0,end_time,yrange[1],yrange[0]])
 	ax5.set_xticks(range(0,end_time,300))
