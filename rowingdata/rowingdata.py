@@ -1257,22 +1257,22 @@ def addpowerzones(df,ftp,powerperc):
 
     # create the columns containing the data for the colored bar chart
     # attempt to do this in a way that doesn't generate dubious copy warnings
-    mask=(df[' Power (watts)']<=ut2)&(df[' Stroke500mPace (sec/500m)']<300)
+    mask=(df[' Power (watts)']<=ut2)&(df[' Stroke500mPace (sec/500m)']<360)
     df.loc[mask,'pw_ut2']=df.loc[mask,' Power (watts)']
 
-    mask=(df[' Power (watts)']<=ut1)&(df[' Power (watts)']>ut2)&(df[' Stroke500mPace (sec/500m)']<300)
+    mask=(df[' Power (watts)']<=ut1)&(df[' Power (watts)']>ut2)&(df[' Stroke500mPace (sec/500m)']<360)
     df.loc[mask,'pw_ut1']=df.loc[mask,' Power (watts)']
 
-    mask=(df[' Power (watts)']<=at)&(df[' Power (watts)']>ut1)&(df[' Stroke500mPace (sec/500m)']<300)
+    mask=(df[' Power (watts)']<=at)&(df[' Power (watts)']>ut1)&(df[' Stroke500mPace (sec/500m)']<360)
     df.loc[mask,'pw_at']=df.loc[mask,' Power (watts)']
 
-    mask=(df[' Power (watts)']<=tr)&(df[' Power (watts)']>at)&(df[' Stroke500mPace (sec/500m)']<300)
+    mask=(df[' Power (watts)']<=tr)&(df[' Power (watts)']>at)&(df[' Stroke500mPace (sec/500m)']<360)
     df.loc[mask,'pw_tr']=df.loc[mask,' Power (watts)']
 
-    mask=(df[' Power (watts)']<=an)&(df[' Power (watts)']>tr)&(df[' Stroke500mPace (sec/500m)']<300)
+    mask=(df[' Power (watts)']<=an)&(df[' Power (watts)']>tr)&(df[' Stroke500mPace (sec/500m)']<360)
     df.loc[mask,'pw_an']=df.loc[mask,' Power (watts)']
 
-    mask=(df[' Power (watts)']>an)&(df[' Stroke500mPace (sec/500m)']<300)
+    mask=(df[' Power (watts)']>an)&(df[' Stroke500mPace (sec/500m)']<360)
     df.loc[mask,'pw_max']=df.loc[mask,' Power (watts)']
 
     df=df.fillna(method='ffill')
@@ -1304,22 +1304,22 @@ def addzones(df,ut2,ut1,at,tr,an,mmax):
 
 	# create the columns containing the data for the colored bar chart
 	# attempt to do this in a way that doesn't generate dubious copy warnings
-	mask=(df[' HRCur (bpm)']<=ut2)&(df[' Stroke500mPace (sec/500m)']<300)
+	mask=(df[' HRCur (bpm)']<=ut2)&(df[' Stroke500mPace (sec/500m)']<360)
 	df.loc[mask,'hr_ut2']=df.loc[mask,' HRCur (bpm)']
 
-	mask=(df[' HRCur (bpm)']<=ut1)&(df[' HRCur (bpm)']>ut2)&(df[' Stroke500mPace (sec/500m)']<300)
+	mask=(df[' HRCur (bpm)']<=ut1)&(df[' HRCur (bpm)']>ut2)&(df[' Stroke500mPace (sec/500m)']<360)
 	df.loc[mask,'hr_ut1']=df.loc[mask,' HRCur (bpm)']
 
-	mask=(df[' HRCur (bpm)']<=at)&(df[' HRCur (bpm)']>ut1)&(df[' Stroke500mPace (sec/500m)']<300)
+	mask=(df[' HRCur (bpm)']<=at)&(df[' HRCur (bpm)']>ut1)&(df[' Stroke500mPace (sec/500m)']<360)
 	df.loc[mask,'hr_at']=df.loc[mask,' HRCur (bpm)']
 
-	mask=(df[' HRCur (bpm)']<=tr)&(df[' HRCur (bpm)']>at)&(df[' Stroke500mPace (sec/500m)']<300)
+	mask=(df[' HRCur (bpm)']<=tr)&(df[' HRCur (bpm)']>at)&(df[' Stroke500mPace (sec/500m)']<360)
 	df.loc[mask,'hr_tr']=df.loc[mask,' HRCur (bpm)']
 
-	mask=(df[' HRCur (bpm)']<=an)&(df[' HRCur (bpm)']>tr)&(df[' Stroke500mPace (sec/500m)']<300)
+	mask=(df[' HRCur (bpm)']<=an)&(df[' HRCur (bpm)']>tr)&(df[' Stroke500mPace (sec/500m)']<360)
 	df.loc[mask,'hr_an']=df.loc[mask,' HRCur (bpm)']
 
-	mask=(df[' HRCur (bpm)']>an)&(df[' Stroke500mPace (sec/500m)']<300)
+	mask=(df[' HRCur (bpm)']>an)&(df[' Stroke500mPace (sec/500m)']<360)
 	df.loc[mask,'hr_max']=df.loc[mask,' HRCur (bpm)']
 
 
@@ -4747,7 +4747,7 @@ class rowingdata:
 	s=np.concatenate((df.ix[:,' Stroke500mPace (sec/500m)'].values,
 			    df.ix[:,'nowindpace'].values))
 	
-	yrange=y_axis_range(s,ultimate=[90,210],quantiles=[0.0,0.9])
+	yrange=y_axis_range(s,ultimate=[90,360],quantiles=[0.0,0.9])
 
 	ax2.axis([0,end_time,yrange[1],yrange[0]])
 	ax2.set_xticks(range(0,end_time,300))
@@ -4813,9 +4813,9 @@ class rowingdata:
             df['TimeStamp (sec)']=df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
 	# calculate erg power
-	pp=df['equivergpower']
-	ergvelo=(pp/2.8)**(1./3.)
-	ergpace=500./ergvelo
+	#pp=df['equivergpower']
+	#ergvelo=(pp/2.8)**(1./3.)
+	#relergpace=500./ergvelo
 	
 
 	# time increments for bar chart
@@ -4880,8 +4880,11 @@ class rowingdata:
 	ax2.plot(df.ix[:,'TimeStamp (sec)'],
 		 df.ix[:,' Stroke500mPace (sec/500m)'])
 
-	ax2.plot(df.ix[:,'TimeStamp (sec)'],
-		 df.ix[:,'nowindpace'])
+        try:
+	    ax2.plot(df.ix[:,'TimeStamp (sec)'],
+		     df.ix[:,'nowindpace'])
+        except KeyError:
+            pass
 
         #	ax2.plot(df.ix[:,'TimeStamp (sec)'],
 	#	 ergpace)
@@ -4891,9 +4894,13 @@ class rowingdata:
 	
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 
-	s=np.concatenate((df.ix[:,' Stroke500mPace (sec/500m)'].values,
-			   df.ix[:,'nowindpace'].values))
-	yrange=y_axis_range(s,ultimate=[90,210],quantiles=[0.0,0.9])
+        try:
+            s=np.concatenate((df.ix[:,' Stroke500mPace (sec/500m)'].values,
+			      df.ix[:,'nowindpace'].values))
+        except KeyError:
+            s = df.ix[:,' Stroke500mPace (sec/500m)'].values
+            
+	yrange=y_axis_range(s,ultimate=[90,360],quantiles=[0.0,0.9])
 
 	ax2.axis([0,end_time,yrange[1],yrange[0]])
 	ax2.set_xticks(range(0,end_time,300))
@@ -4947,8 +4954,11 @@ class rowingdata:
 	ax5.plot(df.ix[:,'TimeStamp (sec)'],
 		 df.ix[:,' Stroke500mPace (sec/500m)'])
 
-	ax5.plot(df.ix[:,'TimeStamp (sec)'],
-		 df.ix[:,'nowindpace'])
+        try:
+            ax5.plot(df.ix[:,'TimeStamp (sec)'],
+		     df.ix[:,'nowindpace'])
+        except KeyError:
+            pass
 
 	#ax5.plot(df.ix[:,'TimeStamp (sec)'],
 	#	 ergpace)
@@ -4958,9 +4968,13 @@ class rowingdata:
 
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 
-	s=np.concatenate((df.ix[:,' Stroke500mPace (sec/500m)'].values,
-			   df.ix[:,'nowindpace'].values))
-	yrange=y_axis_range(s,ultimate=[90,210],quantiles=[0.0,0.9])
+        try:
+	    s=np.concatenate((df.ix[:,' Stroke500mPace (sec/500m)'].values,
+			      df.ix[:,'nowindpace'].values))
+        except KeyError:
+            s = df.ix[:,' Stroke500mPace (sec/500m)'].values
+            
+	yrange=y_axis_range(s,ultimate=[90,360],quantiles=[0.0,0.9])
 
 	ax5.axis([0,end_time,yrange[1],yrange[0]])
 	ax5.set_xticks(range(0,end_time,300))
@@ -5225,7 +5239,7 @@ class rowingdata:
         if self.absolutetimestamps:
             df['TimeStamp (sec)']=df['TimeStamp (sec)']-df['TimeStamp (sec)'].values[0]
 
-	# time increments for bar chart
+        # time increments for bar chart
 	time_increments=df.ix[:,' ElapsedTime (sec)'].diff()
 	time_increments[self.index[0]]=time_increments[self.index[1]]
 	time_increments=0.5*(abs(time_increments)+(time_increments))
