@@ -2312,10 +2312,14 @@ class rowingdata:
 	r=self.rwr.rc
 	r.mc=mc
 
+        # modify pace/spm/wind with rolling averages
+        ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows).mean()
+        spms = df.[' Cadence (stokes/min)'].rolling(skiprows).mean()
+        
 	# this is slow ... need alternative (read from table)
 	for i in tqdm(range(nr_of_rows)):
-	    p=df.ix[i,' Stroke500mPace (sec/500m)']
-	    spm=df.ix[i,' Cadence (stokes/min)']
+	    p= ps.ix[i]
+            spm = spms.ix[i]
 	    r.tempo=spm
 	    try:
 		drivetime=60.*1000./float(spm)  # in milliseconds
