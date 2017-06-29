@@ -8,7 +8,7 @@ import checkdatafiles
 from scipy import integrate
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__="1.1.1"
+__version__="1.1.2"
 
 try:
     from Tkinter import Tk
@@ -2348,7 +2348,10 @@ class rowingdata:
 			res=[np.nan,np.nan,np.nan,np.nan,np.nan]
 		else:
 		    res=[np.nan,np.nan,np.nan,np.nan,np.nan]
-		df.ix[i,'power (model)']=res[0]
+                if not np.isnan(res[0]) and res[0]<800:
+		    df.ix[i,'power (model)']=res[0]
+                else:
+                    df.ix[i,'power (model)']=np.nan
 		df.ix[i,'averageforce (model)']=res[2]/lbstoN
 		df.ix[i,' DriveTime (ms)']=res[1]*drivetime
 		df.ix[i,' StrokeRecoveryTime (ms)']=(1-res[1])*drivetime
@@ -2434,7 +2437,11 @@ class rowingdata:
 			res=[np.nan,np.nan,np.nan,np.nan,np.nan]
 		else:
 		    res=[np.nan,np.nan,np.nan,np.nan,np.nan]
-		df.ix[i,'power (model)']=res[0]
+                if not np.isnan(res[0]) and res[0]<800:
+		    df.ix[i,'power (model)']=res[0]
+                else:
+                    df.ix[i,'power (model)']=np.nan
+		    
 		df.ix[i,'averageforce (model)']=res[2]/lbstoN
 		df.ix[i,' DriveTime (ms)']=res[1]*drivetime
 		df.ix[i,' StrokeRecoveryTime (ms)']=(1-res[1])*drivetime
