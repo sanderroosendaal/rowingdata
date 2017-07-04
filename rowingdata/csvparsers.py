@@ -1317,7 +1317,8 @@ class SpeedCoach2Parser(CSVParser):
         velo_unit = 'ms'
         if 'KPH' in unitrow:
             velo_unit = 'kph'
-
+        if 'MPH' in unitrow:
+            velo_unit = 'mph'
 
         kwargs['skiprows']=skiprows
         super(SpeedCoach2Parser, self).__init__(*args, **kwargs)
@@ -1404,6 +1405,8 @@ class SpeedCoach2Parser(CSVParser):
         velo=self.df[self.columns['GPS Speed']]
         if velo_unit == 'kph':
             velo = velo/3.6
+        if velo_unit == 'mph':
+            velo = velo*0.44704
             
         pace=500./velo
         pace=pace.replace(np.nan,300)
