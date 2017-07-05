@@ -205,6 +205,7 @@ class FITParser(object):
         heartrate = []
         latlist = []
         lonlist = []
+        powerlist = []
         velolist = []
         timestamp = []
         distance = []
@@ -218,6 +219,9 @@ class FITParser(object):
                 speed = record.get_value('speed')
                 heartratev = record.get_value('heart_rate')
                 spm = record.get_value('cadence')
+                power = record.get_value('power')
+                if power == None:
+                    power = 0
                 distancev = record.get_value('distance')
                 timestampv = record.get_value('timestamp')
                 latva = record.get_value('position_lat')
@@ -244,6 +248,7 @@ class FITParser(object):
                     timestamp.append(totimestamp(timestampv))
                     cadence.append(spm)
                     distance.append(distancev)
+                    powerlist.append(power)
 #           if record.mesg_type.name == 'lap':
             if record.name == 'lap':
                 lapcounter += 1
@@ -267,7 +272,7 @@ class FITParser(object):
             ' longitude':lon,
             ' latitude':lat,
             ' Stroke500mPace (sec/500m)':pace,
-            ' Power (watts)':np.zeros(nr_rows),
+            ' Power (watts)':powerlist,
             ' DriveLength (meters)':np.zeros(nr_rows),
             ' StrokeDistance (meters)':np.zeros(nr_rows),
             ' DriveTime (ms)':np.zeros(nr_rows),
