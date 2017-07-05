@@ -298,7 +298,7 @@ class TestFITParser:
         fitfile='testdata/3x250m.fit'
         r = rowingdata.FitSummaryData(fitfile)
         r.setsummary()
-        assert_equals(r.summarytext[66:69],'250')
+        assert_equals(r.summarytext[72:75],'250')
 
 class TestSequence(unittest.TestCase):
     list=pd.read_csv('testdata/testdatasummary.csv')

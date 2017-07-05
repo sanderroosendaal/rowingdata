@@ -25,19 +25,21 @@ class FitSummaryData(object):
 
     def setsummary(self, separator="|"):
         lapcount = 0
-        self.summarytext += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-SPM-{sep}AvgHR{sep}MaxHR{sep}DPS-\n".format(
+        self.summarytext += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-SPM-{sep}-Pwr-{sep}AvgHR{sep}MaxHR{sep}DPS-\n".format(
             sep=separator
             )
 
         strokecount = 0
         recordcount = 0
         totalhr = 0
+        totalpower = 0
         maxhr = 0
 
         totaldistance = 0
         totaltime = 0
         grandhr = 0
         grandmaxhr = 0
+        grandpower = 0
 
         for record in self.records:
             if record.name == 'record':
@@ -50,9 +52,16 @@ class FitSummaryData(object):
                 if heartrate > grandmaxhr:
                     grandmaxhr = heartrate
 
-                totalhr += heartrate
+                power = record.get_value('power')
+                if power is None:
+                    power = 0
 
+                totalhr += heartrate
                 grandhr += heartrate
+
+                totalpower += power
+                grandpower += power
+                
                 strokecount += 1
                 recordcount += 1
 
@@ -64,6 +73,11 @@ class FitSummaryData(object):
                 except ZeroDivisionError:
                     inthr = 0
 
+                try:
+                    intpower = int(totalpower/float(strokecount))
+                except ZeroDivisionError:
+                    intpower = 0
+                    
                 inttime = record.get_value('total_elapsed_time')
 
                 lapmin = int(inttime/60)
@@ -123,6 +137,11 @@ class FitSummaryData(object):
                     sep=separator
                     )
 
+                summarystring += " {intpower:0>3d} {sep}".format(
+                    intpower=intpower,
+                    sep=separator
+                    )
+                
                 summarystring += " {inthr:0>3d} {sep}".format(
                     inthr=inthr,
                     sep=separator
@@ -157,6 +176,7 @@ class FitSummaryData(object):
         totsec = int(int(10*(totaltime-totmin*60.))/10.)
 
         avghr = grandhr/float(recordcount)
+        avgpower = grandpower/float(recordcount)
         try:
             avgspm = 60.*recordcount/totaltime
         except ZeroDivisionError:
@@ -181,6 +201,11 @@ class FitSummaryData(object):
         summarystring += " {avgspm:0>4.1f}{sep}".format(
             sep=separator,
             avgspm=avgspm
+            )
+
+        summarystring += " {avgpower:0>3} {sep}".format(
+            sep=separator,
+            avgpower=int(avgpower)
             )
 
         summarystring += " {avghr:0>3} {sep} {grandmaxhr:0>3} {sep}".format(
