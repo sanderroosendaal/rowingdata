@@ -112,6 +112,7 @@ class FitSummaryData(object):
 
                 strokecount = 0
                 totalhr = 0
+                totalpower = 0
                 maxhr = 0
 
 
