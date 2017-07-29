@@ -1373,6 +1373,19 @@ class SpeedCoach2Parser(CSVParser):
 
         self.columns=dict(zip(self.defaultcolumnnames,self.cols))
 
+        # take Impeller split / speed if available and not zero
+        try:
+            try:
+                impspeed = self.df['Speed (IMP)']
+            except KeyError:
+                impspeed = self.df['Imp Speed']
+            if impspeed.std() != 0 and impspeed.mean() != 0:
+                self.df[self.columns['GPS Speed']] = impspeed
+                self.columns['GPS Speed']='Imp Speed'
+        except KeyError:
+            pass
+
+        # 
         try:
             dist2=self.df['GPS Distance']
         except KeyError:
