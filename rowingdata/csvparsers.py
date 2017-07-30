@@ -1315,10 +1315,14 @@ class SpeedCoach2Parser(CSVParser):
         skiprows,summaryline,blanklines=skip_variable_header(csvfile)
         unitrow = get_file_line(skiprows+2,csvfile)
         velo_unit = 'ms'
+        dist_unit = 'm'
         if 'KPH' in unitrow:
             velo_unit = 'kph'
         if 'MPH' in unitrow:
             velo_unit = 'mph'
+
+        if 'Kilometer' in unitrow:
+            dist_unit = 'km'
 
         kwargs['skiprows']=skiprows
         super(SpeedCoach2Parser, self).__init__(*args, **kwargs)
@@ -1417,6 +1421,9 @@ class SpeedCoach2Parser(CSVParser):
                     pass
 
 
+        if dist_unit == 'km':
+            dist2 *= 1000
+            self.df[self.columns[' Horizontal (meters)']] *= 1000.
             
         cum_dist=make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
         self.df[self.columns['cum_dist']]=cum_dist
