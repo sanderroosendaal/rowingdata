@@ -25,19 +25,21 @@ class FitSummaryData(object):
 
     def setsummary(self, separator="|"):
         lapcount = 0
-        self.summarytext += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-SPM-{sep}AvgHR{sep}MaxHR{sep}DPS-\n".format(
+        self.summarytext += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-SPM-{sep}-Pwr-{sep}AvgHR{sep}MaxHR{sep}DPS-\n".format(
             sep=separator
             )
 
         strokecount = 0
         recordcount = 0
         totalhr = 0
+        totalpower = 0
         maxhr = 0
 
         totaldistance = 0
         totaltime = 0
         grandhr = 0
         grandmaxhr = 0
+        grandpower = 0
 
         for record in self.records:
             if record.name == 'record':
@@ -50,9 +52,16 @@ class FitSummaryData(object):
                 if heartrate > grandmaxhr:
                     grandmaxhr = heartrate
 
-                totalhr += heartrate
+                power = record.get_value('power')
+                if power is None:
+                    power = 0
 
+                totalhr += heartrate
                 grandhr += heartrate
+
+                totalpower += power
+                grandpower += power
+                
                 strokecount += 1
                 recordcount += 1
 
@@ -64,6 +73,11 @@ class FitSummaryData(object):
                 except ZeroDivisionError:
                     inthr = 0
 
+                try:
+                    intpower = int(totalpower/float(strokecount))
+                except ZeroDivisionError:
+                    intpower = 0
+                    
                 inttime = record.get_value('total_elapsed_time')
 
                 lapmin = int(inttime/60)
@@ -98,6 +112,7 @@ class FitSummaryData(object):
 
                 strokecount = 0
                 totalhr = 0
+                totalpower = 0
                 maxhr = 0
 
 
@@ -123,6 +138,11 @@ class FitSummaryData(object):
                     sep=separator
                     )
 
+                summarystring += " {intpower:0>3d} {sep}".format(
+                    intpower=intpower,
+                    sep=separator
+                    )
+                
                 summarystring += " {inthr:0>3d} {sep}".format(
                     inthr=inthr,
                     sep=separator
@@ -157,6 +177,7 @@ class FitSummaryData(object):
         totsec = int(int(10*(totaltime-totmin*60.))/10.)
 
         avghr = grandhr/float(recordcount)
+        avgpower = grandpower/float(recordcount)
         try:
             avgspm = 60.*recordcount/totaltime
         except ZeroDivisionError:
@@ -183,6 +204,11 @@ class FitSummaryData(object):
             avgspm=avgspm
             )
 
+        summarystring += " {avgpower:0>3} {sep}".format(
+            sep=separator,
+            avgpower=int(avgpower)
+            )
+
         summarystring += " {avghr:0>3} {sep} {grandmaxhr:0>3} {sep}".format(
             avghr=int(avghr),
             grandmaxhr=int(grandmaxhr),
@@ -205,6 +231,7 @@ class FITParser(object):
         heartrate = []
         latlist = []
         lonlist = []
+        powerlist = []
         velolist = []
         timestamp = []
         distance = []
@@ -218,6 +245,9 @@ class FITParser(object):
                 speed = record.get_value('speed')
                 heartratev = record.get_value('heart_rate')
                 spm = record.get_value('cadence')
+                power = record.get_value('power')
+                if power == None:
+                    power = 0
                 distancev = record.get_value('distance')
                 timestampv = record.get_value('timestamp')
                 latva = record.get_value('position_lat')
@@ -244,6 +274,7 @@ class FITParser(object):
                     timestamp.append(totimestamp(timestampv))
                     cadence.append(spm)
                     distance.append(distancev)
+                    powerlist.append(power)
 #           if record.mesg_type.name == 'lap':
             if record.name == 'lap':
                 lapcounter += 1
@@ -267,7 +298,7 @@ class FITParser(object):
             ' longitude':lon,
             ' latitude':lat,
             ' Stroke500mPace (sec/500m)':pace,
-            ' Power (watts)':np.zeros(nr_rows),
+            ' Power (watts)':powerlist,
             ' DriveLength (meters)':np.zeros(nr_rows),
             ' StrokeDistance (meters)':np.zeros(nr_rows),
             ' DriveTime (ms)':np.zeros(nr_rows),
