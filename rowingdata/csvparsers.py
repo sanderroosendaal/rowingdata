@@ -1315,10 +1315,14 @@ class SpeedCoach2Parser(CSVParser):
         skiprows,summaryline,blanklines=skip_variable_header(csvfile)
         unitrow = get_file_line(skiprows+2,csvfile)
         velo_unit = 'ms'
+        dist_unit = 'm'
         if 'KPH' in unitrow:
             velo_unit = 'kph'
         if 'MPH' in unitrow:
             velo_unit = 'mph'
+
+        if 'Kilometer' in unitrow:
+            dist_unit = 'km'
 
         kwargs['skiprows']=skiprows
         super(SpeedCoach2Parser, self).__init__(*args, **kwargs)
@@ -1373,13 +1377,31 @@ class SpeedCoach2Parser(CSVParser):
 
         self.columns=dict(zip(self.defaultcolumnnames,self.cols))
 
+
+        # take Impeller split / speed if available and not zero
+        try:
+            try:
+                impspeed = self.df['Speed (IMP)']
+                self.columns['GPS Speed']='Speed (IMP)'
+            except KeyError:
+                impspeed = self.df['Imp Speed']
+                self.columns['GPS Speed']='Imp Speed'
+            if impspeed.std() != 0 and impspeed.mean() != 0:
+                self.df[self.columns['GPS Speed']] = impspeed
+            else:
+                self.columns['GPS Speed'] = 'GPS Speed'
+        except KeyError:
+            pass
+        #
+        
         try:
             dist2=self.df['GPS Distance']
         except KeyError:
             try:
                 dist2=self.df['Distance (GPS)']
                 self.columns[' Horizontal (meters)']='Distance (GPS)'
-                self.columns['GPS Speed']='Speed (GPS)'
+                if 'GPS' in self.columns['GPS Speed']:
+                    self.columns['GPS Speed']='Speed (GPS)'
                 try:
                     self.df[self.columns[' PeakDriveForce (lbs)']]/= lbstoN
                     self.df[self.columns[' AverageDriveForce (lbs)']]/= lbstoN
@@ -1399,6 +1421,9 @@ class SpeedCoach2Parser(CSVParser):
                     pass
 
 
+        if dist_unit == 'km':
+            dist2 *= 1000
+            self.df[self.columns[' Horizontal (meters)']] *= 1000.
             
         cum_dist=make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
         self.df[self.columns['cum_dist']]=cum_dist
