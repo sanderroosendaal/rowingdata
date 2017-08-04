@@ -7,6 +7,7 @@ import numpy as np
 from lxml import etree, objectify
 from lxml.etree import XMLSyntaxError
 import urllib2
+import ssl
 
 namespace='http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -162,7 +163,10 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     file.close()
     
     try:
-	xsd_file=urllib2.urlopen("https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd")
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+	xsd_file=urllib2.urlopen("https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd",context=ctx)
 	output=open('TrainingCenterDatabasev2.xsd','w') 
 	output.write(xsd_file.read().replace('\n',''))
 	output.close()

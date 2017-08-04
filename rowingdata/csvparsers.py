@@ -84,6 +84,9 @@ def csvtests(fop):
     if 'Concept2' in firstline:
         return 'c2log'
 
+    if 'Activity Type' in firstline and 'Date' in firstline:
+        return 'c2log'
+
     if 'Avg Watts' in firstline:
         return 'c2log'
 
