@@ -3490,7 +3490,7 @@ class rowingdata:
 	ax2=fig1.add_subplot(3,1,2)
 	ax2.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,360],quantiles=[0,.9])
+			      ultimate=[85,240],quantiles=[0,.9])
 	
 	ax2.axis([0,end_dist,yrange[1],yrange[0]])
 	ax2.set_xticks(range(1000,end_dist,1000))
@@ -3742,7 +3742,7 @@ class rowingdata:
 	ax2.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,360],quantiles=[0,.9])
+			      ultimate=[85,240],quantiles=[0,.9])
 	ax2.axis([0,end_time,yrange[1],yrange[0]])
 	ax2.set_xticks(range(0,end_time,300))
 	ax2.set_ylabel('(sec/500)')
@@ -3795,7 +3795,7 @@ class rowingdata:
 	ax1.set_ylabel('(sec/500)')
 
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,360],quantiles=[0,.9])
+			      ultimate=[85,240],quantiles=[0,.9])
 	plt.axis([0,end_time,yrange[1],yrange[0]])
 
 	ax1.set_xticks(range(1000,end_time,1000))
@@ -3869,7 +3869,7 @@ class rowingdata:
 	ax1.set_ylabel('Pace (sec/500)')
 
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,360],quantiles=[0,0.9])
+			      ultimate=[85,240],quantiles=[0,0.9])
 	plt.axis([0,end_time,yrange[1],yrange[0]])
 
 	ax1.set_xticks(range(1000,end_time,1000))
@@ -4109,7 +4109,7 @@ class rowingdata:
 	ax2=fig1.add_subplot(4,1,2)
 	ax2.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,360],quantiles=[0,0.9])
+			      ultimate=[85,240],quantiles=[0,0.9])
 	ax2.axis([0,end_dist,yrange[1],yrange[0]])
 	ax2.set_xticks(range(1000,end_dist,1000))
 	ax2.set_ylabel('(sec/500)')
@@ -4255,7 +4255,7 @@ class rowingdata:
 	ax2=fig1.add_subplot(4,1,2)
 	ax2.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,360],quantiles=[0,.9])
+			      ultimate=[85,240],quantiles=[0,.9])
 	ax2.axis([0,end_dist,yrange[1],yrange[0]])
 	ax2.set_xticks(range(1000,end_dist,1000))
 	ax2.set_ylabel('(sec/500)')
@@ -4573,7 +4573,7 @@ class rowingdata:
 
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,360],quantiles=[0,.9])
+			      ultimate=[85,240],quantiles=[0,.9])
 	ax2.axis([0,end_time,yrange[1],yrange[0]])
 	ax2.set_xticks(range(0,end_time,300))
 	ax2.set_ylabel('(sec/500)')
@@ -4762,7 +4762,7 @@ class rowingdata:
 	s=np.concatenate((df.ix[:,' Stroke500mPace (sec/500m)'].values,
 			    df.ix[:,'nowindpace'].values))
 	
-	yrange=y_axis_range(s,ultimate=[90,360],quantiles=[0.0,0.9])
+	yrange=y_axis_range(s,ultimate=[90,240],quantiles=[0.0,0.9])
 
 	ax2.axis([0,end_time,yrange[1],yrange[0]])
 	ax2.set_xticks(range(0,end_time,300))
@@ -4915,7 +4915,7 @@ class rowingdata:
         except KeyError:
             s = df.ix[:,' Stroke500mPace (sec/500m)'].values
             
-	yrange=y_axis_range(s,ultimate=[90,360],quantiles=[0.0,0.9])
+	yrange=y_axis_range(s,ultimate=[90,240],quantiles=[0.0,0.9])
 
 	ax2.axis([0,end_time,yrange[1],yrange[0]])
 	ax2.set_xticks(range(0,end_time,300))
@@ -4989,7 +4989,7 @@ class rowingdata:
         except KeyError:
             s = df.ix[:,' Stroke500mPace (sec/500m)'].values
             
-	yrange=y_axis_range(s,ultimate=[90,360],quantiles=[0.0,0.9])
+	yrange=y_axis_range(s,ultimate=[90,240],quantiles=[0.0,0.9])
 
 	ax5.axis([0,end_time,yrange[1],yrange[0]])
 	ax5.set_xticks(range(0,end_time,300))
@@ -5178,7 +5178,7 @@ class rowingdata:
 	ax2=fig1.add_subplot(3,1,2)
 	ax2.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,360],quantiles=[0.0,0.9])
+			      ultimate=[85,240],quantiles=[0.0,0.9])
 	
 	ax2.axis([0,end_dist,yrange[1],yrange[0]])
 	ax2.set_xticks(range(1000,end_dist,1000))
@@ -5210,7 +5210,7 @@ class rowingdata:
 	ax5=fig2.add_subplot(2,1,1)
 	ax5.plot(df.ix[:,'cum_dist'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,360],quantiles=[0.0,0.9])
+			      ultimate=[85,240],quantiles=[0.0,0.9])
 	ax5.axis([0,end_dist,yrange[1],yrange[0]])
 	ax5.set_xticks(range(1000,end_dist,1000))
 	ax5.set_ylabel('(sec/500)')
@@ -5312,7 +5312,7 @@ class rowingdata:
 	ax2.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,360],quantiles=[0.0,0.9])
+			      ultimate=[85,240],quantiles=[0.0,0.9])
 	ax2.axis([0,end_time,yrange[1],yrange[0]])
 	ax2.set_xticks(range(0,end_time,300))
 	ax2.set_ylabel('(sec/500)')
@@ -5353,7 +5353,7 @@ class rowingdata:
 	ax5=fig2.add_subplot(2,1,1)
 	ax5.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,' Stroke500mPace (sec/500m)'])
 	yrange=y_axis_range(df.ix[:,' Stroke500mPace (sec/500m)'],
-			      ultimate=[85,360],quantiles=[0.0,0.9])
+			      ultimate=[85,240],quantiles=[0.0,0.9])
 	end_time=int(df.ix[df.shape[0]-1,'TimeStamp (sec)'])
 	ax5.axis([0,end_time,yrange[1],yrange[0]])
 	ax5.set_xticks(range(0,end_time,300))
