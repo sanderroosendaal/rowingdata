@@ -120,6 +120,9 @@ def csvtests(fop):
     if 'Stroke Number' in firstline:
         return 'ergdata'
 
+    if 'Number' in firstline and 'Cal/Hr' in firstline:
+        return 'ergdata'
+    
     if ' DriveTime (ms)' in firstline:
         return 'csv'
 
@@ -859,6 +862,7 @@ class BoatCoachAdvancedParser(CSVParser):
 
 
         
+
 class ErgDataParser(CSVParser):
 
     def __init__(self, *args, **kwargs):
@@ -889,7 +893,11 @@ class ErgDataParser(CSVParser):
             pace=self.df[self.cols[4]]
         except KeyError:
             self.cols[4]='Pace (seconds per 500m)'
-            
+            try:
+                pace = self.df[self.cols[4]]
+            except KeyError:
+                self.cols[4] = 'Pace (seconds)'
+                
         self.cols=[b if a=='' else a \
                      for a,b in zip(self.cols,self.defaultcolumnnames)]
 
