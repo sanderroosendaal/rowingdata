@@ -41,6 +41,7 @@ from csvparsers import (
     CSVParser,
     painsledDesktopParser,
     get_empower_rigging,
+    CoxMateParser,
     BoatCoachParser,
     BoatCoachAdvancedParser,
     speedcoachParser,
