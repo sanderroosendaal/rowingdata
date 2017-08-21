@@ -137,6 +137,9 @@ def csvtests(fop):
 
     if 'Date' in firstline and 'Latitude' in firstline and 'Heart rate' in firstline:
         return 'kinomap'
+
+    if 'Cover' in firstline:
+        return 'coxmate'
     
     return 'unknown'
 
@@ -492,6 +495,58 @@ class CSVParser(object):
 
 
         
+class CoxMateParser(CSVParser):
+
+    
+    def __init__(self, *args, **kwargs):
+        super(CoxMateParser, self).__init__(*args, **kwargs)
+	# remove "00 waiting to row"
+
+        self.cols=[
+            'Time',
+            'Distance',
+            'Rating',
+            'Heart Rate',
+            '',
+            '',
+            '',
+            'Cover',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            'Time',
+            '',
+            '',
+        ]
+
+        self.cols=[b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
+
+
+        self.columns=dict(zip(self.defaultcolumnnames,self.cols))
+
+        # calculations / speed
+        dd = self.df[self.columns[' Horizontal (meters)']].diff()
+        dt = self.df[self.columns[' ElapsedTime (sec)']].diff()
+        velo = dd/dt
+        pace = 500./velo
+        self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+        
+        # calculations / time stamp
+        
+	# convert to unix style time stamp
+        now = datetime.datetime.utcnow()
+        elapsed = self.df[self.columns[' ElapsedTime (sec)']]
+        tts = now+elapsed.apply(lambda x:datetime.timedelta(seconds=x))
+        unixtimes=tts.apply(lambda x:time.mktime(x.utctimetuple()))
+        self.df[self.columns['TimeStamp (sec)']]=unixtimes
+
+        self.to_standard()
+
+        
 class painsledDesktopParser(CSVParser):
 
     
@@ -539,6 +594,7 @@ class painsledDesktopParser(CSVParser):
         self.df[self.columns[' ElapsedTime (sec)']]=unixtimes-unixtimes.iloc[0]
         self.to_standard()
 
+        
 class BoatCoachParser(CSVParser):
 
     def __init__(self, *args, **kwargs):

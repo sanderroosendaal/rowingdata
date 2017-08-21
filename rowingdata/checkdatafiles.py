@@ -50,6 +50,10 @@ def checkfile(f2,verbose=False):
 	if (fileformat == 'ergdata'):
 	    row=rowingdata.ErgDataParser(f2)
 
+        # handle CoxMate
+        if (fileformat == 'coxmate'):
+            row = rowingdata.CoxMateParser(f2)
+            
 	# handle BoatCoach
 	if (fileformat == 'boatcoach'):
 	    row=rowingdata.BoatCoachParser(f2)
