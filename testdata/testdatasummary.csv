@@ -1,4 +1,5 @@
 filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrintervals,lap 1 time,lap 1 dist
+coxmate.csv,coxmate,147,0,0,0,0,0,0,1005,284,1,284,1005
 2016-03-25-0758.CSV,unknown,0,0,0,0,0,0,0,0,0,0,0,0
 2016-03-25-0758_data.CSV,csv,3266,2016,3,25,6,58,30,10697,3484,1,3484,10697
 2x20min_o.csv,csv,895,2016,3,31,16,48,29,9812,2458,2,1199,4902
