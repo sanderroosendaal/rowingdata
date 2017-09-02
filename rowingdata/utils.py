@@ -5,6 +5,7 @@ import time
 import matplotlib
 import iso8601
 import os
+import pytz
 import pickle
 import pandas as pd
 import datetime
@@ -68,8 +69,12 @@ def geo_distance(lat1,lon1,lat2,lon2):
 
     return [distance,bearing]
 
-def totimestamp(dt, epoch=datetime.datetime(1970,1,1)):
-    td=dt - epoch
+def totimestamp(dt, epoch=datetime.datetime(1970,1,1,0,0,0,0,pytz.UTC)):
+    try:
+        td=dt - epoch
+    except TypeError:
+        dt = pytz.utc.localize(dt)
+        td = dt - epoch
     # return td.total_seconds()
     return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6
 
