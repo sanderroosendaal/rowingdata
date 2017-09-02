@@ -3,6 +3,7 @@ import csv
 import numpy as np
 import re
 import time
+import arrow
 import matplotlib
 import iso8601
 import os
@@ -541,7 +542,8 @@ class CoxMateParser(CSVParser):
         now = datetime.datetime.utcnow()
         elapsed = self.df[self.columns[' ElapsedTime (sec)']]
         tts = now+elapsed.apply(lambda x:datetime.timedelta(seconds=x))
-        unixtimes=tts.apply(lambda x:time.mktime(x.utctimetuple()))
+        #unixtimes=tts.apply(lambda x:time.mktime(x.utctimetuple()))
+        unixtimes = tts.apply(lambda x:arrow.get(x).timestamp)
         self.df[self.columns['TimeStamp (sec)']]=unixtimes
 
         self.to_standard()
@@ -588,7 +590,8 @@ class painsledDesktopParser(CSVParser):
         timestamps=self.df[self.columns['TimeStamp (sec)']]
 	# convert to unix style time stamp
 	tts=timestamps.apply(lambda x:iso8601.parse_date(x[2:-1]))
-        unixtimes=tts.apply(lambda x:time.mktime(x.utctimetuple()))
+        #unixtimes=tts.apply(lambda x:time.mktime(x.utctimetuple()))
+        unixtimes = tts.apply(lambda x:arrow.get(x).timestamp)
         self.df[self.columns['TimeStamp (sec)']]=unixtimes
         self.columns[' ElapsedTime (sec)']=' ElapsedTime (sec)'
         self.df[self.columns[' ElapsedTime (sec)']]=unixtimes-unixtimes.iloc[0]
@@ -644,10 +647,12 @@ class BoatCoachParser(CSVParser):
             datetime=self.df[self.columns['TimeStamp (sec)']]
             row_date=parser.parse(datetime[0],fuzzy=True)
             datetime=datetime.apply(lambda x:parser.parse(x,fuzzy=True))
-            unixtimes=datetime.apply(lambda x:time.mktime(x.utctimetuple()))
+            #unixtimes=datetime.apply(lambda x:time.mktime(x.utctimetuple()))
+            unixtimes = datetime.apply(lambda x:arrow.get(x).timestamp)
         except KeyError:
             # calculations
-            row_date2=time.mktime(row_date.utctimetuple())
+            #row_date2=time.mktime(row_date.utctimetuple())
+            row_date2 = arrow.get(row_date).timestamp
             timecolumn=self.df[self.columns[' ElapsedTime (sec)']]
             timesecs=timecolumn.apply(lambda x:timestrtosecs(x))
             timesecs=make_cumvalues(timesecs)[0]
@@ -765,8 +770,8 @@ class KinoMapParser(CSVParser):
         datetime=self.df[self.columns['TimeStamp (sec)']]
         row_date=parser.parse(datetime[0],fuzzy=True)
         datetime=datetime.apply(lambda x:parser.parse(x,fuzzy=True))
-        unixtimes=datetime.apply(lambda x:time.mktime(x.utctimetuple()))
-
+        #unixtimes=datetime.apply(lambda x:time.mktime(x.utctimetuple()))
+        unixtimes = datetime.apply(lambda x:arrow.get(x).timestamp)
         self.df[self.columns['TimeStamp (sec)']]=unixtimes
         self.columns[' ElapsedTime (sec)']=' ElapsedTime (sec)'
 
@@ -838,10 +843,12 @@ class BoatCoachAdvancedParser(CSVParser):
             datetime=self.df[self.columns['TimeStamp (sec)']]
             row_date=parser.parse(datetime[0],fuzzy=True)
             datetime=datetime.apply(lambda x:parser.parse(x,fuzzy=True))
-            unixtimes=datetime.apply(lambda x:time.mktime(x.utctimetuple()))
+            #unixtimes=datetime.apply(lambda x:time.mktime(x.utctimetuple()))
+            unixtimes = datetime.apply(lambda x:arrow.get(x).timestamp)
         except KeyError:
             # calculations
-            row_date2=time.mktime(row_date.utctimetuple())
+            #row_date2=time.mktime(row_date.utctimetuple())
+            row_date2 = arrow.get(row_date).timestamp
             timecolumn=self.df[self.columns[' ElapsedTime (sec)']]
             timesecs=timecolumn.apply(lambda x:timestrtosecs(x))
             timesecs=make_cumvalues(timesecs)[0]
@@ -1361,7 +1368,8 @@ class RowProParser(CSVParser):
         seconds3=pd.to_timedelta(seconds3,unit='s')
         tts=self.row_date+seconds3
         
-        unixtimes=tts.apply(lambda x:time.mktime(x.utctimetuple()))
+        #unixtimes=tts.apply(lambda x:time.mktime(x.utctimetuple()))
+        unixtimes = tts.apply(lambda x:arrow.get(x).timestamp)
         # unixtimes=totimestamp(self.row_date+seconds3)
         self.df[self.columns[' lapIdx']]=lapidx
         self.df[self.columns['TimeStamp (sec)']]=unixtimes
@@ -1516,7 +1524,8 @@ class SpeedCoach2Parser(CSVParser):
 
 
         timestrings=self.df[self.columns['TimeStamp (sec)']]
-        datum=time.mktime(self.row_date.utctimetuple())
+        #datum=time.mktime(self.row_date.utctimetuple())
+        datum = arrow.get(self.row_date).timestamp
         seconds=timestrings.apply(lambda x:timestrtosecs2(x,unknown=np.nan))
         seconds=clean_nan(np.array(seconds))
         seconds=pd.Series(seconds).fillna(method='ffill').values
