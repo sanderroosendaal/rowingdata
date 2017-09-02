@@ -5,7 +5,7 @@ import pandas as pd
 from pandas import DataFrame
 from lxml import objectify
 from fitparse import FitFile
-
+import arrow
 from utils import totimestamp, geo_distance, ewmovingaverage
 
 NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
@@ -522,11 +522,11 @@ class TCXParser(object):
         try:
             iso_string = str(self.root.Activities.Activity.Id)
             startdatetimeobj = iso8601.parse_date(iso_string)
-            starttime = time.mktime(startdatetimeobj.utctimetuple())+startdatetimeobj.microsecond/1.e6
+            #starttime = time.mktime(startdatetimeobj.utctimetuple())+startdatetimeobj.microsecond/1.e6
+            starttime = arrow.get(startdatetimeobj).timestamp+startdatetimeobj.microsecond/1.e6
         except AttributeError:
             startdatetimeobj = iso8601.parse_date(str(timestamps[0]))
-            starttime = time.mktime(startdatetimeobj.utctimetuple())+startdatetimeobj.microsecond/1.e6
-
+            starttime = arrow.get(startdatetimeobj).timestamp+startdatetimeobj.microsecond/1.e6
 
         self.activity_starttime = starttime
 
@@ -535,8 +535,9 @@ class TCXParser(object):
         for time_string in timestamps:
             # time_string = str(timestamps[i])
             time_parsed = iso8601.parse_date(str(time_string))
-            unixtimes = np.append(unixtimes,
-                                  time.mktime(time_parsed.utctimetuple())+time_parsed.microsecond/1.e6)
+            #unixtimes = np.append(unixtimes,
+            #                      time.mktime(time_parsed.utctimetuple())+time_parsed.microsecond/1.e6)
+            unixtimes = np.append(unixtimes,arrow.get(time_parsed).timestamp+time_parsed.microsecond/1.e6)
 
         self.time_values = unixtimes
 
@@ -825,7 +826,8 @@ class TCXParserNoHR(object):
         iso_string = str(self.root.Activities.Activity.Id)
         startdatetimeobj = iso8601.parse_date(iso_string)
 
-        starttime = time.mktime(startdatetimeobj.utctimetuple())+startdatetimeobj.microsecond/1.e6
+        #starttime = time.mktime(startdatetimeobj.utctimetuple())+startdatetimeobj.microsecond/1.e6
+        starttime = arrow.get(startdatetimeobj).timestamp+startdatetimeobj.microsecond/1.e6
 
         self.activity_starttime = starttime
 
@@ -835,7 +837,9 @@ class TCXParserNoHR(object):
             # time_string = str(timestamps[i])
             time_parsed = iso8601.parse_date(str(time_string))
             unixtimes = np.append(unixtimes,
-                                  [time.mktime(time_parsed.utctimetuple())+time_parsed.microsecond/1.e6])
+                                  [arrow.get(time_parsed).timestamp+time_parsed.microsecond/1.0e6])
+            #unixtimes = np.append(unixtimes,
+            #                      [time.mktime(time_parsed.utctimetuple())+time_parsed.microsecond/1.e6])
 
         self.time_values = unixtimes
 

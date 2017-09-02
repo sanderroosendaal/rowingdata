@@ -84,6 +84,7 @@ except ImportError:
 
 import time
 import datetime
+import arrow
 import iso8601
 from calendar import timegm
 from pytz import timezone as tz,utc
@@ -1484,8 +1485,9 @@ class rowingdata:
         except IndexError:
             starttime=0
 
-	# using UTC time for now
-	self.rowdatetime=datetime.datetime.utcfromtimestamp(starttime)
+	# create start time timezone aware time objectx
+        self.rowdatetime=arrow.get(starttime).datetime
+	#self.rowdatetime=datetime.datetime.utcfromtimestamp(starttime)
 	    	
 	# remove the start time from the time stamps
         if not self.absolutetimestamps and len(sled_df):
@@ -1514,10 +1516,12 @@ class rowingdata:
         other_df=other.df.copy()
         
         if not self.absolutetimestamps:
-	    starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
+	    #starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
+            starttimeunix = arrow.get(self.rowdatetime).timestamp
 	    self_df['TimeStamp (sec)']=self_df['TimeStamp (sec)']+starttimeunix
         if not other.absolutetimestamps:
-	    starttimeunix=time.mktime(other.rowdatetime.utctimetuple())
+	    #starttimeunix=time.mktime(other.rowdatetime.utctimetuple())
+	    starttimeunix=arrow.get(other.rowdatetime).timestamp
 	    other_df['TimeStamp (sec)']=other_df['TimeStamp (sec)']+starttimeunix
             
             
@@ -1650,7 +1654,8 @@ class rowingdata:
 	# add time stamp to
         if not self.absolutetimestamps:
             try:
-	        starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
+	        #starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
+                starttimeunix = arrow.get(self.rowdatetime).timestamp
             except:
                 starttimeunix = time.mktime(datetime.datetime.now().utctimetuple())
 	    data['TimeStamp (sec)']=data['TimeStamp (sec)']+starttimeunix

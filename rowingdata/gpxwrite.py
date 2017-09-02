@@ -2,7 +2,7 @@ import time
 import datetime
 from dateutil import parser as ps
 import lxml
-
+import arrow
 import numpy as np
 from lxml import etree, objectify
 from lxml.etree import XMLSyntaxError
@@ -57,11 +57,13 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
 	
     s="2000-01-01"
     tt=ps.parse(s)
-    timezero=time.mktime(tt.timetuple())
+    #timezero=time.mktime(tt.timetuple())
+    timezero = arrow.get(tt).timestamp
     if seconds[0]<timezero:
 	# print("Taking Row_Date ",row_date)
 	dateobj=ps.parse(row_date)
-	unixtimes=seconds+time.mktime(dateobj.timetuple())
+	#unixtimes=seconds+time.mktime(dateobj.timetuple())
+	unixtimes=seconds+arrow.get(dateobj).timestamp
 
 
 
@@ -83,8 +85,9 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
             lon=long[i]
             )
 	f.write(s)
-	s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
-	f.write('            <time>{s}Z</time>\n'.format(s=s))
+	#s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
+        s = arrow.get(unixtimes[i]).isoformat()
+	f.write('            <time>{s}</time>\n'.format(s=s))
 	f.write('          </trkpt>\n')
 
 

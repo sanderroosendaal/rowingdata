@@ -2,7 +2,7 @@ import time
 import datetime
 from dateutil import parser as ps
 import lxml
-
+import arrow
 import numpy as np
 from lxml import etree, objectify
 from lxml.etree import XMLSyntaxError
@@ -12,7 +12,7 @@ import ssl
 namespace='http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
 def lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds):
-    f.write('        <Lap StartTime="{s}Z">\n'.format(s=datetimestring))
+    f.write('        <Lap StartTime="{s}">\n'.format(s=datetimestring))
     f.write('          <TotalTimeSeconds>{s}</TotalTimeSeconds>\n'.format(s=totalseconds))
     f.write('          <DistanceMeters>{s}</DistanceMeters>\n'.format(s=totalmeters))
     f.write('          <Calories>1</Calories>\n')
@@ -76,11 +76,12 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
 	
     s="2000-01-01"
     tt=ps.parse(s)
-    timezero=time.mktime(tt.timetuple())
+    #timezero=time.mktime(tt.timetuple())
+    timezero=arrow.get(tt).timestamp
     if seconds[0]<timezero:
 	# print("Taking Row_Date ",row_date)
 	dateobj=ps.parse(row_date)
-	unixtimes=seconds+time.mktime(dateobj.timetuple())
+	unixtimes=seconds+arrow.get(dateobj).timestamp #time.mktime(dateobj.timetuple())
 
 
     
@@ -95,7 +96,7 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
 
     datetimestring=row_date
 
-    f.write('      <Id>{s}Z</Id>\n'.format(s=datetimestring))
+    f.write('      <Id>{s}</Id>\n'.format(s=datetimestring))
 
     lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds)
 
@@ -104,8 +105,9 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
 	if hri == 0:
 	    hri=1
 	f.write('          <Trackpoint>\n')
-	s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
-	f.write('            <Time>{s}Z</Time>\n'.format(s=s))
+	#s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
+        s = arrow.get(unixtimes[i]).isoformat()
+	f.write('            <Time>{s}</Time>\n'.format(s=s))
 	if (lat[i] != 0) & (long[i] != 0 ):
 	    f.write('            <Position>\n')
 	    f.write('              <LatitudeDegrees>{lat}</LatitudeDegrees>\n'.format(
