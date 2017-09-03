@@ -9,6 +9,8 @@ from lxml.etree import XMLSyntaxError
 import urllib2
 import ssl
 
+
+
 namespace='http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
 def lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds):
@@ -38,6 +40,7 @@ def lap_end(f):
 def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     if notes==None:
         notes="Exported by rowingdata"
+    notes = notes.encode('utf-8')
     f=open(tcxFile,'w')
     
     totalseconds=int(df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min())
