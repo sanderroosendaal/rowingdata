@@ -272,7 +272,7 @@ class TestSpeedCoach2_v127Parser:
         assert_equals(row.number_of_rows,1408)
         totaldist=row.df['cum_dist'].max()
         assert_equals(totaldist,14344.5)
-        assert_equals(row.rowdatetime,datetime.datetime(2016,11,5,10,2,3,200000,utc))
+        assert_equals(row.rowdatetime,datetime.datetime(2016,11,5,9,2,3,200000,utc))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(int(10*totaltime),45018)
         checks = row.check_consistency()

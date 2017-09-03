@@ -27,8 +27,8 @@ rp_out.csv,csv,989,1970,1,1,0,14,23,9994,0,1,0,9994,UTC
 RP_testdata.csv,rp,988,2016,3,15,19,49,48,10000,2266,1,2266,10000,UTC
 SpeedCoach GPS Workout.csv,speedcoach2,1308,2015,6,2,6,29,2,14002,3577,7,598,2000,UTC
 Speedcoach2example.csv,speedcoach2,97,2016,7,28,11,35,1,751,170,3,55,250,UTC
-SpeedCoach2Link_interval.csv,speedcoach2,135,2016,11,14,7,38,1,1174,295,5,57,219,UTC
-SpeedCoach2Linkv1.27.csv,speedcoach2,1408,2016,11,5,10,2,3,14344,4501,1,4501,14344,UTC
+SpeedCoach2Link_interval.csv,speedcoach2,135,2016,11,14,12,38,1,1174,295,5,57,219,UTC
+SpeedCoach2Linkv1.27.csv,speedcoach2,1408,2016,11,5,9,2,3,14344,4501,1,4501,14344,UTC
 speedcoach2test2.csv,speedcoach2,269,2016,7,30,10,13,3,2440,871,1,871,2440,UTC
 speedcoach3test3.csv,speedcoach2,147,2016,7,31,12,35,1,1111,272,1,272,1111,UTC
 speedcoachexample.csv,speedcoach,476,0,0,0,0,0,0,9520,3176,1,3176,9520,UTC
@@ -40,4 +40,4 @@ rowpro5.csv,rp,35,2017,1,1,21,50,6,469,120,1,120,469,UTC
 NKEmporfromgreg.csv,speedcoach2,582,2016,9,21,6,32,1,5000,1229,5,238,1000,UTC
 SpeedCoach2v2.12.csv,speedcoach2,115,2017,1,19,7,38,6,991,184,1,184,991,UTC
 kinomap.csv,kinomap,1869,2017,6,4,10,27,33,7350,1867,1,1867,7350,UTC
-impeller_empower.csv,speedcoach2,1140,2017,7,28,18,27,2,7252,2925,1,2925,7252,UTC
+impeller_empower.csv,speedcoach2,1140,2017,7,28,22,27,2,7252,2925,1,2925,7252,UTC

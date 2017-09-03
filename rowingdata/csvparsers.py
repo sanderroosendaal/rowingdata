@@ -12,6 +12,9 @@ import pandas as pd
 from pandas import Series,DataFrame
 from dateutil import parser
 import datetime
+import pytz
+
+from timezonefinder import TimezoneFinder
 from lxml import objectify,etree
 from fitparse import FitFile
 import os
@@ -1522,6 +1525,20 @@ class SpeedCoach2Parser(CSVParser):
             dated=dateline.split(',')[1]
 	    self.row_date=parser.parse(dated,fuzzy=True)
 
+        if self.row_date.tzinfo is None or self.row_date.tzinfo.utcoffset(self.row_date) is None:
+            try:
+                latavg = self.df[self.columns[' latitude']].mean()
+                lonavg = self.df[self.columns[' longitude']].mean()
+                tf = TimezoneFinder()
+                timezone_str = tf.timezone_at(lng=lonavg,lat=latavg)
+                if timezone_str == None:
+                    timezone_str = tf.closest_timezone_at(lng=lonavg,
+                                                          lat=latavg)
+                row_date = self.row_date
+                row_date = pytz.timezone(timezone_str).localize(row_date)
+            except KeyError:
+                row_date = pytz.timezone('UTC').localize(self.row_date)
+            self.row_date = row_date
 
         timestrings=self.df[self.columns['TimeStamp (sec)']]
         #datum=time.mktime(self.row_date.utctimetuple())
