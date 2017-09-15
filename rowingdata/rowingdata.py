@@ -1433,6 +1433,8 @@ class rowingdata:
 	    ' StrokeRecoveryTime (ms)',
 	    ' AverageDriveForce (lbs)',
 	    ' PeakDriveForce (lbs)',
+	    ' AverageDriveForce (N)',
+	    ' PeakDriveForce (N)',
 	    ' lapIdx',
 	    ' ElapsedTime (sec)',
             ' WorkoutState',
@@ -1458,6 +1460,18 @@ class rowingdata:
                         sled_df[name]=forcen/lbstoN
                     except KeyError:
                         pass
+                if name==' AverageDriveForce (N)':
+                    try:
+                        forcelbs=sled_df[' AverageDriveForce (lbs)']
+                        sled_df[name]=forcelbs*lbstoN
+                    except KeyError:
+                        pass
+                if name==' PeakDriveForce (N)':
+                    try:
+                        forcelbs=sled_df[' PeakDriveForce (lbs)']
+                        sled_df[name]=forcelbs*lbstoN
+                    except KeyError:
+                        pass
                 if name==' PeakDriveForce (lbs)':
                     try:
                         forcen=sled_df[' PeakDriveForce (N)']
@@ -1475,8 +1489,8 @@ class rowingdata:
 
 
         # add forces in N (for future)
-        sled_df[' AverageDriveForce (N)']=sled_df[' AverageDriveForce (lbs)']*lbstoN
-        sled_df[' PeakDriveForce (N)']=sled_df[' PeakDriveForce (lbs)']*lbstoN
+        #sled_df[' AverageDriveForce (N)']=sled_df[' AverageDriveForce (lbs)']*lbstoN
+        #sled_df[' PeakDriveForce (N)']=sled_df[' PeakDriveForce (lbs)']*lbstoN
 
         self.dragfactor=sled_df[' DragFactor'].mean()
 	# get the date of the row
@@ -1485,7 +1499,7 @@ class rowingdata:
         except IndexError:
             starttime=0
 
-	# create start time timezone aware time objectx
+	# create start time timezone aware time object
         self.rowdatetime=arrow.get(starttime).datetime
 	#self.rowdatetime=datetime.datetime.utcfromtimestamp(starttime)
 	    	
