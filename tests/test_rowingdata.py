@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from nose_parameterized import parameterized
 import unittest
+from pytz import utc
 
 class TestBasicRowingData:
     row=rowingdata.rowingdata(csvfile='testdata/testdata.csv')
@@ -17,7 +18,7 @@ class TestBasicRowingData:
         assert_equals(self.row.rowtype,'Indoor Rower')
         assert_equals(self.row.dragfactor,104.42931937172774)
         assert_equals(self.row.number_of_rows,191)
-        assert_equals(self.row.rowdatetime,datetime.datetime(2016,5,20,13,41,26,962390))
+        assert_equals(self.row.rowdatetime,datetime.datetime(2016,5,20,13,41,26,962390,utc))
         totaldist=self.row.df['cum_dist'].max()
         totaltime=self.row.df['TimeStamp (sec)'].max()-self.row.df['TimeStamp (sec)'].min()
         totaltime=totaltime+self.row.df.ix[0,' ElapsedTime (sec)']
@@ -110,7 +111,7 @@ class TestCorrectedRowingData:
         assert_equals(self.row.rowtype,'Indoor Rower')
         assert_equals(self.row.dragfactor,95.8808988764045)
         assert_equals(self.row.number_of_rows,445)
-        assert_equals(self.row.rowdatetime,datetime.datetime(2017,5,30,19,4,16,383211))
+        assert_equals(self.row.rowdatetime,datetime.datetime(2017,5,30,19,4,16,383211,utc))
         totaldist=self.row.df['cum_dist'].max()
         totaltime=self.row.df['TimeStamp (sec)'].max()-self.row.df['TimeStamp (sec)'].min()
         totaltime=totaltime+self.row.df.ix[0,' ElapsedTime (sec)']
@@ -146,7 +147,7 @@ class TestpainsledDesktopParser:
         assert_equals(row.number_of_rows,638)
         totaldist=row.df['cum_dist'].max()
         assert_equals(totaldist,7097)
-        assert_equals(row.rowdatetime,datetime.datetime(2016,3,29,16,41,27))
+        assert_equals(row.rowdatetime,datetime.datetime(2016,3,29,17,41,27,0,utc))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(totaltime,1802)
         checks = row.check_consistency()
@@ -162,7 +163,7 @@ class TestBoatCoachParser:
         assert_equals(row.number_of_rows,119)
         totaldist=row.df['cum_dist'].max()
         assert_equals(totaldist,499)
-        assert_equals(row.rowdatetime,datetime.datetime(2016,11,28,7,37,2))
+        assert_equals(row.rowdatetime,datetime.datetime(2016,11,28,8,37,2,0,utc))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(totaltime,118)
         checks = row.check_consistency()
@@ -223,7 +224,7 @@ class TestRowProParser:
         assert_equals(row.number_of_rows,988)
         totaldist=row.df['cum_dist'].max()
         assert_equals(totaldist,10000)
-        assert_equals(row.rowdatetime,datetime.datetime(2016,3,15,18,49,48))
+        assert_equals(row.rowdatetime,datetime.datetime(2016,3,15,19,49,48,0,utc))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(int(10*totaltime),22660)
         checks = row.check_consistency()
@@ -239,7 +240,7 @@ class TestRowProParserIntervals:
         assert_equals(row.number_of_rows,1674)
         totaldist=row.df['cum_dist'].max()
         assert_equals(int(totaldist),19026)
-        assert_equals(row.rowdatetime,datetime.datetime(2016,1,12,18,23,10))
+        assert_equals(row.rowdatetime,datetime.datetime(2016,1,12,19,23,10,0,utc))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(totaltime,4800)
         checks = row.check_consistency()
@@ -255,7 +256,7 @@ class TestSpeedCoach2Parser:
         assert_equals(row.number_of_rows,97)
         totaldist=row.df['cum_dist'].max()
         assert_equals(int(10*totaldist),7516)
-        assert_equals(row.rowdatetime,datetime.datetime(2016,7,28,11,35,1,500000))
+        assert_equals(row.rowdatetime,datetime.datetime(2016,7,28,11,35,1,500000,utc))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(totaltime,170)
         checks = row.check_consistency()
@@ -271,7 +272,7 @@ class TestSpeedCoach2_v127Parser:
         assert_equals(row.number_of_rows,1408)
         totaldist=row.df['cum_dist'].max()
         assert_equals(totaldist,14344.5)
-        assert_equals(row.rowdatetime,datetime.datetime(2016,11,5,10,2,3,200000))
+        assert_equals(row.rowdatetime,datetime.datetime(2016,11,5,9,2,3,200000,utc))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(int(10*totaltime),45018)
         checks = row.check_consistency()
@@ -287,7 +288,7 @@ class TestFITParser:
         assert_equals(row.number_of_rows,94)
         totaldist=row.df['cum_dist'].max()
         assert_equals(int(totaldist),750)
-        assert_equals(row.rowdatetime,datetime.datetime(2016,7,28,9,35,29))
+        assert_equals(row.rowdatetime,datetime.datetime(2016,7,28,9,35,29,0,utc))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(int(10*totaltime),4870)
         checks = row.check_consistency()

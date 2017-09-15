@@ -119,6 +119,7 @@ def checkfile(f2,verbose=False):
     m=row.rowdatetime.month
     d=row.rowdatetime.day
     h=row.rowdatetime.hour
+    tz = row.rowdatetime.tzname()
     minute=row.rowdatetime.minute
     sec=row.rowdatetime.second
 
@@ -136,6 +137,7 @@ def checkfile(f2,verbose=False):
         'nrintervals':nrintervals,
         'lap 1 time': int(int1time),
         'lap 1 dist': int(int1dist),
+        'timezone':tz,
         }
     
     return results
