@@ -53,6 +53,10 @@ def checkfile(f2,verbose=False):
         # handle CoxMate
         if (fileformat == 'coxmate'):
             row = rowingdata.CoxMateParser(f2)
+
+        # handle BoatCoachOTW
+        if (fileformat == 'boatcoachotw'):
+            row = rowingdata.BoatCoachOTWParser(f2)
             
 	# handle BoatCoach
 	if (fileformat == 'boatcoach'):
