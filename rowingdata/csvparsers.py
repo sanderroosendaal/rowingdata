@@ -109,9 +109,12 @@ def csvtests(fop):
     if 'Mike' in firstline and 'process' in firstline:
         return 'bcmike'
 
-    if 'Club' in firstline:
+    if 'Club' in firstline and 'workoutType' in secondline:
         return 'boatcoach'
 
+    if 'Club' in secondline and 'Piece Stroke Count' in thirdline:
+        return 'boatcoachotw'
+    
     if 'peak_force_pos' in firstline:
         return 'rowperfect3'
 
@@ -498,7 +501,64 @@ class CSVParser(object):
             return data.to_csv(writeFile,index_label='index')
 
 
+class BoatCoachOTWParser(CSVParser):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['skiprows']=2
+        if args:
+            csvfile=args[0]
+        else:
+            csvfile=kwargs['csvfile']
+            
+        super(BoatCoachOTWParser, self).__init__(*args, **kwargs)
         
+        self.cols=[
+            'DateTime',
+	    'TOTAL Distance Since Start BoatCoach(m)',
+	    'Stroke Rate',
+	    'Heart Rate',
+	    'Last 10 Stroke Speed(/500m)',
+	    '',
+	    '',
+	    '',
+	    '',
+	    '',
+	    '',
+	    '',
+	    '',
+	    'Piece Number',
+	    'Elapsed Time',
+            'Latitude',
+            'Longitude',
+	]
+
+        self.cols=[b if a=='' else a \
+                     for a,b in zip(self.cols,self.defaultcolumnnames)]
+
+
+        self.columns=dict(zip(self.defaultcolumnnames,self.cols))
+
+        try:
+            datetime = self.df[self.columns['TimeStamp (sec)']]
+            row_date = parser.parse(datetime[0],fuzzy=True)
+            datetime=datetime.apply(lambda x:parser.parse(x,fuzzy=True))
+            unixtimes = datetime.apply(lambda x:arrow.get(x).timestamp)
+        except KeyError:
+            row_date2 = arrow.get(row_date).timestamp
+            timecolumn=self.df[self.columns[' ElapsedTime (sec)']]
+            timesecs=timecolumn.apply(lambda x:timestrtosecs(x))
+            timesecs=make_cumvalues(timesecs)[0]
+            unixtimes=row_date2+timesecs
+
+        self.df[self.columns['TimeStamp (sec)']]=unixtimes
+        self.columns[' ElapsedTime (sec)']=' ElapsedTime (sec)'
+
+        self.df[self.columns[' ElapsedTime (sec)']]=unixtimes-unixtimes[0]
+        pace=self.df[self.columns[' Stroke500mPace (sec/500m)']].apply(lambda x:timestrtosecs2(x))
+        self.df[self.columns[' Stroke500mPace (sec/500m)']]=pace
+        
+        self.to_standard()
+            
 class CoxMateParser(CSVParser):
 
     

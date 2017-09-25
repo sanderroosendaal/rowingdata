@@ -43,6 +43,7 @@ from csvparsers import (
     get_empower_rigging,
     CoxMateParser,
     BoatCoachParser,
+    BoatCoachOTWParser,
     BoatCoachAdvancedParser,
     speedcoachParser,
     ErgDataParser,
