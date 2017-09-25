@@ -8,7 +8,7 @@ import checkdatafiles
 from scipy import integrate
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__="1.2.2"
+__version__="1.2.3"
 
 try:
     from Tkinter import Tk
@@ -43,6 +43,7 @@ from csvparsers import (
     get_empower_rigging,
     CoxMateParser,
     BoatCoachParser,
+    BoatCoachOTWParser,
     BoatCoachAdvancedParser,
     speedcoachParser,
     ErgDataParser,
