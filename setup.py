@@ -45,6 +45,7 @@ setup(name='rowingdata',
 	  'rowingphysics>=0.2.3',
 	  'iso8601',
           'lxml',
+          'xmltodict',
           'nose_parameterized',
       ],
 
