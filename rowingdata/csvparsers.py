@@ -170,10 +170,10 @@ def get_file_type(f):
         except:
             return 'unknown'
 
-        if 'HeartRateBpm' in etree.tostring(rt):
-            return 'tcx'
-        else:
-            return 'tcxnohr'
+        #if 'HeartRateBpm' in etree.tostring(rt):
+        #    return 'tcx'
+        #else:
+        #    return 'tcxnohr'
 
     if extension =='fit':
         try:

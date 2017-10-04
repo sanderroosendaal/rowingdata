@@ -365,7 +365,7 @@ class TCXParserTester(object):
         return the_array
 
 
-class NewTCXParser(object):
+class TCXParser(object):
     def __init__(self,tcx_file):
         self.df = tcxtools.tcxtodf(tcx_file)
         lat = self.df['latitude'].apply(lambda x:tofloat(x)).values
@@ -438,7 +438,7 @@ class NewTCXParser(object):
         else:
             return data.to_csv(writefile,index_label='index')
         
-class TCXParser(object):
+class OldTCXParser(object):
     """ Parser for reading TCX files, e.g. from CrewNerd
 
     Use: data = rowingdata.TCXParser("crewnerd_data.tcx")

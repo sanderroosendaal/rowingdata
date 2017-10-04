@@ -9,7 +9,7 @@ coxmate.csv,coxmate,147,0,0,0,0,0,0,1005,284,1,284,1005,UTC
 boatcoach.csv,boatcoach,119,2016,11,28,8,37,2,499,118,2,58,246,UTC
 crewnerd_interval.csv,mystery,16388,0,0,0,0,0,0,6007,1641,1,1641,6007,UTC
 crewnerddata.CSV,unknown,0,0,0,0,0,0,0,0,0,0,0,0,UTC
-crewnerddata.tcx,tcx,3374,2016,4,2,8,15,9,10465,3923,1,3923,10465,UTC
+crewnerddata.tcx,tcx,3374,2016,4,2,8,15,9,10269,3923,1,3923,10465,UTC
 crewnerddata_o.CSV,csv,3374,2016,4,2,9,15,9,10465,3923,1,3923,10465,UTC
 ergdata_example.csv,ergdata,180,0,0,0,0,0,0,1992,520,1,520,1992,UTC
 ergstick.csv,ergstick,2400,0,0,0,0,0,0,4959,1201,3,598,2481,UTC
@@ -18,11 +18,11 @@ example.csv,csv,3337,2016,3,26,9,33,25,10782,3513,1,3513,10782,UTC
 example_data.csv,csv,3266,2016,3,25,6,58,30,10697,3484,1,3484,10697,UTC
 faketcx.tcx,unknown,0,0,0,0,0,0,0,0,0,0,0,0,UTC
 mystery.csv,mystery,4550,0,0,0,0,0,0,7478,2325,1,2325,7478,UTC
-NoHR.tcx,tcxnohr,6190,2016,6,18,11,53,5,4327,1317,1,1317,4327,UTC
+NoHR.tcx,tcx,6190,2016,6,18,11,53,5,4327,1317,1,1317,4327,UTC
 painsled_desktop_example.csv,painsleddesktop,638,2016,3,29,17,41,27,7097,1802,1,1802,7097,UTC
 painsled_out_data.csv,csv,662,2016,3,29,16,41,8,7118,1843,1,1843,7118,UTC
 painsled_to_csv_20160221-105218_erg-400150318_760465m.csv,painsleddesktop,1434,2016,2,21,9,53,20,15207,4067,3,4067,15207,UTC
-rowinginmotionexample.TCX,tcx,5170,2015,10,17,12,46,39,13766,6157,1,6157,13766,UTC
+rowinginmotionexample.TCX,tcx,5170,2015,10,17,12,46,39,13779,6157,1,6157,13766,UTC
 RP_interval.csv,rp,1674,2016,1,12,19,23,10,19026,4800,4,1200,4956,UTC
 rp_out.csv,csv,989,1970,1,1,0,14,23,9994,0,1,0,9994,UTC
 RP_testdata.csv,rp,988,2016,3,15,19,49,48,10000,2266,1,2266,10000,UTC
