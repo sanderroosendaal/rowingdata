@@ -6,9 +6,17 @@ from pandas import DataFrame
 from lxml import objectify
 from fitparse import FitFile
 import arrow
+import tcxtools
 from utils import totimestamp, geo_distance, ewmovingaverage
 
 NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
+
+def tofloat(x):
+    try:
+        return(float(x))
+    except ValueError:
+        return np.nan
+    
 
 def fitsummarydata(*args, **kwargs):
     from warnings import warn
@@ -357,7 +365,79 @@ class TCXParserTester(object):
         return the_array
 
 
+class NewTCXParser(object):
+    def __init__(self,tcx_file):
+        self.df = tcxtools.tcxtodf(tcx_file)
+        lat = self.df['latitude'].apply(lambda x:tofloat(x)).values
+        longitude = self.df['longitude'].apply(lambda x:tofloat(x)).values
+        unixtimes = self.df['timestamp'].values
+        spm = self.df['Cadence'].apply(lambda x:tofloat(x)).values
 
+        try:
+            velo = self.df['Speed'].apply(lambda x:tofloat(x))
+            dist2 = self.df['DistanceMeters'].apply(lambda x:tofloat(x))
+            strokelength = velo*60./spm
+        except KeyError:
+            nr_rows = len(lat)
+            dist2 = np.zeros(nr_rows)
+            velo = np.zeros(nr_rows)
+            strokelength = np.zeros(nr_rows)
+            for i in range(nr_rows-1):
+                res = geo_distance(lat[i], longitude[i], lat[i+1], longitude[i+1])
+                deltal = 1000.*res[0]
+                dist2[i+1] = dist2[i]+deltal
+                velo[i+1] = deltal/(1.0*(unixtimes[i+1]-unixtimes[i]))
+                if spm[i] <> 0:
+                    strokelength[i] = deltal*60/spm[i]
+                else:
+                    strokelength[i] = 0.
+        
+        try:
+            power = self.df['Watts']
+        except KeyError:
+            self.df['Watts'] = 0*spm
+
+        p = 500./velo
+
+        self.df[' Horizontal (meters)'] = dist2
+        self.df[' StrokeDistance (meters)'] = strokelength
+        self.df[' Stroke500mPace (sec/500m)'] = p
+
+        # translate from standard TCX names to our naming convention
+        self.columns={
+            'timestamp':'TimeStamp (sec)',
+	    'Cadence': ' Cadence (stokes/min)',
+	    'HeartRateBpm' : ' HRCur (bpm)',
+	    'Watts': ' Power (watts)',
+	    'lapid': ' lapIdx',
+            'latitude': ' latitude',
+            'longitude': ' longitude',
+	}
+
+        self.df.rename(columns=self.columns,inplace=True)
+        
+
+    def write_csv(self, writefile='example.csv', window_size=5, gzip=False):
+        data = self.df
+        data = data.sort_values(by='TimeStamp (sec)',ascending=True)
+        data = data.fillna(method='ffill')
+
+        # drop all-zero columns
+        for c in data.columns:
+            if (data[c] == 0).any() and data[c].mean() == 0:
+                data=data.drop(c,axis=1)
+            if c == 'Position':
+                data=data.drop(c,axis=1)
+            if c == 'Extensions':
+                data = data.drop(c,axis=1)
+        
+                
+        if gzip:
+	    return data.to_csv(writefile+'.gz',index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writefile,index_label='index')
+        
 class TCXParser(object):
     """ Parser for reading TCX files, e.g. from CrewNerd
 
