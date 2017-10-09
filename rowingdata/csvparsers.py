@@ -167,6 +167,7 @@ def get_file_type(f):
         try:
             tree=objectify.parse(f)
             rt=tree.getroot()
+            return 'tcx'
         except:
             return 'unknown'
 
