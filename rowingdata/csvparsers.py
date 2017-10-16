@@ -167,13 +167,14 @@ def get_file_type(f):
         try:
             tree=objectify.parse(f)
             rt=tree.getroot()
+            return 'tcx'
         except:
             return 'unknown'
 
-        if 'HeartRateBpm' in etree.tostring(rt):
-            return 'tcx'
-        else:
-            return 'tcxnohr'
+        #if 'HeartRateBpm' in etree.tostring(rt):
+        #    return 'tcx'
+        #else:
+        #    return 'tcxnohr'
 
     if extension =='fit':
         try:
