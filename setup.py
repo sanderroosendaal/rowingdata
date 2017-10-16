@@ -47,6 +47,7 @@ setup(name='rowingdata',
           'lxml',
           'xmltodict',
           'nose_parameterized',
+          'timezonefinder',
       ],
 
       zip_safe=False,
