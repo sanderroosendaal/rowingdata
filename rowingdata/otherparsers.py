@@ -386,7 +386,10 @@ class TCXParser(object):
                 res = geo_distance(lat[i], longitude[i], lat[i+1], longitude[i+1])
                 deltal = 1000.*res[0]
                 dist2[i+1] = dist2[i]+deltal
-                velo[i+1] = deltal/(1.0*(unixtimes[i+1]-unixtimes[i]))
+                try:
+                    velo[i+1] = deltal/(1.0*(unixtimes[i+1]-unixtimes[i]))
+                except ZeroDivisionError:
+                    velo[i+1] = velo[i]
                 if spm[i] <> 0:
                     strokelength[i] = deltal*60/spm[i]
                 else:
