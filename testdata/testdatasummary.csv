@@ -1,4 +1,5 @@
 filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrintervals,lap 1 time,lap 1 dist,timezone
+testdata.csv.gz,csv,191,2016,5,20,11,41,26,2000,537,4,139,510,UTC
 boatcoach_otw.csv,boatcoachotw,4197,2017,9,25,19,22,24,12624,4184,5,4184,12624,UTC
 coxmate.csv,coxmate,147,0,0,0,0,0,0,1005,284,1,284,1005,UTC
 2016-03-25-0758.CSV,unknown,0,0,0,0,0,0,0,0,0,0,0,0,UTC

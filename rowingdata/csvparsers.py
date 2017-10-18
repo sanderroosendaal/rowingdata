@@ -154,8 +154,11 @@ def get_file_type(f):
     extension=f[-3:].lower()
     if extension == '.gz':
         extension=f[-6:-3].lower()
-        with gzip.open(f,'r') as f:
-            return csvtests(f)
+        try:
+            with gzip.open(f,'r') as f:
+                return csvtests(f)
+        except IOError:
+            return 'notgzip'
     if extension == 'csv':
         if get_file_linecount(f) <= 2:
             return 'nostrokes'
