@@ -79,15 +79,21 @@ def tcxtrack_getdata(track):
             pass
 
         if key == 'Extensions':
+            extensionsdf = df[key].apply(pd.Series)
+            thekeys = extensionsdf.keys()
             try:
-                l = df[key].apply(pd.Series)['ax:ActivityTrackpointExtension']
+                l = extensionsdf['ax:ActivityTrackpointExtension']
                 l = l.apply(pd.Series)['Extensions'].apply(pd.Series)
             except KeyError:
-                l = df[key].apply(pd.Series)['TPX']
-                l = l.apply(pd.Series)
+                l = {}
             for kk in l.keys():
                 if kk != 0:
                     df[kk] = l[kk]
+            for key in thekeys:
+                l = extensionsdf[key].apply(pd.Series)
+                for kk in l.keys():
+                    if kk != 0 and 'xmlns' not in kk:
+                        df[kk] = l[kk]
     return df
                                           
 def tcxtodf(path):
