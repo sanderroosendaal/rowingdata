@@ -60,7 +60,7 @@ def tcxtrack_getdata(track):
     trackpoints = tcxtrackgettrackpoint(track)
     df = pd.DataFrame(trackpoints)
     datetime = df['Time'].apply(lambda x:parser.parse(x,fuzzy=True))
-    df['timestamp'] = datetime.apply(lambda x:arrow.get(x).timestamp)
+    df['timestamp'] = datetime.apply(lambda x:arrow.get(x).timestamp+arrow.get(x).microsecond/1.e6)
     try:
         df['latitude'] = df['Position'].apply(lambda x:x['LatitudeDegrees'])
         df['longitude'] = df['Position'].apply(lambda x:x['LongitudeDegrees'])

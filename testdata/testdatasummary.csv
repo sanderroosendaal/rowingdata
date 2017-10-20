@@ -19,14 +19,14 @@ example.csv,csv,3337,2016,3,26,9,33,25,10782,3513,1,3513,10782,UTC
 example_data.csv,csv,3266,2016,3,25,6,58,30,10697,3484,1,3484,10697,UTC
 faketcx.tcx,unknown,0,0,0,0,0,0,0,0,0,0,0,0,UTC
 mystery.csv,mystery,4550,0,0,0,0,0,0,7478,2325,1,2325,7478,UTC
-NoHR.tcx,tcx,6190,2016,6,18,11,53,5,4327,1318,1,1318,4327,UTC
+NoHR.tcx,tcx,6190,2016,6,18,11,53,5,4327,1317,1,1317,4327,UTC
 painsled_desktop_example.csv,painsleddesktop,638,2016,3,29,17,41,27,7097,1802,1,1802,7097,UTC
 painsled_out_data.csv,csv,662,2016,3,29,16,41,8,7118,1843,1,1843,7118,UTC
-painsled_to_csv_20160221-105218_erg-400150318_760465m.csv,painsleddesktop,1434,2016,2,21,9,53,20,15207,4067,3,4067,15207,UTC
+painsled_to_csv_20160221-105218_erg-400150318_760465m.csv,painsleddesktop,1434,2016,2,21,9,53,20,15207,4066,3,4066,15207,UTC
 rowinginmotionexample.TCX,tcx,5177,2015,10,17,12,45,55,13779,6201,1,6201,13779,UTC
 RP_interval.csv,rp,1674,2016,1,12,19,23,10,19026,4800,4,1200,4956,UTC
 rp_out.csv,csv,989,1970,1,1,0,14,23,9994,0,1,0,9994,UTC
-RP_testdata.csv,rp,988,2016,3,15,19,49,48,10000,2266,1,2266,10000,UTC
+RP_testdata.csv,rp,988,2016,3,15,19,49,48,10000,2265,1,2265,10000,UTC
 SpeedCoach GPS Workout.csv,speedcoach2,1308,2015,6,2,6,29,2,14002,3577,7,598,2000,UTC
 Speedcoach2example.csv,speedcoach2,97,2016,7,28,11,35,1,751,170,3,55,250,UTC
 SpeedCoach2Link_interval.csv,speedcoach2,135,2016,11,14,12,38,1,1174,295,5,57,219,UTC

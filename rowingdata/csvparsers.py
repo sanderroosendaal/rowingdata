@@ -546,7 +546,7 @@ class BoatCoachOTWParser(CSVParser):
             datetime = self.df[self.columns['TimeStamp (sec)']]
             row_date = parser.parse(datetime[0],fuzzy=True)
             datetime=datetime.apply(lambda x:parser.parse(x,fuzzy=True))
-            unixtimes = datetime.apply(lambda x:arrow.get(x).timestamp)
+            unixtimes = datetime.apply(lambda x:arrow.get(x).timestamp+arrow.get(x).microsecond/1.e6)
         except KeyError:
             row_date2 = arrow.get(row_date).timestamp
             timecolumn=self.df[self.columns[' ElapsedTime (sec)']]
@@ -610,7 +610,7 @@ class CoxMateParser(CSVParser):
         elapsed = self.df[self.columns[' ElapsedTime (sec)']]
         tts = now+elapsed.apply(lambda x:datetime.timedelta(seconds=x))
         #unixtimes=tts.apply(lambda x:time.mktime(x.utctimetuple()))
-        unixtimes = tts.apply(lambda x:arrow.get(x).timestamp)
+        unixtimes = tts.apply(lambda x:arrow.get(x).timestamp+arrow.get(x).microsecond/1.e6)
         self.df[self.columns['TimeStamp (sec)']]=unixtimes
 
         self.to_standard()
@@ -658,7 +658,7 @@ class painsledDesktopParser(CSVParser):
 	# convert to unix style time stamp
 	tts=timestamps.apply(lambda x:iso8601.parse_date(x[2:-1]))
         #unixtimes=tts.apply(lambda x:time.mktime(x.utctimetuple()))
-        unixtimes = tts.apply(lambda x:arrow.get(x).timestamp)
+        unixtimes = tts.apply(lambda x:arrow.get(x).timestamp+arrow.get(x).microsecond/1.e6)
         self.df[self.columns['TimeStamp (sec)']]=unixtimes
         self.columns[' ElapsedTime (sec)']=' ElapsedTime (sec)'
         self.df[self.columns[' ElapsedTime (sec)']]=unixtimes-unixtimes.iloc[0]
@@ -715,7 +715,7 @@ class BoatCoachParser(CSVParser):
             row_date=parser.parse(datetime[0],fuzzy=True)
             datetime=datetime.apply(lambda x:parser.parse(x,fuzzy=True))
             #unixtimes=datetime.apply(lambda x:time.mktime(x.utctimetuple()))
-            unixtimes = datetime.apply(lambda x:arrow.get(x).timestamp)
+            unixtimes = datetime.apply(lambda x:arrow.get(x).timestamp+arrow.get(x).microsecond/1.e6)
         except KeyError:
             # calculations
             #row_date2=time.mktime(row_date.utctimetuple())
@@ -838,7 +838,7 @@ class KinoMapParser(CSVParser):
         row_date=parser.parse(datetime[0],fuzzy=True)
         datetime=datetime.apply(lambda x:parser.parse(x,fuzzy=True))
         #unixtimes=datetime.apply(lambda x:time.mktime(x.utctimetuple()))
-        unixtimes = datetime.apply(lambda x:arrow.get(x).timestamp)
+        unixtimes = datetime.apply(lambda x:arrow.get(x).timestamp+arrow.get(x).microsecond/1.e6)
         self.df[self.columns['TimeStamp (sec)']]=unixtimes
         self.columns[' ElapsedTime (sec)']=' ElapsedTime (sec)'
 
@@ -911,7 +911,7 @@ class BoatCoachAdvancedParser(CSVParser):
             row_date=parser.parse(datetime[0],fuzzy=True)
             datetime=datetime.apply(lambda x:parser.parse(x,fuzzy=True))
             #unixtimes=datetime.apply(lambda x:time.mktime(x.utctimetuple()))
-            unixtimes = datetime.apply(lambda x:arrow.get(x).timestamp)
+            unixtimes = datetime.apply(lambda x:arrow.get(x).timestamp+arrow.get(x).microsecond/1.e6)
         except KeyError:
             # calculations
             #row_date2=time.mktime(row_date.utctimetuple())
@@ -1436,7 +1436,7 @@ class RowProParser(CSVParser):
         tts=self.row_date+seconds3
         
         #unixtimes=tts.apply(lambda x:time.mktime(x.utctimetuple()))
-        unixtimes = tts.apply(lambda x:arrow.get(x).timestamp)
+        unixtimes = tts.apply(lambda x:arrow.get(x).timestamp+arrow.get(x).microsecond/1.e6)
         # unixtimes=totimestamp(self.row_date+seconds3)
         self.df[self.columns[' lapIdx']]=lapidx
         self.df[self.columns['TimeStamp (sec)']]=unixtimes
