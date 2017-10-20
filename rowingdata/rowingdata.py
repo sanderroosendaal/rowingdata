@@ -1523,6 +1523,9 @@ class rowingdata:
 		      self.rwr.max
 		      )
 
+        # Cadence to float
+        self.df[' Cadence (stokes/min)'] = self.df[' Cadence (stokes/min)'].astype(float)
+        
 	self.df=addpowerzones(self.df,self.rwr.ftp,self.rwr.powerperc)
         self.index=self.df.index
 
