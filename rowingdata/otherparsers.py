@@ -422,7 +422,16 @@ class TCXParser(object):
 	}
 
         self.df.rename(columns=self.columns,inplace=True)
-        
+
+        cc = [value for key,value in self.columns.items()]
+
+        for c in cc:
+            if c != 'lapIdx':
+                try:
+                    self.df[c] = self.df[c].astype(float)
+                except KeyError:
+                    pass
+                    
 
     def write_csv(self, writefile='example.csv', window_size=5, gzip=False):
         data = self.df
