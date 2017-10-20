@@ -371,7 +371,11 @@ class TCXParser(object):
         lat = self.df['latitude'].apply(lambda x:tofloat(x)).values
         longitude = self.df['longitude'].apply(lambda x:tofloat(x)).values
         unixtimes = self.df['timestamp'].values
-        spm = self.df['Cadence'].apply(lambda x:tofloat(x)).values
+        try:
+            spm = self.df['Cadence'].apply(lambda x:tofloat(x)).values
+        except KeyError:
+            spm = self.df['StrokeRate'].apply(lambda x:tofloat(x)).values
+            self.df['Cadence'] = self.df['StrokeRate']
 
         try:
             velo = self.df['Speed'].apply(lambda x:tofloat(x))
