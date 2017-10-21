@@ -1,9 +1,5 @@
 import rowingdata
-#from rowingdata import TCXParser,RowProParser,ErgDataParser,TCXParserNoHR
-#from rowingdata import BoatCoachParser,KinoMapParser
-#from rowingdata import MysteryParser
-#from rowingdata import painsledDesktopParser,speedcoachParser,ErgStickParser
-#from rowingdata import SpeedCoach2Parser,FITParser,fitsummarydata
+
 import os
 
 def checkfile(f2,verbose=False):
