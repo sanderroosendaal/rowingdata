@@ -8,7 +8,7 @@ import checkdatafiles
 from scipy import integrate
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__="1.2.5"
+__version__="1.2.7"
 
 try:
     from Tkinter import Tk
@@ -72,6 +72,8 @@ from otherparsers import (
     TCXParser,
     fitsummarydata,
     )
+
+from otherparsers import TCXParser as TCXParserNoHR
 
 weknowphysics=0
 

@@ -8,7 +8,7 @@ import checkdatafiles
 from scipy import integrate
 #warnings.warn("Experimental version. Downgrade to 0.93.6 if you are not adventurous.",UserWarning)
 
-__version__="1.2.5"
+__version__="1.2.6"
 
 try:
     from Tkinter import Tk
@@ -69,10 +69,11 @@ from csvparsers import (
 from otherparsers import (
     FitSummaryData,
     FITParser,
-    TCXParserNoHR,
     TCXParser,
     fitsummarydata,
     )
+
+from otherparsers import TCXParser as TCXParserNoHR
 
 weknowphysics=0
 
@@ -1523,6 +1524,9 @@ class rowingdata:
 		      self.rwr.max
 		      )
 
+        # Cadence to float
+        self.df[' Cadence (stokes/min)'] = self.df[' Cadence (stokes/min)'].astype(float)
+        
 	self.df=addpowerzones(self.df,self.rwr.ftp,self.rwr.powerperc)
         self.index=self.df.index
 
