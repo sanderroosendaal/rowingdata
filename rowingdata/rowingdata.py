@@ -69,7 +69,6 @@ from csvparsers import (
 from otherparsers import (
     FitSummaryData,
     FITParser,
-    TCXParserNoHR,
     TCXParser,
     fitsummarydata,
     )
