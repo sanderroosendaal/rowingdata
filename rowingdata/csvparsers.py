@@ -96,6 +96,9 @@ def csvtests(fop):
     if 'SpeedCoach GPS Pro' in fourthline:
         return 'speedcoach2'
 
+    if 'SpeedCoach GPS' in fourthline:
+        return 'speedcoach2'
+
     if 'SpeedCoach GPS2' in fourthline:
         return 'speedcoach2'
 

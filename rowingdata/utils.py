@@ -89,7 +89,7 @@ def format_pace(x,pos=None):
     str1="{min:0>2}:{sec:0>4.1f}".format(
 	min=min,
 	sec=sec
-	)
+    )
 
     return str1
 
