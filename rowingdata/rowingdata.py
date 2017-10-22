@@ -2,6 +2,13 @@
 
 __version__ = "1.2.7"
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib import figure
+from matplotlib.pyplot import grid
+from matplotlib.ticker import FuncFormatter, NullFormatter
+
 try:
     from Tkinter import Tk
     tkavail = 1
@@ -24,11 +31,6 @@ from sys import platform as _platform
 import arrow
 
 import mechanize
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib import figure
-from matplotlib.pyplot import grid
-from matplotlib.ticker import FuncFormatter, NullFormatter
 
 import numpy as np
 from numpy import isinf, isnan
