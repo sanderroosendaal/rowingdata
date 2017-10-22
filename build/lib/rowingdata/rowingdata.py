@@ -1,6 +1,13 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.2.7"
+__version__ = "1.2.8"
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from matplotlib import figure
+from matplotlib.pyplot import grid
+from matplotlib.ticker import FuncFormatter, NullFormatter
 
 try:
     from Tkinter import Tk
@@ -24,11 +31,6 @@ from sys import platform as _platform
 import arrow
 
 import mechanize
-import matplotlib
-import matplotlib.pyplot as plt
-from matplotlib import figure
-from matplotlib.pyplot import grid
-from matplotlib.ticker import FuncFormatter, NullFormatter
 
 import numpy as np
 from numpy import isinf, isnan
