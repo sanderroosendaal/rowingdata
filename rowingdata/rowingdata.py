@@ -46,6 +46,7 @@ from scipy import integrate
 from scipy.interpolate import griddata
 
 from tqdm import tqdm
+weknowphysics = 0
 
 try:
     import rowingphysics
@@ -89,7 +90,6 @@ if tkavail == 0:
     matplotlib.use('Agg')
 
 
-weknowphysics = 0
 
 
 

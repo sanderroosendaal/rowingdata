@@ -4,7 +4,6 @@ import xmltodict as xd
 from dateutil import parser
 import arrow
 
-
 def tcx_getdict(path):
     with open(path, 'r') as f:
         d = xd.parse(f)
@@ -91,6 +90,7 @@ def tcxtrack_getdata(track):
     return df
 
 def tcxtodf(path):
+
     data = tcx_getdict(path)
     activity = tcxgetactivities(data)
     laps = tcxactivitygetlaps(activity)
@@ -107,3 +107,5 @@ def tcxtodf(path):
             df = pd.concat([df, dfi])
 
     return df
+
+    
