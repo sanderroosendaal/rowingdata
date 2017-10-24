@@ -233,86 +233,69 @@ class FITParser(object):
         self.readfile = readfile
         self.fitfile = FitFile(readfile, check_crc=False)
         self.records = self.fitfile.messages
-        cadence = []
-        heartrate = []
-        latlist = []
-        lonlist = []
-        powerlist = []
-        velolist = []
-        timestamp = []
-        distance = []
-        lapidx = []
+                
+        recorddicts = []
         lapcounter = 0
-
+        
         for record in self.records:
             if record.name == 'record':
-                # obtain the values
-                speed = record.get_value('speed')
-                heartratev = record.get_value('heart_rate')
-                spm = record.get_value('cadence')
-                power = record.get_value('power')
-                if power is None:
-                    power = 0
-                distancev = record.get_value('distance')
-                timestampv = record.get_value('timestamp')
-                latva = record.get_value('position_lat')
-                if latva is not None:
-                    latv = record.get_value('position_lat')*(180./2**31)
-                else:
-                    latv = 0
-                lonva = record.get_value('position_long')
-                if lonva is not None:
-                    lonv = record.get_value('position_long')*(180./2**31)
-                else:
-                    lonv = 0
-
-                # get the unit
-
-
-                # add the values to the list
-                if latva is not None and lonva is not None:
-                    velolist.append(speed)
-                    heartrate.append(heartratev)
-                    lapidx.append(lapcounter)
-                    latlist.append(latv)
-                    lonlist.append(lonv)
-                    timestamp.append(totimestamp(timestampv))
-                    cadence.append(spm)
-                    distance.append(distancev)
-                    powerlist.append(power)
+                values = record.get_values()
+                values['lapid'] = lapcounter
+                recorddicts.append(values)
             if record.name == 'lap':
                 lapcounter += 1
 
-        lat = pd.Series(latlist)
-        lon = pd.Series(lonlist)
+        
 
-        velo = pd.Series(velolist)
+        self.df = pd.DataFrame(recorddicts)
 
+        latitude = self.df['position_lat']*(180./2**31)            
+        longitude = self.df['position_long']*(180./2**31)
+
+        distance = self.df['distance']
+
+        self.df['position_lat'] = latitude
+        self.df['position_long'] = longitude
+
+        if pd.isnull(distance).all():
+            dist2 = np.zeros(len(distance))
+            for i in range(len(distance)-1):
+                res = geo_distance(
+                    latitude[i],
+                    longitude[i],
+                    latitude[i+1],
+                    longitude[i+1]
+                )
+                deltal = 1000.*res[0]
+                dist2[i+1] = dist2[i]+deltal
+            self.df['distance'] = dist2
+
+        velo = self.df['speed']
+        timestamps = self.df['timestamp'].apply(totimestamp)
         pace = 500./velo
+        elapsed_time = timestamps-timestamps.values[0]
 
-        nr_rows = len(lat)
+        self.df['TimeStamp (sec)'] = timestamps
+        self.df[' Stroke500mPace (sec/500m)'] = pace
+        self.df[' ElapsedTime (sec)'] = elapsed_time
+        
+        newcolnames = {
+            'power': ' Power (watts)',
+            'heart_rate': ' HRCur (bpm)',
+            'position_long': ' longitude',
+            'position_lat': ' latitude',
+            'cadence': ' Cadence (stokes/min)',
+            'lapid': ' lapIdx',
+            'distance': ' Horizontal (meters)'
+            }
 
-        seconds3 = np.array(timestamp)-timestamp[0]
+        self.df.rename(columns=newcolnames,inplace=True)
 
-        self.df = DataFrame({
-            'TimeStamp (sec)': timestamp,
-            ' Horizontal (meters)': distance,
-            ' Cadence (stokes/min)': cadence,
-            ' HRCur (bpm)': heartrate,
-            ' longitude': lon,
-            ' latitude': lat,
-            ' Stroke500mPace (sec/500m)': pace,
-            ' Power (watts)': powerlist,
-            ' DriveLength (meters)': np.zeros(nr_rows),
-            ' StrokeDistance (meters)': np.zeros(nr_rows),
-            ' DriveTime (ms)': np.zeros(nr_rows),
-            ' DragFactor': np.zeros(nr_rows),
-            ' StrokeRecoveryTime (ms)': np.zeros(nr_rows),
-            ' AverageDriveForce (lbs)': np.zeros(nr_rows),
-            ' PeakDriveForce (lbs)': np.zeros(nr_rows),
-            ' ElapsedTime (sec)': seconds3,
-            ' lapIdx': lapidx,
-            })
+        # timestamp
+        # distance
+        # pace
+        # elapsedtime
+
 
     def write_csv(self, writefile="fit_o.csv", gzip=False):
 
