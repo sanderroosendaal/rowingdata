@@ -26,6 +26,24 @@ class FitSummaryData(object):
         self.readfile = readfile
         self.fitfile = FitFile(readfile, check_crc=False)
         self.records = self.fitfile.messages
+
+        recorddicts = []
+        lapdict = []
+        lapcounter = 0
+        for record in self.records:
+            if record.name == 'record':
+                values = record.get_values()
+                values['lapid'] = lapcounter
+                recorddicts.append(values)
+            if record.name == 'lap':
+                lapcounter += 1
+                values = record.get_values()
+                values['lapid'] = lapcounter
+                lapdict.append(values)
+
+        self.df = pd.DataFrame(recorddicts)
+        self.lapdf = pd.DataFrame(lapdict)
+                
         self.summarytext = 'Work Details\n'
 
 
@@ -35,145 +53,96 @@ class FitSummaryData(object):
             sep=separator
             )
 
-        strokecount = 0
-        recordcount = 0
-        totalhr = 0
-        totalpower = 0
-        maxhr = 0
-
         totaldistance = 0
         totaltime = 0
-        grandhr = 0
-        grandmaxhr = 0
-        grandpower = 0
 
-        for record in self.records:
-            if record.name == 'record':
-                heartrate = record.get_value('heart_rate')
-                if heartrate is None:
-                    heartrate = 0
-                if heartrate > maxhr:
-                    maxhr = heartrate
-
-                if heartrate > grandmaxhr:
-                    grandmaxhr = heartrate
-
-                power = record.get_value('power')
-                if power is None:
-                    power = 0
-
-                totalhr += heartrate
-                grandhr += heartrate
-
-                totalpower += power
-                grandpower += power
-                
-                strokecount += 1
-                recordcount += 1
-
-            if record.name == 'lap':
-                lapcount += 1
-
-                try:
-                    inthr = int(totalhr/float(strokecount))
-                except ZeroDivisionError:
-                    inthr = 0
-
-                try:
-                    intpower = int(totalpower/float(strokecount))
-                except ZeroDivisionError:
-                    intpower = 0
-                    
-                inttime = record.get_value('total_elapsed_time')
-
-                lapmin = int(inttime/60)
-                lapsec = int(int(10*(inttime-lapmin*60.))/10.)
-
-                intdist = int(record.get_value('total_distance'))
-                try:
-                    intvelo = intdist/inttime
-                except ZeroDivisionError:
-                    intvelo = 1.0
-                    
+        dfgrouped = self.df.groupby('lapid')
+        for lapcount,group in dfgrouped:
+            intdist = int(
+                self.lapdf[self.lapdf['lapid']==lapcount+1]['total_distance']
+            )
+            if np.isnan(intdist):
+                intdist = 1
+            else:
+                intdist = int(intdist)
+            timestamps = group['timestamp'].apply(totimestamp)
+            inttime = self.lapdf[self.lapdf['lapid']==lapcount+1][
+                'total_elapsed_time'
+            ]
+            try:
+                intpower = int(group['power'].mean())
+            except KeyError:
+                intpower = 0
+            lapmin = int(inttime/60)
+            lapsec = int(int(10*(inttime-lapmin*60.))/10.)
+            try:
+                intvelo = group['speed'].mean()
                 intpace = 500./intvelo
-
-                totaldistance += intdist
-                totaltime += inttime
-
-                try:
-                    intspm = 60.*strokecount/inttime
-                except ZeroDivisionError:
-                    intspm = 1.0
-
-                try:
-                    intdps = intdist/float(strokecount)
-                except ZeroDivisionError:
-                    intdps = 0.0
-
-                intmaxhr = maxhr
-
-                pacemin = int(intpace/60)
-                pacesec = int(10*(intpace-pacemin*60.))/10.
-                pacestring = str(pacemin)+":"+str(pacesec)
-
-                strokecount = 0
-                totalhr = 0
-                totalpower = 0
-                maxhr = 0
-
-
-                summarystring = "{nr:0>2}{sep}{intdist:0>5d}{sep}".format(
-                    nr=lapcount,
-                    sep=separator,
-                    intdist=intdist
-                    )
-
-                summarystring += " {lapmin:0>2}:{lapsec:0>2} {sep}".format(
-                    lapmin=lapmin,
-                    lapsec=lapsec,
-                    sep=separator,
-                    )
-
-                summarystring += "{pacemin:0>2}:{pacesec:0>3.1f}".format(
-                    pacemin=pacemin,
-                    pacesec=pacesec,
-                    )
-
-                summarystring += "{sep} {intspm:0>4.1f}{sep}".format(
-                    intspm=intspm,
-                    sep=separator
-                    )
-
-                summarystring += " {intpower:0>3d} {sep}".format(
-                    intpower=intpower,
-                    sep=separator
-                    )
+            except KeyError:
+                intvelo = 0
+                intpace = 0
+            pacemin = int(intpace/60)
+            pacesec = int(10*(intpace-pacemin*60.))/10.
+            pacestring = str(pacemin)+":"+str(pacesec)
+            intspm = group['cadence'].mean()
+            inthr = int(group['heart_rate'].mean())
+            intmaxhr = int(group['heart_rate'].max())
+            strokecount = intspm*inttime/60.
+            try:
+                intdps = intdist/float(strokecount)
+            except ZeroDivisionError:
+                intdps = 0.0
                 
-                summarystring += " {inthr:0>3d} {sep}".format(
-                    inthr=inthr,
-                    sep=separator
-                    )
+            summarystring = "{nr:0>2}{sep}{intdist:0>5d}{sep}".format(
+                nr=lapcount+1,
+                sep=separator,
+                intdist=intdist
+            )
 
-                summarystring += " {intmaxhr:0>3d} {sep}".format(
-                    intmaxhr=intmaxhr,
-                    sep=separator
-                    )
+            summarystring += " {lapmin:0>2}:{lapsec:0>2} {sep}".format(
+                lapmin=lapmin,
+                lapsec=lapsec,
+                sep=separator,
+            )
 
-                summarystring += " {dps:0>3.1f}".format(
-                    dps=intdps
-                    )
+            summarystring += "{pacemin:0>2}:{pacesec:0>3.1f}".format(
+                pacemin=pacemin,
+                pacesec=pacesec,
+            )
 
-                summarystring += "\n"
-                self.summarytext += summarystring
+            summarystring += "{sep} {intspm:0>4.1f}{sep}".format(
+                intspm=intspm,
+                sep=separator
+            )
+
+            summarystring += " {intpower:0>3d} {sep}".format(
+                intpower=intpower,
+                sep=separator
+            )
+                
+            summarystring += " {inthr:0>3d} {sep}".format(
+                inthr=inthr,
+                sep=separator
+            )
+
+            summarystring += " {intmaxhr:0>3d} {sep}".format(
+                intmaxhr=intmaxhr,
+                sep=separator
+            )
+
+            summarystring += " {dps:0>3.1f}".format(
+                dps=intdps
+            )
+
+            summarystring += "\n"
+            self.summarytext += summarystring
 
         # add total summary
-        try:
-            overallvelo = totaldistance/totaltime
-        except ZeroDivisionError:
-            overallvelo = 1.0
+        overallvelo = self.df['speed'].mean()
+        timestamps = self.df['timestamp'].apply(totimestamp)
+        totaltime = timestamps.max()-timestamps.min()
             
         overallpace = 500./overallvelo
-
 
         minutes = int(overallpace/60)
         sec = int(10*(overallpace-minutes*60.))/10.
@@ -182,14 +151,26 @@ class FitSummaryData(object):
         totmin = int(totaltime/60)
         totsec = int(int(10*(totaltime-totmin*60.))/10.)
 
-        avghr = grandhr/float(recordcount)
-        avgpower = grandpower/float(recordcount)
+        avghr = self.df['heart_rate'].mean()
+        grandmaxhr = self.df['heart_rate'].max()
         try:
-            avgspm = 60.*recordcount/totaltime
-        except ZeroDivisionError:
-            avgspm = 1.0
+            avgpower = self.df['power'].mean()
+        except KeyError:
+            avgpower = 0
+        try:
+            avgspm = self.df['cadence'].mean()
+        except KeyError:
+            avgspm = 0
+        totaldistance = self.df['distance'].max()-self.df['distance'].min()
+        if np.isnan(totaldistance):
+            totaldistance = 1
 
-        avgdps = totaldistance/float(recordcount)
+        strokecount = avgspm*totaltime/60.
+        try:
+            avgdps = totaldistance/strokecount
+        except ZeroDivisionError:
+            avgdps = 0
+            
 
         summarystring = "Workout Summary\n"
         summarystring += "--{sep}{totaldistance:0>5}{sep}".format(
@@ -233,86 +214,69 @@ class FITParser(object):
         self.readfile = readfile
         self.fitfile = FitFile(readfile, check_crc=False)
         self.records = self.fitfile.messages
-        cadence = []
-        heartrate = []
-        latlist = []
-        lonlist = []
-        powerlist = []
-        velolist = []
-        timestamp = []
-        distance = []
-        lapidx = []
+                
+        recorddicts = []
         lapcounter = 0
-
+        
         for record in self.records:
             if record.name == 'record':
-                # obtain the values
-                speed = record.get_value('speed')
-                heartratev = record.get_value('heart_rate')
-                spm = record.get_value('cadence')
-                power = record.get_value('power')
-                if power is None:
-                    power = 0
-                distancev = record.get_value('distance')
-                timestampv = record.get_value('timestamp')
-                latva = record.get_value('position_lat')
-                if latva is not None:
-                    latv = record.get_value('position_lat')*(180./2**31)
-                else:
-                    latv = 0
-                lonva = record.get_value('position_long')
-                if lonva is not None:
-                    lonv = record.get_value('position_long')*(180./2**31)
-                else:
-                    lonv = 0
-
-                # get the unit
-
-
-                # add the values to the list
-                if latva is not None and lonva is not None:
-                    velolist.append(speed)
-                    heartrate.append(heartratev)
-                    lapidx.append(lapcounter)
-                    latlist.append(latv)
-                    lonlist.append(lonv)
-                    timestamp.append(totimestamp(timestampv))
-                    cadence.append(spm)
-                    distance.append(distancev)
-                    powerlist.append(power)
+                values = record.get_values()
+                values['lapid'] = lapcounter
+                recorddicts.append(values)
             if record.name == 'lap':
                 lapcounter += 1
 
-        lat = pd.Series(latlist)
-        lon = pd.Series(lonlist)
+        
 
-        velo = pd.Series(velolist)
+        self.df = pd.DataFrame(recorddicts)
 
+        latitude = self.df['position_lat']*(180./2**31)            
+        longitude = self.df['position_long']*(180./2**31)
+
+        distance = self.df['distance']
+
+        self.df['position_lat'] = latitude
+        self.df['position_long'] = longitude
+
+        if pd.isnull(distance).all():
+            dist2 = np.zeros(len(distance))
+            for i in range(len(distance)-1):
+                res = geo_distance(
+                    latitude[i],
+                    longitude[i],
+                    latitude[i+1],
+                    longitude[i+1]
+                )
+                deltal = 1000.*res[0]
+                dist2[i+1] = dist2[i]+deltal
+            self.df['distance'] = dist2
+
+        velo = self.df['speed']
+        timestamps = self.df['timestamp'].apply(totimestamp)
         pace = 500./velo
+        elapsed_time = timestamps-timestamps.values[0]
 
-        nr_rows = len(lat)
+        self.df['TimeStamp (sec)'] = timestamps
+        self.df[' Stroke500mPace (sec/500m)'] = pace
+        self.df[' ElapsedTime (sec)'] = elapsed_time
+        
+        newcolnames = {
+            'power': ' Power (watts)',
+            'heart_rate': ' HRCur (bpm)',
+            'position_long': ' longitude',
+            'position_lat': ' latitude',
+            'cadence': ' Cadence (stokes/min)',
+            'lapid': ' lapIdx',
+            'distance': ' Horizontal (meters)'
+            }
 
-        seconds3 = np.array(timestamp)-timestamp[0]
+        self.df.rename(columns=newcolnames,inplace=True)
 
-        self.df = DataFrame({
-            'TimeStamp (sec)': timestamp,
-            ' Horizontal (meters)': distance,
-            ' Cadence (stokes/min)': cadence,
-            ' HRCur (bpm)': heartrate,
-            ' longitude': lon,
-            ' latitude': lat,
-            ' Stroke500mPace (sec/500m)': pace,
-            ' Power (watts)': powerlist,
-            ' DriveLength (meters)': np.zeros(nr_rows),
-            ' StrokeDistance (meters)': np.zeros(nr_rows),
-            ' DriveTime (ms)': np.zeros(nr_rows),
-            ' DragFactor': np.zeros(nr_rows),
-            ' StrokeRecoveryTime (ms)': np.zeros(nr_rows),
-            ' AverageDriveForce (lbs)': np.zeros(nr_rows),
-            ' PeakDriveForce (lbs)': np.zeros(nr_rows),
-            ' ElapsedTime (sec)': seconds3,
-            ' lapIdx': lapidx,
-            })
+        # timestamp
+        # distance
+        # pace
+        # elapsedtime
+
 
     def write_csv(self, writefile="fit_o.csv", gzip=False):
 
