@@ -1283,9 +1283,6 @@ class MysteryParser(CSVParser):
         pace = pace.replace(np.inf, 300)
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
 
-        power = 2.8 * velo**3
-        self.df[' Power (watts)'] = power
-
         seconds = self.df[self.columns['TimeStamp (sec)']]
         res = make_cumvalues_array(np.array(seconds))
         seconds3 = res[0]
