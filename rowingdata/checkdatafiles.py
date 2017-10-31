@@ -89,6 +89,12 @@ def checkfile(f2, verbose=False):
             os.remove(f2 + 'o.csv')
             notread = 0
 
+        # handle workout log (no stroke data)
+        if (fileformat == 'c2log'):
+            return 0
+
+            
+
         if notread:
             row = rowingdata.rowingdata(df=row.df)
 
