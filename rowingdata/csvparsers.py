@@ -8,7 +8,7 @@ import datetime
 import pytz
 import arrow
 import iso8601
-
+import shutil
 import numpy as np
 import pandas as pd
 from pandas.core.indexing import IndexingError
@@ -159,11 +159,32 @@ def get_file_type(f):
     extension = f[-3:].lower()
     if extension == '.gz':
         extension = f[-6:-3].lower()
-        try:
-            with gzip.open(f, 'r') as f:
-                return csvtests(f)
-        except IOError:
-            return 'notgzip'
+        with gzip.open(f, 'r') as f:
+            try:
+                if extension == 'csv':
+                    return csvtests(f)
+                elif extension == 'tcx':
+                    try:
+                        tree = objectify.parse(f)
+                        rt = tree.getroot()
+                        return 'tcx'
+                    except:
+                        return 'unknown'
+                elif extension == 'fit':
+                    newfile = 'temp.fit'
+                    with open(newfile,'wb') as f_out:
+                        shutil.copyfileobj(f, f_out)
+  
+                    try:
+                        FitFile(newfile, check_crc=False).parse()
+                        return 'fit'
+                    except:
+                        return 'unknown'
+
+                    return 'fit'
+                    
+            except IOError:
+                return 'notgzip'
     if extension == 'csv':
         if get_file_linecount(f) <= 2:
             return 'nostrokes'
