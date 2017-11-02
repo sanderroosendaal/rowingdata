@@ -60,6 +60,8 @@ import gpxwrite
 import trainingparser
 import writetcx
 
+import requests
+
 import checkdatafiles
 
 from csvparsers import (
@@ -116,6 +118,10 @@ def spm_toarray(l):
 
     return o
 
+def postprogress(secret,progressurl,progress):
+    post_data = {"secret":secret}
+    s = requests.post(url, data=post_data)
+    return s.status_code
 
 def make_cumvalues_rowingdata(df):
     """ Takes entire dataframe, calculates cumulative distance
@@ -2316,7 +2322,8 @@ class rowingdata:
             self.df[' DriveLength (meters)'] = self.df['drivelength (model)']
 
     def otw_setpower_silent(self, skiprows=0, rg=getrigging(), mc=70.0,
-                            powermeasured=False):
+                            powermeasured=False,
+                            secret=None,progressurl=None):
         """ Adds power from rowing physics calculations to OTW result
 
         For now, works only in singles
@@ -2342,7 +2349,16 @@ class rowingdata:
         spms = df[' Cadence (stokes/min)'].rolling(skiprows).mean()
 
         # this is slow ... need alternative (read from table)
+        counterrange = int(nr_of_rows/100.)
+        counter = 0
         for i in range(nr_of_rows):
+            counter += 1
+            if counter>counterrange:
+                counter = 0
+                progress = int(100.*i/float(nr_of_rows))
+                if secret and progressurl:
+                    status_code = post_progress(secret,progressurl,progress)
+                
             p = ps.ix[i]
             spm = spms.ix[i]
             r.tempo = spm
