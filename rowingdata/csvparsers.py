@@ -8,7 +8,7 @@ import datetime
 import pytz
 import arrow
 import iso8601
-
+import shutil
 import numpy as np
 import pandas as pd
 from pandas.core.indexing import IndexingError
@@ -171,8 +171,13 @@ def get_file_type(f):
                     except:
                         return 'unknown'
                 elif extension == 'fit':
+                    newfile = 'temp.fit'
+                    with open(newfile,'wb') as f_out:
+                        shutil.copyfileobj(f, f_out)
+  
                     try:
-                        FitFile(f, check_crc=False).parse()
+                        FitFile(newfile, check_crc=False).parse()
+                        return 'fit'
                     except:
                         return 'unknown'
 
