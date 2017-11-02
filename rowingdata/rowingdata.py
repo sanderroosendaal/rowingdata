@@ -118,6 +118,10 @@ def spm_toarray(l):
 
     return o
 
+def postprogress(secret,progressurl,progress):
+    post_data = {"secret":secret}
+    s = requests.post(url, data=post_data)
+    return s.status_code
 
 def make_cumvalues_rowingdata(df):
     """ Takes entire dataframe, calculates cumulative distance
@@ -2353,7 +2357,7 @@ class rowingdata:
                 counter = 0
                 progress = int(100.*i/float(nr_of_rows))
                 if secret and progressurl:
-                    post_progress(secret,progressurl,progress)
+                    status_code = post_progress(secret,progressurl,progress)
                 
             p = ps.ix[i]
             spm = spms.ix[i]
