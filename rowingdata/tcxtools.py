@@ -3,10 +3,16 @@ import pandas as pd
 import xmltodict as xd
 from dateutil import parser
 import arrow
+import gzip
 
 def tcx_getdict(path):
-    with open(path, 'r') as f:
-        d = xd.parse(f)
+    extension = path[-3:].lower()
+    if extension == '.gz':
+        with gzip.open(path,'r') as f:
+            d = xd.parse(f)
+    else:
+        with open(path, 'r') as f:
+            d = xd.parse(f)
     return d['TrainingCenterDatabase']
 
 def tcxgetactivities(d):

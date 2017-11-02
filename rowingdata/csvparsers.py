@@ -159,11 +159,27 @@ def get_file_type(f):
     extension = f[-3:].lower()
     if extension == '.gz':
         extension = f[-6:-3].lower()
-        try:
-            with gzip.open(f, 'r') as f:
-                return csvtests(f)
-        except IOError:
-            return 'notgzip'
+        with gzip.open(f, 'r') as f:
+            try:
+                if extension == 'csv':
+                    return csvtests(f)
+                elif extension == 'tcx':
+                    try:
+                        tree = objectify.parse(f)
+                        rt = tree.getroot()
+                        return 'tcx'
+                    except:
+                        return 'unknown'
+                elif extension == 'fit':
+                    try:
+                        FitFile(f, check_crc=False).parse()
+                    except:
+                        return 'unknown'
+
+                    return 'fit'
+                    
+            except IOError:
+                return 'notgzip'
     if extension == 'csv':
         if get_file_linecount(f) <= 2:
             return 'nostrokes'

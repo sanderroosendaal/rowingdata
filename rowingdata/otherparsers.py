@@ -6,6 +6,8 @@ from lxml import objectify
 from fitparse import FitFile
 import tcxtools
 from utils import totimestamp, geo_distance
+import gzip
+import shutil
 
 NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -211,8 +213,17 @@ class FitSummaryData(object):
 class FITParser(object):
 
     def __init__(self, readfile):
-        self.readfile = readfile
-        self.fitfile = FitFile(readfile, check_crc=False)
+        extension = readfile[-3:].lower()
+        if extension == '.gz':
+            newfile = readfile[-3:]
+            with gzip.open(readfile,'rb') as f_in, open(newfile,'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+            self.readfile = newfile
+        else:
+            self.readfile = readfile
+
+        self.fitfile = FitFile(self.readfile, check_crc=False)
+
         self.records = self.fitfile.messages
                 
         recorddicts = []
