@@ -118,6 +118,10 @@ def spm_toarray(l):
 
     return o
 
+def postprogress(secret,progressurl,progress):
+    post_data = {"secret":secret}
+    s = requests.post(url, data=post_data)
+
 
 def make_cumvalues_rowingdata(df):
     """ Takes entire dataframe, calculates cumulative distance
