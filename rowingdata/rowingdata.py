@@ -119,7 +119,10 @@ def spm_toarray(l):
     return o
 
 def postprogress(secret,progressurl,progress):
-    post_data = {"secret":secret}
+    post_data = {
+        "secret":secret,
+        "progress":progress,
+    }
 
     s = requests.post(url, data=post_data)
     return s.status_code
