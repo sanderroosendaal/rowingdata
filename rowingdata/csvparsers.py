@@ -226,28 +226,50 @@ def get_file_type(f):
     return 'unknown'
 
 def get_file_linecount(f):
-    with open(f, 'r') as fop:
-        count = sum(1 for line in fop if line.rstrip('\n'))
+    extension = f[-3:].lower()
+    if extension == '.gz':
+        with gzip.open(f,'rb') as fop:
+            count = sum(1 for line in fop if line.rstrip('\n'))            
+    else:
+        with open(f, 'r') as fop:
+            count = sum(1 for line in fop if line.rstrip('\n'))
 
     return count
 
 def get_file_line(linenr, f):
     line = ''
-    with open(f, 'r') as fop:
-        for i in range(linenr):
-            line = fop.readline()
+    extension = f[-3:].lower()
+    if extension == '.gz':
+        with gzip.open(f, 'r') as fop:
+            for i in range(linenr):
+                line = fop.readline()
+    else:
+        with open(f, 'r') as fop:
+            for i in range(linenr):
+                line = fop.readline()
 
     return line
 
+
 def get_separator(linenr, f):
     line = ''
-    with open(f, 'r') as fop:
-        for i in range(linenr):
-            line = fop.readline()
+    extension = f[-3:].lower()
+    if extension == '.gz':    
+        with gzip.open(f, 'r') as fop:
+            for i in range(linenr):
+                line = fop.readline()
 
-    sep = ','
-    sniffer = csv.Sniffer()
-    sep = sniffer.sniff(line).delimiter
+            sep = ','
+            sniffer = csv.Sniffer()
+            sep = sniffer.sniff(line).delimiter
+    else:
+        with open(f, 'r') as fop:
+            for i in range(linenr):
+                line = fop.readline()
+
+            sep = ','
+            sniffer = csv.Sniffer()
+            sep = sniffer.sniff(line).delimiter
 
     return sep
 
@@ -269,6 +291,7 @@ def get_empower_rigging(f):
                 oarlength = getoarlength(line)
             if 'Inboard' in line:
                 inboard = getinboard(line)
+        
 
     return oarlength / 100., inboard / 100.
 
@@ -276,7 +299,12 @@ def skip_variable_footer(f):
     counter = 0
     counter2 = 0
 
-    fop = open(f, 'r')
+    extension = f[-3:].lower()
+    if extension == '.gz':
+        fop = gzip.open(f,'rb')
+    else:
+        fop = open(f, 'r')
+        
     for line in fop:
         if line.startswith('Type') and counter > 15:
             counter2 = counter
@@ -285,13 +313,20 @@ def skip_variable_footer(f):
             counter += 1
 
     fop.close()
+
     return counter - counter2 + 1
 
 def get_rowpro_footer(f, converters={}):
     counter = 0
     counter2 = 0
 
-    fop = open(f, 'r')
+    
+    extension = f[-3:].lower()
+    if extension == '.gz':
+        fop = gzip.open(f,'rb')
+    else:
+        fop = open(f, 'r')
+
     for line in fop:
         if line.startswith('Type') and counter > 15:
             counter2 = counter
@@ -311,7 +346,13 @@ def skip_variable_header(f):
     counter = 0
     counter2 = 0
     summaryc = -2
-    fop = open(f, 'r')
+    extension = f[-3:].lower()
+    if extension == '.gz':
+        fop = gzip.open(f,'rb')
+    else:
+        fop = open(f, 'r')
+
+
     for line in fop:
         if line.startswith('Interval Summaries'):
             summaryc = counter
@@ -321,6 +362,7 @@ def skip_variable_header(f):
             counter += 1
 
     fop.close()
+            
     # test for blank line
     l = get_file_line(counter2 + 2, f)
     if 'Interval' in l:
@@ -456,7 +498,8 @@ class CSVParser(object):
 
         self.df = pd.read_csv(csvfile, skiprows=skiprows, usecols=usecols,
                               sep=sep, engine=engine, skipfooter=skipfooter,
-                              converters=converters, index_col=False)
+                              converters=converters, index_col=False,
+                              compression='infer')
 
         self.df = self.df.fillna(method='ffill')
 
@@ -735,11 +778,16 @@ class BoatCoachParser(CSVParser):
         self.columns = dict(zip(self.defaultcolumnnames, self.cols))
 
         # get date from footer
-        fop = open(csvfile, 'r')
-        line = fop.readline()
-        dated = re.split('Date:', line)[1][1:-1]
+        try:
+            with open(csvfile, 'r') as fop:
+                line = fop.readline()
+                dated = re.split('Date:', line)[1][1:-1]
+        except IndexError:
+            with gzip.open(csvfile,'rb') as fop:
+                line = fop.readline()
+                dated = re.split('Date:', line)[1][1:-1]
+                
         row_date = parser.parse(dated, fuzzy=True)
-        fop.close()
 
         try:
             datetime = self.df[self.columns['TimeStamp (sec)']]
@@ -936,11 +984,16 @@ class BoatCoachAdvancedParser(CSVParser):
         self.columns = dict(zip(self.defaultcolumnnames, self.cols))
 
         # get date from footer
-        fop = open(csvfile, 'r')
-        line = fop.readline()
-        dated = re.split('Date:', line)[1][1:-1]
+        try:
+            with open(csvfile, 'r') as fop:
+                line = fop.readline()
+                dated = re.split('Date:', line)[1][1:-1]
+        except IndexError:
+            with gzip.open(csvfile,'rb') as fop:
+                line = fop.readline()
+                dated = re.split('Date:', line)[1][1:-1]
+            
         row_date = parser.parse(dated, fuzzy=True)
-        fop.close()
 
         try:
             row_datetime = self.df[self.columns['TimeStamp (sec)']]
