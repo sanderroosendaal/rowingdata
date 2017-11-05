@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.3.3"
+__version__ = "1.3.4"
 
 import matplotlib
 matplotlib.use('Agg')
