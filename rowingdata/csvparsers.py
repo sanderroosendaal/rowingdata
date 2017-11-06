@@ -157,6 +157,8 @@ def csvtests(fop):
 
 def get_file_type(f):
     extension = f[-3:].lower()
+    if extension == 'kml':
+        return 'kml'
     if extension == '.gz':
         extension = f[-6:-3].lower()
         with gzip.open(f, 'r') as f:
@@ -1320,11 +1322,22 @@ class RowPerfectParser(CSVParser):
 class MysteryParser(CSVParser):
 
     def __init__(self, *args, **kwargs):
+        if args:
+            csvfile = args[0]
+        else:
+            csvfile = kwargs['csvfile']
+
+        separator = get_separator(1, csvfile)
+        kwargs['sep'] = separator
+        
         super(MysteryParser, self).__init__(*args, **kwargs)
         self.df = self.df.drop(self.df.index[[0]])
         self.row_date = kwargs.pop('row_date', datetime.datetime.utcnow())
 
         kwargs['engine'] = 'python'
+
+        
+
         kwargs['sep'] = None
 
         self.row_date = kwargs.pop('row_date', datetime.datetime.utcnow())
@@ -1352,7 +1365,7 @@ class MysteryParser(CSVParser):
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
         self.columns = dict(zip(self.defaultcolumnnames, self.cols))
 
-        # calculations
+        # calculations        
         velo = pd.to_numeric(self.df['Speed (m/s)'], errors='coerce')
 
         pace = 500. / velo
