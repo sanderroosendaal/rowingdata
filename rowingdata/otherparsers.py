@@ -341,8 +341,16 @@ class TCXParserTester(object):
 class TCXParser(object):
     def __init__(self, tcx_file):
         self.df = tcxtools.tcxtodf(tcx_file)
-        lat = self.df['latitude'].apply(tofloat).values
-        longitude = self.df['longitude'].apply(tofloat).values
+        try:
+            lat = self.df['latitude'].apply(tofloat).values
+            longitude = self.df['longitude'].apply(tofloat).values
+        except KeyError:
+            self.df['latitude'] = 0
+            self.df['longitude'] = 0
+            lat = self.df['latitude'].apply(tofloat).values
+            longitude = self.df['longitude'].apply(tofloat).values
+            
+
         unixtimes = self.df['timestamp'].values
         try:
             spm = self.df['Cadence'].apply(tofloat).values
