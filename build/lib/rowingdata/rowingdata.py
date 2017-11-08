@@ -1,6 +1,10 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
+<<<<<<< HEAD
 __version__ = "1.3.6"
+=======
+__version__ = "1.3.7"
+>>>>>>> release/v1.3.7
 
 import matplotlib
 matplotlib.use('Agg')
@@ -69,6 +73,7 @@ from csvparsers import (
     BoatCoachParser, CoxMateParser, CSVParser,
     ErgDataParser, ErgStickParser, KinoMapParser,
     MysteryParser, RowPerfectParser, RowProParser,
+    QuiskeParser,
     SpeedCoach2Parser, get_empower_rigging, get_file_line,
     get_file_type, get_rowpro_footer, lbstoN,
     make_cumvalues, make_cumvalues_array,

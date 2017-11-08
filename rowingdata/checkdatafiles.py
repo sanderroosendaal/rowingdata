@@ -34,6 +34,10 @@ def checkfile(f2, verbose=False):
         if (fileformat == 'mystery'):
             row = rowingdata.MysteryParser(f2)
 
+        # handle Quiske
+        if (fileformat == 'quiske'):
+            row = rowingdata.QuiskeParser(f2)
+            
         # handle TCX no HR
         if (fileformat == 'tcxnohr'):
             row = rowingdata.TCXParserNoHR(f2)
