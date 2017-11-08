@@ -78,6 +78,9 @@ def csvtests(fop):
 
     fop.close()
 
+    if 'Quiske' in firstline:
+        return 'quiske'
+
     if 'RowDate' in firstline:
         return 'rowprolog'
 
@@ -576,7 +579,60 @@ class CSVParser(object):
         else:
             return data.to_csv(writeFile, index_label='index')
 
+class QuiskeParser(CSVParser):
+    def __init__(self, *args, **kwargs):
+        kwargs['skiprows'] = 1
+        if args:
+            csvfile = args[0]
+        else:
+            csvfile = kwargs['csvfile']
 
+        super(QuiskeParser, self).__init__(*args, **kwargs)
+
+        self.cols = [
+            'timestamp(s)',
+            'distance(m)',
+            'SPM (strokes per minute)',
+            '',
+            ' Stroke500mPace (sec/500m)',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            'latitude',
+            'longitude',
+            'Catch',
+            'Finish',
+            ]
+
+        self.defaultcolumnnames += [
+            'catch',
+            'finish',
+            ]
+
+        self.cols = [b if a == '' else a
+                     for a, b in zip(self.cols, self.defaultcolumnnames)]
+
+        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+
+        velo = self.df['speed (m/s)']
+        pace = 500./velo
+        pace = pace.replace(np.nan, 300)
+        pace = pace.replace(np.inf, 300)
+        self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+        unixtimes = self.df[self.columns['TimeStamp (sec)']]
+        self.df[self.columns[' ElapsedTime (sec)']] = unixtimes - unixtimes.iloc[0]
+        self.df[self.columns['catch']] = 0
+        self.df[self.columns['finish']] = self.df['stroke angle (deg)']
+        
+        self.to_standard()
+            
 class BoatCoachOTWParser(CSVParser):
 
     def __init__(self, *args, **kwargs):

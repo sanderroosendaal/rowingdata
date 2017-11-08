@@ -1,4 +1,7 @@
 filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrintervals,lap 1 time,lap 1 dist,timezone
+quiske_per_stroke_seat.csv,quiske,55,2017,5,21,6,18,0,484,151,1,151,484,UTC
+quiske_per_stroke_left.csv,quiske,25,2017,5,21,6,33,53,219,57,1,57,219,UTC
+quiske_per_stroke_right.csv,quiske,33,2017,5,21,6,31,24,315,93,1,93,315,UTC
 boatcoach.csv.gz,boatcoach,3325,2017,11,3,12,13,32,11895,3600,3,1199,3887,UTC
 davidfit.fit.gz,fit,4609,2017,10,23,18,34,51,38260,4608,1,4608,38260,UTC
 davidfit.fit,fit,4609,2017,10,23,18,34,51,38260,4608,1,4608,38260,UTC
