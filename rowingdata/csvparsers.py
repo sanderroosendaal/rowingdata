@@ -12,6 +12,7 @@ import shutil
 import numpy as np
 import pandas as pd
 from pandas.core.indexing import IndexingError
+
 from pandas import Series, DataFrame
 from dateutil import parser
 
@@ -501,10 +502,24 @@ class CSVParser(object):
 
         self.csvfile = csvfile
 
-        self.df = pd.read_csv(csvfile, skiprows=skiprows, usecols=usecols,
-                              sep=sep, engine=engine, skipfooter=skipfooter,
-                              converters=converters, index_col=False,
-                              compression='infer')
+
+        if engine == 'python':
+            self.df = pd.read_csv(
+                csvfile, skiprows=skiprows, usecols=usecols,
+                sep=sep, engine=engine, skipfooter=skipfooter,
+                converters=converters, index_col=False,
+                compression='infer',
+            )
+        else:
+            self.df = pd.read_csv(
+                csvfile, skiprows=skiprows, usecols=usecols,
+                sep=sep, engine=engine, skipfooter=skipfooter,
+                converters=converters, index_col=False,
+                compression='infer',
+                error_bad_lines = False
+            )
+
+            
 
         self.df = self.df.fillna(method='ffill')
 
