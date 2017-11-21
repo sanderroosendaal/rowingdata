@@ -85,6 +85,9 @@ def csvtests(fop):
     if 'RowDate' in firstline:
         return 'rowprolog'
 
+    if 'Workout Name' in firstline:
+        return 'c2log'
+
     if 'Concept2 Utility' in firstline:
         return 'c2log'
 
