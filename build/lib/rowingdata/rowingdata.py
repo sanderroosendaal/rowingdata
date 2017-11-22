@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.3.8"
+__version__ = "1.3.9"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1513,7 +1513,7 @@ class rowingdata:
                                 keep='first', inplace=True)
         self_df = self_df.sort_values(by='TimeStamp (sec)', ascending=1)
         self_df = self_df.fillna(method='ffill')
-        self_df.reset_index(inplace=True)
+        self_df.reset_index(drop=True,inplace=True)
 
         # recalc cum_dist
         # this needs improvement. If Elapsed Distance is measured
