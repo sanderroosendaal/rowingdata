@@ -1513,7 +1513,7 @@ class rowingdata:
                                 keep='first', inplace=True)
         self_df = self_df.sort_values(by='TimeStamp (sec)', ascending=1)
         self_df = self_df.fillna(method='ffill')
-        self_df.reset_index(inplace=True)
+        self_df.reset_index(drop=True,inplace=True)
 
         # recalc cum_dist
         # this needs improvement. If Elapsed Distance is measured
