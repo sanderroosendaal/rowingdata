@@ -359,7 +359,11 @@ class TCXParser(object):
                 spm = self.df['StrokeRate'].apply(tofloat).values
                 self.df['Cadence'] = self.df['StrokeRate']
             except KeyError:
-                spm = 0.0*self.df['Speed']
+                try:
+                    spm = 0.0*self.df['Speed']
+                except KeyError:
+                    spm = 0.0*unixtimes
+                    
 
         try:
             velo = self.df['Speed'].apply(tofloat)
