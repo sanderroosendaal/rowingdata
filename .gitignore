@@ -10,3 +10,6 @@
 
 # Emacs temp files
 *.*~
+
+# password
+.pypirc

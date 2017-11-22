@@ -12,6 +12,7 @@ import shutil
 import numpy as np
 import pandas as pd
 from pandas.core.indexing import IndexingError
+
 from pandas import Series, DataFrame
 from dateutil import parser
 
@@ -83,6 +84,9 @@ def csvtests(fop):
 
     if 'RowDate' in firstline:
         return 'rowprolog'
+
+    if 'Workout Name' in firstline:
+        return 'c2log'
 
     if 'Concept2 Utility' in firstline:
         return 'c2log'
@@ -501,10 +505,24 @@ class CSVParser(object):
 
         self.csvfile = csvfile
 
-        self.df = pd.read_csv(csvfile, skiprows=skiprows, usecols=usecols,
-                              sep=sep, engine=engine, skipfooter=skipfooter,
-                              converters=converters, index_col=False,
-                              compression='infer')
+
+        if engine == 'python':
+            self.df = pd.read_csv(
+                csvfile, skiprows=skiprows, usecols=usecols,
+                sep=sep, engine=engine, skipfooter=skipfooter,
+                converters=converters, index_col=False,
+                compression='infer',
+            )
+        else:
+            self.df = pd.read_csv(
+                csvfile, skiprows=skiprows, usecols=usecols,
+                sep=sep, engine=engine, skipfooter=skipfooter,
+                converters=converters, index_col=False,
+                compression='infer',
+                error_bad_lines = False
+            )
+
+            
 
         self.df = self.df.fillna(method='ffill')
 
@@ -1316,8 +1334,10 @@ class RowPerfectParser(CSVParser):
 
     def __init__(self, *args, **kwargs):
         super(RowPerfectParser, self).__init__(*args, **kwargs)
+
         self.df.sort_values(by=['workout_interval_id', 'stroke_number'],
                             ascending=[True, True], inplace=True)
+
         self.row_date = kwargs.pop('row_date', datetime.datetime.utcnow())
         self.cols = [
             'time',

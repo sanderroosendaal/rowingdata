@@ -18,7 +18,7 @@ setup(name='rowingdata',
 
       long_description=readme(),
 
-      url='http://rowsandall.wordpress.com',
+      url='',
 
       author='Sander Roosendaal',
 
