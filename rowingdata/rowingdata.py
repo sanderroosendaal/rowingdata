@@ -1643,10 +1643,16 @@ class rowingdata:
                 pass
 
         return cols
-                
-    def plot_instroke(self,column_name):
+
+    def get_instroke_data(self,column_name):
         df = self.df[column_name].str[1:-1].str.split(',',expand=True)
         df = df.apply(pd.to_numeric, errors = 'coerce')
+
+        return df
+    
+    def plot_instroke(self,column_name):
+        df  = self.get_instroke_data(column_name)
+        
         mean_vals = df.mean()
         min_vals = df.quantile(q=0.05)
         max_vals = df.quantile(q=0.95)
@@ -1667,8 +1673,8 @@ class rowingdata:
         plt.show()
 
     def get_plot_instroke(self,column_name):
-        df = self.df[column_name].str[1:-1].str.split(',',expand=True)
-        df = df.apply(pd.to_numeric, errors = 'coerce')
+        df  = self.get_instroke_data(column_name)
+
         mean_vals = df.mean()
         min_vals = df.quantile(q=0.05)
         max_vals = df.quantile(q=0.95)
