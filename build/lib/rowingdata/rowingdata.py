@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.3.9"
+__version__ = "1.4.0"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1633,6 +1633,70 @@ class rowingdata:
         else:
             return data.to_csv(writeFile, index_label='index')
 
+    def get_instroke_columns(self):
+        cols = []
+        for c in self.df.columns:
+            try:
+                d = self.df[c].str[1:-1].str.split(',',expand=True)
+                cols.append(c)
+            except:
+                pass
+
+        return cols
+
+    def get_instroke_data(self,column_name):
+        df = self.df[column_name].str[1:-1].str.split(',',expand=True)
+        df = df.apply(pd.to_numeric, errors = 'coerce')
+
+        return df
+    
+    def plot_instroke(self,column_name):
+        df  = self.get_instroke_data(column_name)
+        
+        mean_vals = df.mean()
+        min_vals = df.quantile(q=0.05)
+        max_vals = df.quantile(q=0.95)
+
+        q25 = df.quantile(q = 0.25)
+        q75 = df.quantile(q = 0.75)
+
+        df_plot = DataFrame({
+            'mean':mean_vals,
+            'max':max_vals,
+            'q75':q75,
+            'q25':q25,
+            'min':min_vals,
+            })
+
+        df_plot.plot()
+
+        plt.show()
+
+    def get_plot_instroke(self,column_name):
+        df  = self.get_instroke_data(column_name)
+
+        mean_vals = df.mean()
+        min_vals = df.quantile(q=0.05)
+        max_vals = df.quantile(q=0.95)
+
+        q25 = df.quantile(q = 0.25)
+        q75 = df.quantile(q = 0.75)
+
+        df_plot = DataFrame({
+            'mean':mean_vals,
+            'max':max_vals,
+            'q75':q75,
+            'q25':q25,
+            'min':min_vals,
+            })
+
+        fig1 = figure.Figure(figsize=(12,10))
+        ax = fig1.add_subplot(111)
+        df_plot.plot(ax=ax)
+
+        return fig1
+
+        
     def spm_fromtimestamps(self):
         df = self.df
         dt = (df[' DriveTime (ms)'] + df[' StrokeRecoveryTime (ms)']) / 1000.
