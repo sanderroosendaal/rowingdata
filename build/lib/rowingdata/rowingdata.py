@@ -1638,6 +1638,7 @@ class rowingdata:
         for c in self.df.columns:
             try:
                 d = self.df[c].str[1:-1].str.split(',',expand=True)
+                a = d[1]
                 cols.append(c)
             except:
                 pass

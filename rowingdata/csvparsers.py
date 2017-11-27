@@ -932,6 +932,25 @@ class BoatCoachParser(CSVParser):
             spm = 60. / strokeduration
             self.df.loc[mask2, self.columns[' Cadence (stokes/min)']] = spm
 
+
+        # get stroke power
+        data = []
+        try:
+            
+            with gzip.open(csvfile,'r') as f:
+                for line in f:
+                    s  = line.split(',')
+                    data.append(','.join([str(x) for x in s[26:-1]]))
+        except IOError:
+            with open(csvfile,'r') as f:
+                for line in f:
+                    s  = line.split(',')
+                    data.append(','.join([str(x) for x in s[26:-1]]))
+
+        self.df['PowerCurve'] = data[2:]
+
+
+            
         # dump empty lines at end
         endhorizontal = self.df.loc[self.df.index[-1],
                                     self.columns[' Horizontal (meters)']]
@@ -953,6 +972,7 @@ class BoatCoachParser(CSVParser):
             self.columns[' lapIdx']
         ] = self.df.loc[self.df.index[-3], self.columns[' lapIdx']]
 
+                
         self.to_standard()
 
 class KinoMapParser(CSVParser):
