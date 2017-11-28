@@ -1400,6 +1400,7 @@ class rowingdata:
                 if debug:
                     print name + ' is not found in file'
                 sled_df[name] = 0
+                sled_df.index = range(len(sled_df.index))
                 if name == ' ElapsedTime (sec)':
                     elapsedtime = sled_df['TimeStamp (sec)'] - \
                         sled_df.loc[0, 'TimeStamp (sec)']
