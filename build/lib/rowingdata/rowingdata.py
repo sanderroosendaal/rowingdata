@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.4.0"
+__version__ = "1.4.1"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1400,6 +1400,7 @@ class rowingdata:
                 if debug:
                     print name + ' is not found in file'
                 sled_df[name] = 0
+                sled_df.index = range(len(sled_df.index))
                 if name == ' ElapsedTime (sec)':
                     elapsedtime = sled_df['TimeStamp (sec)'] - \
                         sled_df.loc[0, 'TimeStamp (sec)']
