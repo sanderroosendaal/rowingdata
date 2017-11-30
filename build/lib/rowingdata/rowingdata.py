@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.4.0"
+__version__ = "1.4.1"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1310,9 +1310,6 @@ class rowingdata:
     """
 
     def __init__(self, *args, **kwargs):
-        #                 readFile,
-        #		 rower=rower(),
-        #		 rowtype="Indoor Rower"):
 
         if 'debug' in kwargs:
             debug = kwargs['debug']
@@ -1364,6 +1361,16 @@ class rowingdata:
         self.rwr = rwr
         self.rowtype = rowtype
 
+        othernames = ['catch','finish','peakforceangle',
+                      'wash','slip','index',
+                      'cum_dist','hr_an','hr_at','hr_tr','hr_ut1','hr_ut2',
+                      'lim_an','lim_at','lim_tr','lim_ut1','lim_ut2',
+                      'limpw_an','limpw_at','limpw_tr',
+                      'limpw_ut1','limpw_ut2',
+                      'pw_an','pw_at','pw_max','pw_tr','pw_ut1','pw_ut2',
+                      'lim_max','hr_max',
+                      ' latitude',' longitude']
+        
         # check for missing column names
         mandatorynames = [
             'TimeStamp (sec)',
@@ -1386,11 +1393,14 @@ class rowingdata:
             ' WorkoutState',
         ]
 
+        self.defaultnames = othernames+mandatorynames
+
         for name in mandatorynames:
             if name not in sled_df.columns:
                 if debug:
                     print name + ' is not found in file'
                 sled_df[name] = 0
+                sled_df.index = range(len(sled_df.index))
                 if name == ' ElapsedTime (sec)':
                     elapsedtime = sled_df['TimeStamp (sec)'] - \
                         sled_df.loc[0, 'TimeStamp (sec)']
@@ -1437,11 +1447,7 @@ class rowingdata:
                             print 'Cadence found'
                         sled_df[name] = spm
                     except KeyError:
-                        pass
-
-        # add forces in N (for future)
-        #sled_df[' AverageDriveForce (N)']=sled_df[' AverageDriveForce (lbs)']*lbstoN
-        #sled_df[' PeakDriveForce (N)']=sled_df[' PeakDriveForce (lbs)']*lbstoN
+                        pass 
 
         self.dragfactor = sled_df[' DragFactor'].mean()
         # get the date of the row
@@ -1533,6 +1539,23 @@ class rowingdata:
         """
 
         return self.df[keystring].values
+
+    def get_additional_metrics(self):
+        cols = self.df.columns.values
+        dif = np.setdiff1d(cols,self.defaultnames)
+        
+        additionalmetrics = []
+        
+        for c in dif:
+            try:
+                test = self.df[c].apply(lambda x:float(x))
+                additionalmetrics.append(c)
+            except ValueError:
+                pass
+            except TypeError:
+                pass
+
+        return additionalmetrics
 
     def check_consistency(self, threshold=20, velovariation=1.e-3):
         data = self.df
