@@ -1677,7 +1677,7 @@ class rowingdata:
     def plot_instroke(self,column_name):
         df  = self.get_instroke_data(column_name)
         
-        mean_vals = df.mean()
+        mean_vals = df.median()
         min_vals = df.quantile(q=0.05)
         max_vals = df.quantile(q=0.95)
 
