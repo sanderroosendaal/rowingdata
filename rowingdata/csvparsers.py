@@ -1415,7 +1415,7 @@ class RowPerfectParser(CSVParser):
             data = data.apply(pd.to_numeric, errors = 'coerce')
 
             for cols in data.columns.tolist()[1:]:
-                data[data<0] = 0
+                data[data<0] = np.nan
 
             s = []
             for row in data.values.tolist():
