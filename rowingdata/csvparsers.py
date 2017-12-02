@@ -1408,6 +1408,23 @@ class RowPerfectParser(CSVParser):
         lapidx = res[1]
         unixtime = seconds2 + totimestamp(self.row_date)
 
+        # get stroke curve
+        try:
+            data = self.df['curve_data'].str[1:-1].str.split(',',
+                                                             expand=True)
+            data = data.apply(pd.to_numeric, errors = 'coerce')
+
+            for cols in data.columns.tolist()[1:]:
+                data[data<0] = np.nan
+
+            s = []
+            for row in data.values.tolist():
+                s.append(str(row)[1:-1])
+
+            self.df['curve_data'] = s
+        except AttributeError:
+            pass
+            
         self.df[self.columns[' lapIdx']] = lapidx
         self.df[self.columns['TimeStamp (sec)']] = unixtime
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
