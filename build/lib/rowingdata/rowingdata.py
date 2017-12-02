@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.4.1"
+__version__ = "1.4.2"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1699,7 +1699,7 @@ class rowingdata:
     def get_plot_instroke(self,column_name):
         df  = self.get_instroke_data(column_name)
 
-        mean_vals = df.mean()
+        mean_vals = df.median()
         min_vals = df.quantile(q=0.05)
         max_vals = df.quantile(q=0.95)
 
