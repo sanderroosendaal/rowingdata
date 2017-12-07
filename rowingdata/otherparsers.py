@@ -7,7 +7,9 @@ from fitparse import FitFile
 import tcxtools
 from utils import totimestamp, geo_distance
 import gzip
+import arrow
 import shutil
+from datetime import datetime
 
 NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -16,7 +18,118 @@ def tofloat(x):
         return float(x)
     except ValueError:
         return np.nan
-    
+
+class ExcelTemplate(object):
+    def __init__(self,readfile):
+        self.readfile = readfile
+        xls_f = pd.ExcelFile(self.readfile)
+        self.xls_df = xls_f.parse('workout')
+
+        self.df = pd.DataFrame()
+        now = datetime.utcnow()
+        unixnow = arrow.get(now).timestamp
+        time = 0
+        totdistance = 0
+        
+        for nr,row in self.xls_df.iterrows():
+            duration = row['Interval Time']
+            #duration = datetime.strptime(durationstring,"%M:%S.%f")
+            try:
+                seconds = 60*duration.minute+duration.second+duration.microsecond/1.e6
+            except AttributeError:
+                seconds = 0
+            if seconds:
+                spm = row['SPM']
+                if spm == np.nan:
+                    spm = 10.
+                deltat = 60./spm
+                aantal = int(seconds/deltat)
+                time_list = time+np.arange(aantal)*deltat
+                distance = row['Interval Distance']
+                deltad = distance/float(aantal)
+                d_list = np.arange(aantal)*deltad
+                
+                velo = distance/float(seconds)
+                pace = 500./velo
+                
+                data = pd.DataFrame({
+                    'time':time_list,
+                    'distance':d_list,
+                    'hr':row['Avg HR'],
+                    'spm':spm,
+                    'pace':pace,
+                    'velo':velo,
+                    'type':4,
+                    ' lapIdx':nr
+                })
+
+
+                
+                self.df = self.df.append(data)
+                time += seconds
+                totdistance = distance
+            if row['Rest Time'] != np.nan:
+                try:
+                    restseconds = 60.*row['Rest Time'].minute
+                    restseconds += row['Rest Time'].second
+                    restseconds += row['Rest Time'].microsecond/1.0e6
+                except AttributeError:
+                    restseconds = 0
+
+                if restseconds:
+                    restdistance = row['Rest Distance']
+                    deltat = 60./spm
+                    aantal = int(restseconds/deltat)
+                    time_list = time+np.arange(aantal)*deltat
+                    try:
+                        deltad = restdistance/float(aantal)
+                    except ZeroDivisionError:
+                        deltad = 0
+                    d_list = totdistance+np.arange(aantal)*deltad
+
+                    if restseconds:
+                        velo = restdistance/restseconds
+                        pace = 500./velo
+                    else:
+                        velo = 0
+                        pace = 0
+                    
+                    data = pd.DataFrame({
+                        'time':time_list,
+                        'distance':d_list,
+                        'pace':pace,
+                        'velo':velo,
+                        ' lapIdx':nr,
+                        'type':3,
+                    })
+
+                    self.df = self.df.append(data)
+                    time += restseconds
+                    totdistance += restdistance
+
+        self.df['TimeStamp (sec)'] = unixnow+self.df.time
+        self.df['power'] = 2.8*self.df['velo']**3
+        mapping = {
+            'time': ' ElapsedTime (sec)',
+            'distance': ' Horizontal (meters)',
+            'hr': ' HRCur (bpm)',
+            'spm': ' Cadence (stokes/min)',
+            'power': ' Power (watts)',
+            }
+
+        self.df.rename(columns = mapping, inplace=True)
+
+    def write_csv(self, *args, **kwargs):
+        isgzip = kwargs.pop('gzip', False)
+        writeFile = args[0]
+
+        data = self.df
+        
+        if isgzip:
+            return data.to_csv(writeFile + '.gz', index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writeFile, index_label='index')
 
 def fitsummarydata(*args, **kwargs):
     from warnings import warn
