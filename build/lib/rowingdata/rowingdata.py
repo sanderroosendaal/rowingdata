@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.4.3"
+__version__ = "1.4.4"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -80,7 +80,8 @@ from csvparsers import (
 
 from otherparsers import TCXParser as TCXParserNoHR
 from otherparsers import (
-    FITParser, FitSummaryData, fitsummarydata,TCXParser
+    FITParser, FitSummaryData, fitsummarydata,TCXParser,
+    ExcelTemplate
     )
 
 from utils import (
