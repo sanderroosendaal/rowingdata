@@ -164,6 +164,8 @@ def csvtests(fop):
 
 def get_file_type(f):
     extension = f[-3:].lower()
+    if extension == 'xls':
+        return 'xls'
     if extension == 'kml':
         return 'kml'
     if extension == '.gz':
