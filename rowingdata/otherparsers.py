@@ -46,10 +46,10 @@ class ExcelTemplate(object):
                 aantal = int(seconds/deltat)
                 time_list = time+np.arange(aantal)*deltat
                 distance = row['Interval Distance']
-                deltad = distance/aantal
-                d_list = totdistance+np.arange(aantal)*deltad
-
-                velo = distance/seconds
+                deltad = distance/float(aantal)
+                d_list = np.arange(aantal)*deltad
+                
+                velo = distance/float(seconds)
                 pace = 500./velo
                 
                 data = pd.DataFrame({
@@ -59,11 +59,15 @@ class ExcelTemplate(object):
                     'spm':spm,
                     'pace':pace,
                     'velo':velo,
-                    'type':4
+                    'type':4,
+                    ' lapIdx':nr
                 })
+
+
+                
                 self.df = self.df.append(data)
                 time += seconds
-                totdistance += distance
+                totdistance = distance
             if row['Rest Time'] != np.nan:
                 try:
                     restseconds = 60.*row['Rest Time'].minute
@@ -78,7 +82,7 @@ class ExcelTemplate(object):
                     aantal = int(restseconds/deltat)
                     time_list = time+np.arange(aantal)*deltat
                     try:
-                        deltad = distance/aantal
+                        deltad = restdistance/float(aantal)
                     except ZeroDivisionError:
                         deltad = 0
                     d_list = totdistance+np.arange(aantal)*deltad
@@ -95,10 +99,10 @@ class ExcelTemplate(object):
                         'distance':d_list,
                         'pace':pace,
                         'velo':velo,
-                        'type':3})
+                        ' lapIdx':nr,
+                        'type':3,
+                    })
 
-                    print data.info()
-                    
                     self.df = self.df.append(data)
                     time += restseconds
                     totdistance += restdistance
