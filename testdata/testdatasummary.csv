@@ -1,4 +1,5 @@
 filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrintervals,lap 1 time,lap 1 dist,timezone
+EUBoatCoach.csv,boatcoach,3084,2017,12,6,15,24,55,12587,3598,12,297,1056,UTC
 quiske_per_stroke_seat.csv,quiske,55,2017,5,21,6,18,0,484,151,1,151,484,UTC
 quiske_per_stroke_left.csv,quiske,25,2017,5,21,6,33,53,219,57,1,57,219,UTC
 quiske_per_stroke_right.csv,quiske,33,2017,5,21,6,31,24,315,93,1,93,315,UTC

@@ -662,7 +662,31 @@ class BoatCoachOTWParser(CSVParser):
         else:
             csvfile = kwargs['csvfile']
 
+        separator = get_separator(5, csvfile)
+        kwargs['sep'] = separator
+
         super(BoatCoachOTWParser, self).__init__(*args, **kwargs)
+
+        # crude EU format detector
+        try:
+            ll = self.df['Latitude'] * 1 
+        except TypeError:
+            converters = {
+                'TOTAL Distance Since Start BoatCoach(m)':
+                lambda x: float(x.replace('.', '').replace(', ', '.')),
+                'Stroke Rate':
+                lambda x: float(x.replace('.', '').replace(',', '.')),
+                'Heart Rate':
+                lambda x: float(x.replace('.', '').replace(',', '.')),
+                'Last 10 Stroke Speed(/500m)':
+                lambda x: float(x.replace('.', '').replace(',', '.')),
+                'Latitude':
+                lambda x: float(x.replace('.', '').replace(',', '.')),
+                'Longitude':
+                lambda x: float(x.replace('.', '').replace(',', '.')),
+            }
+            kwargs['converters'] = converters
+            super(BoatCoachOTWParser, self).__init__(*args, **kwargs)
 
         self.cols = [
             'DateTime',
@@ -828,7 +852,32 @@ class BoatCoachParser(CSVParser):
         else:
             csvfile = kwargs['csvfile']
 
+        separator = get_separator(2, csvfile)
+        kwargs['sep'] = separator
+
         super(BoatCoachParser, self).__init__(*args, **kwargs)
+
+        # crude EU format detector
+        try:
+            p = self.df['stroke500MPace'] * 500.
+        except TypeError:
+            converters = {
+                'workDistance':
+                lambda x: float(x.replace('.', '').replace(', ', '.')),
+                'strokeRate':
+                lambda x: float(x.replace('.', '').replace(',', '.')),
+                'currentHeartRate':
+                lambda x: float(x.replace('.', '').replace(',', '.')),
+                'strokePower': lambda x: float(x.replace('.', '').replace(',', '.')),
+                'strokeLength': lambda x: float(x.replace('.', '').replace(',', '.')),
+                'strokeDriveTime': lambda x: float(x.replace('.', '').replace(',', '.')),
+                'dragFactor': lambda x: float(x.replace('.', '').replace(',', '.')),
+                'strokeAverageForce': lambda x: float(x.replace('.', '').replace(',', '.')),
+                'strokePeakForce': lambda x: float(x.replace('.', '').replace(',', '.')),
+                'intervalCount': lambda x: float(x.replace('.', '').replace(',', '.')),
+            }
+            kwargs['converters'] = converters
+            super(BoatCoachParser, self).__init__(*args, **kwargs)
 
         self.cols = [
             'DateTime',
@@ -883,6 +932,7 @@ class BoatCoachParser(CSVParser):
             timesecs = make_cumvalues(timesecs)[0]
             unixtimes = row_date2 + timesecs
 
+            
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
 
@@ -1054,7 +1104,32 @@ class BoatCoachAdvancedParser(CSVParser):
         else:
             csvfile = kwargs['csvfile']
 
+        separator = get_separator(2, csvfile)
+        kwargs['sep'] = separator
+            
+
         super(BoatCoachAdvancedParser, self).__init__(*args, **kwargs)
+        # crude EU format detector
+        try:
+            p = self.df['stroke500MPace'] * 500.
+        except TypeError:
+            converters = {
+                'workDistance':
+                lambda x: float(x.replace('.', '').replace(', ', '.')),
+                'strokeRate':
+                lambda x: float(x.replace('.', '').replace(',', '.')),
+                'currentHeartRate':
+                lambda x: float(x.replace('.', '').replace(',', '.')),
+                'strokePower': lambda x: float(x.replace('.', '').replace(',', '.')),
+                'strokeLength': lambda x: float(x.replace('.', '').replace(',', '.')),
+                'strokeDriveTime': lambda x: float(x.replace('.', '').replace(',', '.')),
+                'dragFactor': lambda x: float(x.replace('.', '').replace(',', '.')),
+                'strokeAverageForce': lambda x: float(x.replace('.', '').replace(',', '.')),
+                'strokePeakForce': lambda x: float(x.replace('.', '').replace(',', '.')),
+                'intervalCount': lambda x: float(x.replace('.', '').replace(',', '.')),
+            }
+            kwargs['converters'] = converters
+            super(BoatCoachParser, self).__init__(*args, **kwargs)
 
         self.cols = [
             'DateTime',
