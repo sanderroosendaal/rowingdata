@@ -669,17 +669,17 @@ class BoatCoachOTWParser(CSVParser):
 
         # crude EU format detector
         try:
-            ll = self.df['Latitude'] * 1 
+            ll = self.df['Last 10 Stroke Speed(/500m)']*10.0
         except TypeError:
             converters = {
                 'TOTAL Distance Since Start BoatCoach(m)':
-                lambda x: float(x.replace('.', '').replace(', ', '.')),
+                lambda x: float(x.replace('.', '').replace(',', '.')),
                 'Stroke Rate':
                 lambda x: float(x.replace('.', '').replace(',', '.')),
                 'Heart Rate':
                 lambda x: float(x.replace('.', '').replace(',', '.')),
-                'Last 10 Stroke Speed(/500m)':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
+#                'Last 10 Stroke Speed(/500m)':
+#                lambda x: float(x.replace('.', '').replace(',', '.')),
                 'Latitude':
                 lambda x: float(x.replace('.', '').replace(',', '.')),
                 'Longitude':
