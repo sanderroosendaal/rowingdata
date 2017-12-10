@@ -662,7 +662,7 @@ class BoatCoachOTWParser(CSVParser):
         else:
             csvfile = kwargs['csvfile']
 
-        separator = get_separator(5, csvfile)
+        separator = get_separator(3, csvfile)
         kwargs['sep'] = separator
 
         super(BoatCoachOTWParser, self).__init__(*args, **kwargs)
