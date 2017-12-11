@@ -37,6 +37,23 @@ def clean_nan(x):
 
     return x
 
+def make_converter(convertlistbase,df):
+    converters = {}
+    for key in convertlistbase:
+        try:
+            try:
+                values = df[key].apply(
+                    lambda x: float(x.replace('.', '').replace(',', '.'))
+                )
+                converters[key] = lambda x: float(x.replace('.', '').replace(',', '.'))
+            except AttributeError:
+                pass
+        except KeyError:
+            pass
+
+    return converters
+
+
 def flexistrptime(inttime):
 
     try:
@@ -122,6 +139,9 @@ def csvtests(fop):
         return 'bcmike'
 
     if 'Club' in firstline and 'workoutType' in secondline:
+        return 'boatcoach'
+
+    if 'stroke500MPace' in firstline:
         return 'boatcoach'
 
     if 'Club' in secondline and 'Piece Stroke Count' in thirdline:
@@ -662,6 +682,10 @@ class BoatCoachOTWParser(CSVParser):
         else:
             csvfile = kwargs['csvfile']
 
+        ll = get_file_line(1,csvfile)
+        if 'workoutType' in ll:
+            kwargs['skiprows'] = 0
+
         separator = get_separator(3, csvfile)
         kwargs['sep'] = separator
 
@@ -671,20 +695,15 @@ class BoatCoachOTWParser(CSVParser):
         try:
             ll = self.df['Last 10 Stroke Speed(/500m)']*10.0
         except TypeError:
-            converters = {
-                'TOTAL Distance Since Start BoatCoach(m)':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
-                'Stroke Rate':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
-                'Heart Rate':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
-#                'Last 10 Stroke Speed(/500m)':
-#                lambda x: float(x.replace('.', '').replace(',', '.')),
-                'Latitude':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
-                'Longitude':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
-            }
+            convertlistbase = [
+                'TOTAL Distance Since Start BoatCoach(m)',
+                'Stroke Rate',
+                'Heart Rate',
+                'Latitude',
+                'Longitude',
+            ]
+            converters = make_converter(convertlistbase,self.df)
+            
             kwargs['converters'] = converters
             super(BoatCoachOTWParser, self).__init__(*args, **kwargs)
 
@@ -852,6 +871,10 @@ class BoatCoachParser(CSVParser):
         else:
             csvfile = kwargs['csvfile']
 
+        ll = get_file_line(1,csvfile)
+        if 'workoutType' in ll:
+            kwargs['skiprows'] = 0
+
         separator = get_separator(2, csvfile)
         kwargs['sep'] = separator
 
@@ -861,24 +884,22 @@ class BoatCoachParser(CSVParser):
         try:
             p = self.df['stroke500MPace'] * 500.
         except TypeError:
-            converters = {
-                'workDistance':
-                lambda x: float(x.replace('.', '').replace(', ', '.')),
-                'strokeRate':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
-                'currentHeartRate':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
-                'strokePower': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'strokeLength': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'strokeDriveTime': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'dragFactor': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'strokeAverageForce': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'strokePeakForce': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'intervalCount': lambda x: float(x.replace('.', '').replace(',', '.')),
-            }
+            convertlistbase = ['workDistance',
+                           'strokeRate',
+                           'currentHeartRate',
+                           'strokePower',
+                           'strokeLength',
+                           'strokeDriveTime',
+                           'dragFactor',
+                           'strokeAverageForce',
+                           'strokePeakForce',
+                           'intervalCount']
+            converters = make_converter(convertlistbase,self.df)
+
             kwargs['converters'] = converters
             super(BoatCoachParser, self).__init__(*args, **kwargs)
 
+            
         self.cols = [
             'DateTime',
             'workDistance',
@@ -906,15 +927,18 @@ class BoatCoachParser(CSVParser):
 
         # get date from footer
         try:
-            with open(csvfile, 'r') as fop:
-                line = fop.readline()
-                dated = re.split('Date:', line)[1][1:-1]
-        except IndexError:
-            with gzip.open(csvfile,'rb') as fop:
-                line = fop.readline()
-                dated = re.split('Date:', line)[1][1:-1]
+            try:
+                with open(csvfile, 'r') as fop:
+                    line = fop.readline()
+                    dated = re.split('Date:', line)[1][1:-1]
+            except IndexError:
+                with gzip.open(csvfile,'rb') as fop:
+                    line = fop.readline()
+                    dated = re.split('Date:', line)[1][1:-1]
+            row_date = parser.parse(dated, fuzzy=True)
+        except IOError:
+            pass
                 
-        row_date = parser.parse(dated, fuzzy=True)
 
         try:
             datetime = self.df[self.columns['TimeStamp (sec)']]
@@ -999,8 +1023,10 @@ class BoatCoachParser(CSVParser):
                     s  = line.split(',')
                     data.append(','.join([str(x) for x in s[26:-1]]))
 
-        self.df['PowerCurve'] = data[2:]
-
+        try:
+            self.df['PowerCurve'] = data[2:]
+        except ValueError:
+            pass
 
             
         # dump empty lines at end
@@ -1113,21 +1139,21 @@ class BoatCoachAdvancedParser(CSVParser):
         try:
             p = self.df['stroke500MPace'] * 500.
         except TypeError:
-            converters = {
-                'workDistance':
-                lambda x: float(x.replace('.', '').replace(', ', '.')),
-                'strokeRate':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
-                'currentHeartRate':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
-                'strokePower': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'strokeLength': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'strokeDriveTime': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'dragFactor': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'strokeAverageForce': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'strokePeakForce': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'intervalCount': lambda x: float(x.replace('.', '').replace(',', '.')),
-            }
+            convertlistbase = [
+                'workDistance',
+                'strokeRate',
+                'currentHeartRate',
+                'strokePower',
+                'strokeLength',
+                'strokeDriveTime',
+                'dragFactor',
+                'strokeAverageForce',
+                'strokePeakForce',
+                'intervalCount',
+            ]
+            
+            converters = make_converter(convertlistbase,self.df)
+            
             kwargs['converters'] = converters
             super(BoatCoachParser, self).__init__(*args, **kwargs)
 
@@ -1606,19 +1632,30 @@ class RowProParser(CSVParser):
         try:
             p = self.df['Pace'] * 500.
         except TypeError:
-            converters = {
-                'Distance':
-                lambda x: float(x.replace('.', '').replace(', ', '.')),
-                'AvgPace':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
-                'Pace':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
-                'AvgWatts':
-                lambda x: float(x.replace('.', '').replace(',', '.')),
-                'Watts': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'SPM': lambda x: float(x.replace('.', '').replace(',', '.')),
-                'EndHR': lambda x: float(x.replace('.', '').replace(',', '.')),
-            }
+            convertlistbase = [
+                'Distance',
+                'AvgPace',
+                'Pace',
+                'AvgWatts',
+                'Watts',
+                'SPM',
+                'EndHR'
+                ]
+
+            converters = make_converter(convertlistbase,self.df)
+#            converters = {
+#                'Distance':
+#                lambda x: float(x.replace('.', '').replace(',', '.')),
+#                'AvgPace':
+#                lambda x: float(x.replace('.', '').replace(',', '.')),
+#                'Pace':
+#                lambda x: float(x.replace('.', '').replace(',', '.')),
+#                'AvgWatts':
+#                lambda x: float(x.replace('.', '').replace(',', '.')),
+#                'Watts': lambda x: float(x.replace('.', '').replace(',', '.')),
+#                'SPM': lambda x: float(x.replace('.', '').replace(',', '.')),
+#                'EndHR': lambda x: float(x.replace('.', '').replace(',', '.')),
+#            }
             kwargs['converters'] = converters
             super(RowProParser, self).__init__(*args, **kwargs)
             self.footer = get_rowpro_footer(csvfile, converters=converters)
