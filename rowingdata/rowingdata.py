@@ -1480,6 +1480,9 @@ class rowingdata:
                            self.rwr.max
                            )
 
+        # Remove "logging data" - not strokes
+        self.df = self.df[self.df[' WorkoutState'] != 12]
+        
         # Cadence to float
         self.df[' Cadence (stokes/min)'] = self.df[' Cadence (stokes/min)'].astype(float)
 
