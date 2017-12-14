@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.4.8"
+__version__ = "1.4.9"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1480,6 +1480,9 @@ class rowingdata:
                            self.rwr.max
                            )
 
+        # Remove "logging data" - not strokes
+        self.df = self.df[self.df[' WorkoutState'] != 12]
+        
         # Cadence to float
         self.df[' Cadence (stokes/min)'] = self.df[' Cadence (stokes/min)'].astype(float)
 
