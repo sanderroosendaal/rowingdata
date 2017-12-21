@@ -43,7 +43,7 @@ class ExcelTemplate(object):
                 if spm == np.nan:
                     spm = 10.
                 deltat = 60./spm
-                aantal = int(seconds/deltat)
+                aantal = int(seconds/deltat)+1
                 time_list = time+np.arange(aantal)*deltat
                 distance = row['Interval Distance']
                 deltad = distance/float(aantal)
