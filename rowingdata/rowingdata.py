@@ -312,6 +312,7 @@ def cumcpdata2(rows):
 
     for row in rows:
         tt = row.df[' ElapsedTime (sec)'].copy()
+        tt = tt-tt[0]
         ww = row.df[' Power (watts)'].copy()
         
         G = pd.Series(ww.cumsum())
@@ -334,7 +335,6 @@ def cumcpdata2(rows):
         tt = pd.Series(newt)
         ww = pd.Series(ww)
 
-        indexes = pd.Series(np.arange(1,len(tt))).astype(float)
         h = np.mgrid[0:len(tt):1,0:len(tt):1]
 
         distances = pd.DataFrame(h[1]-h[0])
@@ -350,7 +350,7 @@ def cumcpdata2(rows):
 
         Gdif = pd.DataFrame(Gdif)
 
-        F = Gdif/distances
+        F = (Gdif+G[0])/distances
 
         F.fillna(value=0,inplace=True)
         
@@ -376,15 +376,22 @@ def cumcpdata2(rows):
             delta.append(d)
  
 
+    velo = (np.array(cpvalue)/2.8)**(1./3.)
+    d = np.array(delta)*velo
+            
     df = pd.DataFrame(
         {
             'Delta':delta,
-            'CP':cpvalue
+            'CP':cpvalue,
+            'Distance':d,
+            
         }
         )
 
     df = df.sort_values(['Delta', 'CP'], ascending=[1, 0])
     df = df.drop_duplicates(subset='Delta', keep='first')
+
+    #df = df[df['Distance']>100]
 
     return df
     
@@ -457,6 +464,8 @@ def cumcpdata(rows):
 
     df = df.sort_values(['Delta', 'CP', 'Distance'], ascending=[1, 0, 1])
     df = df.drop_duplicates(subset='Delta', keep='first')
+
+    #df = df[df['Distance']>100]
 
     return df
 
