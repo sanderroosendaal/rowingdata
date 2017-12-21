@@ -290,6 +290,145 @@ def histodata(rows):
 
     return power
 
+def appendmax(P,Dt,NewP,NewDt):
+    if P.iloc[0] == P.max():
+        NewP.append(P.iloc[0])
+        NewDt.append(Dt.iloc[0])
+
+    return P.iloc[1:],Dt.iloc[1:],NewP,NewDt
+
+def getcpdata(P,Dt):
+    NewP = []
+    NewDt = []
+
+    P = pd.Series(P)
+    Dt = pd.Series(Dt)
+
+    while len(P):
+        P, Dt, NewP, NewDt = appendmax(P,Dt,NewP,NewDt)
+
+    return NewP, NewDt
+
+def getmaxwattinterval(tt,ww,i):
+    w_roll = ww.rolling(i+2).mean().dropna()
+    if len(w_roll):
+        # now goes with # data points - should be fixed seconds
+        indexmax = w_roll.idxmax(axis=1)
+        try:
+            t_0 = tt.ix[indexmax]
+            t_1 = tt.ix[indexmax-i]
+            deltas = tt.ix[indexmax-1:indexmax].diff().dropna()
+            testres = 1.0e-3*deltas.max() < 30.
+            if testres:
+                deltat = 1.0e-3*(t_0-t_1)
+                wmax = w_roll.ix[indexmax]
+                #if wmax > 800 or wmax*5.0e-4*deltat > 800.0:
+                #    wmax = 0
+            else:
+                wmax = 0
+                deltat = 0
+        except KeyError:
+            pass
+    else:
+        wmax = 0
+        deltat = 0
+
+    return deltat,wmax
+
+def getlogarr(maxt):
+    maxlog10 = np.log10(maxt-5)
+    logarr = np.arange(50)*maxlog10/50.
+    logarr = [5+int(10.**(la)) for la in logarr]
+    logarr = pd.Series(logarr)
+    logarr.drop_duplicates(keep='first',inplace=True)
+
+    logarr = logarr.values
+    return logarr
+
+def cumcpdata2(rows):
+    delta = []
+    cpvalue = []
+    avgpower = {}
+
+
+    maxt = 0
+    for row in rows:
+        thismaxt = row.df[' ElapsedTime (sec)'].max()
+        if thismaxt > maxt:
+            maxt = thismaxt
+
+    maxlog10 = np.log10(maxt)
+
+    logarr = np.arange(100) * maxlog10 / 100.
+
+    logarr = 10.**(logarr)
+
+    for row in rows:
+        tt = row.df[' ElapsedTime (sec)'].copy()
+        ww = row.df[' Power (watts)'].copy()
+
+        tmax = tt.max()
+
+        if tmax > 500000:
+            newlen = int(tmax/2000.)
+        else:
+            newlen = len(tt)
+        if newlen < len(tt):
+            newt = np.arange(newlen)*tmax/float(newlen)
+            ww = griddata(tt.values,
+                          ww.values,
+                          newt,method='linear',
+                          rescale=True)
+
+            tt = pd.Series(newt)
+            ww = pd.Series(ww)
+
+            
+        try:
+            avgpower[id] = int(ww.mean())
+        except ValueError:
+            avgpower[id] = '---'
+        if not np.isnan(ww.mean()):
+            length = len(ww)
+            dt = []
+            cpw = []
+            for i in xrange(length-2):
+                deltat,wmax = getmaxwattinterval(tt,ww,i)
+
+                if not np.isnan(deltat) and not np.isnan(wmax):
+                    dt.append(deltat)
+                    cpw.append(wmax)
+
+
+            
+            dt = pd.Series(dt)
+            cpw = pd.Series(cpw)
+            if len(dt):
+                cpvalues = griddata(dt.values,
+                                    cpw.values,
+                                    logarr,method='linear',
+                                    rescale=True)
+
+                for cpv in cpvalues:
+                    cpvalue.append(cpv)
+                for d in logarr:
+                    delta.append(d)
+            
+    delta = pd.Series(delta,name='Delta')
+    cpvalue = pd.Series(cpvalue,name='CP')
+
+    
+    cpdf = pd.DataFrame({
+        'delta':delta,
+        'cpvalue':cpvalue
+        })
+
+    cpdf.dropna(axis=0, how='any',inplace=True)
+
+    return cpdf
+
+    
+    
 def cumcpdata(rows):
     # calculates CP data from a series of rowingdata class rows
     maxt = 0
