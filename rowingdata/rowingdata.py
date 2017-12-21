@@ -354,15 +354,13 @@ def cumcpdata2(rows,debug=False):
 
         Gdif = pd.DataFrame(Gdif)
 
-        F = (Gdif)/distances
+        Gdif = Gdif+(ww[0]-ww[1])
+        F = (Gdif)/(distances)
+
 
         F.fillna(inplace=True,method='ffill',axis=1)
-        F.fillna(inplace=True,method='bfill',axis=1)
+        F.fillna(inplace=True,value=0)
 
-        if debug:
-            print '=================F==========='
-            print F
-        
         restime = []
         power = []
         
@@ -371,14 +369,14 @@ def cumcpdata2(rows,debug=False):
             cp = np.diag(F,i).max()
             if debug:
                 print np.diag(F,i)
-                print i,cp
+                print i,deltat*i,cp
             power.append(cp)
+
+        power[0] = power[1]
 
         restime = np.array(restime)
         power = np.array(power)
 
-        if debug:
-            print power
             
         #power[0] = power[1]
             
@@ -410,6 +408,9 @@ def cumcpdata2(rows,debug=False):
 
     #df = df[df['Distance']>100]
 
+    if debug:
+        return df, F
+    
     return df
     
     
