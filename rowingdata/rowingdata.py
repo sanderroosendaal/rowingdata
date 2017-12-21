@@ -290,6 +290,112 @@ def histodata(rows):
 
     return power
 
+
+
+def cumcpdata2(rows):
+    delta = []
+    cpvalue = []
+    avgpower = {}
+
+
+    maxt = 0
+    for row in rows:
+        thismaxt = row.df[' ElapsedTime (sec)'].max()
+        if thismaxt > maxt:
+            maxt = thismaxt
+
+    maxlog10 = np.log10(maxt)
+
+    logarr = np.arange(100) * maxlog10 / 100.
+
+    logarr = 10.**(logarr)
+
+    for row in rows:
+        tt = row.df[' ElapsedTime (sec)'].copy()
+        tt = tt-tt[0]
+        ww = row.df[' Power (watts)'].copy()
+        
+        G = pd.Series(ww.cumsum())
+
+        tmax = tt.max()
+
+        if tmax > 500000:
+            newlen = int(tmax/2000.)
+            newt = np.arange(newlen)*tmax/float(newlen)
+            deltat = newt[1]-newt[0]
+        else:
+            newt = np.arange(0,tmax,10.)
+            deltat = 10.
+
+        ww = griddata(tt.values,
+                      ww.values,
+                      newt,method='linear',
+                      rescale=True)
+        
+        tt = pd.Series(newt)
+        ww = pd.Series(ww)
+
+        h = np.mgrid[0:len(tt):1,0:len(tt):1]
+
+        distances = pd.DataFrame(h[1]-h[0])
+
+        ones = 1+np.zeros(len(G))
+
+        Ghor = np.outer(ones,G)
+        Gver = np.outer(G,ones)
+
+        Gdif = Ghor - Gver
+
+        Gdif = np.tril(Gdif.T).T
+
+        Gdif = pd.DataFrame(Gdif)
+
+        F = (Gdif+G[0])/distances
+
+        F.fillna(value=0,inplace=True)
+        
+        restime = []
+        power = []
+        
+        for i in np.arange(0,len(tt)-1,1):
+            restime.append(deltat*i)
+            cp = np.diag(F,i).max()
+            power.append(cp)
+
+        restime = np.array(restime)
+        power = np.array(power)
+            
+        cpvalues = griddata(restime,power,
+                            logarr,method='linear', fill_value=0)
+
+
+    
+        for cpv in cpvalues:
+            cpvalue.append(cpv)
+        for d in logarr:
+            delta.append(d)
+ 
+
+    velo = (np.array(cpvalue)/2.8)**(1./3.)
+    d = np.array(delta)*velo
+            
+    df = pd.DataFrame(
+        {
+            'Delta':delta,
+            'CP':cpvalue,
+            'Distance':d,
+            
+        }
+        )
+
+    df = df.sort_values(['Delta', 'CP'], ascending=[1, 0])
+    df = df.drop_duplicates(subset='Delta', keep='first')
+
+    #df = df[df['Distance']>100]
+
+    return df
+    
+    
 def cumcpdata(rows):
     # calculates CP data from a series of rowingdata class rows
     maxt = 0
@@ -358,6 +464,8 @@ def cumcpdata(rows):
 
     df = df.sort_values(['Delta', 'CP', 'Distance'], ascending=[1, 0, 1])
     df = df.drop_duplicates(subset='Delta', keep='first')
+
+    #df = df[df['Distance']>100]
 
     return df
 
