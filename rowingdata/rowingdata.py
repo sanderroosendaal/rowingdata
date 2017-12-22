@@ -326,7 +326,7 @@ def cumcpdata(rows,debug=False):
             newt = np.arange(newlen)*tmax/float(newlen)
             deltat = newt[1]-newt[0]
         else:
-            newt = np.arange(0,tmax+10.,10.)
+            newt = np.arange(0,tmax,10.)
             deltat = 10.
 
         ww = griddata(tt.values,

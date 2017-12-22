@@ -317,9 +317,6 @@ def cumcpdata(rows,debug=False):
         tt = tt-tt[0]
         ww = row.df[' Power (watts)'].copy()
         
-        G = pd.Series(ww.cumsum())
-        G = pd.concat([pd.Series([0]),G])
-
         tmax = tt.max()
         if debug:
             print 'tmax = ',tmax
@@ -329,7 +326,7 @@ def cumcpdata(rows,debug=False):
             newt = np.arange(newlen)*tmax/float(newlen)
             deltat = newt[1]-newt[0]
         else:
-            newt = np.arange(0,tmax+10.,10.)
+            newt = np.arange(0,tmax,10.)
             deltat = 10.
 
         ww = griddata(tt.values,
@@ -339,6 +336,9 @@ def cumcpdata(rows,debug=False):
         
         tt = pd.Series(newt)
         ww = pd.Series(ww)
+
+        G = pd.Series(ww.cumsum())
+        G = pd.concat([pd.Series([0]),G])
 
         h = np.mgrid[0:len(tt)+1:1,0:len(tt)+1:1]
 
