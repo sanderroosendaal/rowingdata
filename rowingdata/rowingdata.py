@@ -317,9 +317,6 @@ def cumcpdata(rows,debug=False):
         tt = tt-tt[0]
         ww = row.df[' Power (watts)'].copy()
         
-        G = pd.Series(ww.cumsum())
-        G = pd.concat([pd.Series([0]),G])
-
         tmax = tt.max()
         if debug:
             print 'tmax = ',tmax
@@ -339,6 +336,9 @@ def cumcpdata(rows,debug=False):
         
         tt = pd.Series(newt)
         ww = pd.Series(ww)
+
+        G = pd.Series(ww.cumsum())
+        G = pd.concat([pd.Series([0]),G])
 
         h = np.mgrid[0:len(tt)+1:1,0:len(tt)+1:1]
 

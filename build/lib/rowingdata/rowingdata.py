@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.5.0"
+__version__ = "1.5.1"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -292,15 +292,17 @@ def histodata(rows):
 
 
 
-def cumcpdata2(rows):
+def cumcpdata(rows,debug=False):
     delta = []
     cpvalue = []
     avgpower = {}
 
 
-    maxt = 0
+    maxt = 10.
     for row in rows:
-        thismaxt = row.df[' ElapsedTime (sec)'].max()
+        tt = row.df[' ElapsedTime (sec)'].copy()
+        tt = tt-tt[0]
+        thismaxt = tt.max()+10.
         if thismaxt > maxt:
             maxt = thismaxt
 
@@ -316,15 +318,18 @@ def cumcpdata2(rows):
         ww = row.df[' Power (watts)'].copy()
         
         G = pd.Series(ww.cumsum())
+        G = pd.concat([pd.Series([0]),G])
 
         tmax = tt.max()
+        if debug:
+            print 'tmax = ',tmax
 
         if tmax > 500000:
             newlen = int(tmax/2000.)
             newt = np.arange(newlen)*tmax/float(newlen)
             deltat = newt[1]-newt[0]
         else:
-            newt = np.arange(0,tmax,10.)
+            newt = np.arange(0,tmax+10.,10.)
             deltat = 10.
 
         ww = griddata(tt.values,
@@ -335,10 +340,13 @@ def cumcpdata2(rows):
         tt = pd.Series(newt)
         ww = pd.Series(ww)
 
-        indexes = pd.Series(np.arange(1,len(tt))).astype(float)
-        h = np.mgrid[0:len(tt):1,0:len(tt):1]
+        h = np.mgrid[0:len(tt)+1:1,0:len(tt)+1:1]
 
         distances = pd.DataFrame(h[1]-h[0])
+
+        if debug:
+            print len(tt)
+            print distances
 
         ones = 1+np.zeros(len(G))
 
@@ -351,20 +359,38 @@ def cumcpdata2(rows):
 
         Gdif = pd.DataFrame(Gdif)
 
-        F = Gdif/distances
-
-        F.fillna(value=0,inplace=True)
+        if debug:
+            print Gdif
         
+        F = (Gdif)/(distances)
+
+        if debug:
+            print '=====================F============'
+            print F
+            print '=================================='
+
+
+        F.fillna(inplace=True,method='ffill',axis=1)
+        F.fillna(inplace=True,value=0)
+
         restime = []
         power = []
         
-        for i in np.arange(0,len(tt)-1,1):
+        for i in np.arange(0,len(tt)+1,1):
             restime.append(deltat*i)
             cp = np.diag(F,i).max()
+            if debug:
+                print np.diag(F,i)
+                print i,deltat*i,cp
             power.append(cp)
+
+        power[0] = power[1]
 
         restime = np.array(restime)
         power = np.array(power)
+
+            
+        #power[0] = power[1]
             
         cpvalues = griddata(restime,power,
                             logarr,method='linear', fill_value=0)
@@ -384,7 +410,7 @@ def cumcpdata2(rows):
         {
             'Delta':delta,
             'CP':cpvalue,
-            'distance':d,
+            'Distance':d,
             
         }
         )
@@ -392,16 +418,22 @@ def cumcpdata2(rows):
     df = df.sort_values(['Delta', 'CP'], ascending=[1, 0])
     df = df.drop_duplicates(subset='Delta', keep='first')
 
-    df = df[df['distance']<100]
+    #df = df[df['Distance']>100]
 
+    if debug:
+        return df, F
+    
     return df
     
     
-def cumcpdata(rows):
+def cumcpdata_old(rows):
     # calculates CP data from a series of rowingdata class rows
     maxt = 0
     for row in rows:
-        thismaxt = row.df[' ElapsedTime (sec)'].max()
+        tt = row.df[' ElapsedTime (sec)'].copy()
+        tt = tt-tt[0]
+        thismaxt = tt.max()
+
         if thismaxt > maxt:
             maxt = thismaxt
 
@@ -420,15 +452,22 @@ def cumcpdata(rows):
     for row in rows:
         cumdist = row.df['cum_dist']
         elapsedtime = row.df[' ElapsedTime (sec)']
+        ww = row.df[' Power (watts)']
+
+        powerpresent = (ww.std > 0)
 
         for i in range(len(cumdist) - 2):
             resdist = cumdist.ix[i + 1:] - cumdist.ix[i]
             restime = elapsedtime.ix[i + 1:] - elapsedtime[i]
             timedeltas = np.nan_to_num(restime.diff())
 
-            velo = resdist / restime
-            pace = 500. / velo
-            power = 2.8 * velo**3
+            if not powerpresent:
+                velo = resdist / restime
+                pace = 500. / velo
+                power = 2.8 * velo**3
+            else:
+                power = 0*resdist + ww[i+1:].mean()
+                velo = (power/2.8)**(1./3.)
 
             power.name = 'Power'
             restime.name = 'restime'
@@ -465,6 +504,8 @@ def cumcpdata(rows):
 
     df = df.sort_values(['Delta', 'CP', 'Distance'], ascending=[1, 0, 1])
     df = df.drop_duplicates(subset='Delta', keep='first')
+
+    #df = df[df['Distance']>100]
 
     return df
 
