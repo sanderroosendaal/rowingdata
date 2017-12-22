@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.5.0"
+__version__ = "1.5.1"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -292,17 +292,17 @@ def histodata(rows):
 
 
 
-def cumcpdata2(rows,debug=False):
+def cumcpdata(rows,debug=False):
     delta = []
     cpvalue = []
     avgpower = {}
 
 
-    maxt = 0
+    maxt = 10.
     for row in rows:
         tt = row.df[' ElapsedTime (sec)'].copy()
         tt = tt-tt[0]
-        thismaxt = tt.max()
+        thismaxt = tt.max()+10.
         if thismaxt > maxt:
             maxt = thismaxt
 
@@ -318,6 +318,7 @@ def cumcpdata2(rows,debug=False):
         ww = row.df[' Power (watts)'].copy()
         
         G = pd.Series(ww.cumsum())
+        G = pd.concat([pd.Series([0]),G])
 
         tmax = tt.max()
         if debug:
@@ -328,7 +329,7 @@ def cumcpdata2(rows,debug=False):
             newt = np.arange(newlen)*tmax/float(newlen)
             deltat = newt[1]-newt[0]
         else:
-            newt = np.arange(0,tmax,10.)
+            newt = np.arange(0,tmax+10.,10.)
             deltat = 10.
 
         ww = griddata(tt.values,
@@ -339,9 +340,13 @@ def cumcpdata2(rows,debug=False):
         tt = pd.Series(newt)
         ww = pd.Series(ww)
 
-        h = np.mgrid[0:len(tt):1,0:len(tt):1]
+        h = np.mgrid[0:len(tt)+1:1,0:len(tt)+1:1]
 
         distances = pd.DataFrame(h[1]-h[0])
+
+        if debug:
+            print len(tt)
+            print distances
 
         ones = 1+np.zeros(len(G))
 
@@ -354,8 +359,15 @@ def cumcpdata2(rows,debug=False):
 
         Gdif = pd.DataFrame(Gdif)
 
-        Gdif = Gdif+(ww[0]-ww[1])
+        if debug:
+            print Gdif
+        
         F = (Gdif)/(distances)
+
+        if debug:
+            print '=====================F============'
+            print F
+            print '=================================='
 
 
         F.fillna(inplace=True,method='ffill',axis=1)
@@ -414,7 +426,7 @@ def cumcpdata2(rows,debug=False):
     return df
     
     
-def cumcpdata(rows):
+def cumcpdata_old(rows):
     # calculates CP data from a series of rowingdata class rows
     maxt = 0
     for row in rows:
