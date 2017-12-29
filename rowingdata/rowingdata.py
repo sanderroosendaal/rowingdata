@@ -1437,6 +1437,10 @@ def addzones(df, ut2, ut1, at, tr, an, mmax):
 
     return df
 
+Nspm = 30
+Nvw = 40
+Nvb = 550
+
 def getaddress(spm,vw,vb):
     spmmin = 15
     spmmax = 45
@@ -1444,7 +1448,7 @@ def getaddress(spm,vw,vb):
     spmrel = (spm-spmmin)/float(spmmax-spmmin)
     spmrel = min([max([spmrel,0]),1])
 
-    i = int(9*spmrel)
+    i = int((Nspm-1)*spmrel)
 
     vwmin = -10
     vwmax = +10
@@ -1452,7 +1456,7 @@ def getaddress(spm,vw,vb):
     vwrel = (vw-vwmin)/float(vwmax-vwmin)
     vwrel = min([max([vwrel,0]),1])
 
-    j = int(199*vwrel)
+    j = int((Nvw-1)*vwrel)
 
     vbmin = 2.5
     vbmax = 8.0
@@ -1461,7 +1465,7 @@ def getaddress(spm,vw,vb):
     vbrel = min([max([vbrel,0]),1])
 
 
-    k = int(549*vbrel)
+    k = int((Nvb-1)*vbrel)
 
     return i,j,k
 
@@ -2544,11 +2548,11 @@ class rowingdata:
                     T = loaded['T']
                     S = loaded['S']
                 except IOError:
-                    T = np.zeros((30,200,550))
-                    S = np.zeros((30,200,550))
+                    T = np.zeros((Nspm,Nvw,Nvb))
+                    S = np.zeros((Nspm,Nvw,Nvb))
             else:
-                T = np.zeros((30,200,550))
-                S = np.zeros((30,200,550))
+                T = np.zeros((Nspm,Nvw,Nvb))
+                S = np.zeros((Nspm,Nvw,Nvb))
 
         # this is slow ... need alternative (read from table)
         for i in tqdm(range(nr_of_rows)):
@@ -2670,11 +2674,11 @@ class rowingdata:
                     T = loaded['T']
                     S = loaded['S']
                 except IOError:
-                    T = np.zeros((30,200,550))
-                    S = np.zeros((30,200,550))
+                    T = np.zeros((Nspm,Nvw,Nvb))
+                    S = np.zeros((Nspm,Nvw,Nvb))
             else:
-                T = np.zeros((30,200,550))
-                S = np.zeros((30,200,550))
+                T = np.zeros((Nspm,Nvw,Nvb))
+                S = np.zeros((Nspm,Nvw,Nvb))
 
         # this is slow ... need alternative (read from table)
         counterrange = int(nr_of_rows/100.)
