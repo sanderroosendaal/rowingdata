@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.5.1"
+__version__ = "1.5.2"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1452,7 +1452,7 @@ def getaddress(spm,vw,vb):
     vwrel = (vw-vwmin)/float(vwmax-vwmin)
     vwrel = min([max([vwrel,0]),1])
 
-    j = int(19*vwrel)
+    j = int(199*vwrel)
 
     vbmin = 2.5
     vbmax = 8.0
@@ -2509,7 +2509,7 @@ class rowingdata:
 
     def otw_setpower(self, skiprows=1, rg=getrigging(), mc=70.0,
                      powermeasured=False,
-                     usetable=False):
+                     usetable=False,storetable=None):
         """ Adds power from rowing physics calculations to OTW result
 
         For now, works only in singles
@@ -2533,12 +2533,22 @@ class rowingdata:
         r.mc = mc
 
         # modify pace/spm/wind with rolling averages
-        ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows).mean()
-        spms = df[' Cadence (stokes/min)'].rolling(skiprows).mean()
+        ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
+        spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
 
         if usetable:
-            T = np.zeros((30,20,550))
-            J = np.zeros((30,20,550))
+            if storetable is not None:
+                try:
+                    filename = storetable+'.npz'
+                    loaded = np.load(filename)
+                    T = loaded['T']
+                    S = loaded['S']
+                except IOError:
+                    T = np.zeros((30,200,550))
+                    S = np.zeros((30,200,550))
+            else:
+                T = np.zeros((30,200,550))
+                S = np.zeros((30,200,550))
 
         # this is slow ... need alternative (read from table)
         for i in tqdm(range(nr_of_rows)):
@@ -2573,7 +2583,7 @@ class rowingdata:
                         u,v,w = getaddress(spm, tw, velowater)
 
                         pwr = T[u,v,w]
-                        nowindpace = J[u,v,w]
+                        nowindpace = S[u,v,w]
                     else:
                         pwr = -1
 
@@ -2587,7 +2597,7 @@ class rowingdata:
                                                 vstream)
                             if usetable:
                                 T[u,v,w] = res[0]
-                                J[u,v,w] = res[3]
+                                S[u,v,w] = res[3]
                         except:
                             res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 else:
@@ -2614,6 +2624,9 @@ class rowingdata:
             else:
                 velo = 0.0
 
+        if storetable is not None:
+            np.savez_compressed(storetable,T=T,S=S)
+
         self.df = df.interpolate()
         if not powermeasured:
             self.df[' Power (watts)'] = self.df['power (model)']
@@ -2623,7 +2636,8 @@ class rowingdata:
     def otw_setpower_silent(self, skiprows=1, rg=getrigging(), mc=70.0,
                             powermeasured=False,
                             secret=None,progressurl=None,
-                            usetable=False):
+                            usetable=False,storetable=None):
+
         """ Adds power from rowing physics calculations to OTW result
 
         For now, works only in singles
@@ -2645,12 +2659,22 @@ class rowingdata:
         r.mc = mc
 
         # modify pace/spm/wind with rolling averages
-        ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows).mean()
-        spms = df[' Cadence (stokes/min)'].rolling(skiprows).mean()
+        ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
+        spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
 
         if usetable:
-            T = np.zeros((30,20,550))
-            J = np.zeros((30,20,550))
+            if storetable is not None:
+                try:
+                    filename = storetable+'.npz'
+                    loaded = np.load(filename)
+                    T = loaded['T']
+                    S = loaded['S']
+                except IOError:
+                    T = np.zeros((30,200,550))
+                    S = np.zeros((30,200,550))
+            else:
+                T = np.zeros((30,200,550))
+                S = np.zeros((30,200,550))
 
         # this is slow ... need alternative (read from table)
         counterrange = int(nr_of_rows/100.)
@@ -2695,7 +2719,7 @@ class rowingdata:
                         u,v,w = getaddress(spm, tw, velowater)
 
                         pwr = T[u,v,w]
-                        nowindpace = J[u,v,w]
+                        nowindpace = S[u,v,w]
                     else:
                         pwr = -1
 
@@ -2709,7 +2733,7 @@ class rowingdata:
                                                 vstream)
                             if usetable:
                                 T[u,v,w] = res[0]
-                                J[u,v,w] = res[3]
+                                S[u,v,w] = res[3]
                         except:
                             res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 else:
@@ -2729,6 +2753,9 @@ class rowingdata:
 
             else:
                 velo = 0.0
+
+        if storetable is not None:
+            np.savez_compressed(storetable,T=T,S=S)
 
         self.df = df.interpolate()
         if not powermeasured:
