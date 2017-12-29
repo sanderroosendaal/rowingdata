@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.5.0"
+__version__ = "1.5.2"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -188,7 +188,8 @@ def copytocb(s):
         )
         print(res)
 
-def phys_getpower(velo, rower, rigging, bearing, vwind, winddirection, vstream=0):
+def phys_getpower(velo, rower, rigging,
+                  bearing, vwind, winddirection, vstream=0):
     power = 0
     tw = tailwind(bearing, vwind, winddirection, vstream=0)
     velowater = velo - vstream
@@ -290,11 +291,150 @@ def histodata(rows):
 
     return power
 
-def cumcpdata(rows):
+
+
+def cumcpdata(rows,debug=False):
+    delta = []
+    cpvalue = []
+    avgpower = {}
+
+
+    maxt = 10.
+    for row in rows:
+        tt = row.df[' ElapsedTime (sec)'].copy()
+        tt = tt-tt[0]
+        thismaxt = tt.max()+10.
+        if thismaxt > maxt:
+            maxt = thismaxt
+
+    maxlog10 = np.log10(maxt)
+
+    logarr = np.arange(100) * maxlog10 / 100.
+
+    logarr = 10.**(logarr)
+
+    for row in rows:
+        tt = row.df[' ElapsedTime (sec)'].copy()
+        tt = tt-tt[0]
+        ww = row.df[' Power (watts)'].copy()
+        
+        tmax = tt.max()
+        if debug:
+            print 'tmax = ',tmax
+
+        if tmax > 500000:
+            newlen = int(tmax/2000.)
+            newt = np.arange(newlen)*tmax/float(newlen)
+            deltat = newt[1]-newt[0]
+        else:
+            newt = np.arange(0,tmax,10.)
+            deltat = 10.
+
+        ww = griddata(tt.values,
+                      ww.values,
+                      newt,method='linear',
+                      rescale=True)
+        
+        tt = pd.Series(newt)
+        ww = pd.Series(ww)
+
+        G = pd.Series(ww.cumsum())
+        G = pd.concat([pd.Series([0]),G])
+
+        h = np.mgrid[0:len(tt)+1:1,0:len(tt)+1:1]
+
+        distances = pd.DataFrame(h[1]-h[0])
+
+        if debug:
+            print len(tt)
+            print distances
+
+        ones = 1+np.zeros(len(G))
+
+        Ghor = np.outer(ones,G)
+        Gver = np.outer(G,ones)
+
+        Gdif = Ghor - Gver
+
+        Gdif = np.tril(Gdif.T).T
+
+        Gdif = pd.DataFrame(Gdif)
+
+        if debug:
+            print Gdif
+        
+        F = (Gdif)/(distances)
+
+        if debug:
+            print '=====================F============'
+            print F
+            print '=================================='
+
+
+        F.fillna(inplace=True,method='ffill',axis=1)
+        F.fillna(inplace=True,value=0)
+
+        restime = []
+        power = []
+        
+        for i in np.arange(0,len(tt)+1,1):
+            restime.append(deltat*i)
+            cp = np.diag(F,i).max()
+            if debug:
+                print np.diag(F,i)
+                print i,deltat*i,cp
+            power.append(cp)
+
+        power[0] = power[1]
+
+        restime = np.array(restime)
+        power = np.array(power)
+
+            
+        #power[0] = power[1]
+            
+        cpvalues = griddata(restime,power,
+                            logarr,method='linear', fill_value=0)
+
+
+    
+        for cpv in cpvalues:
+            cpvalue.append(cpv)
+        for d in logarr:
+            delta.append(d)
+ 
+
+    velo = (np.array(cpvalue)/2.8)**(1./3.)
+    d = np.array(delta)*velo
+            
+    df = pd.DataFrame(
+        {
+            'Delta':delta,
+            'CP':cpvalue,
+            'Distance':d,
+            
+        }
+        )
+
+    df = df.sort_values(['Delta', 'CP'], ascending=[1, 0])
+    df = df.drop_duplicates(subset='Delta', keep='first')
+
+    #df = df[df['Distance']>100]
+
+    if debug:
+        return df, F
+    
+    return df
+    
+    
+def cumcpdata_old(rows):
     # calculates CP data from a series of rowingdata class rows
     maxt = 0
     for row in rows:
-        thismaxt = row.df[' ElapsedTime (sec)'].max()
+        tt = row.df[' ElapsedTime (sec)'].copy()
+        tt = tt-tt[0]
+        thismaxt = tt.max()
+
         if thismaxt > maxt:
             maxt = thismaxt
 
@@ -313,15 +453,22 @@ def cumcpdata(rows):
     for row in rows:
         cumdist = row.df['cum_dist']
         elapsedtime = row.df[' ElapsedTime (sec)']
+        ww = row.df[' Power (watts)']
+
+        powerpresent = (ww.std > 0)
 
         for i in range(len(cumdist) - 2):
             resdist = cumdist.ix[i + 1:] - cumdist.ix[i]
             restime = elapsedtime.ix[i + 1:] - elapsedtime[i]
             timedeltas = np.nan_to_num(restime.diff())
 
-            velo = resdist / restime
-            pace = 500. / velo
-            power = 2.8 * velo**3
+            if not powerpresent:
+                velo = resdist / restime
+                pace = 500. / velo
+                power = 2.8 * velo**3
+            else:
+                power = 0*resdist + ww[i+1:].mean()
+                velo = (power/2.8)**(1./3.)
 
             power.name = 'Power'
             restime.name = 'restime'
@@ -358,6 +505,8 @@ def cumcpdata(rows):
 
     df = df.sort_values(['Delta', 'CP', 'Distance'], ascending=[1, 0, 1])
     df = df.drop_duplicates(subset='Delta', keep='first')
+
+    #df = df[df['Distance']>100]
 
     return df
 
@@ -1287,6 +1436,38 @@ def addzones(df, ut2, ut1, at, tr, an, mmax):
     df = df.fillna(method='ffill')
 
     return df
+
+Nspm = 30
+Nvw = 40
+Nvb = 550
+
+def getaddress(spm,vw,vb):
+    spmmin = 15
+    spmmax = 45
+
+    spmrel = (spm-spmmin)/float(spmmax-spmmin)
+    spmrel = min([max([spmrel,0]),1])
+
+    i = int((Nspm-1)*spmrel)
+
+    vwmin = -10
+    vwmax = +10
+
+    vwrel = (vw-vwmin)/float(vwmax-vwmin)
+    vwrel = min([max([vwrel,0]),1])
+
+    j = int((Nvw-1)*vwrel)
+
+    vbmin = 2.5
+    vbmax = 8.0
+
+    vbrel = (vb-vbmin)/float(vbmax-vbmin)
+    vbrel = min([max([vbrel,0]),1])
+
+
+    k = int((Nvb-1)*vbrel)
+
+    return i,j,k
 
 class rowingdata:
     """ This is the main class. Read the data from the csv file and do all
@@ -2330,8 +2511,9 @@ class rowingdata:
 
         self.df = df
 
-    def otw_setpower(self, skiprows=0, rg=getrigging(), mc=70.0,
-                     powermeasured=False):
+    def otw_setpower(self, skiprows=1, rg=getrigging(), mc=70.0,
+                     powermeasured=False,
+                     usetable=False,storetable=None):
         """ Adds power from rowing physics calculations to OTW result
 
         For now, works only in singles
@@ -2355,8 +2537,22 @@ class rowingdata:
         r.mc = mc
 
         # modify pace/spm/wind with rolling averages
-        ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows).mean()
-        spms = df[' Cadence (stokes/min)'].rolling(skiprows).mean()
+        ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
+        spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
+
+        if usetable:
+            if storetable is not None:
+                try:
+                    filename = storetable+'.npz'
+                    loaded = np.load(filename)
+                    T = loaded['T']
+                    S = loaded['S']
+                except IOError:
+                    T = np.zeros((Nspm,Nvw,Nvb))
+                    S = np.zeros((Nspm,Nvw,Nvb))
+            else:
+                T = np.zeros((Nspm,Nvw,Nvb))
+                S = np.zeros((Nspm,Nvw,Nvb))
 
         # this is slow ... need alternative (read from table)
         for i in tqdm(range(nr_of_rows)):
@@ -2383,11 +2579,31 @@ class rowingdata:
                     vstream = 0
 
                 if (i % rows_mod == 0):
-                    try:
-                        res = phys_getpower(velo, r, rg, bearing, vwind, winddirection,
-                                            vstream)
-                    except:
-                        res = [np.nan, np.nan, np.nan, np.nan, np.nan]
+                    if usetable:
+                        tw = tailwind(bearing, vwind,
+                                      winddirection, vstream=0)
+                        velowater = velo - vstream
+                    
+                        u,v,w = getaddress(spm, tw, velowater)
+
+                        pwr = T[u,v,w]
+                        nowindpace = S[u,v,w]
+                    else:
+                        pwr = -1
+
+                    if pwr > 0:
+                        res = [pwr,np.nan,np.nan,nowindpace,np.nan]
+                    else:
+                        try:
+                            res = phys_getpower(velo, r, rg,
+                                                bearing, vwind,
+                                                winddirection,
+                                                vstream)
+                            if usetable:
+                                T[u,v,w] = res[0]
+                                S[u,v,w] = res[3]
+                        except:
+                            res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 else:
                     res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 if not np.isnan(res[0]) and res[0] < 800:
@@ -2412,15 +2628,20 @@ class rowingdata:
             else:
                 velo = 0.0
 
+        if storetable is not None:
+            np.savez_compressed(storetable,T=T,S=S)
+
         self.df = df.interpolate()
         if not powermeasured:
             self.df[' Power (watts)'] = self.df['power (model)']
             self.df[' AverageDriveForce (lbs)'] = self.df['averageforce (model)']
             self.df[' DriveLength (meters)'] = self.df['drivelength (model)']
 
-    def otw_setpower_silent(self, skiprows=0, rg=getrigging(), mc=70.0,
+    def otw_setpower_silent(self, skiprows=1, rg=getrigging(), mc=70.0,
                             powermeasured=False,
-                            secret=None,progressurl=None):
+                            secret=None,progressurl=None,
+                            usetable=False,storetable=None):
+
         """ Adds power from rowing physics calculations to OTW result
 
         For now, works only in singles
@@ -2442,8 +2663,22 @@ class rowingdata:
         r.mc = mc
 
         # modify pace/spm/wind with rolling averages
-        ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows).mean()
-        spms = df[' Cadence (stokes/min)'].rolling(skiprows).mean()
+        ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
+        spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
+
+        if usetable:
+            if storetable is not None:
+                try:
+                    filename = storetable+'.npz'
+                    loaded = np.load(filename)
+                    T = loaded['T']
+                    S = loaded['S']
+                except IOError:
+                    T = np.zeros((Nspm,Nvw,Nvb))
+                    S = np.zeros((Nspm,Nvw,Nvb))
+            else:
+                T = np.zeros((Nspm,Nvw,Nvb))
+                S = np.zeros((Nspm,Nvw,Nvb))
 
         # this is slow ... need alternative (read from table)
         counterrange = int(nr_of_rows/100.)
@@ -2480,11 +2715,31 @@ class rowingdata:
                     vstream = 0
 
                 if (i % rows_mod == 0):
-                    try:
-                        res = phys_getpower(velo, r, rg, bearing, vwind, winddirection,
-                                            vstream)
-                    except:
-                        res = [np.nan, np.nan, np.nan, np.nan, np.nan]
+                    if usetable:
+                        tw = tailwind(bearing, vwind,
+                                      winddirection, vstream=0)
+                        velowater = velo - vstream
+                    
+                        u,v,w = getaddress(spm, tw, velowater)
+
+                        pwr = T[u,v,w]
+                        nowindpace = S[u,v,w]
+                    else:
+                        pwr = -1
+
+                    if pwr > 0:
+                        res = [pwr,np.nan,np.nan,nowindpace,np.nan]
+                    else:
+                        try:
+                            res = phys_getpower(velo, r, rg,
+                                                bearing, vwind,
+                                                winddirection,
+                                                vstream)
+                            if usetable:
+                                T[u,v,w] = res[0]
+                                S[u,v,w] = res[3]
+                        except:
+                            res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 else:
                     res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 if not np.isnan(res[0]) and res[0] < 800:
@@ -2502,6 +2757,9 @@ class rowingdata:
 
             else:
                 velo = 0.0
+
+        if storetable is not None:
+            np.savez_compressed(storetable,T=T,S=S)
 
         self.df = df.interpolate()
         if not powermeasured:
