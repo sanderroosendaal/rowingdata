@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.5.2"
+__version__ = "1.5.3"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -2540,19 +2540,23 @@ class rowingdata:
         ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
         spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
 
-        if usetable:
-            if storetable is not None:
+        if storetable is not None:
+            try:
+                filename = storetable+'.npz'
+                loaded = np.load(filename)
+                T = loaded['T']
+                S = loaded['S']
                 try:
-                    filename = storetable+'.npz'
-                    loaded = np.load(filename)
-                    T = loaded['T']
-                    S = loaded['S']
-                except IOError:
-                    T = np.zeros((Nspm,Nvw,Nvb))
-                    S = np.zeros((Nspm,Nvw,Nvb))
-            else:
+                    C = loaded['C']
+                except KeyError:
+                    C = np.zeros((Nspm,Nvw,Nvb))
+            except IOError:
                 T = np.zeros((Nspm,Nvw,Nvb))
                 S = np.zeros((Nspm,Nvw,Nvb))
+                C = np.zeros((Nspm,Nvw,Nvb))                
+        else:
+            T = np.zeros((Nspm,Nvw,Nvb))
+            S = np.zeros((Nspm,Nvw,Nvb))
 
         # this is slow ... need alternative (read from table)
         for i in tqdm(range(nr_of_rows)):
@@ -2579,13 +2583,12 @@ class rowingdata:
                     vstream = 0
 
                 if (i % rows_mod == 0):
-                    if usetable:
-                        tw = tailwind(bearing, vwind,
-                                      winddirection, vstream=0)
-                        velowater = velo - vstream
+                    tw = tailwind(bearing, vwind,
+                                  winddirection, vstream=0)
+                    velowater = velo - vstream
                     
-                        u,v,w = getaddress(spm, tw, velowater)
-
+                    u,v,w = getaddress(spm, tw, velowater)
+                    if usetable:
                         pwr = T[u,v,w]
                         nowindpace = S[u,v,w]
                     else:
@@ -2599,9 +2602,16 @@ class rowingdata:
                                                 bearing, vwind,
                                                 winddirection,
                                                 vstream)
-                            if usetable:
+                            if usetable: 
                                 T[u,v,w] = res[0]
                                 S[u,v,w] = res[3]
+                            if storetable is not None:
+                                if not usetable:
+                                    count = float(C[u,v,w])
+                                    T[u,v,w] = (count*T[u,v,w]+res[0])/count
+                                    S[u,v,w] = (count*S[u,v,w]+res[0])/count
+                                    C[u,v,w] += 1.
+                                
                         except:
                             res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 else:
@@ -2629,7 +2639,7 @@ class rowingdata:
                 velo = 0.0
 
         if storetable is not None:
-            np.savez_compressed(storetable,T=T,S=S)
+            np.savez_compressed(storetable,T=T,S=S,C=C)
 
         self.df = df.interpolate()
         if not powermeasured:
