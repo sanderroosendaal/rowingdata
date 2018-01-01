@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.5.4"
+__version__ = "1.5.5"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -2632,8 +2632,8 @@ class rowingdata:
                             if storetable is not None:
                                 if not usetable:
                                     count = float(C[u,v,w])
-                                    T[u,v,w] = (count*T[u,v,w]+res[0])/count
-                                    S[u,v,w] = (count*S[u,v,w]+res[0])/count
+                                    T[u,v,w] = (count*T[u,v,w]+res[0])/(count+1.0)
+                                    S[u,v,w] = (count*S[u,v,w]+res[3])/(count+1.0)
                                     C[u,v,w] += 1.
                                 
                         except:
