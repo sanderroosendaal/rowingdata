@@ -2513,14 +2513,14 @@ class rowingdata:
 
     def otw_setpower(self, skiprows=1, rg=getrigging(), mc=70.0,
                      powermeasured=False,
-                     usetable=False,storetable=None):
+                     secret=None,progressurl=None,
+                     usetable=False,storetable=None,
+                     silent=False):
         """ Adds power from rowing physics calculations to OTW result
 
         For now, works only in singles
 
         """
-
-        print("EXPERIMENTAL")
 
         nr_of_rows = self.number_of_rows
         rows_mod = skiprows + 1
@@ -2542,7 +2542,11 @@ class rowingdata:
 
         if storetable is not None:
             try:
-                filename = storetable+'.npz'
+                if storetable[-3:] != 'npz':
+                    filename = storetable+'.npz'
+                else:
+                    filename = storetable
+                    
                 loaded = np.load(filename)
                 T = loaded['T']
                 S = loaded['S']
@@ -2550,6 +2554,8 @@ class rowingdata:
                     C = loaded['C']
                 except KeyError:
                     C = np.zeros((Nspm,Nvw,Nvb))
+
+                loaded.close()
             except IOError:
                 T = np.zeros((Nspm,Nvw,Nvb))
                 S = np.zeros((Nspm,Nvw,Nvb))
@@ -2557,9 +2563,26 @@ class rowingdata:
         else:
             T = np.zeros((Nspm,Nvw,Nvb))
             S = np.zeros((Nspm,Nvw,Nvb))
+            C = np.zeros((Nspm,Nvw,Nvb))                
 
         # this is slow ... need alternative (read from table)
-        for i in tqdm(range(nr_of_rows)):
+
+        # this is slow ... need alternative (read from table)
+        counterrange = int(nr_of_rows/100.)
+        counter = 0
+
+        iterator = range(nr_of_rows)
+        if not silent:
+            iterator = tqdm(iterator)
+        
+        for i in iterator:
+            counter += 1
+            if counter>counterrange:
+                counter = 0
+                progress = int(100.*i/float(nr_of_rows))
+                if secret and progressurl:
+                    status_code = post_progress(secret,progressurl,progress)
+
             p = ps.ix[i]
             spm = spms.ix[i]
             r.tempo = spm
@@ -2605,6 +2628,7 @@ class rowingdata:
                             if usetable: 
                                 T[u,v,w] = res[0]
                                 S[u,v,w] = res[3]
+                                C[u,v,w] += 1
                             if storetable is not None:
                                 if not usetable:
                                     count = float(C[u,v,w])
@@ -2627,7 +2651,7 @@ class rowingdata:
                 df.ix[i, 'nowindpace'] = res[3]
                 df.ix[i, 'equivergpower'] = res[4]
 
-                if res[4] > res[0]:
+                if (res[4] > res[0]) and not silent:
                     print("Power ", res[0])
                     print("Equiv erg Power ", res[4])
                     print("Boat speed (m/s) ", velo)
@@ -2678,14 +2702,26 @@ class rowingdata:
 
         if storetable is not None:
             try:
-                filename = storetable+'.npz'
+                if storetable[-3:] != 'npz':
+                    filename = storetable+'.npz'
+                else:
+                    filename = storetable
+
                 loaded = np.load(filename)
+
+                print 'loaded %s' % filename
+                
                 T = loaded['T']
                 S = loaded['S']
+
                 try:
                     C = loaded['C']
                 except KeyError:
                     C = np.zeros((Nspm,Nvw,Nvb))
+
+                print 'Non zero %d ' % np.count_nonzero(T)
+
+                loaded.close()
             except IOError:
                 T = np.zeros((Nspm,Nvw,Nvb))
                 S = np.zeros((Nspm,Nvw,Nvb))
@@ -2693,10 +2729,12 @@ class rowingdata:
             else:
                 T = np.zeros((Nspm,Nvw,Nvb))
                 S = np.zeros((Nspm,Nvw,Nvb))
+                C = np.zeros((Nspm,Nvw,Nvb))
 
         # this is slow ... need alternative (read from table)
         counterrange = int(nr_of_rows/100.)
         counter = 0
+        counter2 = 0
         for i in range(nr_of_rows):
             counter += 1
             if counter>counterrange:
@@ -2729,11 +2767,15 @@ class rowingdata:
                     vstream = 0
 
                 if (i % rows_mod == 0):
+
+                    print 'Task %s: working on row %s of %s ' % (counter2,i,nr_of_rows)
+                    
                     tw = tailwind(bearing, vwind,
                                   winddirection, vstream=0)
                     velowater = velo - vstream
                     
                     u,v,w = getaddress(spm, tw, velowater)
+
                     if usetable:
                         pwr = T[u,v,w]
                         nowindpace = S[u,v,w]
@@ -2743,6 +2785,7 @@ class rowingdata:
                     if pwr > 0:
                         res = [pwr,np.nan,np.nan,nowindpace,np.nan]
                     else:
+                        counter2 += 1
                         try:
                             res = phys_getpower(velo, r, rg,
                                                 bearing, vwind,
