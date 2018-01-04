@@ -731,6 +731,12 @@ def y_axis_range(ydata, **kwargs):
     if (yrangemax > ultimate[1]):
         yrangemax = ultimate[1]
 
+    if not np.isfinite(yrangemin):
+        yrangemin = ymin
+
+    if not np.isfinite(yrangemax):
+        yrangemax = ymax
+
     return [yrangemin, yrangemax]
 
 
