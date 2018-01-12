@@ -88,8 +88,12 @@ class ExcelTemplate(object):
                     d_list = totdistance+np.arange(aantal)*deltad
 
                     if restseconds:
-                        velo = restdistance/restseconds
-                        pace = 500./velo
+                        try:
+                            velo = restdistance/restseconds
+                            pace = 500./velo
+                        except ZeroDivisionError:
+                            velo = 0
+                            pace = 0
                     else:
                         velo = 0
                         pace = 0

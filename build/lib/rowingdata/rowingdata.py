@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.5.5"
+__version__ = "1.5.6"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -730,6 +730,12 @@ def y_axis_range(ydata, **kwargs):
 
     if (yrangemax > ultimate[1]):
         yrangemax = ultimate[1]
+
+    if not np.isfinite(yrangemin):
+        yrangemin = ymin
+
+    if not np.isfinite(yrangemax):
+        yrangemax = ymax
 
     return [yrangemin, yrangemax]
 
