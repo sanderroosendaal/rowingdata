@@ -1616,7 +1616,7 @@ class RowProParser(CSVParser):
         else:
             csvfile = kwargs['csvfile']
 
-        separator = get_separator(17, csvfile)
+        separator = get_separator(15, csvfile)
 
         skipfooter = skip_variable_footer(csvfile)
         kwargs['skipfooter'] = skipfooter
@@ -1633,6 +1633,7 @@ class RowProParser(CSVParser):
             p = self.df['Pace'] * 500.
         except TypeError:
             convertlistbase = [
+                'Time',
                 'Distance',
                 'AvgPace',
                 'Pace',
@@ -1643,19 +1644,6 @@ class RowProParser(CSVParser):
                 ]
 
             converters = make_converter(convertlistbase,self.df)
-#            converters = {
-#                'Distance':
-#                lambda x: float(x.replace('.', '').replace(',', '.')),
-#                'AvgPace':
-#                lambda x: float(x.replace('.', '').replace(',', '.')),
-#                'Pace':
-#                lambda x: float(x.replace('.', '').replace(',', '.')),
-#                'AvgWatts':
-#                lambda x: float(x.replace('.', '').replace(',', '.')),
-#                'Watts': lambda x: float(x.replace('.', '').replace(',', '.')),
-#                'SPM': lambda x: float(x.replace('.', '').replace(',', '.')),
-#                'EndHR': lambda x: float(x.replace('.', '').replace(',', '.')),
-#            }
             kwargs['converters'] = converters
             super(RowProParser, self).__init__(*args, **kwargs)
             self.footer = get_rowpro_footer(csvfile, converters=converters)
