@@ -184,16 +184,20 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
 	xsd_filename="TrainingCenterDatabasev2.xsd"
 
 	# Run some tests
-	tree=objectify.parse(tcxFile)
-	try:
-	    schema=etree.XMLSchema(file=xsd_filename)
-	    parser=objectify.makeparser(schema=schema)
-	    objectify.fromstring(some_xml_string, parser)
-	    # print("YEAH!, your xml file has validated")
-	except XMLSyntaxError:
+        try:
+	    tree=objectify.parse(tcxFile)
+	    try:
+	        schema=etree.XMLSchema(file=xsd_filename)
+	        parser=objectify.makeparser(schema=schema)
+	        objectify.fromstring(some_xml_string, parser)
+	        # print("YEAH!, your xml file has validated")
+	    except XMLSyntaxError:
         
-	    print("Oh NO!, your xml file does not validate")
-	    pass
+	        print("Oh NO!, your xml file does not validate")
+	        pass
+        except:
+            print("Oh NO!, your xmsl file does not validate")
+            pass
 	
     except urllib2.URLError:
 	print("cannot download TCX schema")

@@ -1930,7 +1930,10 @@ class rowingdata:
         df = self.df
 
         writetcx.write_tcx(
-            fileName, df, row_date=self.rowdatetime.isoformat(), notes=notes)
+            fileName,
+            df,
+            row_date=self.rowdatetime.isoformat(), notes=notes
+        )
 
     def exporttogpx(self, fileName, notes="Exported by Rowingdata"):
         df = self.df
