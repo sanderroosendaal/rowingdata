@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.5.8"
+__version__ = "1.5.9"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1682,14 +1682,31 @@ class rowingdata:
 
         if not self.absolutetimestamps:
             # starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
-            starttimeunix = arrow.get(self.rowdatetime).timestamp
+            starttimeunix1 = arrow.get(self.rowdatetime).timestamp
             self_df['TimeStamp (sec)'] = self_df['TimeStamp (sec)'] + \
-                starttimeunix
+                starttimeunix1
         if not other.absolutetimestamps:
             # starttimeunix=time.mktime(other.rowdatetime.utctimetuple())
-            starttimeunix = arrow.get(other.rowdatetime).timestamp
+            starttimeunix2 = arrow.get(other.rowdatetime).timestamp
             other_df['TimeStamp (sec)'] = other_df['TimeStamp (sec)'] + \
-                starttimeunix
+                starttimeunix2
+
+        # determine overlap
+        overlap1 = self_df['TimeStamp (sec)'].max() > starttimeunix2 and starttimeunix1 < starttimeunix2
+        overlap2 = other_df['TimeStamp (sec)'].max() > starttimeunix1 and starttimeunix2 < starttimeunix1
+
+        # remove overlap 
+        if overlap1:
+            delta = self_df['TimeStamp (sec)'].max() - starttimeunix2
+            if delta < 60:
+                starttimeunix2 += delta+0.1
+                other_df['TimeStamp (sec)'] += delta+0.1
+
+        if overlap2:
+            delta = other_df['TimeStamp (sec)'].max() - starttimeunix1
+            if delta < 60:
+                starttimeunix1 += delta+0.1
+                self_df['TimeStamp (sec)'] += delta+0.1
 
         lapids = self_df[' lapIdx'].unique()
         otherlapids = other_df[' lapIdx'].unique()
