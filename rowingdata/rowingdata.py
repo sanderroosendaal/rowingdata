@@ -1676,6 +1676,9 @@ class rowingdata:
         self.df = addpowerzones(self.df, self.rwr.ftp, self.rwr.powerperc)
         self.index = self.df.index
 
+        # duration
+        self.duration = self.df['TimeStamp (sec)'].max()-self.df['TimeStamp (sec)'].min()
+
     def __add__(self, other):
         self_df = self.df.copy()
         other_df = other.df.copy()
