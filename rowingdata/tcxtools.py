@@ -4,6 +4,7 @@ import xmltodict as xd
 from dateutil import parser
 import arrow
 import gzip
+import numpy as np
 
 def tcx_getdict(path):
     extension = path[-3:].lower()
@@ -55,6 +56,12 @@ def tcxtrackgettrackpoint(d):
         except KeyError:
             return None
 
+def getvalue(x,key):
+    try:
+        return x[key]
+    except TypeError:
+        return np.nan
+        
 def tcxtrack_getdata(track):
     trackpoints = tcxtrackgettrackpoint(track)
     df = pd.DataFrame(trackpoints)
@@ -63,8 +70,12 @@ def tcxtrack_getdata(track):
         lambda x: arrow.get(x).timestamp+arrow.get(x).microsecond/1.e6
     )
     try:
-        df['latitude'] = df['Position'].apply(lambda x: x['LatitudeDegrees'])
-        df['longitude'] = df['Position'].apply(lambda x: x['LongitudeDegrees'])
+        #df['latitude'] = df['Position'].apply(lambda x: x['LatitudeDegrees'])
+        #df['longitude'] = df['Position'].apply(lambda x: x['LongitudeDegrees'])
+        df['latitude'] = df['Position'].apply(
+            lambda x: getvalue(x,'LatitudeDegrees'))
+        df['longitude'] = df['Position'].apply(
+            lambda x: getvalue(x,'LongitudeDegrees'))
     except KeyError:
         pass
     except TypeError:
