@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.5.9"
+__version__ = "1.6.0"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1768,6 +1768,7 @@ class rowingdata:
 
         return additionalmetrics
 
+    
     def check_consistency(self, threshold=20, velovariation=1.e-3):
         data = self.df
 
