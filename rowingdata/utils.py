@@ -105,3 +105,15 @@ def format_time(x,pos=None):
 	)
 
     return str1
+
+def wavg(group, avg_name, weight_name):
+    """ http://stackoverflow.com/questions/10951341/pandas-dataframe-aggregate-function-using-multiple-columns
+    In rare instance, we may not have weights, so just return the mean. Customize this if your business case
+    should return otherwise.
+    """
+    d = group[avg_name]
+    w = group[weight_name]
+    try:
+        return (d * w).sum() / w.sum()
+    except ZeroDivisionError:
+        return d.mean()
