@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.6.0"
+__version__ = "1.6.1"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -86,7 +86,7 @@ from otherparsers import (
 
 from utils import (
     ewmovingaverage, geo_distance, totimestamp, format_pace,
-    format_time, 
+    format_time, wavg
     )
 
 
@@ -1679,6 +1679,14 @@ class rowingdata:
         # duration
         self.duration = self.df['TimeStamp (sec)'].max()-self.df['TimeStamp (sec)'].min()
 
+        # Remove zeros from HR
+        hrmean = self.df[' HRCur (bpm)'].mean()
+        hrstd = self.df[' HRCur (bpm)'].std()
+
+        if hrmean != 0 and hrstd != 0:
+            self.df[' HRCur (bpm)'].replace(to_replace=0, method='ffill',
+                                       inplace=True)
+
     def __add__(self, other):
         self_df = self.df.copy()
         other_df = other.df.copy()
@@ -1974,6 +1982,7 @@ class rowingdata:
         """
 
         df = self.df
+        df['deltat'] = df['TimeStamp (sec)'].diff()
 
         workoutstateswork = [1, 4, 5, 8, 9, 6, 7]
         workoutstatesrest = [3]
@@ -1996,10 +2005,13 @@ class rowingdata:
             # assuming no stroke type info
             tdwork = td
 
-            avghr = tdwork[' HRCur (bpm)'].mean()
+            #avghr = tdwork[' HRCur (bpm)'].mean()
+            avghr = wavg(tdwork,' HRCur (bpm)','deltat')
             maxhr = tdwork[' HRCur (bpm)'].max()
-            avgspm = tdwork[' Cadence (stokes/min)'].mean()
-            avgpower = tdwork[' Power (watts)'].mean()
+            #avgspm = tdwork[' Cadence (stokes/min)'].mean()
+            #avgpower = tdwork[' Power (watts)'].mean()
+            avgspm = wavg(tdwork,' Cadence (stokes/min)','deltat')
+            avgpower = wavg(tdwork,' Power (watts)','deltat')
 
             intervaldistance = tdwork[' Horizontal (meters)'].max()
 
@@ -2031,6 +2043,7 @@ class rowingdata:
         """
 
         df = self.df
+        df['deltat'] = df['TimeStamp (sec)'].diff()
 
         workoutstateswork = [1, 4, 5, 8, 9, 6, 7]
         workoutstatesrest = [3]
@@ -2106,7 +2119,8 @@ class rowingdata:
         """
 
         df = self.df
-
+        df['deltat'] = df['TimeStamp (sec)'].diff()
+        
         workoutstateswork = [1, 4, 5, 8, 9, 6, 7]
         workoutstatesrest = [3]
         workoutstatetransition = [0, 2, 10, 11, 12, 13]
@@ -2134,10 +2148,14 @@ class rowingdata:
             tdwork = td[~td[' WorkoutState'].isin(workoutstatesrest)]
             tdrest = td[td[' WorkoutState'].isin(workoutstatesrest)]
 
-            avghr = tdwork[' HRCur (bpm)'].mean()
+
+            #avghr = tdwork[' HRCur (bpm)'].mean()
+            avghr = wavg(tdwork,' HRCur (bpm)','deltat')
             maxhr = tdwork[' HRCur (bpm)'].max()
-            avgspm = tdwork[' Cadence (stokes/min)'].mean()
-            avgpower = tdwork[' Power (watts)'].mean()
+            #avgspm = tdwork[' Cadence (stokes/min)'].mean()
+            #avgpower = tdwork[' Power (watts)'].mean()
+            avgspm = wavg(tdwork,' Cadence (stokes/min)','deltat')
+            avgpower = wavg(tdwork,' Power (watts)','deltat')
 
             intervaldistance = tdwork['cum_dist'].max() - previousdist
             if isnan(intervaldistance) or isinf(intervaldistance):
@@ -2977,6 +2995,7 @@ class rowingdata:
         """
 
         df = self.df
+        df['deltat'] = df['TimeStamp (sec)'].diff()
 
         # total dist, total time, avg pace, avg hr, max hr, avg dps
 
@@ -2990,11 +3009,16 @@ class rowingdata:
         totaltime = np.array(times).sum()
 
         avgpace = 500 * totaltime / totaldist
-        avghr = df[' HRCur (bpm)'].mean()
+        #avghr = df[' HRCur (bpm)'].mean()
         maxhr = df[' HRCur (bpm)'].max()
-        avgspm = df[' Cadence (stokes/min)'].mean()
+        #avgspm = df[' Cadence (stokes/min)'].mean()
+        #avgpower = df[' Power (watts)'].mean()
+
+        avghr = wavg(df,' HRCur (bpm)','deltat')
+
+        avgspm = wavg(df,' Cadence (stokes/min)','deltat')
+        avgpower = wavg(df,' Power (watts)','deltat')
         avgdps = totaldist / (totaltime * avgspm / 60.)
-        avgpower = df[' Power (watts)'].mean()
 
         stri = summarystring(totaldist, totaltime, avgpace, avgspm,
                              avghr, maxhr, avgdps, avgpower,
@@ -3041,15 +3065,21 @@ class rowingdata:
             tdwork = td[~td[' WorkoutState'].isin(workoutstatesrest)]
             tdrest = td[td[' WorkoutState'].isin(workoutstatesrest)]
 
-            avghr = nanstozero(tdwork[' HRCur (bpm)'].mean())
+            #avghr = nanstozero(tdwork[' HRCur (bpm)'].mean())
+            avghr = nanstozero(wavg(tdwork,' HRCur (bpm)','deltat'))
             maxhr = nanstozero(tdwork[' HRCur (bpm)'].max())
-            avgspm = nanstozero(tdwork[' Cadence (stokes/min)'].mean())
-            avgpower = nanstozero(tdwork[' Power (watts)'].mean())
+            #avgspm = nanstozero(tdwork[' Cadence (stokes/min)'].mean())
+            avgspm = nanstozero(wavg(tdwork,' Cadence (stokes/min)','deltat'))
+            #avgpower = nanstozero(tdwork[' Power (watts)'].mean())
+            avgpower = nanstozero(wavg(tdwork,' Power (watts)','deltat'))
 
-            avghrrest = nanstozero(tdrest[' HRCur (bpm)'].mean())
+            #avghrrest = nanstozero(tdrest[' HRCur (bpm)'].mean())
+            avghrrest = nanstozero(wavg(tdrest,' HRCur (bpm)','deltat'))
             maxhrrest = nanstozero(tdrest[' HRCur (bpm)'].max())
-            avgspmrest = nanstozero(tdrest[' Cadence (stokes/min)'].mean())
-            avgrestpower = nanstozero(tdrest[' Power (watts)'].mean())
+            #avgspmrest = nanstozero(tdrest[' Cadence (stokes/min)'].mean())
+            #avgrestpower = nanstozero(tdrest[' Power (watts)'].mean())
+            avgspmrest = nanstozero(wavg(tdrest,' Cadence (stokes/min)','deltat'))
+            avgrestpower = nanstozero(wavg(tdrest,' Power (watts)','deltat'))
 
             intervaldistance = tdwork['cum_dist'].max() - previousdist
             if isnan(intervaldistance) or isinf(intervaldistance):
@@ -6113,10 +6143,12 @@ class rowingdata:
         totaldist = df['cum_dist'].max()
         totaltime = df['TimeStamp (sec)'].max()
         avgpace = 500 * totaltime / totaldist
-        avghr = df[' HRCur (bpm)'].mean()
+        #avghr = df[' HRCur (bpm)'].mean()
+        avghr = wavg(df,' HRCur (bpm)','deltat')
         maxhr = df[' HRCur (bpm)'].max()
-        avgspm = df[' Cadence (stokes/min)'].mean()
+        #avgspm = df[' Cadence (stokes/min)'].mean()
         avgdps = totaldist / (totaltime * avgspm / 60.)
+        avgspm = wavg(df,' Cadence (stokes/min)','deltat')
 
         hour = int(totaltime / 3600)
         min = int((totaltime - hour * 3600.) / 60)
