@@ -13,6 +13,11 @@ from datetime import datetime
 
 NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
+def strip_non_ascii(string):
+    ''' Returns the string without non ASCII characters'''
+    stripped = (c for c in string if 0 < ord(c) < 127)
+    return ''.join(stripped)
+
 def tofloat(x):
     try:
         return float(x)
@@ -357,15 +362,26 @@ class FITParser(object):
         
 
         self.df = pd.DataFrame(recorddicts)
+        # columns to lowercase
+        self.df.columns = [strip_non_ascii(x) for x in self.df.columns]
+        self.df.columns = [x.encode('ascii','ignore') for x in self.df.columns]
+        self.df.rename(columns = str.lower,inplace=True)
 
-        latitude = self.df['position_lat']*(180./2**31)            
-        longitude = self.df['position_long']*(180./2**31)
+        try:
+            latitude = self.df['position_lat']*(180./2**31)            
+            longitude = self.df['position_long']*(180./2**31)
+        except KeyError:
+            # no coordinates
+            latitude = 0
+            longitude = 0
 
         distance = self.df['distance']
 
         self.df['position_lat'] = latitude
         self.df['position_long'] = longitude
 
+        print distance
+        
         if pd.isnull(distance).all():
             dist2 = np.zeros(len(distance))
             for i in range(len(distance)-1):
