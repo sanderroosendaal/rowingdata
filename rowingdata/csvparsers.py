@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 from pandas.core.indexing import IndexingError
 
+from StringIO import StringIO
+
 from pandas import Series, DataFrame
 from dateutil import parser
 
@@ -23,6 +25,8 @@ from fitparse import FitFile
 from utils import (
     totimestamp, format_pace, format_time,
 )
+
+from tcxtools import strip_control_characters
 
 # we're going to plot SI units - convert pound force to Newton
 lbstoN = 4.44822
@@ -190,13 +194,15 @@ def get_file_type(f):
         return 'kml'
     if extension == '.gz':
         extension = f[-6:-3].lower()
-        with gzip.open(f, 'r') as f:
+        with gzip.open(f, 'r') as fop:
             try:
                 if extension == 'csv':
-                    return csvtests(f)
+                    return csvtests(fop)
                 elif extension == 'tcx':
                     try:
-                        tree = objectify.parse(f)
+                        input = fop.read()
+                        input = strip_control_characters(input)
+                        tree = objectify.parse(StringIO(input))
                         rt = tree.getroot()
                         return 'tcx'
                     except:
@@ -204,7 +210,7 @@ def get_file_type(f):
                 elif extension == 'fit':
                     newfile = 'temp.fit'
                     with open(newfile,'wb') as f_out:
-                        shutil.copyfileobj(f, f_out)
+                        shutil.copyfileobj(fop, f_out)
   
                     try:
                         FitFile(newfile, check_crc=False).parse()
@@ -224,12 +230,17 @@ def get_file_type(f):
             return csvtests(fop)
 
     if extension == 'tcx':
-        try:
-            tree = objectify.parse(f)
-            rt = tree.getroot()
-            return 'tcx'
-        except:
-            return 'unknown'
+        with open(f,'r') as fop:
+            try:
+                input = fop.read()
+                input = strip_control_characters(input)
+                tree = objectify.parse(StringIO(input))
+                rt = tree.getroot()
+                return 'tcx'
+            except:
+                return 'unknown'
+            
+
 
         # if 'HeartRateBpm' in etree.tostring(rt):
         #    return 'tcx'
