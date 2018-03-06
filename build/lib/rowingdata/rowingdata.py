@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.6.1"
+__version__ = "1.6.4"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1637,6 +1637,14 @@ class rowingdata:
                     except KeyError:
                         pass 
 
+        # Remove zeros from HR
+        hrmean = sled_df[' HRCur (bpm)'].mean()
+        hrstd = sled_df[' HRCur (bpm)'].std()
+
+        if hrmean != 0 and hrstd != 0:
+            sled_df[' HRCur (bpm)'].replace(to_replace=0, method='ffill',
+                                       inplace=True)
+
         self.dragfactor = sled_df[' DragFactor'].mean()
         # get the date of the row
         try:
@@ -1679,13 +1687,6 @@ class rowingdata:
         # duration
         self.duration = self.df['TimeStamp (sec)'].max()-self.df['TimeStamp (sec)'].min()
 
-        # Remove zeros from HR
-        hrmean = self.df[' HRCur (bpm)'].mean()
-        hrstd = self.df[' HRCur (bpm)'].std()
-
-        if hrmean != 0 and hrstd != 0:
-            self.df[' HRCur (bpm)'].replace(to_replace=0, method='ffill',
-                                       inplace=True)
 
     def __add__(self, other):
         self_df = self.df.copy()

@@ -1,19 +1,47 @@
 # pylint: disable=C0103
 import pandas as pd
+import re
+import sys
+import unicodedata
+import codecs
 import xmltodict as xd
 from dateutil import parser
 import arrow
 import gzip
 import numpy as np
+import string
+
+def strip_control_characters(input):
+
+    if input:
+
+        # unicode invalid characters
+        RE_XML_ILLEGAL = u'([\u0000-\u0008\u000b-\u000c\u000e-\u001f\ufffe-\uffff])' + \
+                         u'|' + \
+                         u'([%s-%s][^%s-%s])|([^%s-%s][%s-%s])|([%s-%s]$)|(^[%s-%s])' % \
+                          (unichr(0xd800),unichr(0xdbff),unichr(0xdc00),unichr(0xdfff),
+                           unichr(0xd800),unichr(0xdbff),unichr(0xdc00),unichr(0xdfff),
+                           unichr(0xd800),unichr(0xdbff),unichr(0xdc00),unichr(0xdfff),
+                           )
+        input = re.sub(RE_XML_ILLEGAL, "", input)
+
+        # ascii control characters
+        #input = re.sub(r"[\x01-\x1F\x7F]", "", input)
+
+    return input
 
 def tcx_getdict(path):
     extension = path[-3:].lower()
     if extension == '.gz':
         with gzip.open(path,'r') as f:
-            d = xd.parse(f)
+            input = f.read()
+            input = strip_control_characters(input)
+            d = xd.parse(input)
     else:
         with open(path, 'r') as f:
-            d = xd.parse(f)
+            input = f.read()
+            input = strip_control_characters(input)
+            d = xd.parse(input)
     return d['TrainingCenterDatabase']
 
 def tcxgetactivities(d):
