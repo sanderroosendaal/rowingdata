@@ -51,7 +51,7 @@ class ExcelTemplate(object):
                 aantal = int(seconds/deltat)+1
                 time_list = time+np.arange(aantal)*deltat
                 distance = row['Interval Distance']
-                deltad = distance/float(aantal)
+                deltad = distance/float(aantal-1)
                 d_list = np.arange(aantal)*deltad
                 
                 velo = distance/float(seconds)
