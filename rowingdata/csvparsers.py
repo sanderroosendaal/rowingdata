@@ -1420,7 +1420,7 @@ class ErgStickParser(CSVParser):
             'Stroke rate (/min)',
             'Current heart rate (bpm)',
             'Current pace (/500m)',
-            ' Power (watts)',
+            'Split average power (W)',
             'Drive length (m)',
             'Stroke distance (m)',
             'Drive time (s)',
@@ -1447,10 +1447,10 @@ class ErgStickParser(CSVParser):
         pace = np.clip(pace, 1, 1e4)
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
 
-        velocity = 500. / pace
-        power = 2.8 * velocity**3
+        #velocity = 500. / pace
+        #power = 2.8 * velocity**3
 
-        self.df[' Power (watts)'] = power
+        #self.df[' Power (watts)'] = power
 
         seconds = self.df[self.columns['TimeStamp (sec)']]
         res = make_cumvalues(seconds)
