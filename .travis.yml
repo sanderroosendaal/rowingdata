@@ -64,7 +64,7 @@ deploy:
   user: sanderroosendaal
   password:
     secure: "jC7d6yV9SAiIrSg5uhxp1PljzD/V7ElMRHiGwAtmr0393BMzu5I8rLIM60y19qhSoe6AxPgfA+8A8OwbzMvbZRaE2ngHIHiPS+ohAQeOdEsV8kfw8eIR0I6VjAvP/NvwnWZ+aHxcA5SssJ6Nisy1ITsR44olcv5/hjWksBt+Tj/PscsVkT4dYR+mHPZ+q0qyWNEHZ/YLCVc5oW5TpfkkFDWVq6fPtFrUoPYaDay83DkXqNbbri1Xqxw72d33n9izfcqnh3o+SLxr6mkU2Nzs5j+h88RrBiVGmQ1XkPrKbrBlcrCG9P3u/brNexc2wOKwwtnWLJLSphMeLr483X+M71NqSMA6XvxOJAVuL68ja8Af78fUGbDWLMUA+/RaE4xsJOMqzaci3N5PtHGS5Ki2dSB82snph7dzcgh0P0N5rCqNGybyj6OO4rH9q10jw/hHbIJNpg83Gsjcbo+mLwl9M1eCtY2AaDg0wmBKRG7+gwvqX+K0zD1yNsz61S28Oal2tZv6arOwT/tUrZ6laqynpqlrzM71V04d5vGEt0lL2+NySi8R8vogpiR6Zo5BZIvZ+4KkeWDXnrxFKMH4R9UR8qSf5L0EZdPq73SoHVVp7BrSIOmzPOFoSYZrWtcFh9lyH06OPLdcJz9zL1EWvmD3OVGCIYNZ7OuRfSSsgt0j6Tw="
-  distributions: sdist wheel bdist_wheel
+  distributions: sdist
   on:
     branch: master
     repo: sanderroosendaal/rowingdata
