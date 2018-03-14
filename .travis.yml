@@ -1,71 +1,57 @@
 language: python
 env:
-
-# apt-get is only available to the Ubuntu tests (os: linux)
-# the other tests (os: osx) uses Homebrew to install shell
-# dependencies and is done in ./utils/travis-install.sh
+  global:
+    secure: kGtMHEQPUyWhDAZYI6HfBZ78zbN9yBRpLObgBymjtokICUpBPjE6/o8qrZ31iLki2uBQn/DLrA5vBDrYLQ5hMaiP5e0bBherlpoTkiyd0se0py9YSG0d7umqd0SVZ+NXEEeQBSDvvZBHrn5jj1gfrbE4r4bY3HpFv+glzN+P45wsmFj+YlqTQE9jPk00b+RkE+2rhDdZDqWMd9Ql4QDKks3yFy1aE89+oENSppbe9n15uJT83E9cNICn6Y03tUJHelSNKx9EAQEeqPDREsS1RbZhWDeKwgRwu+7szShnp6/3riwuzsmLPZV4HOvAC87Fhkse3SQ1Q5B6N/j18XWosW5ER/5PP1yGr3WxWksnATbwtgmO4uHpzgjaVrnH3eT0D517fiBU6UOmYzQtSsFVf42wRK7G6WVJWlCPt0qg1KzTZ5QGHaLGo0d3m1YEyct/kJEKa54wYCCxBADhor06MwlE6WF8GXxhzWaXwLf9abW9RDun1klgFCWDIAMPtVBAxXyGA936s9X5dFMYBITm/fEeamhAAC9l9ZC99Zuh9TT13j7EW1I8/ZMVOIBhtvoHgOkR54Er55P2ZDVVdlqjCt/dgmZ93fsAAQwtFPhyvsmwA8HejCdAAJnc0xihYB97UKKJcLg4v4Q9T+mBZoezhWfogtpGvSpntQ/JPDhikxs=
 addons:
   apt:
     packages:
-      - zsh
-      - csh
-      - tcsh
-      - posh
-      - ksh
-
-
+    - zsh
+    - csh
+    - tcsh
+    - posh
+    - ksh
 git:
   depth: 100
-
-
-cache:
-  directories:
-    - $HOME/.cache/pip
-before_cache:
-  - rm -f $HOME/.cache/pip/log/debug.log
-
-
-python:
- - "2.7.10"
-# - "3.3"
-notifications:
- email: false
 cache: pip
+before_cache:
+- rm -f $HOME/.cache/pip/log/debug.log
+python:
+- 2.7.10
+notifications:
+  email: false
 before_install:
-  - export TZ=Europe/Prague
-  - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - ./miniconda.sh -b
-  - export PATH=/home/travis/miniconda2/bin:$PATH
-  # The next couple lines fix a crash with multiprocessing on Travis and are not specific to using Miniconda
-  - sudo rm -rf /dev/shm
-  - sudo ln -s /run/shm /dev/shm
+- export TZ=Europe/Prague
+- wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
+- chmod +x miniconda.sh
+- "./miniconda.sh -b"
+- export PATH=/home/travis/miniconda2/bin:$PATH
+- sudo rm -rf /dev/shm
+- sudo ln -s /run/shm /dev/shm
 install:
-  - git clone -b master https://github.com/dtcooper/python-fitparse.git
-  - pip install twine
-  - cd python-fitparse
-  - python setup.py install
-  - cd ..
-  - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose dateutil pandas statsmodels
-  - python setup.py install
+- git clone -b master https://github.com/dtcooper/python-fitparse.git
+- pip install twine
+- cd python-fitparse
+- python setup.py install
+- cd ..
+- conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose
+  dateutil pandas statsmodels
+- python setup.py install
 script:
- - nosetests tests/testparser.py
- - nosetests tests/test_rowingdata.py
+- nosetests tests/testparser.py
+- nosetests tests/test_rowingdata.py
 sudo: required
 after_success:
-  - coveralls --config_file .coveragerc
-
+- coveralls --config_file .coveragerc
 before_deploy:
-  - python setup.py develop install
-  - python setup.py sdist
-
+- python setup.py develop install
+- python setup.py sdist
 deploy:
   provider: pypi
   user: sanderroosendaal
   password:
-    secure: "jC7d6yV9SAiIrSg5uhxp1PljzD/V7ElMRHiGwAtmr0393BMzu5I8rLIM60y19qhSoe6AxPgfA+8A8OwbzMvbZRaE2ngHIHiPS+ohAQeOdEsV8kfw8eIR0I6VjAvP/NvwnWZ+aHxcA5SssJ6Nisy1ITsR44olcv5/hjWksBt+Tj/PscsVkT4dYR+mHPZ+q0qyWNEHZ/YLCVc5oW5TpfkkFDWVq6fPtFrUoPYaDay83DkXqNbbri1Xqxw72d33n9izfcqnh3o+SLxr6mkU2Nzs5j+h88RrBiVGmQ1XkPrKbrBlcrCG9P3u/brNexc2wOKwwtnWLJLSphMeLr483X+M71NqSMA6XvxOJAVuL68ja8Af78fUGbDWLMUA+/RaE4xsJOMqzaci3N5PtHGS5Ki2dSB82snph7dzcgh0P0N5rCqNGybyj6OO4rH9q10jw/hHbIJNpg83Gsjcbo+mLwl9M1eCtY2AaDg0wmBKRG7+gwvqX+K0zD1yNsz61S28Oal2tZv6arOwT/tUrZ6laqynpqlrzM71V04d5vGEt0lL2+NySi8R8vogpiR6Zo5BZIvZ+4KkeWDXnrxFKMH4R9UR8qSf5L0EZdPq73SoHVVp7BrSIOmzPOFoSYZrWtcFh9lyH06OPLdcJz9zL1EWvmD3OVGCIYNZ7OuRfSSsgt0j6Tw="
+    secure: kGtMHEQPUyWhDAZYI6HfBZ78zbN9yBRpLObgBymjtokICUpBPjE6/o8qrZ31iLki2uBQn/DLrA5vBDrYLQ5hMaiP5e0bBherlpoTkiyd0se0py9YSG0d7umqd0SVZ+NXEEeQBSDvvZBHrn5jj1gfrbE4r4bY3HpFv+glzN+P45wsmFj+YlqTQE9jPk00b+RkE+2rhDdZDqWMd9Ql4QDKks3yFy1aE89+oENSppbe9n15uJT83E9cNICn6Y03tUJHelSNKx9EAQEeqPDREsS1RbZhWDeKwgRwu+7szShnp6/3riwuzsmLPZV4HOvAC87Fhkse3SQ1Q5B6N/j18XWosW5ER/5PP1yGr3WxWksnATbwtgmO4uHpzgjaVrnH3eT0D517fiBU6UOmYzQtSsFVf42wRK7G6WVJWlCPt0qg1KzTZ5QGHaLGo0d3m1YEyct/kJEKa54wYCCxBADhor06MwlE6WF8GXxhzWaXwLf9abW9RDun1klgFCWDIAMPtVBAxXyGA936s9X5dFMYBITm/fEeamhAAC9l9ZC99Zuh9TT13j7EW1I8/ZMVOIBhtvoHgOkR54Er55P2ZDVVdlqjCt/dgmZ93fsAAQwtFPhyvsmwA8HejCdAAJnc0xihYB97UKKJcLg4v4Q9T+mBZoezhWfogtpGvSpntQ/JPDhikxs=
+
   distributions: sdist
   on:
     branch: master
     repo: sanderroosendaal/rowingdata
-
