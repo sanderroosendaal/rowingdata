@@ -380,8 +380,6 @@ class FITParser(object):
         self.df['position_lat'] = latitude
         self.df['position_long'] = longitude
 
-        print distance
-        
         if pd.isnull(distance).all():
             dist2 = np.zeros(len(distance))
             for i in range(len(distance)-1):

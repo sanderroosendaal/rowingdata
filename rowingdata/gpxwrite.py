@@ -10,6 +10,10 @@ import urllib2
 
 namespace='http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
+empty_gpx = """
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1" creator="Oregon 400t" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v1 http://www.garmin.com/xmlschemas/TrackPointExtensionv1.xsd"><metadata><link href="http://www.garmin.com"><text>Garmin International</text></link><time>2018-03-17T12:59:13</time></metadata><trk><name>Export by rowingdata</name>
+</trk></gpx>
+"""
 
 def lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds):
     f.write('<?xml version="1.0" encoding="UTF-8" standalone="no" ?>')
