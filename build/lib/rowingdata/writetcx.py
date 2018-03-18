@@ -9,7 +9,21 @@ from lxml.etree import XMLSyntaxError
 import urllib2
 import ssl
 
-
+empty_tcx = """
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
+    <Activities>
+        <Activity Sport="Other">
+            <Id>2015-03-28T20:45:15.000Z</Id>
+            <Creator xsi:type="Device_t" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                <Name>Empty File</Name>
+                <UnitId>0</UnitId>
+                <ProductID>0</ProductID>
+            </Creator>
+        </Activity>
+    </Activities>
+</TrainingCenterDatabase>   
+"""
 
 namespace='http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
