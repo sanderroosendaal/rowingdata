@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.6.9"
+__version__ = "1.7.0"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib import figure
 from matplotlib.pyplot import grid
 from matplotlib.ticker import FuncFormatter, NullFormatter
+import shutil
 
 try:
     from Tkinter import Tk
@@ -1549,6 +1550,10 @@ class rowingdata:
         self.rwr = rwr
         self.rowtype = rowtype
 
+        self.empty = False
+        if sled_df.empty:
+            self.empty = True
+            
         othernames = ['catch','finish','peakforceangle',
                       'wash','slip','index',
                       'cum_dist','hr_an','hr_at','hr_tr','hr_ut1','hr_ut2',
@@ -1584,7 +1589,7 @@ class rowingdata:
         self.defaultnames = othernames+mandatorynames
 
         for name in mandatorynames:
-            if name not in sled_df.columns:
+            if name not in sled_df.columns and not sled_df.empty:
                 if debug:
                     print name + ' is not found in file'
                 sled_df[name] = 0
@@ -1637,19 +1642,22 @@ class rowingdata:
                     except KeyError:
                         pass 
 
-        # Remove zeros from HR
-        hrmean = sled_df[' HRCur (bpm)'].mean()
-        hrstd = sled_df[' HRCur (bpm)'].std()
+        if len(sled_df):
+            # Remove zeros from HR
+            hrmean = sled_df[' HRCur (bpm)'].mean()
+            hrstd = sled_df[' HRCur (bpm)'].std()
 
-        if hrmean != 0 and hrstd != 0:
-            sled_df[' HRCur (bpm)'].replace(to_replace=0, method='ffill',
-                                       inplace=True)
+            if hrmean != 0 and hrstd != 0:
+                sled_df[' HRCur (bpm)'].replace(to_replace=0,
+                                                method='ffill',
+                                                inplace=True)
 
-        self.dragfactor = sled_df[' DragFactor'].mean()
+            self.dragfactor = sled_df[' DragFactor'].mean()
+
         # get the date of the row
         try:
             starttime = sled_df['TimeStamp (sec)'].values[0]
-        except IndexError:
+        except KeyError,IndexError:
             starttime = 0
 
         # create start time timezone aware time object
@@ -1667,30 +1675,43 @@ class rowingdata:
         self.number_of_rows = number_of_rows
 
         # add HR zone data to dataframe
-        self.df = addzones(sled_df, self.rwr.ut2,
-                           self.rwr.ut1,
-                           self.rwr.at,
-                           self.rwr.tr,
-                           self.rwr.an,
-                           self.rwr.max
-                           )
+        if len(sled_df):
+            self.df = addzones(sled_df, self.rwr.ut2,
+                               self.rwr.ut1,
+                               self.rwr.at,
+                               self.rwr.tr,
+                               self.rwr.an,
+                               self.rwr.max
+            )
+        else:
+            self.df = sled_df
 
-        # Remove "logging data" - not strokes
-        self.df = self.df[self.df[' WorkoutState'] != 12]
+        if len(sled_df):
+            # Remove "logging data" - not strokes
+            self.df = self.df[self.df[' WorkoutState'] != 12]
         
-        # Cadence to float
-        self.df[' Cadence (stokes/min)'] = self.df[' Cadence (stokes/min)'].astype(float)
+            # Cadence to float
+            self.df[' Cadence (stokes/min)'] = self.df[' Cadence (stokes/min)'].astype(float)
 
-        self.df = addpowerzones(self.df, self.rwr.ftp, self.rwr.powerperc)
+            self.df = addpowerzones(self.df, self.rwr.ftp, self.rwr.powerperc)
         self.index = self.df.index
 
         # duration
-        self.duration = self.df['TimeStamp (sec)'].max()-self.df['TimeStamp (sec)'].min()
+        if len(sled_df):
+            self.duration = self.df['TimeStamp (sec)'].max()-self.df['TimeStamp (sec)'].min()
+        else:
+            self.duration = 0
 
 
     def __add__(self, other):
         self_df = self.df.copy()
         other_df = other.df.copy()
+
+        if self.empty:
+            return other
+
+        if other.empty:
+            return self
 
         if not self.absolutetimestamps:
             # starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
@@ -1758,6 +1779,9 @@ class rowingdata:
 
         """
 
+        if self.empty:
+            return np.array([])
+        
         return self.df[keystring].values
 
     def get_additional_metrics(self):
@@ -1782,6 +1806,11 @@ class rowingdata:
         data = self.df
 
         result = {}
+
+        if self.empty:
+            result['velo_time_distance'] = True
+            result['velo_valid'] = True
+            return result
 
         # velocity integrated over time must equal total distance
         velo = 500. / data[' Stroke500mPace (sec/500m)']
@@ -1862,7 +1891,7 @@ class rowingdata:
                           ], 1, errors='ignore')
 
         # add time stamp to
-        if not self.absolutetimestamps:
+        if not self.absolutetimestamps and not self.empty:
             try:
                 # starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
                 starttimeunix = arrow.get(self.rowdatetime).timestamp
@@ -1943,35 +1972,48 @@ class rowingdata:
 
         
     def spm_fromtimestamps(self):
-        df = self.df
-        dt = (df[' DriveTime (ms)'] + df[' StrokeRecoveryTime (ms)']) / 1000.
-        spm = 60. / dt
-        df[' Cadence (stokes/min)'] = spm
-        self.df = df
+        if not self.empty:
+            df = self.df
+            dt = (df[' DriveTime (ms)'] + df[' StrokeRecoveryTime (ms)']) / 1000.
+            spm = 60. / dt
+            df[' Cadence (stokes/min)'] = spm
+            self.df = df
 
     def erg_recalculatepower(self):
-        df = self.df
-        velo = df[' Speed (m/sec)']
-        pwr = 2.8 * velo**3
-        df[' Power (watts)'] = pwr
-        self.df = df
+        if not self.empty:
+            df = self.df
+            velo = df[' Speed (m/sec)']
+            pwr = 2.8 * velo**3
+            df[' Power (watts)'] = pwr
+            self.df = df
 
     def exporttotcx(self, fileName, notes="Exported by Rowingdata"):
-        df = self.df
-
-        writetcx.write_tcx(
-            fileName,
-            df,
-            row_date=self.rowdatetime.isoformat(), notes=notes
-        )
+        if not self.empty:
+            df = self.df
+            
+            writetcx.write_tcx(
+                fileName,
+                df,
+                row_date=self.rowdatetime.isoformat(), notes=notes
+            )
+        else:
+            emptytcx = writetcx.empty_tcx
+            with open(fileName,'wb') as f_out:
+                f_out.write(emptytcx)
+            
 
     def exporttogpx(self, fileName, notes="Exported by Rowingdata"):
-        df = self.df
-        gpxwrite.write_gpx(fileName,
-                           df,
-                           row_date=self.rowdatetime.isoformat(),
-                           notes=notes)
-
+        if not self.empty:
+            df = self.df
+            gpxwrite.write_gpx(fileName,
+                               df,
+                               row_date=self.rowdatetime.isoformat(),
+                               notes=notes)
+        else:
+            emptygpx = gpxwrite.empty_gpx
+            with open(fileName,'wb') as f_out:
+                f_out.write(emptygpx)
+            
     def intervalstats(self, separator='|'):
         """ Used to create a nifty text summary, one row for each interval
 
@@ -1982,6 +2024,9 @@ class rowingdata:
 
         """
 
+        if self.empty:
+            return ""
+        
         df = self.df
         df['deltat'] = df['TimeStamp (sec)'].diff()
 
@@ -2043,6 +2088,9 @@ class rowingdata:
 
         """
 
+        if self.empty:
+            return None
+        
         df = self.df
         df['deltat'] = df['TimeStamp (sec)'].diff()
 
@@ -2119,6 +2167,9 @@ class rowingdata:
 
         """
 
+        if self.empty:
+            return ""
+        
         df = self.df
         df['deltat'] = df['TimeStamp (sec)'].diff()
         
@@ -2227,6 +2278,9 @@ class rowingdata:
         types=['work','rest','work','rest']
         """
 
+        if self.empty:
+            return None
+        
         df = self.df
         try:
             origdist = df['orig_dist']
@@ -2571,6 +2625,9 @@ class rowingdata:
 
         """
 
+        if self.empty:
+            return None
+
         nr_of_rows = self.number_of_rows
         rows_mod = skiprows + 1
         df = self.df
@@ -2730,6 +2787,8 @@ class rowingdata:
         For now, works only in singles
 
         """
+        if self.empty:
+            return None
 
         nr_of_rows = self.number_of_rows
         rows_mod = skiprows + 1
@@ -2886,6 +2945,8 @@ class rowingdata:
         For now, works only in singles
 
         """
+        if self.empty:
+            return None
 
         print("EXPERIMENTAL")
 
@@ -2959,6 +3020,8 @@ class rowingdata:
         For now, works only in singles
 
         """
+        if self.empty:
+            return None
 
         print("EXPERIMENTAL")
 
@@ -2994,6 +3057,8 @@ class rowingdata:
         and copies it to the clipboard
 
         """
+        if self.empty:
+            return ""
 
         df = self.df
         df['deltat'] = df['TimeStamp (sec)'].diff()
@@ -3194,6 +3259,8 @@ class rowingdata:
         return stri
 
     def plotcp(self):
+        if self.empty:
+            return None
         cumdist = self.df['cum_dist']
         elapsedtime = self.df[' ElapsedTime (sec)']
 
@@ -3221,6 +3288,9 @@ class rowingdata:
         plt.show()
 
     def getcp(self):
+        if self.empty:
+            return None
+        
         cumdist = self.df['cum_dist']
         elapsedtime = self.df[' ElapsedTime (sec)']
 
@@ -3249,6 +3319,9 @@ class rowingdata:
         return pd.concat([delta, cpvalue, dist], axis=1).reset_index()
 
     def plototwergpower(self):
+        if self.empty:
+            return None
+
         df = self.df
         pe = df['equivergpower']
         pw = df[' Power (watts)']
@@ -3270,6 +3343,8 @@ class rowingdata:
 
 
         """
+        if self.empty:
+            return None
 
         df = self.df
 
@@ -3444,6 +3519,8 @@ class rowingdata:
 
 
         """
+        if self.empty:
+            return None
 
         df = self.df
 
@@ -3650,6 +3727,8 @@ class rowingdata:
 
 
         """
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -3844,6 +3923,9 @@ class rowingdata:
         self.piechart()
 
     def get_metersplot_otw(self, title):
+        if self.empty:
+            return None
+
         df = self.df
         df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
             df['TimeStamp (sec)'].values[0]
@@ -3933,6 +4015,9 @@ class rowingdata:
         return fig1
 
     def get_metersplot_erg2(self, title):
+        if self.empty:
+            return None
+
         df = self.df
         if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
@@ -4009,6 +4094,9 @@ class rowingdata:
         return fig2
 
     def get_timeplot_erg2(self, title):
+        if self.empty:
+            return None
+
         df = self.df
         if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
@@ -4096,6 +4184,9 @@ class rowingdata:
         return fig2
 
     def get_timeplot_otw(self, title):
+        if self.empty:
+            return None
+
         df = self.df
         if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
@@ -4197,6 +4288,9 @@ class rowingdata:
         return fig1
 
     def get_pacehrplot(self, title):
+        if self.empty:
+            return None
+
         df = self.df
         if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
@@ -4245,6 +4339,9 @@ class rowingdata:
         return fig
 
     def bokehpaceplot(self):
+        if self.empty:
+            return None
+
         df = self.df
         if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
@@ -4265,6 +4362,9 @@ class rowingdata:
         return 1
 
     def get_paceplot(self, title):
+        if self.empty:
+            return None
+
         df = self.df
         if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
@@ -4317,6 +4417,8 @@ class rowingdata:
         return fig
 
     def get_metersplot_erg(self, title):
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -4461,6 +4563,8 @@ class rowingdata:
         return(fig1)
 
     def get_metersplot_otwempower(self, title):
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -4605,6 +4709,8 @@ class rowingdata:
         return(fig1)
 
     def get_metersplot_otwpower(self, title):
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -4749,6 +4855,8 @@ class rowingdata:
         return(fig1)
 
     def get_timeplot_erg(self, title):
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -4906,6 +5014,8 @@ class rowingdata:
         return(fig1)
 
     def get_timeplot_otwempower(self, title):
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -5063,6 +5173,9 @@ class rowingdata:
         return(fig1)
 
     def get_time_otwpower(self, title):
+        if self.empty:
+            return None
+
         df = self.df
         if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
@@ -5218,6 +5331,8 @@ class rowingdata:
 
 
         """
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -5462,6 +5577,8 @@ class rowingdata:
         """ Creates a HR vs time plot
 
         """
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -5519,6 +5636,8 @@ class rowingdata:
 
 
         """
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -5650,6 +5769,8 @@ class rowingdata:
 
 
         """
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -5804,6 +5925,8 @@ class rowingdata:
         HR data and adds that incremental time in each band
 
         """
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -5876,6 +5999,8 @@ class rowingdata:
         HR data and adds that incremental time in each band
 
         """
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -5955,6 +6080,8 @@ class rowingdata:
         HR data and adds that incremental time in each band
 
         """
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -6032,6 +6159,8 @@ class rowingdata:
         HR data and adds that incremental time in each band
 
         """
+        if self.empty:
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -6106,6 +6235,8 @@ class rowingdata:
         changes their website. I am waiting for a Concept2 Logbook API
 
         """
+        if self.empty:
+            return None
 
         comment += "version %s.\n" % __version__
         comment += self.readfilename
