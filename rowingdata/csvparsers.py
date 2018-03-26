@@ -594,6 +594,9 @@ class CSVParser(object):
         return unixtimes
 
     def write_csv(self, *args, **kwargs):
+        if self.df.empty:
+            return None
+
         isgzip = kwargs.pop('gzip', False)
         writeFile = args[0]
 
