@@ -1534,9 +1534,12 @@ class rowingdata:
             readFile = 0
         elif readFile:
             try:
-                sled_df = pd.read_csv(readFile)
-            except IOError:
-                sled_df = pd.read_csv(readFile + '.gz')
+                try:
+                    sled_df = pd.read_csv(readFile)
+                except IOError:
+                    sled_df = pd.read_csv(readFile + '.gz')
+            except:
+                sled_df = pd.DataFrame()
 
         if readFile:
             try:
