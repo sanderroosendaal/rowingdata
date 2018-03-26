@@ -4,7 +4,7 @@ import csv
 import gzip
 import zipfile
 import re
-import datetim
+import datetime
 import pytz
 import arrow
 import iso8601
@@ -538,23 +538,24 @@ class CSVParser(object):
 
         self.csvfile = csvfile
 
-
-        if engine == 'python':
-            self.df = pd.read_csv(
-                csvfile, skiprows=skiprows, usecols=usecols,
-                sep=sep, engine=engine, skipfooter=skipfooter,
-                converters=converters, index_col=False,
-                compression='infer',
-            )
-        else:
-            self.df = pd.read_csv(
-                csvfile, skiprows=skiprows, usecols=usecols,
-                sep=sep, engine=engine, skipfooter=skipfooter,
-                converters=converters, index_col=False,
-                compression='infer',
-                error_bad_lines = False
-            )
-
+        try:
+            if engine == 'python':
+                self.df = pd.read_csv(
+                    csvfile, skiprows=skiprows, usecols=usecols,
+                    sep=sep, engine=engine, skipfooter=skipfooter,
+                    converters=converters, index_col=False,
+                    compression='infer',
+                    )
+            else:
+                self.df = pd.read_csv(
+                    csvfile, skiprows=skiprows, usecols=usecols,
+                    sep=sep, engine=engine, skipfooter=skipfooter,
+                    converters=converters, index_col=False,
+                    compression='infer',
+                    error_bad_lines = False
+                    )
+        except:
+            self.df = pd.DataFrame()
 
 
         self.df = self.df.fillna(method='ffill')
