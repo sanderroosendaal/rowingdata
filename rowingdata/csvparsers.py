@@ -545,6 +545,7 @@ class CSVParser(object):
                     sep=sep, engine=engine, skipfooter=skipfooter,
                     converters=converters, index_col=False,
                     compression='infer',
+                    )
             else:
                 self.df = pd.read_csv(
                     csvfile, skiprows=skiprows, usecols=usecols,
@@ -595,11 +596,7 @@ class CSVParser(object):
     def write_csv(self, *args, **kwargs):
         if self.df.empty:
             return None
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> bugfix/falsedetect
         isgzip = kwargs.pop('gzip', False)
         writeFile = args[0]
 
