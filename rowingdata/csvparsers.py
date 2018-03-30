@@ -211,7 +211,7 @@ def get_file_type(f):
                     newfile = 'temp.fit'
                     with open(newfile,'wb') as f_out:
                         shutil.copyfileobj(fop, f_out)
-  
+
                     try:
                         FitFile(newfile, check_crc=False).parse()
                         return 'fit'
@@ -219,7 +219,7 @@ def get_file_type(f):
                         return 'unknown'
 
                     return 'fit'
-                    
+
             except IOError:
                 return 'notgzip'
     if extension == 'csv':
@@ -239,7 +239,7 @@ def get_file_type(f):
                 return 'tcx'
             except:
                 return 'unknown'
-            
+
 
 
         # if 'HeartRateBpm' in etree.tostring(rt):
@@ -271,7 +271,7 @@ def get_file_linecount(f):
     extension = f[-3:].lower()
     if extension == '.gz':
         with gzip.open(f,'rb') as fop:
-            count = sum(1 for line in fop if line.rstrip('\n'))            
+            count = sum(1 for line in fop if line.rstrip('\n'))
     else:
         with open(f, 'r') as fop:
             count = sum(1 for line in fop if line.rstrip('\n'))
@@ -296,7 +296,7 @@ def get_file_line(linenr, f):
 def get_separator(linenr, f):
     line = ''
     extension = f[-3:].lower()
-    if extension == '.gz':    
+    if extension == '.gz':
         with gzip.open(f, 'r') as fop:
             for i in range(linenr):
                 line = fop.readline()
@@ -333,7 +333,7 @@ def get_empower_rigging(f):
                 oarlength = getoarlength(line)
             if 'Inboard' in line:
                 inboard = getinboard(line)
-        
+
 
     return oarlength / 100., inboard / 100.
 
@@ -346,7 +346,7 @@ def skip_variable_footer(f):
         fop = gzip.open(f,'rb')
     else:
         fop = open(f, 'r')
-        
+
     for line in fop:
         if line.startswith('Type') and counter > 15:
             counter2 = counter
@@ -362,7 +362,7 @@ def get_rowpro_footer(f, converters={}):
     counter = 0
     counter2 = 0
 
-    
+
     extension = f[-3:].lower()
     if extension == '.gz':
         fop = gzip.open(f,'rb')
@@ -404,7 +404,7 @@ def skip_variable_header(f):
             counter += 1
 
     fop.close()
-            
+
     # test for blank line
     l = get_file_line(counter2 + 2, f)
     if 'Interval' in l:
@@ -538,24 +538,26 @@ class CSVParser(object):
 
         self.csvfile = csvfile
 
+        try:
+            if engine == 'python':
+                self.df = pd.read_csv(
+                    csvfile, skiprows=skiprows, usecols=usecols,
+                    sep=sep, engine=engine, skipfooter=skipfooter,
+                    converters=converters, index_col=False,
+                    compression='infer',
+                )
+            else:
+                self.df = pd.read_csv(
+                    csvfile, skiprows=skiprows, usecols=usecols,
+                    sep=sep, engine=engine, skipfooter=skipfooter,
+                    converters=converters, index_col=False,
+                    compression='infer',
+                    error_bad_lines = False
+                )
+        except:
+            self.df = pd.DataFrame()
 
-        if engine == 'python':
-            self.df = pd.read_csv(
-                csvfile, skiprows=skiprows, usecols=usecols,
-                sep=sep, engine=engine, skipfooter=skipfooter,
-                converters=converters, index_col=False,
-                compression='infer',
-            )
-        else:
-            self.df = pd.read_csv(
-                csvfile, skiprows=skiprows, usecols=usecols,
-                sep=sep, engine=engine, skipfooter=skipfooter,
-                converters=converters, index_col=False,
-                compression='infer',
-                error_bad_lines = False
-            )
 
-            
 
         self.df = self.df.fillna(method='ffill')
 
@@ -593,6 +595,9 @@ class CSVParser(object):
         return unixtimes
 
     def write_csv(self, *args, **kwargs):
+        if self.df.empty:
+            return None
+        
         isgzip = kwargs.pop('gzip', False)
         writeFile = args[0]
 
@@ -681,9 +686,9 @@ class QuiskeParser(CSVParser):
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes - unixtimes.iloc[0]
         self.df[self.columns['catch']] = 0
         self.df[self.columns['finish']] = self.df['stroke angle (deg)']
-        
+
         self.to_standard()
-            
+
 class BoatCoachOTWParser(CSVParser):
 
     def __init__(self, *args, **kwargs):
@@ -714,7 +719,7 @@ class BoatCoachOTWParser(CSVParser):
                 'Longitude',
             ]
             converters = make_converter(convertlistbase,self.df)
-            
+
             kwargs['converters'] = converters
             super(BoatCoachOTWParser, self).__init__(*args, **kwargs)
 
@@ -910,7 +915,7 @@ class BoatCoachParser(CSVParser):
             kwargs['converters'] = converters
             super(BoatCoachParser, self).__init__(*args, **kwargs)
 
-            
+
         self.cols = [
             'DateTime',
             'workDistance',
@@ -949,7 +954,7 @@ class BoatCoachParser(CSVParser):
             row_date = parser.parse(dated, fuzzy=True)
         except IOError:
             pass
-                
+
 
         try:
             datetime = self.df[self.columns['TimeStamp (sec)']]
@@ -967,7 +972,7 @@ class BoatCoachParser(CSVParser):
             timesecs = make_cumvalues(timesecs)[0]
             unixtimes = row_date2 + timesecs
 
-            
+
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
 
@@ -1023,7 +1028,7 @@ class BoatCoachParser(CSVParser):
         # get stroke power
         data = []
         try:
-            
+
             with gzip.open(csvfile,'r') as f:
                 for line in f:
                     s  = line.split(',')
@@ -1039,7 +1044,7 @@ class BoatCoachParser(CSVParser):
         except ValueError:
             pass
 
-            
+
         # dump empty lines at end
         endhorizontal = self.df.loc[self.df.index[-1],
                                     self.columns[' Horizontal (meters)']]
@@ -1061,7 +1066,7 @@ class BoatCoachParser(CSVParser):
             self.columns[' lapIdx']
         ] = self.df.loc[self.df.index[-3], self.columns[' lapIdx']]
 
-                
+
         self.to_standard()
 
 class KinoMapParser(CSVParser):
@@ -1143,7 +1148,7 @@ class BoatCoachAdvancedParser(CSVParser):
 
         separator = get_separator(2, csvfile)
         kwargs['sep'] = separator
-            
+
 
         super(BoatCoachAdvancedParser, self).__init__(*args, **kwargs)
         # crude EU format detector
@@ -1162,9 +1167,9 @@ class BoatCoachAdvancedParser(CSVParser):
                 'strokePeakForce',
                 'intervalCount',
             ]
-            
+
             converters = make_converter(convertlistbase,self.df)
-            
+
             kwargs['converters'] = converters
             super(BoatCoachParser, self).__init__(*args, **kwargs)
 
@@ -1202,7 +1207,7 @@ class BoatCoachAdvancedParser(CSVParser):
             with gzip.open(csvfile,'rb') as fop:
                 line = fop.readline()
                 dated = re.split('Date:', line)[1][1:-1]
-            
+
         row_date = parser.parse(dated, fuzzy=True)
 
         try:
@@ -1475,7 +1480,7 @@ class RowPerfectParser(CSVParser):
         self.df.sort_values(by=['workout_interval_id', 'stroke_number'],
                             ascending=[True, True], inplace=True)
 
-        
+
         self.row_date = kwargs.pop('row_date', datetime.datetime.utcnow())
         self.cols = [
             'time',
@@ -1543,7 +1548,7 @@ class RowPerfectParser(CSVParser):
             self.df['curve_data'] = s
         except AttributeError:
             pass
-            
+
         self.df[self.columns[' lapIdx']] = lapidx
         self.df[self.columns['TimeStamp (sec)']] = unixtime
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
@@ -1561,14 +1566,14 @@ class MysteryParser(CSVParser):
 
         separator = get_separator(1, csvfile)
         kwargs['sep'] = separator
-        
+
         super(MysteryParser, self).__init__(*args, **kwargs)
         self.df = self.df.drop(self.df.index[[0]])
         self.row_date = kwargs.pop('row_date', datetime.datetime.utcnow())
 
         kwargs['engine'] = 'python'
 
-        
+
 
         kwargs['sep'] = None
 
@@ -1597,7 +1602,7 @@ class MysteryParser(CSVParser):
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
         self.columns = dict(zip(self.defaultcolumnnames, self.cols))
 
-        # calculations        
+        # calculations
         velo = pd.to_numeric(self.df['Speed (m/s)'], errors='coerce')
 
         pace = 500. / velo
