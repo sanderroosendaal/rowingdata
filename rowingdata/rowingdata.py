@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.7.1"
+__version__ = "1.7.2"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -318,7 +318,7 @@ def cumcpdata(rows,debug=False):
         tt = row.df[' ElapsedTime (sec)'].copy()
         tt = tt-tt[0]
         ww = row.df[' Power (watts)'].copy()
-        
+
         tmax = tt.max()
         if debug:
             print 'tmax = ',tmax
@@ -335,7 +335,7 @@ def cumcpdata(rows,debug=False):
                       ww.values,
                       newt,method='linear',
                       rescale=True)
-        
+
         tt = pd.Series(newt)
         ww = pd.Series(ww)
 
@@ -363,7 +363,7 @@ def cumcpdata(rows,debug=False):
 
         if debug:
             print Gdif
-        
+
         F = (Gdif)/(distances)
 
         if debug:
@@ -377,7 +377,7 @@ def cumcpdata(rows,debug=False):
 
         restime = []
         power = []
-        
+
         for i in np.arange(0,len(tt)+1,1):
             restime.append(deltat*i)
             cp = np.diag(F,i).max()
@@ -391,29 +391,29 @@ def cumcpdata(rows,debug=False):
         restime = np.array(restime)
         power = np.array(power)
 
-            
+
         #power[0] = power[1]
-            
+
         cpvalues = griddata(restime,power,
                             logarr,method='linear', fill_value=0)
 
 
-    
+
         for cpv in cpvalues:
             cpvalue.append(cpv)
         for d in logarr:
             delta.append(d)
- 
+
 
     velo = (np.array(cpvalue)/2.8)**(1./3.)
     d = np.array(delta)*velo
-            
+
     df = pd.DataFrame(
         {
             'Delta':delta,
             'CP':cpvalue,
             'Distance':d,
-            
+
         }
         )
 
@@ -424,10 +424,10 @@ def cumcpdata(rows,debug=False):
 
     if debug:
         return df, F
-    
+
     return df
-    
-    
+
+
 def cumcpdata_old(rows):
     # calculates CP data from a series of rowingdata class rows
     maxt = 0
@@ -1488,9 +1488,9 @@ class rowingdata:
                                        )
 
 
-    If absolutetimestamps is set to True, the time stamp info in the 
-    main dataframe will be seconds since 1-1-1970. The default is 
-    seconds since workout start. 
+    If absolutetimestamps is set to True, the time stamp info in the
+    main dataframe will be seconds since 1-1-1970. The default is
+    seconds since workout start.
 
     The default rower looks for a defaultrower.txt file. If it is not found,
     it reverts to some arbitrary rower.
@@ -1556,7 +1556,7 @@ class rowingdata:
         self.empty = False
         if sled_df.empty:
             self.empty = True
-            
+
         othernames = ['catch','finish','peakforceangle',
                       'wash','slip','index',
                       'cum_dist','hr_an','hr_at','hr_tr','hr_ut1','hr_ut2',
@@ -1566,7 +1566,7 @@ class rowingdata:
                       'pw_an','pw_at','pw_max','pw_tr','pw_ut1','pw_ut2',
                       'lim_max','hr_max',
                       ' latitude',' longitude']
-        
+
         # check for missing column names
         mandatorynames = [
             'TimeStamp (sec)',
@@ -1643,7 +1643,7 @@ class rowingdata:
                             print 'Cadence found'
                         sled_df[name] = spm
                     except KeyError:
-                        pass 
+                        pass
 
         if len(sled_df):
             # Remove zeros from HR
@@ -1692,7 +1692,7 @@ class rowingdata:
         if len(sled_df):
             # Remove "logging data" - not strokes
             self.df = self.df[self.df[' WorkoutState'] != 12]
-        
+
             # Cadence to float
             self.df[' Cadence (stokes/min)'] = self.df[' Cadence (stokes/min)'].astype(float)
 
@@ -1731,7 +1731,7 @@ class rowingdata:
         overlap1 = self_df['TimeStamp (sec)'].max() > starttimeunix2 and starttimeunix1 < starttimeunix2
         overlap2 = other_df['TimeStamp (sec)'].max() > starttimeunix1 and starttimeunix2 < starttimeunix1
 
-        # remove overlap 
+        # remove overlap
         if overlap1:
             delta = self_df['TimeStamp (sec)'].max() - starttimeunix2
             if delta < 60:
@@ -1784,15 +1784,15 @@ class rowingdata:
 
         if self.empty:
             return np.array([])
-        
+
         return self.df[keystring].values
 
     def get_additional_metrics(self):
         cols = self.df.columns.values
         dif = np.setdiff1d(cols,self.defaultnames)
-        
+
         additionalmetrics = []
-        
+
         for c in dif:
             try:
                 test = self.df[c].apply(lambda x:float(x))
@@ -1804,7 +1804,7 @@ class rowingdata:
 
         return additionalmetrics
 
-    
+
     def check_consistency(self, threshold=20, velovariation=1.e-3):
         data = self.df
 
@@ -1926,10 +1926,10 @@ class rowingdata:
         df = df.apply(pd.to_numeric, errors = 'coerce')
 
         return df
-    
+
     def plot_instroke(self,column_name):
         df  = self.get_instroke_data(column_name)
-        
+
         mean_vals = df.median()
         min_vals = df.quantile(q=0.05)
         max_vals = df.quantile(q=0.95)
@@ -1973,7 +1973,7 @@ class rowingdata:
 
         return fig1
 
-        
+
     def spm_fromtimestamps(self):
         if not self.empty:
             df = self.df
@@ -1993,7 +1993,7 @@ class rowingdata:
     def exporttotcx(self, fileName, notes="Exported by Rowingdata"):
         if not self.empty:
             df = self.df
-            
+
             writetcx.write_tcx(
                 fileName,
                 df,
@@ -2003,7 +2003,7 @@ class rowingdata:
             emptytcx = writetcx.empty_tcx
             with open(fileName,'wb') as f_out:
                 f_out.write(emptytcx)
-            
+
 
     def exporttogpx(self, fileName, notes="Exported by Rowingdata"):
         if not self.empty:
@@ -2016,7 +2016,7 @@ class rowingdata:
             emptygpx = gpxwrite.empty_gpx
             with open(fileName,'wb') as f_out:
                 f_out.write(emptygpx)
-            
+
     def intervalstats(self, separator='|'):
         """ Used to create a nifty text summary, one row for each interval
 
@@ -2029,7 +2029,7 @@ class rowingdata:
 
         if self.empty:
             return ""
-        
+
         df = self.df
         df['deltat'] = df['TimeStamp (sec)'].diff()
 
@@ -2093,7 +2093,7 @@ class rowingdata:
 
         if self.empty:
             return None
-        
+
         df = self.df
         df['deltat'] = df['TimeStamp (sec)'].diff()
 
@@ -2172,10 +2172,10 @@ class rowingdata:
 
         if self.empty:
             return ""
-        
+
         df = self.df
         df['deltat'] = df['TimeStamp (sec)'].diff()
-        
+
         workoutstateswork = [1, 4, 5, 8, 9, 6, 7]
         workoutstatesrest = [3]
         workoutstatetransition = [0, 2, 10, 11, 12, 13]
@@ -2283,7 +2283,7 @@ class rowingdata:
 
         if self.empty:
             return None
-        
+
         df = self.df
         try:
             origdist = df['orig_dist']
@@ -2655,7 +2655,7 @@ class rowingdata:
                     filename = storetable+'.npz'
                 else:
                     filename = storetable
-                    
+
                 loaded = np.load(filename)
                 T = loaded['T']
                 S = loaded['S']
@@ -2668,11 +2668,11 @@ class rowingdata:
             except IOError:
                 T = np.zeros((Nspm,Nvw,Nvb))
                 S = np.zeros((Nspm,Nvw,Nvb))
-                C = np.zeros((Nspm,Nvw,Nvb))                
+                C = np.zeros((Nspm,Nvw,Nvb))
         else:
             T = np.zeros((Nspm,Nvw,Nvb))
             S = np.zeros((Nspm,Nvw,Nvb))
-            C = np.zeros((Nspm,Nvw,Nvb))                
+            C = np.zeros((Nspm,Nvw,Nvb))
 
         # this is slow ... need alternative (read from table)
 
@@ -2683,7 +2683,7 @@ class rowingdata:
         iterator = range(nr_of_rows)
         if not silent:
             iterator = tqdm(iterator)
-        
+
         for i in iterator:
             counter += 1
             if counter>counterrange:
@@ -2718,7 +2718,7 @@ class rowingdata:
                     tw = tailwind(bearing, vwind,
                                   winddirection, vstream=0)
                     velowater = velo - vstream
-                    
+
                     u,v,w = getaddress(spm, tw, velowater)
                     if usetable:
                         pwr = T[u,v,w]
@@ -2734,7 +2734,7 @@ class rowingdata:
                                                 bearing, vwind,
                                                 winddirection,
                                                 vstream)
-                            if usetable: 
+                            if usetable:
                                 T[u,v,w] = res[0]
                                 S[u,v,w] = res[3]
                                 C[u,v,w] += 1
@@ -2744,7 +2744,7 @@ class rowingdata:
                                     T[u,v,w] = (count*T[u,v,w]+res[0])/(count+1.0)
                                     S[u,v,w] = (count*S[u,v,w]+res[3])/(count+1.0)
                                     C[u,v,w] += 1.
-                                
+
                         except:
                             res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 else:
@@ -2821,7 +2821,7 @@ class rowingdata:
                 loaded = np.load(filename)
 
                 print 'loaded %s' % filename
-                
+
                 T = loaded['T']
                 S = loaded['S']
 
@@ -2853,7 +2853,7 @@ class rowingdata:
                 progress = int(100.*i/float(nr_of_rows))
                 if secret and progressurl:
                     status_code = post_progress(secret,progressurl,progress)
-                
+
             p = ps.ix[i]
             spm = spms.ix[i]
             r.tempo = spm
@@ -2880,11 +2880,11 @@ class rowingdata:
                 if (i % rows_mod == 0):
 
                     print 'Task %s: working on row %s of %s ' % (counter2,i,nr_of_rows)
-                    
+
                     tw = tailwind(bearing, vwind,
                                   winddirection, vstream=0)
                     velowater = velo - vstream
-                    
+
                     u,v,w = getaddress(spm, tw, velowater)
 
                     if usetable:
@@ -3293,7 +3293,7 @@ class rowingdata:
     def getcp(self):
         if self.empty:
             return None
-        
+
         cumdist = self.df['cum_dist']
         elapsedtime = self.df[' ElapsedTime (sec)']
 

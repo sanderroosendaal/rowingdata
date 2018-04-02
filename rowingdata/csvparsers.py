@@ -8,6 +8,7 @@ import datetime
 import pytz
 import arrow
 import iso8601
+import traceback
 import shutil
 import numpy as np
 import pandas as pd
@@ -545,7 +546,7 @@ class CSVParser(object):
                     sep=sep, engine=engine, skipfooter=skipfooter,
                     converters=converters, index_col=False,
                     compression='infer',
-                )
+                    )
             else:
                 self.df = pd.read_csv(
                     csvfile, skiprows=skiprows, usecols=usecols,
@@ -556,7 +557,6 @@ class CSVParser(object):
                 )
         except:
             self.df = pd.DataFrame()
-
 
 
         self.df = self.df.fillna(method='ffill')
@@ -597,7 +597,7 @@ class CSVParser(object):
     def write_csv(self, *args, **kwargs):
         if self.df.empty:
             return None
-        
+
         isgzip = kwargs.pop('gzip', False)
         writeFile = args[0]
 
@@ -1474,8 +1474,27 @@ class RowPerfectParser(CSVParser):
     def __init__(self, *args, **kwargs):
         super(RowPerfectParser, self).__init__(*args, **kwargs)
 
+        # get stroke curve
+        try:
+            data = self.df['curve_data'].str[1:-1].str.split(',',
+                                                             expand=True)
+            data = data.apply(pd.to_numeric, errors = 'coerce')
+
+            for cols in data.columns.tolist()[1:]:
+                data[data<0] = np.nan
+
+            s = []
+            for row in data.values.tolist():
+                s.append(str(row)[1:-1])
+
+            self.df['curve_data'] = s
+        except AttributeError,e:
+            pass
+            # print traceback.format_exc()
+
         for c in self.df.columns:
-            self.df[c] = pd.to_numeric(self.df[c], errors='coerce')
+            if c != 'curve_data':
+                self.df[c] = pd.to_numeric(self.df[c], errors='coerce')
 
         self.df.sort_values(by=['workout_interval_id', 'stroke_number'],
                             ascending=[True, True], inplace=True)
@@ -1532,22 +1551,6 @@ class RowPerfectParser(CSVParser):
         lapidx = res[1]
         unixtime = seconds2 + totimestamp(self.row_date)
 
-        # get stroke curve
-        try:
-            data = self.df['curve_data'].str[1:-1].str.split(',',
-                                                             expand=True)
-            data = data.apply(pd.to_numeric, errors = 'coerce')
-
-            for cols in data.columns.tolist()[1:]:
-                data[data<0] = np.nan
-
-            s = []
-            for row in data.values.tolist():
-                s.append(str(row)[1:-1])
-
-            self.df['curve_data'] = s
-        except AttributeError:
-            pass
 
         self.df[self.columns[' lapIdx']] = lapidx
         self.df[self.columns['TimeStamp (sec)']] = unixtime
