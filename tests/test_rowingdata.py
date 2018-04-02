@@ -278,6 +278,27 @@ class TestSpeedCoach2_v127Parser:
         checks = row.check_consistency()
         assert_equals(checks['velo_time_distance'],True)
         assert_equals(checks['velo_valid'],True)
+
+class TestCurveData:
+    def testcurvedata(self):
+        file = 'testdata/rp3_curve.csv'
+        r = rowingdata.RowPerfectParser(file)
+        row = rowingdata.rowingdata(df=r.df)
+        df = row.get_instroke_data('curve_data')
+        assert_equals(len(df),468)
+        cs = row.get_instroke_columns()
+        assert_equals(len(cs),1)
+        assert_equals(cs[0],'curve_data')
+
+        file = 'testdata/quiske_per_stroke_left.csv'
+        r = rowingdata.QuiskeParser(file)
+        row = rowingdata.rowingdata(df=r.df)
+        df = row.get_instroke_data('oar angle velocity curve')
+        assert_equals(len(df),25)
+        cs = row.get_instroke_columns()
+        assert_equals(len(cs),2)
+        assert_equals(cs[0],'boat accelerator curve')
+
         
 class TestFITParser:
     def testfit(self):
