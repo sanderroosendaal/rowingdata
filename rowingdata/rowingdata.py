@@ -1945,7 +1945,7 @@ class rowingdata:
     def set_instroke_metrics(self):
         cols = self.get_instroke_columns()
         for c in cols:
-            pass
+            self.add_instroke_metrics(str(c))
 
     def get_instroke_data(self,column_name):
         df = self.df[column_name].str[1:-1].str.split(',',expand=True)
