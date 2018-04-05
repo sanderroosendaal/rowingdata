@@ -1921,6 +1921,32 @@ class rowingdata:
 
         return cols
 
+    def add_instroke_metrics(self,c):
+        df = self.get_instroke_data(c)
+        dfnorm = df.copy()
+        for col in dfnorm.columns:
+            dfnorm[col] = dfnorm[col].apply(lambda x:np.abs(x))
+            dfnorm[col] = dfnorm[col]/dfnorm[col].mean()
+
+
+        aantalcol = len(dfnorm.columns)
+        markers = (np.arange(4))*aantalcol/4
+        
+        first = dfnorm.ix[:,markers[0]:markers[1]].mean(axis=1).rolling(10,min_periods=1).std()
+        second = dfnorm.ix[:,markers[1]+1:markers[2]].mean(axis=1).rolling(10,min_periods=1).std()
+        third = dfnorm.ix[:,markers[2]+1:markers[3]].mean(axis=1).rolling(10,min_periods=1).std()
+        fourth = dfnorm.ix[:,markers[3]+1:].mean(axis=1).rolling(10,min_periods=1).std()
+
+        self.df[c+'_m1'] = first
+        self.df[c+'_m2'] = second
+        self.df[c+'_m3'] = third
+        self.df[c+'_m4'] = fourth
+    
+    def set_instroke_metrics(self):
+        cols = self.get_instroke_columns()
+        for c in cols:
+            self.add_instroke_metrics(str(c))
+
     def get_instroke_data(self,column_name):
         df = self.df[column_name].str[1:-1].str.split(',',expand=True)
         df = df.apply(pd.to_numeric, errors = 'coerce')
