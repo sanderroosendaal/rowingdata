@@ -1921,12 +1921,25 @@ class rowingdata:
 
         return cols
 
+    def add_instroke_diff(self,c):
+        df = self.get_instroke_data(c)
+        dfnorm = df.copy()
+        for index, row in dfnorm.iterrows():
+            dfnorm.ix[index,:] = row/row.max()
+
+        
+            
+        aantalcol = len(dfnorm.columns)
+        diff = dfnorm.diff(axis=1).apply(lambda x:x**2)
+
+        self.df[c+'_diff'] = diff.transpose().sum()
+    
     def add_instroke_metrics(self,c):
         df = self.get_instroke_data(c)
         dfnorm = df.copy()
-        for col in dfnorm.columns:
-            dfnorm[col] = dfnorm[col].apply(lambda x:np.abs(x))
-            dfnorm[col] = dfnorm[col]/dfnorm[col].mean()
+        for index, row in dfnorm.iterrows():
+            row = row.apply(lambda x:np.abs(x))
+            dfnorm.ix[index,:] = row/row.mean()
 
 
         aantalcol = len(dfnorm.columns)
@@ -1946,6 +1959,7 @@ class rowingdata:
         cols = self.get_instroke_columns()
         for c in cols:
             self.add_instroke_metrics(str(c))
+            self.add_instroke_diff(str(c))
 
     def get_instroke_data(self,column_name):
         df = self.df[column_name].str[1:-1].str.split(',',expand=True)
