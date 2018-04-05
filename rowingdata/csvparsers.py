@@ -1527,6 +1527,7 @@ class RowPerfectParser(CSVParser):
 
         self.columns = dict(zip(self.defaultcolumnnames, self.cols))
 
+
         # calculations
         self.df[self.columns[' DriveTime (ms)']] *= 1000.
         self.df[self.columns[' StrokeRecoveryTime (ms)']] *= 1000.
