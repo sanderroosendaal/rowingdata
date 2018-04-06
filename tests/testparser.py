@@ -73,3 +73,37 @@ class TestParser:
         assert_equals(res[4],'meters')
         assert_equals(res[5],'work')
         
+    def testgreg3(self):
+        res = parse("1min + 9 x (10sec + 50 sec)")
+        assert_equals(len(res),57)
+        assert_equals(res[0],60)
+        assert_equals(res[3],10)
+        assert_equals(res[6],50)
+        assert_equals(res[9],10)
+        assert_equals(res[12],50)
+
+    def testgreg4(self):
+        res = parse("1min + 10sec + 50 sec + 8x1min")
+        assert_equals(len(res),33)
+        assert_equals(res[0],60)
+        assert_equals(res[3],10)
+        assert_equals(res[6],50)
+        assert_equals(res[9],60)
+        
+
+    def testgreg5(self):
+        res = parse("1min + 1x(10sec+50sec) + 8 x 1min")
+        assert_equals(len(res),33)
+        assert_equals(res[0],60)
+        assert_equals(res[3],10)
+        assert_equals(res[6],50)
+        assert_equals(res[9],60)
+
+    def testgreg6(self):
+        res = parse("1min + 2x(10sec+50sec) + 7x1min")
+        assert_equals(len(res),36)
+        assert_equals(res[0],60)
+        assert_equals(res[3],10)
+        assert_equals(res[6],50)
+        assert_equals(res[9],10)
+        assert_equals(res[12],50)
