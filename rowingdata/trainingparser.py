@@ -170,8 +170,8 @@ def parse(s,debug=0):
 	if n==1:
 	    return parse(piece+"/"+m.group(3),debug=debug)
 
-    # now check for aap+noot
-    p=re.compile('([0-9]+.+)\+(.+)')
+    # now check for aap+noot (greedy)
+    p=re.compile('([0-9]+.+?)\+(.+)')
     m=p.match(s)
     if m != None:
         if matched(m.group(1)) and matched(m.group(2)):
