@@ -2,49 +2,6 @@ import numpy as np
 import string
 import re
 
-def matched(str):
-    count=0
-    for i in str:
-        if i == "(":
-            count += 1
-        elif i == ")":
-            count -= 1
-        if count < 0:
-            return False
-    return count == 0
-
-def pieceparse(r):
-    value=0
-    unit='seconds'
-    p=re.compile('([0-9]*\.?[0-9]+)([A-Za-wyz]+)')
-    m=p.match(r)
-    if m != None:
-	value=float(m.group(1))
-	units=m.group(2)
-	if units in ['meter','meters','m']:
-	    unit='meters'
-	if units in ['km','k']:
-	    value*= 1000
-	    unit='meters'
-	if units in ['min','minute','minutes',"'"]:
-	    unit='seconds'
-	    value *= 60
-	    
-    # now check for 2:30min
-    p=re.compile('([0-9]*)\:([0-9]+)([A-Za-wyz]+)')
-    m=p.match(r)
-    if m != None:
-	unit='seconds'
-	value1=float(m.group(1))
-	value2=float(m.group(2))
-	units=m.group(3)
-
-	if units in ['h','hour','hrs']:
-	    value=3600*value1+60*value2
-	else:
-	    value=60*value1+value2
-
-    return [value,unit]
 
 def cleanzeros(values):
     newlist = []
@@ -57,206 +14,86 @@ def cleanzeros(values):
 
     return newlist
 
-def parse(s,debug=0):
-    s = s.replace('*','x')
-    s = s.replace(' ','')
-    if debug == 1:
-        print("-----------------")
-	print(s)
-        raw_input()
+from pyparsing import (
+    Literal,Word,ZeroOrMore,Forward,nums,oneOf,Group,
+    alphas
+    )
 
-    s=s.strip()
+def Syntax():
+#    op = Word("+",max=1)
+    op = "+"
+    restop = "/"
+    times = "x"
+    minsep = ":"
+#    restop = Word("/",max=1)
+#    times = Word("x",max=1)
+#    minsep = Word(":",max=1)
 
-    # replace (aap noot) + mies with 1x(aap noot) + mies
-    p=re.compile('\((.+?)\)(.+)')
-    m=p.match(s)
-    if m != None:
-        if debug:
-            print("adding 1x to parenthesized group")
-        return parse("1x("+m.group(1)+")"+m.group(2),debug=debug)
-                   
-    # check for nx(aap noot) + mies
-    p=re.compile('([0-9]+)x\((.+?)\)\+(.+)')
-    m=p.match(s)
-    if m != None:
-        if debug:
-            print("1st match")
-        n=int(m.group(1))
-        piece=m.group(2)
-        secondpiece=m.group(3)
-        if n>1:
-            newstring=str(n-1)+"x("+piece+")"
-            return parse(piece,debug=debug)+parse(newstring,debug=debug)+parse(secondpiece,debug=debug)
-        if n==1:
-            return parse(piece,debug=debug)+parse(secondpiece,debug=debug)
+    lpar  = Literal( '(' ).suppress()
+    rpar  = Literal( ')' ).suppress()
+    num = Word(nums)
+    timeordist = Group(num+":"+num) | num
+    ntimes = num+"x"
+    unit = Word(alphas)
+    interval = Group(timeordist+unit)  # 5min
     
-    # check for nx(aap noot)/mies + jet
-    p=re.compile('([0-9]+)x\((.+?)\)\/(.+)\+(.+)')
-    m=p.match(s)
-    if m != None:
-        if debug:
-            print("2nd match")
-        n=int(m.group(1))
-        piece=m.group(2)
-        rest=pieceparse(m.group(3))
-        secondpiece=m.group(4)
-        if n>1:
-            newstring=str(n-1)+"x("+piece+")/"+m.group(3)
-            piecestring=piece+"/"+m.group(3)
-            return parse(piecestring,debug=debug)+parse(newstring,debug=debug)+parse(secondpiece,debug=debug)
-        if n==1:
-            return parse(piece+"/"+m.group(3),debug=debug)+parse(secondpiece,debug=debug)
+    multipleinterval = Group(ntimes+interval)  # 3x5min
+    set = multipleinterval | interval  # 5min or 3x5min
+    intervalwithrest = Group(set+"/"+interval) # 5min/3min or 3x5min/3min
+    expr = Forward()
+
+    atom = intervalwithrest | set | multipleinterval | interval | Group(lpar+expr+rpar)
+
+    bigset = Group(ntimes+atom) | atom
+    bigsetwithrest = Group(bigset+"/"+interval)
+    majorset = bigsetwithrest | bigset
 
     
-    # check for nx(aap noot)/5min
-    p=re.compile('([0-9]+)x\((.+?)\)\/(.+)')
-    m=p.match(s)
-    if m != None:
-        if debug:
-            print("3rd match")
-	n=int(m.group(1))
-	piece=m.group(2)
-	rest=pieceparse(m.group(3))
-	if n>1:
-	    newstring=str(n-1)+"x("+piece+")/"+m.group(3)
-	    piecestring=piece+"/"+m.group(3)
-	    return parse(piecestring,debug=debug)+parse(newstring,debug=debug)
-	if n==1:
-	    return parse(piece+"/"+m.group(3),debug=debug)
+    expr << majorset + ZeroOrMore( "+" + expr )
+    return expr
 
-    # first check for nx(aap noot)
-    p=re.compile('([0-9]+)x\((.+)\)')
-    m=p.match(s)
-    if m != None:
-        if debug:
-            print("4th match")
-	n=int(m.group(1))
-	piece=m.group(2)
-	if n>1:
-	    newstring=str(n-1)+"x("+piece+")"
-	    piecestring=piece
-	    return parse(piecestring,debug=debug)+parse(newstring,debug=debug)
-	if n==1:
-	    return parse(piece,debug=debug)
 
-    # check for nxaap/noot+mies
-    p=re.compile('([0-9]+)x(.+?)\+(.+)')
-    m=p.match(s)
-    if m != None:
-        if debug:
-            print("4.5th match")
-        n=int(m.group(1))
-        piece1=m.group(2)
-        piece2=m.group(3)
-        if n>1:
-            newstring=str(n-1)+"x"+piece1+"+"+piece2
-            return parse(piece1,debug=debug)+parse(newstring,debug=debug)
+def getinterval(l):
+    if len(l)==0:
+        return []
+    elif len(l)==2:
+        try:
+            value = int(l[0])
+            unit = l[1]
+        except TypeError:
+            valuemin = int(l[0][0])
+            valuesec = int(l[0][2])
+            value = 60*valuemin+valuesec
+            unit = 'sec'
+        return [value,unit,'work']
+    elif len(l)==3 and l[1] == '/':
+        a = getinterval(l[0])
+        b = getinterval(l[2])
+        b[2] = 'rest'
+        return a+b
+    elif len(l)==3 and l[1] == 'x':
+        u = []
+        for i in range(int(l[0])):
+            u+=getinterval(l[2])
+        return u
+    elif len(l)==1:
+        return getinterval(l[0])
+    else:
+        return getinterval(l[0])+getinterval(l[2:])
 
-        if n==1:
-            return parse(piece1+"+"+piece2,debug=debug)
+def pieceparse(v):
+    value = int(v[0])
+    unit = 'seconds'
+    if v[1] in ['meter','meters','m']:
+        unit = 'meters'
+    if v[1] in ['km','k','kilometer']:
+        value *= 1000
+        unit = 'meters'
+    if v[1] in ['min','minute','minutes',"'"]:
+        unit = 'seconds'
+        value *= 60
 
-    # now check for nxaap/5min
-    p=re.compile('([0-9]+)x(.+?)\/(.+)')
-    m=p.match(s)
-    if m != None:
-        if debug:
-            print("5th match")
-	n=int(m.group(1))
-	piece=m.group(2)
-	rest=pieceparse(m.group(3))
-	if n>1:
-	    newstring=str(n-1)+"x"+piece+"/"+m.group(3)
-	    piecestring=piece+"/"+m.group(3)
-	    return parse(piecestring,debug=debug)+parse(newstring,debug=debug)
-	if n==1:
-	    return parse(piece+"/"+m.group(3),debug=debug)
-
-    # now check for aap+noot (greedy)
-    p=re.compile('([0-9]+.+?)\+(.+)')
-    m=p.match(s)
-    if m != None:
-        if matched(m.group(1)) and matched(m.group(2)):
-            if debug:
-                print("6th match")
-	    return parse(m.group(1),debug=debug)+parse(m.group(2),debug=debug)
-        else:
-            if debug:
-                print("unmatched parentheses (6th match)")
-
-    # now check for aap/noot+mies
-    p=re.compile('([0-9]+.+)\/([0-9]+.+?)\+(.+)')
-    m=p.match(s)
-    if m != None:
-        if debug:
-            print("6.5th match")
-            print(m.group(1))
-            print(m.group(2))
-            print(m.group(3))
-        return parse(m.group(1)+"/"+m.group(2))+parse(m.group(3),debug=debug)
-                
-    # now check for aap/noot
-    p=re.compile('([0-9]+.+)\/([0-9]+.+)')
-    m=p.match(s)
-    if m != None:
-        if debug:
-            print("7th match")
-            print(m.group(1))
-            print(m.group(2))
-	w=pieceparse(m.group(1))
-	r=pieceparse(m.group(2))
-	return [w[0],w[1],'work',r[0],r[1],'rest']
-
-    # now check for 8x500m
-    p=re.compile('([0-9]+)x(.+)')
-    m=p.match(s)
-    if m != None:
-        if debug:
-            print("8th match")
-	n=int(m.group(1))
-	if n>=2:
-	    return parse(str(n-1)+"x"+m.group(2),debug=debug)+parse(m.group(2),debug=debug)
-	if n == 1:
-	    return parse(m.group(2),debug=debug)
-
-    # now check for 2:30min
-    p=re.compile('([0-9]*)\:([0-9]+)([A-Za-wyz]+)')
-    m=p.match(s)
-    if m != None:
-        if debug:
-            print("9th match")
-	unit='seconds'
-	value1=float(m.group(1))
-	value2=float(m.group(2))
-	units=m.group(3)
-
-	if units in ['h','hour','hrs']:
-	    value=3600*value1+60*value2
-	else:
-	    value=60*value1+value2
-
-	return [value,unit,'work']
-
-    # now check for 500m
-    p=re.compile('([0-9]*\.?[0-9]+)([A-Za-wyz]+)')
-    m=p.match(s)
-    if m != None:
-        if debug:
-            print("10th match")
-	unit='seconds'
-	value=float(m.group(1))
-	units=m.group(2)
-
-	if units in ['meter','meters','m']:
-	    unit='meters'
-	if units in ['km','k']:
-	    value*= 1000
-	    unit='meters'
-	if units in ['min','minute','minutes']:
-	    unit='seconds'
-	    value *= 60
-	return [value,unit,'work']
-
-    return [0,'seconds','rest']
+    return [value,unit]
 
 def getlist(s,sel='value'):
     s1=s[0:3]
@@ -278,4 +115,20 @@ def getlist(s,sel='value'):
 	    return [s[2]]
 
     return 0
-    
+
+def parse(s):
+    r = Syntax().parseString(s)
+    if len(r)==2:
+        res =  getinterval(r)
+    elif len(r)==1:
+        res =  getinterval(r)
+    else:
+        res =  getinterval(r[0])+getinterval(r[2:])
+
+    xres = []
+
+    while len(res):
+        xres += pieceparse(res[0:2]) + [res[2]]
+        res = res[3:]
+
+    return xres

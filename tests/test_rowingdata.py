@@ -50,7 +50,7 @@ class TestStringParser:
         s2='10km'
         s3='3min/3min+3min'
         s4='3min/3min + 3min'
-        s5='4x(500m+500m)/2min'
+        s5='4x((500m+500m)/2min)'
         s6='2x500m/500m'
         s7='4x30sec/30sec+5min/1min+2x10min'
 

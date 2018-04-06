@@ -31,7 +31,7 @@ class TestParser:
         assert_equals(res[5],'rest')
 
     def testfourtimes1km(self):
-        res=parse("4x(500m+500m)/5min")
+        res=parse("4x((500m+500m)/5min)")
         assert_equals(len(res),36)
         assert_equals(res[0],500)
         assert_equals(res[1],'meters')
@@ -64,7 +64,7 @@ class TestParser:
         assert_equals(res[5],'work')
 
     def testgreg2(self):
-        res=parse("3x(1000m+750m+500m+250m)/0m+2500m")
+        res=parse("3x((1000m+750m+500m+250m)/0m)+2500m")
         assert_equals(len(res),48)
         assert_equals(res[0],1000)
         assert_equals(res[1],'meters')
