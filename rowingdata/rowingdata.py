@@ -1982,10 +1982,10 @@ class rowingdata:
         third = dfnorm.ix[:,markers[2]+1:markers[3]].mean(axis=1).rolling(10,min_periods=1).std()
         fourth = dfnorm.ix[:,markers[3]+1:].mean(axis=1).rolling(10,min_periods=1).std()
 
-        self.df[c+'_m1'] = first
-        self.df[c+'_m2'] = second
-        self.df[c+'_m3'] = third
-        self.df[c+'_m4'] = fourth
+        self.df[c+'_q1'] = first
+        self.df[c+'_q2'] = second
+        self.df[c+'_q3'] = third
+        self.df[c+'_q4'] = fourth
     
     def set_instroke_metrics(self):
         cols = self.get_instroke_columns()
