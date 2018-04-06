@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.7.2"
+__version__ = "1.7.3"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -9,6 +9,7 @@ from matplotlib import figure
 from matplotlib.pyplot import grid
 from matplotlib.ticker import FuncFormatter, NullFormatter
 import shutil
+from scipy.signal import savgol_filter
 
 try:
     from Tkinter import Tk
@@ -1921,25 +1922,56 @@ class rowingdata:
 
         return cols
 
+    def add_instroke_maxminpos(self,c):
+        df = self.get_instroke_data(c)
+        aantalcol = len(df.columns)
+        minpos = aantalcol/10
+        dfnorm = df.copy().ix[:,minpos:]
+        min_idxs = dfnorm.idxmin(axis=1)
+        max_idxs = dfnorm.idxmax(axis=1)
+
+        minpos = min_idxs/float(aantalcol)
+        maxpos = max_idxs/float(aantalcol)
+
+        f = self.df['TimeStamp (sec)'].diff().mean()
+        if f != 0 and not np.isnan(f):
+            windowsize = 2* (int(10./(f)))+1
+        else:
+            windowsize = 1
+
+        if windowsize > 3 and windowsize < len(min_idxs):
+            minpos = savgol_filter(minpos,windowsize,1)
+            maxpos = savgol_filter(maxpos,windowsize,1)
+
+        self.df[c+'_minpos'] = minpos
+        self.df[c+'_maxpos'] = maxpos
+    
     def add_instroke_diff(self,c):
         df = self.get_instroke_data(c)
         dfnorm = df.copy()
-        for index, row in dfnorm.iterrows():
-            dfnorm.ix[index,:] = row/row.max()
-
+        dfnorm = (dfnorm.transpose()/dfnorm.transpose().max()).transpose()
         
             
         aantalcol = len(dfnorm.columns)
-        diff = dfnorm.diff(axis=1).apply(lambda x:x**2)
+        diff = dfnorm.diff(axis=0)**2
 
-        self.df[c+'_diff'] = diff.transpose().sum()
+        diff_c = diff.transpose().sum()/float(aantalcol)
+        f = self.df['TimeStamp (sec)'].diff().mean()
+        if f != 0 and not np.isnan(f):
+            windowsize = 2* (int(10./(f)))+1
+        else:
+            windowsize = 1
+
+        if windowsize > 3 and windowsize < len(diff_c):
+            diff_c = savgol_filter(diff_c,windowsize,1)
+
+        self.df[c+'_diff'] = diff_c
+            
     
     def add_instroke_metrics(self,c):
         df = self.get_instroke_data(c)
-        dfnorm = df.copy()
-        for index, row in dfnorm.iterrows():
-            row = row.apply(lambda x:np.abs(x))
-            dfnorm.ix[index,:] = row/row.mean()
+        dfnorm = df.copy().abs()
+        dfnorm = (dfnorm.transpose()/dfnorm.transpose().max()).transpose()
 
 
         aantalcol = len(dfnorm.columns)
@@ -1960,6 +1992,7 @@ class rowingdata:
         for c in cols:
             self.add_instroke_metrics(str(c))
             self.add_instroke_diff(str(c))
+            self.add_instroke_maxminpos(str(c))
 
     def get_instroke_data(self,column_name):
         df = self.df[column_name].str[1:-1].str.split(',',expand=True)
