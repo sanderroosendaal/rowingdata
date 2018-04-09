@@ -1675,6 +1675,16 @@ class rowingdata:
         number_of_columns = sled_df.shape[1]
         number_of_rows = sled_df.shape[0]
 
+        try:
+            dt = sled_df['TimeStamp (sec)'].diff()
+            dt.ix[0] = dt.ix[1]
+            strokenumbers = np.cumsum(dt*sled_df[' Cadence (stokes/min)']/60.).astype('int')
+            sled_df[' Stroke Number'] = strokenumbers
+        except KeyError:
+            if debug:
+                print "Could not calculate stroke number"
+            
+
         # these parameters are handy to have available in other routines
         self.number_of_rows = number_of_rows
 
