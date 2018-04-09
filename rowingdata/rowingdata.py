@@ -1678,12 +1678,21 @@ class rowingdata:
         try:
             dt = sled_df['TimeStamp (sec)'].diff()
             dt.ix[0] = dt.ix[1]
-            strokenumbers = np.cumsum(dt*sled_df[' Cadence (stokes/min)']/60.).astype('int')
-            sled_df[' Stroke Number'] = strokenumbers
+            dt.fillna(inplace=True, method='ffill')
+            dt.fillna(inplace=True, method='bfill')
+            strokenumbers = pd.Series(
+                np.cumsum(dt*sled_df[' Cadence (stokes/min)']/60.)
+                )
+            strokenumbers.fillna(inplace=True, method='ffill')
+            strokenumbers.fillna(inplace=True, method='bfill')
+
+            sled_df[' Stroke Number'] = strokenumbers.astype('int')
         except KeyError:
             if debug:
                 print "Could not calculate stroke number"
-            
+            else:
+                pass
+                
 
         # these parameters are handy to have available in other routines
         self.number_of_rows = number_of_rows
