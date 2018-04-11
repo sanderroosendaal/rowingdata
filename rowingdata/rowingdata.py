@@ -2184,7 +2184,7 @@ class rowingdata:
         """
 
         if self.empty:
-            return None
+            return ([],[],[])
 
         df = self.df
         df['deltat'] = df['TimeStamp (sec)'].diff()
@@ -2460,10 +2460,14 @@ class rowingdata:
                     if deltadist > 25:
                         deltadist = 0
                     mask2 = (df['cum_dist'] == recordedmaxmeters)
-                    paceend = df.loc[mask2,
-                                     ' Stroke500mPace (sec/500m)'].values[0]
-                    veloend = 500. / paceend
-                    deltatime = deltadist / veloend
+                    try:
+                        paceend = df.loc[mask2,
+                                         ' Stroke500mPace (sec/500m)'
+                        ].values[0]
+                        veloend = 500. / paceend
+                        deltatime = deltadist / veloend
+                    except IndexError:
+                        deltatime = 0
 
                     df.loc[mask2, ' ElapsedTime (sec)'] += deltatime
                     df.loc[mask2, 'TimeStamp (sec)'] += deltatime
