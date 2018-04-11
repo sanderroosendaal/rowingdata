@@ -2184,7 +2184,7 @@ class rowingdata:
         """
 
         if self.empty:
-            return None
+            return ([],[],[])
 
         df = self.df
         df['deltat'] = df['TimeStamp (sec)'].diff()
