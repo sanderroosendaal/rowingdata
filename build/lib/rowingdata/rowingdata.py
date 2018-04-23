@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.7.4"
+__version__ = "1.7.5"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1675,6 +1675,25 @@ class rowingdata:
         number_of_columns = sled_df.shape[1]
         number_of_rows = sled_df.shape[0]
 
+        try:
+            dt = sled_df['TimeStamp (sec)'].diff()
+            dt.ix[0] = dt.ix[1]
+            dt.fillna(inplace=True, method='ffill')
+            dt.fillna(inplace=True, method='bfill')
+            strokenumbers = pd.Series(
+                np.cumsum(dt*sled_df[' Cadence (stokes/min)']/60.)
+                )
+            strokenumbers.fillna(inplace=True, method='ffill')
+            strokenumbers.fillna(inplace=True, method='bfill')
+
+            sled_df[' Stroke Number'] = strokenumbers.astype('int')
+        except KeyError:
+            if debug:
+                print "Could not calculate stroke number"
+            else:
+                pass
+                
+
         # these parameters are handy to have available in other routines
         self.number_of_rows = number_of_rows
 
@@ -2165,7 +2184,7 @@ class rowingdata:
         """
 
         if self.empty:
-            return None
+            return ([],[],[])
 
         df = self.df
         df['deltat'] = df['TimeStamp (sec)'].diff()
@@ -2441,10 +2460,14 @@ class rowingdata:
                     if deltadist > 25:
                         deltadist = 0
                     mask2 = (df['cum_dist'] == recordedmaxmeters)
-                    paceend = df.loc[mask2,
-                                     ' Stroke500mPace (sec/500m)'].values[0]
-                    veloend = 500. / paceend
-                    deltatime = deltadist / veloend
+                    try:
+                        paceend = df.loc[mask2,
+                                         ' Stroke500mPace (sec/500m)'
+                        ].values[0]
+                        veloend = 500. / paceend
+                        deltatime = deltadist / veloend
+                    except IndexError:
+                        deltatime = 0
 
                     df.loc[mask2, ' ElapsedTime (sec)'] += deltatime
                     df.loc[mask2, 'TimeStamp (sec)'] += deltatime
@@ -2522,11 +2545,12 @@ class rowingdata:
     def updateinterval_string(self, s, debug=False):
         res = trainingparser.parse(s)
         res = trainingparser.cleanzeros(res)
-        values = trainingparser.getlist(res)
-        units = trainingparser.getlist(res, sel='unit')
-        typ = trainingparser.getlist(res, sel='type')
+        if res:
+            values = trainingparser.getlist(res)
+            units = trainingparser.getlist(res, sel='unit')
+            typ = trainingparser.getlist(res, sel='type')
 
-        self.updateintervaldata(values, units, typ, debug=debug)
+            self.updateintervaldata(values, units, typ, debug=debug)
 
     def add_bearing(self, window_size=20):
         """ Adds bearing. Only works if long and lat values are known
