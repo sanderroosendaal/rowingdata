@@ -2545,11 +2545,12 @@ class rowingdata:
     def updateinterval_string(self, s, debug=False):
         res = trainingparser.parse(s)
         res = trainingparser.cleanzeros(res)
-        values = trainingparser.getlist(res)
-        units = trainingparser.getlist(res, sel='unit')
-        typ = trainingparser.getlist(res, sel='type')
+        if res:
+            values = trainingparser.getlist(res)
+            units = trainingparser.getlist(res, sel='unit')
+            typ = trainingparser.getlist(res, sel='type')
 
-        self.updateintervaldata(values, units, typ, debug=debug)
+            self.updateintervaldata(values, units, typ, debug=debug)
 
     def add_bearing(self, window_size=20):
         """ Adds bearing. Only works if long and lat values are known
