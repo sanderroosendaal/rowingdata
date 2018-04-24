@@ -161,7 +161,7 @@ def csvtests(fop):
     if 'Total elapsed time (s)' in firstline:
         return 'ergstick'
 
-    if 'Stroke Number' in firstline:
+    if 'Stroke Number' and 'Time (seconds)' in firstline:
         return 'ergdata'
 
     if 'Number' in firstline and 'Cal/Hr' in firstline:
