@@ -152,6 +152,9 @@ def csvtests(fop):
     if 'Club' in secondline and 'Piece Stroke Count' in thirdline:
         return 'boatcoachotw'
 
+    if 'Club' in firstline and 'Piece Stroke Count' in secondline:
+        return 'boatcoachotw'
+
     if 'peak_force_pos' in firstline:
         return 'rowperfect3'
 
@@ -416,6 +419,26 @@ def skip_variable_header(f):
         blanklines = 1
 
     return counter2 + 2, summaryc + 2, blanklines
+
+def bc_variable_header(f):
+    counter = 0
+    extension = f[-3:].lower()
+    if extension == '.gz':
+        fop = gzip.open(f,'rb')
+    else:
+        fop = open(f, 'r')
+
+
+    for line in fop:
+        if line.startswith('Workout'):
+            fop.close()
+            return counter+1
+        else:
+            counter += 1
+
+    fop.close()
+
+    return 0
 
 def make_cumvalues_array(xvalues):
     """ Takes a Pandas dataframe with one column as input value.
@@ -692,24 +715,30 @@ class QuiskeParser(CSVParser):
 class BoatCoachOTWParser(CSVParser):
 
     def __init__(self, *args, **kwargs):
-        kwargs['skiprows'] = 2
         if args:
             csvfile = args[0]
         else:
             csvfile = kwargs['csvfile']
 
-        ll = get_file_line(1,csvfile)
-        if 'workoutType' in ll:
-            kwargs['skiprows'] = 0
+        skiprows = bc_variable_header(csvfile)
+        kwargs['skiprows'] = skiprows
 
         separator = get_separator(3, csvfile)
         kwargs['sep'] = separator
 
         super(BoatCoachOTWParser, self).__init__(*args, **kwargs)
 
+        # 500m or km based
+        try:
+            pace = self.df['Last 10 Stroke Speed(/500m)']
+        except KeyError:
+            pace1 = self.df['Last 10 Stroke Speed(/km)']
+            self.df['Last 10 Stroke Speed(/500m)'] = pace1.values
+
+            
         # crude EU format detector
         try:
-            ll = self.df['Last 10 Stroke Speed(/500m)']*10.0
+            ll = self.df['Longitude']*10.0
         except TypeError:
             convertlistbase = [
                 'TOTAL Distance Since Start BoatCoach(m)',
@@ -721,6 +750,7 @@ class BoatCoachOTWParser(CSVParser):
             converters = make_converter(convertlistbase,self.df)
 
             kwargs['converters'] = converters
+
             super(BoatCoachOTWParser, self).__init__(*args, **kwargs)
 
         self.cols = [
@@ -766,10 +796,23 @@ class BoatCoachOTWParser(CSVParser):
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
 
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes - unixtimes[0]
+
+        try:
+            d = self.df['Last 10 Stroke Speed(/km)']
+            multiplicator = 0.5
+        except:
+            multiplicator = 1
+    
+
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']].apply(
-            timestrtosecs2
-        )
+                timestrtosecs2
+            )
+
+        pace *= multiplicator
+            
+            
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+
 
         self.to_standard()
 
