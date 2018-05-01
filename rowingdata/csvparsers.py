@@ -321,11 +321,21 @@ def get_separator(linenr, f):
 
 def getoarlength(line):
     l = float(line.split(',')[-1])
+        
     return l
 
 def getinboard(line):
     inboard = float(line.split(',')[-1])
     return inboard
+
+def getfirmware(line):
+    l = line.lower().split(',')
+    try:
+        firmware = l[l.index("firmware version:")+1]
+    except ValueError:
+        firmware = ''
+
+    return firmware
 
 def get_empower_rigging(f):
     oarlength = 289.
@@ -334,12 +344,32 @@ def get_empower_rigging(f):
     with open(f, 'r') as fop:
         for line in fop:
             if 'Oar Length' in line:
-                oarlength = getoarlength(line)
+                try:
+                    oarlength = getoarlength(line)
+                except ValueError:
+                    return None,None
             if 'Inboard' in line:
-                inboard = getinboard(line)
+                try:
+                    inboard = getinboard(line)
+                except ValueError:
+                    return None,None
 
 
     return oarlength / 100., inboard / 100.
+
+def get_empower_firmware(f):
+    firmware = ''
+    with open(f,'r') as fop:
+        for line in fop:
+            if 'firmware' in line.lower() and 'oar' in line.lower():
+                firmware = getfirmware(line)
+
+    try:
+        firmware = np.float(firmware)
+    except ValueError:
+        firmware = None
+        
+    return firmware
 
 def skip_variable_footer(f):
     counter = 0
@@ -393,6 +423,7 @@ def skip_variable_header(f):
     counter2 = 0
     summaryc = -2
     extension = f[-3:].lower()
+    firmware = ''
     if extension == '.gz':
         fop = gzip.open(f,'rb')
     else:
@@ -402,6 +433,8 @@ def skip_variable_header(f):
     for line in fop:
         if line.startswith('Interval Summaries'):
             summaryc = counter
+        if 'firmware' in line.lower() and 'oar' in line.lower():
+            firmware = getfirmware(line)
         if line.startswith('Session Detail Data') or line.startswith('Per-Stroke Data'):
             counter2 = counter
         else:
@@ -1824,6 +1857,20 @@ class SpeedCoach2Parser(CSVParser):
             csvfile = kwargs['csvfile']
 
         skiprows, summaryline, blanklines = skip_variable_header(csvfile)
+
+        firmware = get_empower_firmware(csvfile)
+        corr_factor = 1.0
+        if firmware < 2.18 and firmware is not None:
+            # apply correction
+            oarlength, inboard = get_empower_rigging(csvfile)
+            if oarlength is not None and oarlength > 3.30:
+                # sweep
+                corr_factor = 0.945
+            elif oarlength is not None and oarlength <= 3.3:
+                corr_factor = 0.905
+
+
+            
         unitrow = get_file_line(skiprows + 2, csvfile)
         velo_unit = 'ms'
         dist_unit = 'm'
@@ -1886,6 +1933,13 @@ class SpeedCoach2Parser(CSVParser):
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
         self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+
+        # correct Power, Work per Stroke
+        try:
+            self.df[self.columns[' Power (watts)']] *= corr_factor
+            self.df[self.columns['driveenergy']] *= corr_factor
+        except KeyError:
+            pass
 
         # take Impeller split / speed if available and not zero
         try:
