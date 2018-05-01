@@ -421,6 +421,7 @@ def get_rowpro_footer(f, converters={}):
 def skip_variable_header(f):
     counter = 0
     counter2 = 0
+    sessionc = -2
     summaryc = -2
     extension = f[-3:].lower()
     firmware = ''
@@ -431,6 +432,8 @@ def skip_variable_header(f):
 
 
     for line in fop:
+        if line.startswith('Session Summary'):
+            sessionc = counter
         if line.startswith('Interval Summaries'):
             summaryc = counter
         if 'firmware' in line.lower() and 'oar' in line.lower():
@@ -451,7 +454,7 @@ def skip_variable_header(f):
     else:
         blanklines = 1
 
-    return counter2 + 2, summaryc + 2, blanklines
+    return counter2 + 2, summaryc + 2, blanklines, sessionc + 2
 
 def bc_variable_header(f):
     counter = 0
@@ -1856,7 +1859,7 @@ class SpeedCoach2Parser(CSVParser):
         else:
             csvfile = kwargs['csvfile']
 
-        skiprows, summaryline, blanklines = skip_variable_header(csvfile)
+        skiprows, summaryline, blanklines, sessionline = skip_variable_header(csvfile)
 
         firmware = get_empower_firmware(csvfile)
         corr_factor = 1.0
@@ -2055,12 +2058,80 @@ class SpeedCoach2Parser(CSVParser):
         else:
             self.summarydata = pd.DataFrame()
 
+        skipfooter = 11 + len(self.df)+len(self.summarydata)
+        if not blanklines:
+            skipfooter = skipfooter - 3
+        if sessionline:
+            self.sessiondata = pd.read_csv(csvfile,
+                                           skiprows= sessionline,
+                                           skipfooter=skipfooter,
+                                           engine='python')
+            self.sessiondata.drop(0,inplace=True)
+        else:
+            self.sessiondata = pd.DataFrame()
+
     def allstats(self, separator='|'):
         stri = self.summary(separator=separator) + \
             self.intervalstats(separator=separator)
         return stri
 
+    def sessionsummary(self, separator= '|'):
+        if self.sessiondata.empty:
+            return None
+
+        stri1 = "Workout Summary - " + self.csvfile + "\n"
+        stri1 += "--{sep}Total{sep}-Total-{sep}--Avg--{sep}-Avg-{sep}-Avg--{sep}-Avg-{sep}-Max-{sep}-Avg\n".format(
+            sep=separator)
+        stri1 += "--{sep}Dist-{sep}-Time--{sep}-Pace--{sep}-Pwr-{sep}-SPM--{sep}-HR--{sep}-HR--{sep}-DPS\n".format(
+            sep=separator)
+
+        dist = self.sessiondata['Total Distance (GPS)'].mean()
+        timestring = self.sessiondata['Total Elapsed Time'].values[0]
+        timestring = flexistrftime(flexistrptime(timestring))
+
+        pacestring = self.sessiondata['Avg Split (GPS)'].values[0]
+        pacestring = flexistrftime(flexistrptime(pacestring))
+        pwr = self.sessiondata['Avg Power'].mean()
+        spm = self.sessiondata['Avg Stroke Rate'].mean()
+        avghr = self.sessiondata['Avg Heart Rate'].mean()
+        avgdps = self.sessiondata['Distance/Stroke (GPS)'].mean()
+
+        try:
+            maxhr = self.df[self.columns[' HRCur (bpm)']].max()
+        except KeyError:
+            maxhr = 0
+
+        stri1 += "--{sep}{dist:0>5.0f}{sep}".format(
+            sep=separator,
+            dist=dist,
+        )
+
+        stri1 += timestring + separator + pacestring
+        
+        stri1 += "{sep}{avgpower:0>5.1f}".format(
+            sep=separator,
+            avgpower=pwr,
+        )
+
+        stri1 += "{sep} {avgsr:2.1f} {sep}{avghr:0>5.1f}{sep}".format(
+            avgsr=spm,
+            sep=separator,
+            avghr=avghr
+        )
+
+        stri1 += "{maxhr:0>5.1f}{sep}{avgdps:0>4.1f}\n".format(
+            sep=separator,
+            maxhr=maxhr,
+            avgdps=avgdps
+        )
+
+        return stri1
+            
+            
     def summary(self, separator='|'):
+        if self.sessionsummary() is not None:
+            return self.sessionsummary()
+        
         stri1 = "Workout Summary - " + self.csvfile + "\n"
         stri1 += "--{sep}Total{sep}-Total-{sep}--Avg--{sep}-Avg-{sep}Avg-{sep}-Avg-{sep}-Max-{sep}-Avg\n".format(
             sep=separator)
@@ -2095,7 +2166,7 @@ class SpeedCoach2Parser(CSVParser):
         )
 
         stri1 += timestring + separator + pacestring
-
+        
         stri1 += "{sep}{avgpower:0>5.1f}".format(
             sep=separator,
             avgpower=pwr,
@@ -2117,7 +2188,7 @@ class SpeedCoach2Parser(CSVParser):
 
     def intervalstats(self, separator='|'):
         stri = "Workout Details\n"
-        stri += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-Pwr-{sep}SPM-{sep}AvgHR{sep}DPS-\n".format(
+        stri += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-Pwr-{sep}-SPM--{sep}AvgHR{sep}DPS-\n".format(
             sep=separator)
         aantal = len(self.summarydata)
         for i in range(aantal):
