@@ -31,7 +31,7 @@ install:
 - git clone -b master https://github.com/dtcooper/python-fitparse.git
 - pip install twine
 - cd python-fitparse
-- git checkout 5d8bb3a1a2f6a36d9bf645af3e6bf93cc62b9908
+#- git checkout 5d8bb3a1a2f6a36d9bf645af3e6bf93cc62b9908
 - python setup.py install
 - cd ..
 - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose
