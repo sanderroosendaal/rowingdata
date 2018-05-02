@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.7.7"
+__version__ = "1.7.8"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -77,7 +77,8 @@ from csvparsers import (
     make_cumvalues, make_cumvalues_array,
     painsledDesktopParser, skip_variable_footer,
     skip_variable_header, speedcoachParser, timestrtosecs,
-    timestrtosecs2, totimestamp
+    timestrtosecs2, totimestamp, empower_bug_correction,
+    get_empower_firmware
 )
 
 from otherparsers import TCXParser as TCXParserNoHR
