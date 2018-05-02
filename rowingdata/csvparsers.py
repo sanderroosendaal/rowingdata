@@ -319,6 +319,11 @@ def get_separator(linenr, f):
 
     return sep
 
+def empower_bug_correction(oarlength,inboard,a,b):
+    f = (oarlength-inboard-b)/(oarlength-inboard-a)
+
+    return f
+
 def getoarlength(line):
     l = float(line.split(',')[-1])
         
@@ -1868,9 +1873,14 @@ class SpeedCoach2Parser(CSVParser):
             oarlength, inboard = get_empower_rigging(csvfile)
             if oarlength is not None and oarlength > 3.30:
                 # sweep
-                corr_factor = 0.945
+                a = 0.15
+                b = 0.275
+                corr_factor = empower_bug_correction(oarlength,inboard,a,b)
             elif oarlength is not None and oarlength <= 3.3:
-                corr_factor = 0.905
+                # scull
+                a = 0.06
+                b = 0.225
+                corr_factor = empower_bug_correction(oarlength,inboard,a,b)
 
 
             

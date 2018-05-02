@@ -77,7 +77,8 @@ from csvparsers import (
     make_cumvalues, make_cumvalues_array,
     painsledDesktopParser, skip_variable_footer,
     skip_variable_header, speedcoachParser, timestrtosecs,
-    timestrtosecs2, totimestamp
+    timestrtosecs2, totimestamp, empower_bug_correction,
+    get_empower_firmware
 )
 
 from otherparsers import TCXParser as TCXParserNoHR
