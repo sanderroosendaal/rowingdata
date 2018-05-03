@@ -319,13 +319,28 @@ def get_separator(linenr, f):
 
     return sep
 
+def empower_bug_correction(oarlength,inboard,a,b):
+    f = (oarlength-inboard-b)/(oarlength-inboard-a)
+
+    return f
+
 def getoarlength(line):
     l = float(line.split(',')[-1])
+        
     return l
 
 def getinboard(line):
     inboard = float(line.split(',')[-1])
     return inboard
+
+def getfirmware(line):
+    l = line.lower().split(',')
+    try:
+        firmware = l[l.index("firmware version:")+1]
+    except ValueError:
+        firmware = ''
+
+    return firmware
 
 def get_empower_rigging(f):
     oarlength = 289.
@@ -334,12 +349,32 @@ def get_empower_rigging(f):
     with open(f, 'r') as fop:
         for line in fop:
             if 'Oar Length' in line:
-                oarlength = getoarlength(line)
+                try:
+                    oarlength = getoarlength(line)
+                except ValueError:
+                    return None,None
             if 'Inboard' in line:
-                inboard = getinboard(line)
+                try:
+                    inboard = getinboard(line)
+                except ValueError:
+                    return None,None
 
 
     return oarlength / 100., inboard / 100.
+
+def get_empower_firmware(f):
+    firmware = ''
+    with open(f,'r') as fop:
+        for line in fop:
+            if 'firmware' in line.lower() and 'oar' in line.lower():
+                firmware = getfirmware(line)
+
+    try:
+        firmware = np.float(firmware)
+    except ValueError:
+        firmware = None
+        
+    return firmware
 
 def skip_variable_footer(f):
     counter = 0
@@ -391,8 +426,10 @@ def get_rowpro_footer(f, converters={}):
 def skip_variable_header(f):
     counter = 0
     counter2 = 0
+    sessionc = -2
     summaryc = -2
     extension = f[-3:].lower()
+    firmware = ''
     if extension == '.gz':
         fop = gzip.open(f,'rb')
     else:
@@ -400,8 +437,12 @@ def skip_variable_header(f):
 
 
     for line in fop:
+        if line.startswith('Session Summary'):
+            sessionc = counter
         if line.startswith('Interval Summaries'):
             summaryc = counter
+        if 'firmware' in line.lower() and 'oar' in line.lower():
+            firmware = getfirmware(line)
         if line.startswith('Session Detail Data') or line.startswith('Per-Stroke Data'):
             counter2 = counter
         else:
@@ -418,7 +459,7 @@ def skip_variable_header(f):
     else:
         blanklines = 1
 
-    return counter2 + 2, summaryc + 2, blanklines
+    return counter2 + 2, summaryc + 2, blanklines, sessionc + 2
 
 def bc_variable_header(f):
     counter = 0
@@ -1823,7 +1864,26 @@ class SpeedCoach2Parser(CSVParser):
         else:
             csvfile = kwargs['csvfile']
 
-        skiprows, summaryline, blanklines = skip_variable_header(csvfile)
+        skiprows, summaryline, blanklines, sessionline = skip_variable_header(csvfile)
+
+        firmware = get_empower_firmware(csvfile)
+        corr_factor = 1.0
+        if firmware < 2.18 and firmware is not None:
+            # apply correction
+            oarlength, inboard = get_empower_rigging(csvfile)
+            if oarlength is not None and oarlength > 3.30:
+                # sweep
+                a = 0.15
+                b = 0.275
+                corr_factor = empower_bug_correction(oarlength,inboard,a,b)
+            elif oarlength is not None and oarlength <= 3.3:
+                # scull
+                a = 0.06
+                b = 0.225
+                corr_factor = empower_bug_correction(oarlength,inboard,a,b)
+
+
+            
         unitrow = get_file_line(skiprows + 2, csvfile)
         velo_unit = 'ms'
         dist_unit = 'm'
@@ -1886,6 +1946,13 @@ class SpeedCoach2Parser(CSVParser):
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
         self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+
+        # correct Power, Work per Stroke
+        try:
+            self.df[self.columns[' Power (watts)']] *= corr_factor
+            self.df[self.columns['driveenergy']] *= corr_factor
+        except KeyError:
+            pass
 
         # take Impeller split / speed if available and not zero
         try:
@@ -2001,12 +2068,108 @@ class SpeedCoach2Parser(CSVParser):
         else:
             self.summarydata = pd.DataFrame()
 
+        skipfooter = 11 + len(self.df)+len(self.summarydata)
+        if not blanklines:
+            skipfooter = skipfooter - 3
+        if sessionline:
+            self.sessiondata = pd.read_csv(csvfile,
+                                           skiprows= sessionline,
+                                           skipfooter=skipfooter,
+                                           engine='python')
+            self.sessiondata.drop(0,inplace=True)
+        else:
+            self.sessiondata = pd.DataFrame()
+
     def allstats(self, separator='|'):
         stri = self.summary(separator=separator) + \
             self.intervalstats(separator=separator)
         return stri
 
+    def sessionsummary(self, separator= '|'):
+        if self.sessiondata.empty:
+            return None
+
+        stri1 = "Workout Summary - " + self.csvfile + "\n"
+        stri1 += "--{sep}Total{sep}-Total-{sep}--Avg--{sep}-Avg-{sep}-Avg--{sep}-Avg-{sep}-Max-{sep}-Avg\n".format(
+            sep=separator)
+        stri1 += "--{sep}Dist-{sep}-Time--{sep}-Pace--{sep}-Pwr-{sep}-SPM--{sep}-HR--{sep}-HR--{sep}-DPS\n".format(
+            sep=separator)
+
+        try:
+            dist = self.sessiondata['Total Distance (GPS)'].astype(float).mean()
+        except (KeyError,ValueError):
+            try:
+                dist = self.sessiondata['Total Distance'].astype(float).mean()
+            except (ValueError,KeyError):
+                dist = 0.0
+
+            
+        timestring = self.sessiondata['Total Elapsed Time'].values[0]
+        timestring = flexistrftime(flexistrptime(timestring))
+
+        try:
+            pacestring = self.sessiondata['Avg Split (GPS)'].values[0]
+        except KeyError:
+            pacestring = self.sessiondata['Avg Split'].values[0]
+            
+        pacestring = flexistrftime(flexistrptime(pacestring))
+        try:
+            pwr = self.sessiondata['Avg Power'].astype(float).mean()
+        except (KeyError,ValueError):
+            pwr = 0.0
+
+
+        try:
+            spm = self.sessiondata['Avg Stroke Rate'].astype(float).mean()
+        except (ValueError,KeyError):
+            spm = 0
+
+        try:
+            avghr = self.sessiondata['Avg Heart Rate'].astype(float).mean()
+        except (ValueError,KeyError):
+            avghr = 0
+            
+        try:
+            avgdps = self.sessiondata['Distance/Stroke (GPS)'].astype(float).mean()
+        except KeyError:
+            avgdps = 0
+
+        try:
+            maxhr = self.df[self.columns[' HRCur (bpm)']].max()
+        except KeyError:
+            maxhr = 0
+
+        stri1 += "--{sep}{dist:0>5.0f}{sep}".format(
+            sep=separator,
+            dist=dist,
+        )
+
+        stri1 += timestring + separator + pacestring
+        
+        stri1 += "{sep}{avgpower:0>5.1f}".format(
+            sep=separator,
+            avgpower=pwr,
+        )
+
+        stri1 += "{sep} {avgsr:2.1f} {sep}{avghr:0>5.1f}{sep}".format(
+            avgsr=spm,
+            sep=separator,
+            avghr=avghr
+        )
+
+        stri1 += "{maxhr:0>5.1f}{sep}{avgdps:0>4.1f}\n".format(
+            sep=separator,
+            maxhr=maxhr,
+            avgdps=avgdps
+        )
+
+        return stri1
+            
+            
     def summary(self, separator='|'):
+        if self.sessionsummary() is not None:
+            return self.sessionsummary()
+        
         stri1 = "Workout Summary - " + self.csvfile + "\n"
         stri1 += "--{sep}Total{sep}-Total-{sep}--Avg--{sep}-Avg-{sep}Avg-{sep}-Avg-{sep}-Max-{sep}-Avg\n".format(
             sep=separator)
@@ -2041,7 +2204,7 @@ class SpeedCoach2Parser(CSVParser):
         )
 
         stri1 += timestring + separator + pacestring
-
+        
         stri1 += "{sep}{avgpower:0>5.1f}".format(
             sep=separator,
             avgpower=pwr,
@@ -2063,7 +2226,7 @@ class SpeedCoach2Parser(CSVParser):
 
     def intervalstats(self, separator='|'):
         stri = "Workout Details\n"
-        stri += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-Pwr-{sep}SPM-{sep}AvgHR{sep}DPS-\n".format(
+        stri += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-Pwr-{sep}-SPM--{sep}AvgHR{sep}DPS-\n".format(
             sep=separator)
         aantal = len(self.summarydata)
         for i in range(aantal):

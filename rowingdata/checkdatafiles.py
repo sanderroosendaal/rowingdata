@@ -73,6 +73,9 @@ def checkfile(f2, verbose=False):
         # handle speed coach GPS 2
         if (fileformat == 'speedcoach2'):
             row = rowingdata.SpeedCoach2Parser(f2)
+            summary = row.allstats()
+            v = rowingdata.get_empower_firmware(f2)
+            rig = rowingdata.get_empower_rigging(f2)
 
         if (fileformat == 'rowperfect3'):
             row = rowingdata.RowPerfectParser(f2)
