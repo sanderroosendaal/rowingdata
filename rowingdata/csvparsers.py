@@ -2111,12 +2111,18 @@ class SpeedCoach2Parser(CSVParser):
             
         pacestring = flexistrftime(flexistrptime(pacestring))
         try:
-            pwr = self.sessiondata['Avg Power'].mean()
+            pwr = self.sessiondata['Avg Power'].astype(float).mean()
         except KeyError:
             pwr = 0.0*self.sessiondata['Avg Stroke Rate'].astype(float).mean()
-            
+
+        
         spm = self.sessiondata['Avg Stroke Rate'].astype(float).mean()
-        avghr = self.sessiondata['Avg Heart Rate'].astype(float).mean()
+
+        try:
+            avghr = self.sessiondata['Avg Heart Rate'].astype(float).mean()
+        except (ValueError,KeyError):
+            avghr = 0*pwr
+            
         try:
             avgdps = self.sessiondata['Distance/Stroke (GPS)'].astype(float).mean()
         except KeyError:
