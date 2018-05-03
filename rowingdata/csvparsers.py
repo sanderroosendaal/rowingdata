@@ -2097,8 +2097,11 @@ class SpeedCoach2Parser(CSVParser):
 
         try:
             dist = self.sessiondata['Total Distance (GPS)'].astype(float).mean()
-        except KeyError:
-            dist = self.sessiondata['Total Distance'].astype(float).mean()
+        except (KeyError,ValueError):
+            try:
+                dist = self.sessiondata['Total Distance'].astype(float).mean()
+            except (ValueError,KeyError):
+                dist = 0.0
 
             
         timestring = self.sessiondata['Total Elapsed Time'].values[0]
@@ -2112,21 +2115,24 @@ class SpeedCoach2Parser(CSVParser):
         pacestring = flexistrftime(flexistrptime(pacestring))
         try:
             pwr = self.sessiondata['Avg Power'].astype(float).mean()
-        except KeyError:
-            pwr = 0.0*self.sessiondata['Avg Stroke Rate'].astype(float).mean()
+        except (KeyError,ValueError):
+            pwr = 0.0
 
-        
-        spm = self.sessiondata['Avg Stroke Rate'].astype(float).mean()
+
+        try:
+            spm = self.sessiondata['Avg Stroke Rate'].astype(float).mean()
+        except (ValueError,KeyError):
+            spm = 0
 
         try:
             avghr = self.sessiondata['Avg Heart Rate'].astype(float).mean()
         except (ValueError,KeyError):
-            avghr = 0*pwr
+            avghr = 0
             
         try:
             avgdps = self.sessiondata['Distance/Stroke (GPS)'].astype(float).mean()
         except KeyError:
-            avgdps = 0*pwr
+            avgdps = 0
 
         try:
             maxhr = self.df[self.columns[' HRCur (bpm)']].max()
