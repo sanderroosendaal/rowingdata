@@ -1583,6 +1583,7 @@ class rowingdata:
             ' DragFactor',
             ' StrokeRecoveryTime (ms)',
             ' AverageDriveForce (lbs)',
+            ' AverageBoatSpeed (m/s)',
             ' PeakDriveForce (lbs)',
             ' AverageDriveForce (N)',
             ' PeakDriveForce (N)',
@@ -1614,6 +1615,13 @@ class rowingdata:
                         velo = sled_df[' Horizontal (meters)'] / (
                             sled_df['TimeStamp (sec)'] - sled_df['TimeStamp (sec)'].min())
                         sled_df[name] = 500. / velo
+                if name == ' AverageBoatSpeed (m/s)':
+                    try:
+                        velo = 500./sled_df[' Stroke500mPace (sec/500m)']
+                    except (KeyError,ValueError):
+                        velo = sled_df[' Horizontal (meters)'] / (
+                            sled_df['TimeStamp (sec)'] - sled_df['TimeStamp (sec)'].min())
+                    sled_df[name] = velo
                 if name == ' AverageDriveForce (lbs)':
                     try:
                         forcen = sled_df[' AverageDriveForce (N)']
