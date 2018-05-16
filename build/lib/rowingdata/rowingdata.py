@@ -6097,6 +6097,8 @@ class rowingdata:
                 counterclock=False,
                 startangle=90.0)
 
+        ax9.set_title(fig_title)
+
         plt.show()
         return 1
 
@@ -6178,6 +6180,8 @@ class rowingdata:
                 counterclock=False,
                 startangle=90.0)
 
+        ax_9.set_title(fig_title)
+
         plt.show()
         return 1
 
@@ -6258,6 +6262,8 @@ class rowingdata:
                 counterclock=False,
                 startangle=90.0)
 
+        ax9.set_title(title)
+
         return fig2
 
     def get_piechart(self, title):
@@ -6329,6 +6335,8 @@ class rowingdata:
                 counterclock=False,
                 startangle=90.0)
 
+        ax9.set_title(fig_title)
+        
         return fig2
 
     def uploadtoc2(self,
