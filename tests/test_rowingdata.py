@@ -1,4 +1,4 @@
-from nose.tools import assert_equals
+from nose.tools import assert_equals, assert_not_equal
 from nose import with_setup
 import rowingdata
 import datetime
@@ -337,10 +337,16 @@ class TestSequence(unittest.TestCase):
     def test_check(self, name, filename, expected):
         f2='testdata/'+filename
         res=rowingdata.checkdatafiles.checkfile(f2)
+        filetype = rowingdata.get_file_type(f2)
+        if filetype  not in ['unknown','c2log']:
+            assert_not_equal(res,0)
         if res != 0:
             for key,value in res.iteritems():
-                if expected[key] != 0:
-                    assert_equals(value,expected[key])        
+                if key != 'summary':
+                    if expected[key] != 0:
+                        assert_equals(value,expected[key])
+                elif key == 'summary':
+                    assert_not_equal(value,'')
 
 
                       

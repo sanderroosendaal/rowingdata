@@ -4,6 +4,7 @@ import os
 
 def checkfile(f2, verbose=False):
     fileformat = rowingdata.get_file_type(f2)
+    summary = 'a'
     notread = 1
     if verbose:
         print(fileformat)
@@ -151,6 +152,7 @@ def checkfile(f2, verbose=False):
         'lap 1 time': int(int1time),
         'lap 1 dist': int(int1dist),
         'timezone': tz,
+        'summary':summary,
     }
 
     return results

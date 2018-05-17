@@ -1,6 +1,6 @@
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
-__version__ = "1.7.8"
+__version__ = "1.7.9"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -1583,6 +1583,7 @@ class rowingdata:
             ' DragFactor',
             ' StrokeRecoveryTime (ms)',
             ' AverageDriveForce (lbs)',
+            ' AverageBoatSpeed (m/s)',
             ' PeakDriveForce (lbs)',
             ' AverageDriveForce (N)',
             ' PeakDriveForce (N)',
@@ -1614,6 +1615,13 @@ class rowingdata:
                         velo = sled_df[' Horizontal (meters)'] / (
                             sled_df['TimeStamp (sec)'] - sled_df['TimeStamp (sec)'].min())
                         sled_df[name] = 500. / velo
+                if name == ' AverageBoatSpeed (m/s)':
+                    try:
+                        velo = 500./sled_df[' Stroke500mPace (sec/500m)']
+                    except (KeyError,ValueError):
+                        velo = sled_df[' Horizontal (meters)'] / (
+                            sled_df['TimeStamp (sec)'] - sled_df['TimeStamp (sec)'].min())
+                    sled_df[name] = velo
                 if name == ' AverageDriveForce (lbs)':
                     try:
                         forcen = sled_df[' AverageDriveForce (N)']
@@ -6089,6 +6097,8 @@ class rowingdata:
                 counterclock=False,
                 startangle=90.0)
 
+        ax9.set_title(fig_title)
+
         plt.show()
         return 1
 
@@ -6170,6 +6180,8 @@ class rowingdata:
                 counterclock=False,
                 startangle=90.0)
 
+        ax_9.set_title(fig_title)
+
         plt.show()
         return 1
 
@@ -6250,6 +6262,8 @@ class rowingdata:
                 counterclock=False,
                 startangle=90.0)
 
+        ax9.set_title(title)
+
         return fig2
 
     def get_piechart(self, title):
@@ -6321,6 +6335,8 @@ class rowingdata:
                 counterclock=False,
                 startangle=90.0)
 
+        ax9.set_title(fig_title)
+        
         return fig2
 
     def uploadtoc2(self,
