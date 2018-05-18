@@ -362,10 +362,22 @@ class FITParser(object):
         
 
         self.df = pd.DataFrame(recorddicts)
+
         # columns to lowercase
         self.df.columns = [strip_non_ascii(x) for x in self.df.columns]
         self.df.columns = [x.encode('ascii','ignore') for x in self.df.columns]
         self.df.rename(columns = str.lower,inplace=True)
+
+        # check column dimensions
+
+        for c in self.df.columns:
+            x = self.df[c]
+            if len(x.shape)>1:
+                newdf = pd.DataFrame({
+                    c: x.ix[:,0].values
+                    })
+                self.df.drop(labels=c,axis=1,inplace=True)
+                self.df[c] = newdf[c]
 
         try:
             latitude = self.df['position_lat']*(180./2**31)            
@@ -380,6 +392,7 @@ class FITParser(object):
         self.df['position_lat'] = latitude
         self.df['position_long'] = longitude
 
+        
         if pd.isnull(distance).all():
             dist2 = np.zeros(len(distance))
             for i in range(len(distance)-1):
