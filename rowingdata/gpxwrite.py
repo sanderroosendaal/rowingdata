@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 import datetime
 from dateutil import parser as ps
@@ -6,7 +8,8 @@ import arrow
 import numpy as np
 from lxml import etree, objectify
 from lxml.etree import XMLSyntaxError
-import urllib2
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
+from six.moves import range
 
 namespace='http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -29,10 +32,10 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     totalmeters=int(df['cum_dist'].max())
     avghr=int(df[' HRCur (bpm)'].mean())
     if avghr == 0:
-	avghr=1
+        avghr=1
     maxhr=int(df[' HRCur (bpm)'].max())
     if maxhr == 0:
-	maxhr=1
+        maxhr=1
     avgspm=int(df[' Cadence (stokes/min)'].mean())
 
     seconds=df['TimeStamp (sec)'].values
@@ -43,31 +46,31 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     nr_rows=len(seconds)
 
     try:
-	lat=df[' latitude'].values
+        lat=df[' latitude'].values
     except KeyError:
-	lat=np.zeros(nr_rows)
+        lat=np.zeros(nr_rows)
 
     try:
-	long=df[' longitude'].values
+        long=df[' longitude'].values
     except KeyError:
-	long=np.zeros(nr_rows)
+        long=np.zeros(nr_rows)
 
     haspower=1
 
     try:
-	power=df[' Power (watts)'].values
+        power=df[' Power (watts)'].values
     except KeyError:
-	haspower=0
-	
+        haspower=0
+        
     s="2000-01-01"
     tt=ps.parse(s)
     #timezero=time.mktime(tt.timetuple())
     timezero = arrow.get(tt).timestamp
     if seconds[0]<timezero:
-	# print("Taking Row_Date ",row_date)
-	dateobj=ps.parse(row_date)
-	#unixtimes=seconds+time.mktime(dateobj.timetuple())
-	unixtimes=seconds+arrow.get(dateobj).timestamp
+        # print("Taking Row_Date ",row_date)
+        dateobj=ps.parse(row_date)
+        #unixtimes=seconds+time.mktime(dateobj.timetuple())
+        unixtimes=seconds+arrow.get(dateobj).timestamp
 
 
 
@@ -86,13 +89,13 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     for i in range(nr_rows):
         s = '          <trkpt lat="{lat}" lon="{lon}">\n'.format(
             lat=lat[i],
-            lon=long[i]
+            lon=int[i]
             )
-	f.write(s)
-	#s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
+        f.write(s)
+        #s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
         s = arrow.get(unixtimes[i]).isoformat()
-	f.write('            <time>{s}</time>\n'.format(s=s))
-	f.write('          </trkpt>\n')
+        f.write('            <time>{s}</time>\n'.format(s=s))
+        f.write('          </trkpt>\n')
 
 
 
@@ -109,30 +112,30 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     file.close()
     
     try:
-	xsd_file=urllib2.urlopen("http://www.topografix.com/GPX/1/1/gpx.xsd")
-	output=open('gpx.xsd','w') 
-	output.write(xsd_file.read().replace('\n',''))
-	output.close()
-	xsd_filename="gpx.xsd"
+        xsd_file=six.moves.urllib.request.urlopen("http://www.topografix.com/GPX/1/1/gpx.xsd")
+        output=open('gpx.xsd','w') 
+        output.write(xsd_file.read().replace('\n',''))
+        output.close()
+        xsd_filename="gpx.xsd"
 
-	# Run some tests
-	tree=objectify.parse(gpxFile)
-	try:
-	    schema=etree.XMLSchema(file=xsd_filename)
-	    parser=objectify.makeparser(schema=schema)
-	    objectify.fromstring(some_xml_string, parser)
-	    # print("YEAH!, your xml file has validated")
-	except XMLSyntaxError:
+        # Run some tests
+        tree=objectify.parse(gpxFile)
+        try:
+            schema=etree.XMLSchema(file=xsd_filename)
+            parser=objectify.makeparser(schema=schema)
+            objectify.fromstring(some_xml_string, parser)
+            # print("YEAH!, your xml file has validated")
+        except XMLSyntaxError:
         
-	    print("Oh NO!, your xml file does not validate")
-	    pass
-	
-    except urllib2.URLError:
-	print("cannot download GPX schema")
-	print("your GPX file is unvalidated. Good luck")
+            print("Oh NO!, your xml file does not validate")
+            pass
+        
+    except six.moves.urllib.error.URLError:
+        print("cannot download GPX schema")
+        print("your GPX file is unvalidated. Good luck")
 
     
-	    
+            
 
     return 1
 

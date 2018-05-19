@@ -1,4 +1,5 @@
 # pylint: disable=C0103, C0303
+from __future__ import absolute_import
 import os
 import csv
 import gzip
@@ -14,7 +15,10 @@ import numpy as np
 import pandas as pd
 from pandas.core.indexing import IndexingError
 
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from pandas import Series, DataFrame
 from dateutil import parser
@@ -23,11 +27,14 @@ from timezonefinder import TimezoneFinder
 from lxml import objectify
 from fitparse import FitFile
 
-from utils import (
+from .utils import (
     totimestamp, format_pace, format_time,
 )
 
-from tcxtools import strip_control_characters
+from .tcxtools import strip_control_characters
+import six
+from six.moves import range
+from six.moves import zip
 
 # we're going to plot SI units - convert pound force to Newton
 lbstoN = 4.44822
@@ -648,7 +655,7 @@ class CSVParser(object):
         self.columns = {c: c for c in self.defaultcolumnnames}
 
     def to_standard(self):
-        inverted = {value: key for key, value in self.columns.iteritems()}
+        inverted = {value: key for key, value in six.iteritems(self.columns)}
         self.df.rename(columns=inverted, inplace=True)
         self.columns = {c: c for c in self.defaultcolumnnames}
 
@@ -739,7 +746,7 @@ class QuiskeParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         velo = self.df['speed (m/s)']
         pace = 500./velo
@@ -817,7 +824,7 @@ class BoatCoachOTWParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         try:
             row_datetime = self.df[self.columns['TimeStamp (sec)']]
@@ -886,7 +893,7 @@ class CoxMateParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations / speed
         dd = self.df[self.columns[' Horizontal (meters)']].diff()
@@ -940,7 +947,7 @@ class painsledDesktopParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']] / 2.
@@ -964,7 +971,7 @@ class BoatCoachParser(CSVParser):
 
     def __init__(self, *args, **kwargs):
         kwargs['skiprows'] = 1
-        kwargs['usecols'] = range(25)
+        kwargs['usecols'] = list(range(25))
 
         if args:
             csvfile = args[0]
@@ -1023,7 +1030,7 @@ class BoatCoachParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # get date from footer
         try:
@@ -1189,7 +1196,7 @@ class KinoMapParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         row_datetime = self.df[self.columns['TimeStamp (sec)']]
         row_datetime = row_datetime.apply(
@@ -1223,7 +1230,7 @@ class BoatCoachAdvancedParser(CSVParser):
 
     def __init__(self, *args, **kwargs):
         kwargs['skiprows'] = 1
-        kwargs['usecols'] = range(25)
+        kwargs['usecols'] = list(range(25))
 
         if args:
             csvfile = args[0]
@@ -1280,7 +1287,7 @@ class BoatCoachAdvancedParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # get date from footer
         try:
@@ -1422,7 +1429,7 @@ class ErgDataParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
         # get date from footer
@@ -1480,7 +1487,7 @@ class speedcoachParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
         # get date from footer
@@ -1526,7 +1533,7 @@ class ErgStickParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
         self.df[self.columns[' DriveTime (ms)']] *= 1000.
@@ -1572,7 +1579,7 @@ class RowPerfectParser(CSVParser):
                 s.append(str(row)[1:-1])
 
             self.df['curve_data'] = s
-        except AttributeError,e:
+        except AttributeError as e:
             pass
             # print traceback.format_exc()
 
@@ -1609,7 +1616,7 @@ class RowPerfectParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
 
         # calculations
@@ -1688,7 +1695,7 @@ class MysteryParser(CSVParser):
 
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
         velo = pd.to_numeric(self.df['Speed (m/s)'], errors='coerce')
@@ -1831,7 +1838,7 @@ class RowProParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
         self.df[self.columns[' Stroke500mPace (sec/500m)']] *= 500.0
@@ -1945,7 +1952,7 @@ class SpeedCoach2Parser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # correct Power, Work per Stroke
         try:

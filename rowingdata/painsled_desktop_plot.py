@@ -1,5 +1,7 @@
 #! /usr/bin/python
-import rowingdata
+from __future__ import absolute_import
+from __future__ import print_function
+from . import rowingdata
 from sys import argv
 
 def main():
@@ -21,8 +23,8 @@ def main():
 
     row.plotmeters_erg()
 
-    print(row.allstats())
+    print((row.allstats()))
 
 
 
-    print("done "+readFile)
+    print(("done "+readFile))

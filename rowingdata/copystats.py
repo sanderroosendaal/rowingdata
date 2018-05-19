@@ -1,5 +1,6 @@
 #! /usr/bin/python
-import rowingdata
+from __future__ import absolute_import
+from . import rowingdata
 from sys import argv
 
 

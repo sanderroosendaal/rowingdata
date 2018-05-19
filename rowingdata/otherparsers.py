@@ -1,15 +1,17 @@
 # pylint: disable=C0103, C0303
+from __future__ import absolute_import
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from lxml import objectify
 from fitparse import FitFile
-import tcxtools
-from utils import totimestamp, geo_distance
+from . import tcxtools
+from .utils import totimestamp, geo_distance
 import gzip
 import arrow
 import shutil
 from datetime import datetime
+from six.moves import range
 
 NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -526,7 +528,7 @@ class TCXParser(object):
                     velo[i+1] = deltal/(1.0*(unixtimes[i+1]-unixtimes[i]))
                 except ZeroDivisionError:
                     velo[i+1] = velo[i]
-                if spm[i] <> 0:
+                if spm[i] != 0:
                     strokelength[i] = deltal*60/spm[i]
                 else:
                     strokelength[i] = 0.

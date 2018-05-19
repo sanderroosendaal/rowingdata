@@ -1,5 +1,7 @@
 #! /usr/bin/python
-import rowingdata
+from __future__ import absolute_import
+from __future__ import print_function
+from . import rowingdata
 import time
 from sys import argv
 
@@ -31,4 +33,4 @@ def main():
 
 
 
-    print("done "+readFile)
+    print(("done "+readFile))

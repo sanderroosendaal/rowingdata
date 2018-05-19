@@ -1,4 +1,5 @@
-import rowingdata
+from __future__ import absolute_import
+from . import rowingdata
 
 def dorowall(readFile="testdata",window_size=20):
 

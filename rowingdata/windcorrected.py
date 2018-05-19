@@ -1,6 +1,9 @@
 #! /usr/bin/python
-import rowingdata
+from __future__ import absolute_import
+from __future__ import print_function
+from . import rowingdata
 from sys import argv
+from six.moves import input
 
 def main():
     readFile=argv[1]
@@ -26,10 +29,10 @@ def main():
     res=rowingdata.rowingdata(csvoutput,rowtype="On-water",
 				rower=rower)
 
-    s=raw_input('Enter wind speed: ')
+    s=input('Enter wind speed: ')
     windv=float(s)
-    u=raw_input('Enter wind speed units m=m/s, b=beaufort, k=knots: ')
-    s=raw_input('Enter wind bearing (N=0, E=90, S=180, W=270): ')
+    u=input('Enter wind speed units m=m/s, b=beaufort, k=knots: ')
+    s=input('Enter wind bearing (N=0, E=90, S=180, W=270): ')
     winddirection=float(s)
 
     res.add_wind(windv,winddirection,units=u)
@@ -42,4 +45,4 @@ def main():
     res.plottime_otwpower()
 
 
-    print("done "+readFile)
+    print(("done "+readFile))

@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import time
 import datetime
 from dateutil import parser as ps
@@ -6,8 +8,9 @@ import arrow
 import numpy as np
 from lxml import etree, objectify
 from lxml.etree import XMLSyntaxError
-import urllib2
+import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 import ssl
+from six.moves import range
 
 empty_tcx = """
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -131,13 +134,13 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
 	#s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
         s = arrow.get(unixtimes[i]).isoformat()
 	f.write('            <Time>{s}</Time>\n'.format(s=s))
-	if (lat[i] != 0) & (long[i] != 0 ):
+	if (lat[i] != 0) & (int[i] != 0 ):
 	    f.write('            <Position>\n')
 	    f.write('              <LatitudeDegrees>{lat}</LatitudeDegrees>\n'.format(
 		lat=lat[i]
 		))
 	    f.write('              <LongitudeDegrees>{long}</LongitudeDegrees>\n'.format(
-		long=long[i]
+		int=int[i]
 		))
 	    f.write('            </Position>\n')
 	f.write('            <DistanceMeters>{d}</DistanceMeters>\n'.format(
@@ -191,7 +194,7 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
-	xsd_file=urllib2.urlopen("https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd",context=ctx)
+	xsd_file=six.moves.urllib.request.urlopen("https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd",context=ctx)
 	output=open('TrainingCenterDatabasev2.xsd','w') 
 	output.write(xsd_file.read().replace('\n',''))
 	output.close()
@@ -213,7 +216,7 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
             print("Oh NO!, your xmsl file does not validate")
             pass
 	
-    except urllib2.URLError:
+    except six.moves.urllib.error.URLError:
 	print("cannot download TCX schema")
 	print("your TCX file is unvalidated. Good luck")
 
