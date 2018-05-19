@@ -17,7 +17,7 @@ before_cache:
 - rm -f $HOME/.cache/pip/log/debug.log
 python:
 - 2.7.10
-- 3.6
+- 3.4
 notifications:
   email: false
 before_install:
