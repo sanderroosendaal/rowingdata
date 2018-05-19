@@ -67,13 +67,13 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     except ValueError:
         avghr = 1
     if avghr == 0:
-	avghr=1
+        avghr=1
     try:
         maxhr=int(df[' HRCur (bpm)'].max())
     except ValueError:
         maxhr = 1
     if maxhr == 0:
-	maxhr=1
+        maxhr=1
     avgspm=int(df[' Cadence (stokes/min)'].mean())
 
     seconds=df['TimeStamp (sec)'].values
@@ -84,30 +84,30 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     nr_rows=len(seconds)
 
     try:
-	lat=df[' latitude'].values
+        lat=df[' latitude'].values
     except KeyError:
-	lat=np.zeros(nr_rows)
+        lat=np.zeros(nr_rows)
 
     try:
-	long=df[' longitude'].values
+        long=df[' longitude'].values
     except KeyError:
-	long=np.zeros(nr_rows)
+        long=np.zeros(nr_rows)
 
     haspower=1
 
     try:
-	power=df[' Power (watts)'].values
+        power=df[' Power (watts)'].values
     except KeyError:
-	haspower=0
-	
+        haspower=0
+        
     s="2000-01-01"
     tt=ps.parse(s)
     #timezero=time.mktime(tt.timetuple())
     timezero=arrow.get(tt).timestamp
     if seconds[0]<timezero:
-	# print("Taking Row_Date ",row_date)
-	dateobj=ps.parse(row_date)
-	unixtimes=seconds+arrow.get(dateobj).timestamp #time.mktime(dateobj.timetuple())
+        # print("Taking Row_Date ",row_date)
+        dateobj=ps.parse(row_date)
+        unixtimes=seconds+arrow.get(dateobj).timestamp #time.mktime(dateobj.timetuple())
 
 
     
@@ -127,36 +127,36 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds)
 
     for i in range(nr_rows):
-	hri=heartrate[i]
-	if hri == 0:
-	    hri=1
-	f.write('          <Trackpoint>\n')
-	#s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
+        hri=heartrate[i]
+        if hri == 0:
+            hri=1
+        f.write('          <Trackpoint>\n')
+        #s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
         s = arrow.get(unixtimes[i]).isoformat()
-	f.write('            <Time>{s}</Time>\n'.format(s=s))
-	if (lat[i] != 0) & (int[i] != 0 ):
-	    f.write('            <Position>\n')
-	    f.write('              <LatitudeDegrees>{lat}</LatitudeDegrees>\n'.format(
-		lat=lat[i]
-		))
-	    f.write('              <LongitudeDegrees>{long}</LongitudeDegrees>\n'.format(
-		int=int[i]
-		))
-	    f.write('            </Position>\n')
-	f.write('            <DistanceMeters>{d}</DistanceMeters>\n'.format(
-	    d=distancemeters[i]
-	    ))
-	f.write('            <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">\n')
-	f.write('              <Value>{h}</Value>\n'.format(h=hri))
-	f.write('            </HeartRateBpm>\n')
-	f.write('            <Cadence>{c}</Cadence>\n'.format(c=cadence[i]))
-	if haspower:
-	    f.write('            <Extensions>\n')
-	    f.write('              <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">\n')
-	    f.write('                <Watts>{p}</Watts>\n'.format(p=int(power[i])))
-	    f.write('              </TPX>\n')
-	    f.write('            </Extensions>\n')
-	f.write('          </Trackpoint>\n')
+        f.write('            <Time>{s}</Time>\n'.format(s=s))
+        if (lat[i] != 0) & (int[i] != 0 ):
+            f.write('            <Position>\n')
+            f.write('              <LatitudeDegrees>{lat}</LatitudeDegrees>\n'.format(
+                lat=lat[i]
+                ))
+            f.write('              <LongitudeDegrees>{long}</LongitudeDegrees>\n'.format(
+                int=int[i]
+                ))
+            f.write('            </Position>\n')
+        f.write('            <DistanceMeters>{d}</DistanceMeters>\n'.format(
+            d=distancemeters[i]
+            ))
+        f.write('            <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">\n')
+        f.write('              <Value>{h}</Value>\n'.format(h=hri))
+        f.write('            </HeartRateBpm>\n')
+        f.write('            <Cadence>{c}</Cadence>\n'.format(c=cadence[i]))
+        if haspower:
+            f.write('            <Extensions>\n')
+            f.write('              <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">\n')
+            f.write('                <Watts>{p}</Watts>\n'.format(p=int(power[i])))
+            f.write('              </TPX>\n')
+            f.write('            </Extensions>\n')
+        f.write('          </Trackpoint>\n')
 
 
 
@@ -194,34 +194,34 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
-	xsd_file=six.moves.urllib.request.urlopen("https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd",context=ctx)
-	output=open('TrainingCenterDatabasev2.xsd','w') 
-	output.write(xsd_file.read().replace('\n',''))
-	output.close()
-	xsd_filename="TrainingCenterDatabasev2.xsd"
+        xsd_file=six.moves.urllib.request.urlopen("https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd",context=ctx)
+        output=open('TrainingCenterDatabasev2.xsd','w') 
+        output.write(xsd_file.read().replace('\n',''))
+        output.close()
+        xsd_filename="TrainingCenterDatabasev2.xsd"
 
-	# Run some tests
+        # Run some tests
         try:
-	    tree=objectify.parse(tcxFile)
-	    try:
-	        schema=etree.XMLSchema(file=xsd_filename)
-	        parser=objectify.makeparser(schema=schema)
-	        objectify.fromstring(some_xml_string, parser)
-	        # print("YEAH!, your xml file has validated")
-	    except XMLSyntaxError:
+            tree=objectify.parse(tcxFile)
+            try:
+                schema=etree.XMLSchema(file=xsd_filename)
+                parser=objectify.makeparser(schema=schema)
+                objectify.fromstring(some_xml_string, parser)
+                # print("YEAH!, your xml file has validated")
+            except XMLSyntaxError:
         
-	        print("Oh NO!, your xml file does not validate")
-	        pass
+                print("Oh NO!, your xml file does not validate")
+                pass
         except:
             print("Oh NO!, your xmsl file does not validate")
             pass
-	
+        
     except six.moves.urllib.error.URLError:
-	print("cannot download TCX schema")
-	print("your TCX file is unvalidated. Good luck")
+        print("cannot download TCX schema")
+        print("your TCX file is unvalidated. Good luck")
 
     
-	    
+            
 
     return 1
 

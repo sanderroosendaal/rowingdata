@@ -36,8 +36,6 @@ from sys import platform as _platform
 
 import arrow
 
-import mechanize
-
 import numpy as np
 from numpy import isinf, isnan
 
@@ -61,41 +59,74 @@ try:
 except ImportError:
     weknowphysics = 0
 
-
-from . import gpxwrite
-from . import trainingparser
-from . import writetcx
+try:
+    from . import gpxwrite
+    from . import trainingparser
+    from . import writetcx
+except (ValueError,ImportError):
+    import gpxwrite
+    import trainingparser
+    import writetcx
 
 import requests
 
-from . import checkdatafiles
+try:
+    from . import checkdatafiles
+except (ValueError,ImportError):
+    import checkdatafiles
 
-from .csvparsers import (
-    BoatCoachAdvancedParser, BoatCoachOTWParser,
-    BoatCoachParser, CoxMateParser, CSVParser,
-    ErgDataParser, ErgStickParser, KinoMapParser,
-    MysteryParser, RowPerfectParser, RowProParser,
-    QuiskeParser,
-    SpeedCoach2Parser, get_empower_rigging, get_file_line,
-    get_file_type, get_rowpro_footer, lbstoN,
-    make_cumvalues, make_cumvalues_array,
-    painsledDesktopParser, skip_variable_footer,
-    skip_variable_header, speedcoachParser, timestrtosecs,
-    timestrtosecs2, totimestamp, empower_bug_correction,
-    get_empower_firmware
-)
-
-from .otherparsers import TCXParser as TCXParserNoHR
-from .otherparsers import (
-    FITParser, FitSummaryData, fitsummarydata,TCXParser,
-    ExcelTemplate
+try:
+    from .csvparsers import (
+        BoatCoachAdvancedParser, BoatCoachOTWParser,
+        BoatCoachParser, CoxMateParser, CSVParser,
+        ErgDataParser, ErgStickParser, KinoMapParser,
+        MysteryParser, RowPerfectParser, RowProParser,
+        QuiskeParser,
+        SpeedCoach2Parser, get_empower_rigging, get_file_line,
+        get_file_type, get_rowpro_footer, lbstoN,
+        make_cumvalues, make_cumvalues_array,
+        painsledDesktopParser, skip_variable_footer,
+        skip_variable_header, speedcoachParser, timestrtosecs,
+        timestrtosecs2, totimestamp, empower_bug_correction,
+        get_empower_firmware
+    )
+    
+    from .otherparsers import TCXParser as TCXParserNoHR
+    from .otherparsers import (
+        FITParser, FitSummaryData, fitsummarydata,TCXParser,
+        ExcelTemplate
     )
 
-from .utils import (
-    ewmovingaverage, geo_distance, totimestamp, format_pace,
-    format_time, wavg
+    from .utils import (
+        ewmovingaverage, geo_distance, totimestamp, format_pace,
+        format_time, wavg
+    )
+except (ValueError,ImportError):
+    from csvparsers import (
+        BoatCoachAdvancedParser, BoatCoachOTWParser,
+        BoatCoachParser, CoxMateParser, CSVParser,
+        ErgDataParser, ErgStickParser, KinoMapParser,
+        MysteryParser, RowPerfectParser, RowProParser,
+        QuiskeParser,
+        SpeedCoach2Parser, get_empower_rigging, get_file_line,
+        get_file_type, get_rowpro_footer, lbstoN,
+        make_cumvalues, make_cumvalues_array,
+        painsledDesktopParser, skip_variable_footer,
+        skip_variable_header, speedcoachParser, timestrtosecs,
+        timestrtosecs2, totimestamp, empower_bug_correction,
+        get_empower_firmware
+    )
+    
+    from otherparsers import TCXParser as TCXParserNoHR
+    from otherparsers import (
+        FITParser, FitSummaryData, fitsummarydata,TCXParser,
+        ExcelTemplate
     )
 
+    from utils import (
+        ewmovingaverage, geo_distance, totimestamp, format_pace,
+        format_time, wavg
+    )
 
 if tkavail == 0:
     matplotlib.use('Agg')
@@ -246,7 +277,7 @@ def getrigging(fileName="my1x.txt"):
     """
 
     try:
-        rg = pickle.load(open(fileName))
+        rg = pickle.load(open(fileName,'rb'))
     except (IOError, ImportError, ValueError):
         if __name__ == '__main__':
             print("Getrigging: File doesn't exist or is not valid. Creating new")
@@ -3547,7 +3578,7 @@ class rowingdata:
         ax4.set_xticks(list(range(1000, end_dist, 1000)))
         ax4.set_xlabel('Dist (km)')
         ax4.set_ylabel('Watts')
-#	ax4.set_yticks(range(150,450,50))
+#       ax4.set_yticks(range(150,450,50))
         grid(True)
         majorKmFormatter = FuncFormatter(format_dist_tick)
         majorLocator = (1000)
@@ -3566,7 +3597,7 @@ class rowingdata:
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
         ax5.set_ylabel('(sec/500)')
-#	ax5.set_yticks(range(175,95,-10))
+#       ax5.set_yticks(range(175,95,-10))
         grid(True)
         ax5.set_title(fig_title)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -3596,7 +3627,7 @@ class rowingdata:
         ax7.axis([0, end_dist, yrange[0], yrange[1]])
         ax7.set_xticks(list(range(1000, end_dist, 1000)))
         ax7.set_ylabel('Drv / Rcv Time (s)')
-#	ax7.set_yticks(np.arange(0.2,3.0,0.2))
+#       ax7.set_yticks(np.arange(0.2,3.0,0.2))
         grid(True)
 
         # Peak and average force
@@ -3613,7 +3644,7 @@ class rowingdata:
         ax8.set_xticks(list(range(1000, end_dist, 1000)))
         ax8.set_xlabel('Dist (m)')
         ax8.set_ylabel('Force (N)')
-#	ax8.set_yticks(range(25,300,25))
+#       ax8.set_yticks(range(25,300,25))
         grid(True)
         majorLocator = (1000)
         ax8.xaxis.set_major_formatter(majorKmFormatter)
@@ -3686,7 +3717,7 @@ class rowingdata:
         ax1.axis([0, end_dist, 50, 1.5 * an])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
         ax1.set_ylabel('Power (Watts)')
-#	ax1.set_yticks(range(110,200,10))
+#       ax1.set_yticks(range(110,200,10))
         ax1.set_title(fig_title)
 
         grid(True)
@@ -3699,7 +3730,7 @@ class rowingdata:
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(145,95,-5))
+#       ax2.set_yticks(range(145,95,-5))
         grid(True)
         majorTickFormatter = FuncFormatter(format_pace_tick)
         majorLocator = (5)
@@ -3775,7 +3806,7 @@ class rowingdata:
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
         ax5.set_ylabel('(sec/500)')
-#	ax5.set_yticks(range(175,95,-10))
+#       ax5.set_yticks(range(175,95,-10))
         grid(True)
         ax5.set_title(fig_title)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -3790,7 +3821,7 @@ class rowingdata:
         ax6.axis([0, end_dist, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(1000, end_dist, 1000)))
         ax6.set_ylabel('Drive Len(m)')
-#	ax6.set_yticks(np.arange(1.,2.,0.05))
+#       ax6.set_yticks(np.arange(1.,2.,0.05))
         grid(True)
 
         # next we plot the drive time and recovery time
@@ -3805,7 +3836,7 @@ class rowingdata:
         ax7.axis([0, end_dist, yrange[0], yrange[1]])
         ax7.set_xticks(list(range(1000, end_dist, 1000)))
         ax7.set_ylabel('Drv / Rcv Time (s)')
-#	ax7.set_yticks(np.arange(0.2,3.0,0.2))
+#       ax7.set_yticks(np.arange(0.2,3.0,0.2))
         grid(True)
 
         # Peak and average force
@@ -3822,7 +3853,7 @@ class rowingdata:
         ax8.set_xticks(list(range(1000, end_dist, 1000)))
         ax8.set_xlabel('Dist (m)')
         ax8.set_ylabel('Force (N)')
-#	ax8.set_yticks(range(25,300,25))
+#       ax8.set_yticks(range(25,300,25))
         grid(True)
         majorLocator = (1000)
         ax8.xaxis.set_major_formatter(majorKmFormatter)
@@ -3914,7 +3945,7 @@ class rowingdata:
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(145,90,-5))
+#       ax2.set_yticks(range(145,90,-5))
         # ax2.set_title('Pace')
         grid(True)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -3926,7 +3957,7 @@ class rowingdata:
         ax3 = fig1.add_subplot(4, 1, 3)
         ax3.plot(df.ix[:, 'TimeStamp (sec)'],
                  df.ix[:, ' Cadence (stokes/min)'])
-#	rate_ewma=pd.ewma
+#       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
         ax3.set_xlabel('Time (sec)')
@@ -3945,7 +3976,7 @@ class rowingdata:
         ax4.set_xticks(list(range(0, end_time, 300)))
         ax4.set_xlabel('Time (h:m)')
         ax4.set_ylabel('Watts')
-#	ax4.set_yticks(range(150,450,50))
+#       ax4.set_yticks(range(150,450,50))
         # ax4.set_title('Power')
         grid(True)
         majorTimeFormatter = FuncFormatter(format_time_tick)
@@ -3968,7 +3999,7 @@ class rowingdata:
         ax5.axis([0, end_time, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(0, end_time, 300)))
         ax5.set_ylabel('(sec/500)')
-#	ax5.set_yticks(range(145,90,-5))
+#       ax5.set_yticks(range(145,90,-5))
         grid(True)
         ax5.set_title(fig_title)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -3986,7 +4017,7 @@ class rowingdata:
         ax6.set_xticks(list(range(0, end_time, 300)))
         ax6.set_xlabel('Time (sec)')
         ax6.set_ylabel('Drive Len(m)')
-#	ax6.set_yticks(np.arange(1.35,1.6,0.05))
+#       ax6.set_yticks(np.arange(1.35,1.6,0.05))
         ax6.xaxis.set_major_formatter(timeTickFormatter)
         grid(True)
 
@@ -4004,7 +4035,7 @@ class rowingdata:
         ax7.set_xticks(list(range(0, end_time, 300)))
         ax7.set_xlabel('Time (sec)')
         ax7.set_ylabel('Drv / Rcv Time (s)')
-#	ax7.set_yticks(np.arange(0.2,3.0,0.2))
+#       ax7.set_yticks(np.arange(0.2,3.0,0.2))
         ax7.xaxis.set_major_formatter(timeTickFormatter)
         grid(True)
 
@@ -4022,7 +4053,7 @@ class rowingdata:
         ax8.set_xticks(list(range(0, end_time, 300)))
         ax8.set_xlabel('Time (h:m)')
         ax8.set_ylabel('Force (N)')
-#	ax8.set_yticks(range(25,300,25))
+#       ax8.set_yticks(range(25,300,25))
         # ax4.set_title('Power')
         grid(True)
         majorTimeFormatter = FuncFormatter(format_time_tick)
@@ -4046,9 +4077,9 @@ class rowingdata:
         # distance increments for bar chart
         dist_increments = -df.ix[:, 'cum_dist'].diff()
         dist_increments[0] = dist_increments[1]
-#	dist_increments=abs(dist_increments)+dist_increments
+#       dist_increments=abs(dist_increments)+dist_increments
 
-        #	fig1=plt.figure(figsize=(12,10))
+        #       fig1=plt.figure(figsize=(12,10))
         fig1 = figure.Figure(figsize=(12, 10))
         fig_title = title
 
@@ -4106,7 +4137,7 @@ class rowingdata:
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(175,95,-10))
+#       ax2.set_yticks(range(175,95,-10))
         grid(True)
         majorTickFormatter = FuncFormatter(format_pace_tick)
         majorLocator = (5)
@@ -4148,7 +4179,7 @@ class rowingdata:
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
         ax5.set_ylabel('(sec/500)')
-#	ax5.set_yticks(range(175,95,-10))
+#       ax5.set_yticks(range(175,95,-10))
         grid(True)
         ax5.set_title(fig_title)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -4163,7 +4194,7 @@ class rowingdata:
         ax6.axis([0, end_dist, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(1000, end_dist, 1000)))
         ax6.set_ylabel('Drive Len(m)')
-#	ax6.set_yticks(np.arange(1.,2.,0.05))
+#       ax6.set_yticks(np.arange(1.,2.,0.05))
         grid(True)
 
         # next we plot the drive time and recovery time
@@ -4178,7 +4209,7 @@ class rowingdata:
         ax7.axis([0, end_dist, yrange[0], yrange[1]])
         ax7.set_xticks(list(range(1000, end_dist, 1000)))
         ax7.set_ylabel('Drv / Rcv Time (s)')
-#	ax7.set_yticks(np.arange(0.2,3.0,0.2))
+#       ax7.set_yticks(np.arange(0.2,3.0,0.2))
         grid(True)
 
         # Peak and average force
@@ -4195,7 +4226,7 @@ class rowingdata:
         ax8.set_xticks(list(range(1000, end_dist, 1000)))
         ax8.set_xlabel('Dist (m)')
         ax8.set_ylabel('Force (N)')
-#	ax8.set_yticks(range(25,300,25))
+#       ax8.set_yticks(range(25,300,25))
         grid(True)
         majorKmFormatter = FuncFormatter(format_dist_tick)
 
@@ -4229,7 +4260,7 @@ class rowingdata:
         ax5.axis([0, end_time, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(0, end_time, 300)))
         ax5.set_ylabel('(sec/500)')
-#	ax5.set_yticks(range(145,90,-5))
+#       ax5.set_yticks(range(145,90,-5))
         grid(True)
         timeTickFormatter = NullFormatter()
 
@@ -4249,7 +4280,7 @@ class rowingdata:
         ax6.set_xticks(list(range(0, end_time, 300)))
         ax6.set_xlabel('Time (sec)')
         ax6.set_ylabel('Drive Len(m)')
-#	ax6.set_yticks(np.arange(1.35,1.6,0.05))
+#       ax6.set_yticks(np.arange(1.35,1.6,0.05))
         ax6.xaxis.set_major_formatter(timeTickFormatter)
         grid(True)
 
@@ -4267,7 +4298,7 @@ class rowingdata:
         ax7.set_xticks(list(range(0, end_time, 300)))
         ax7.set_xlabel('Time (sec)')
         ax7.set_ylabel('Drv / Rcv Time (s)')
-#	ax7.set_yticks(np.arange(0.2,3.0,0.2))
+#       ax7.set_yticks(np.arange(0.2,3.0,0.2))
         ax7.xaxis.set_major_formatter(timeTickFormatter)
         grid(True)
 
@@ -4285,7 +4316,7 @@ class rowingdata:
         ax8.set_xticks(list(range(0, end_time, 300)))
         ax8.set_xlabel('Time (h:m)')
         ax8.set_ylabel('Force (N)')
-#	ax8.set_yticks(range(25,300,25))
+#       ax8.set_yticks(range(25,300,25))
         # ax4.set_title('Power')
         grid(True)
         majorTimeFormatter = FuncFormatter(format_time_tick)
@@ -4368,7 +4399,7 @@ class rowingdata:
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(175,90,-5))
+#       ax2.set_yticks(range(175,90,-5))
         # ax2.set_title('Pace')
         grid(True)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -4380,9 +4411,9 @@ class rowingdata:
         ax3 = fig1.add_subplot(3, 1, 3)
         ax3.plot(df.ix[:, 'TimeStamp (sec)'],
                  df.ix[:, ' Cadence (stokes/min)'])
-#	rate_ewma=pd.ewma(df,span=20)
-#	ax3.plot(rate_ewma.ix[:,'TimeStamp (sec)'],
-#		 rate_ewma.ix[:,' Cadence (stokes/min)'])
+#       rate_ewma=pd.ewma(df,span=20)
+#       ax3.plot(rate_ewma.ix[:,'TimeStamp (sec)'],
+#                rate_ewma.ix[:,' Cadence (stokes/min)'])
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
         ax3.set_xlabel('Time (sec)')
@@ -4601,7 +4632,7 @@ class rowingdata:
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(145,95,-5))
+#       ax2.set_yticks(range(145,95,-5))
         grid(True)
         majorTickFormatter = FuncFormatter(format_pace_tick)
         majorLocator = (5)
@@ -4667,7 +4698,7 @@ class rowingdata:
         ax4.set_xticks(list(range(1000, end_dist, 1000)))
         ax4.set_xlabel('Dist (m)')
         ax4.set_ylabel('Power (Watts)')
-#	ax4.set_yticks(range(110,200,10))
+#       ax4.set_yticks(range(110,200,10))
 
         grid(True)
 
@@ -4747,7 +4778,7 @@ class rowingdata:
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(145,95,-5))
+#       ax2.set_yticks(range(145,95,-5))
         grid(True)
         majorTickFormatter = FuncFormatter(format_pace_tick)
         majorLocator = (5)
@@ -4813,7 +4844,7 @@ class rowingdata:
         ax4.set_xticks(list(range(1000, end_dist, 1000)))
         ax4.set_xlabel('Dist (m)')
         ax4.set_ylabel('Power (Watts)')
-#	ax4.set_yticks(range(110,200,10))
+#       ax4.set_yticks(range(110,200,10))
 
         grid(True)
 
@@ -4893,7 +4924,7 @@ class rowingdata:
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(145,95,-5))
+#       ax2.set_yticks(range(145,95,-5))
         grid(True)
         majorTickFormatter = FuncFormatter(format_pace_tick)
         majorLocator = (5)
@@ -4959,7 +4990,7 @@ class rowingdata:
         ax4.set_xticks(list(range(1000, end_dist, 1000)))
         ax4.set_xlabel('Dist (m)')
         ax4.set_ylabel('Power (Watts)')
-#	ax4.set_yticks(range(110,200,10))
+#       ax4.set_yticks(range(110,200,10))
 
         grid(True)
 
@@ -5043,7 +5074,7 @@ class rowingdata:
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(145,90,-5))
+#       ax2.set_yticks(range(145,90,-5))
         # ax2.set_title('Pace')
         grid(True)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -5055,7 +5086,7 @@ class rowingdata:
         ax3 = fig1.add_subplot(4, 1, 3)
         ax3.plot(df.ix[:, 'TimeStamp (sec)'],
                  df.ix[:, ' Cadence (stokes/min)'])
-#	rate_ewma=pd.ewma
+#       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
         ax3.set_xlabel('Time (sec)')
@@ -5115,7 +5146,7 @@ class rowingdata:
         ax4.set_xticks(list(range(0, end_time, 300)))
         ax4.set_xlabel('Time (h:m)')
         ax4.set_ylabel('Watts')
-#	ax4.set_yticks(range(150,450,50))
+#       ax4.set_yticks(range(150,450,50))
         # ax4.set_title('Power')
         grid(True)
         majorTimeFormatter = FuncFormatter(format_time_tick)
@@ -5202,7 +5233,7 @@ class rowingdata:
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(145,90,-5))
+#       ax2.set_yticks(range(145,90,-5))
         # ax2.set_title('Pace')
         grid(True)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -5214,7 +5245,7 @@ class rowingdata:
         ax3 = fig1.add_subplot(4, 1, 3)
         ax3.plot(df.ix[:, 'TimeStamp (sec)'],
                  df.ix[:, ' Cadence (stokes/min)'])
-#	rate_ewma=pd.ewma
+#       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
         ax3.set_xlabel('Time (sec)')
@@ -5274,7 +5305,7 @@ class rowingdata:
         ax4.set_xticks(list(range(0, end_time, 300)))
         ax4.set_xlabel('Time (h:m)')
         ax4.set_ylabel('Watts')
-#	ax4.set_yticks(range(150,450,50))
+#       ax4.set_yticks(range(150,450,50))
         # ax4.set_title('Power')
         grid(True)
         majorTimeFormatter = FuncFormatter(format_time_tick)
@@ -5375,7 +5406,7 @@ class rowingdata:
                  df.ix[:, 'nowindpace'])
 
         # ax2.plot(df.ix[:,'TimeStamp (sec)'],
-        #	 ergpace)
+        #        ergpace)
 
         ax2.legend(['Pace', 'Wind corrected pace'],
                    prop={'size': 10}, loc=0)
@@ -5390,7 +5421,7 @@ class rowingdata:
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(145,90,-5))
+#       ax2.set_yticks(range(145,90,-5))
         # ax2.set_title('Pace')
         grid(True)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -5402,7 +5433,7 @@ class rowingdata:
         ax3 = fig1.add_subplot(4, 1, 3)
         ax3.plot(df.ix[:, 'TimeStamp (sec)'],
                  df.ix[:, ' Cadence (stokes/min)'])
-#	rate_ewma=pd.ewma
+#       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
         ax3.set_xlabel('Time (sec)')
@@ -5424,7 +5455,7 @@ class rowingdata:
         ax4.set_xticks(list(range(0, end_time, 300)))
         ax4.set_xlabel('Time (h:m)')
         ax4.set_ylabel('Watts')
-#	ax4.set_yticks(range(150,450,50))
+#       ax4.set_yticks(range(150,450,50))
         # ax4.set_title('Power')
         grid(True)
         majorTimeFormatter = FuncFormatter(format_time_tick)
@@ -5523,8 +5554,8 @@ class rowingdata:
         except KeyError:
             pass
 
-        #	ax2.plot(df.ix[:,'TimeStamp (sec)'],
-        #	 ergpace)
+        #       ax2.plot(df.ix[:,'TimeStamp (sec)'],
+        #        ergpace)
 
         ax2.legend(['Pace', 'Wind corrected pace'],
                    prop={'size': 10}, loc=0)
@@ -5542,7 +5573,7 @@ class rowingdata:
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(145,90,-5))
+#       ax2.set_yticks(range(145,90,-5))
         # ax2.set_title('Pace')
         grid(True)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -5554,7 +5585,7 @@ class rowingdata:
         ax3 = fig1.add_subplot(4, 1, 3)
         ax3.plot(df.ix[:, 'TimeStamp (sec)'],
                  df.ix[:, ' Cadence (stokes/min)'])
-#	rate_ewma=pd.ewma
+#       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
         ax3.set_xlabel('Time (sec)')
@@ -5575,7 +5606,7 @@ class rowingdata:
         ax4.set_xticks(list(range(0, end_time, 300)))
         ax4.set_xlabel('Time (h:m)')
         ax4.set_ylabel('Watts')
-#	ax4.set_yticks(range(150,450,50))
+#       ax4.set_yticks(range(150,450,50))
         # ax4.set_title('Power')
         grid(True)
         majorTimeFormatter = FuncFormatter(format_time_tick)
@@ -5599,7 +5630,7 @@ class rowingdata:
             pass
 
         # ax5.plot(df.ix[:,'TimeStamp (sec)'],
-        #	 ergpace)
+        #        ergpace)
 
         ax5.legend(['Pace', 'Wind corrected pace'],
                    prop={'size': 10}, loc=0)
@@ -5617,7 +5648,7 @@ class rowingdata:
         ax5.axis([0, end_time, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(0, end_time, 300)))
         ax5.set_ylabel('(sec/500)')
-#	ax5.set_yticks(range(145,90,-5))
+#       ax5.set_yticks(range(145,90,-5))
         grid(True)
         ax5.set_title(fig_title)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -5635,7 +5666,7 @@ class rowingdata:
         ax6.set_xticks(list(range(0, end_time, 300)))
         ax6.set_xlabel('Time (sec)')
         ax6.set_ylabel('Drive Len(m)')
-#	ax6.set_yticks(np.arange(1.35,1.6,0.05))
+#       ax6.set_yticks(np.arange(1.35,1.6,0.05))
         ax6.xaxis.set_major_formatter(timeTickFormatter)
         grid(True)
 
@@ -5653,7 +5684,7 @@ class rowingdata:
         ax7.set_xticks(list(range(0, end_time, 300)))
         ax7.set_xlabel('Time (sec)')
         ax7.set_ylabel('Drv / Rcv Time (s)')
-#	ax7.set_yticks(np.arange(0.2,3.0,0.2))
+#       ax7.set_yticks(np.arange(0.2,3.0,0.2))
         ax7.xaxis.set_major_formatter(timeTickFormatter)
         grid(True)
 
@@ -5671,7 +5702,7 @@ class rowingdata:
         ax8.set_xticks(list(range(0, end_time, 300)))
         ax8.set_xlabel('Time (h:m)')
         ax8.set_ylabel('Force (N)')
-#	ax8.set_yticks(range(25,300,25))
+#       ax8.set_yticks(range(25,300,25))
         # ax4.set_title('Power')
         grid(True)
         majorTimeFormatter = FuncFormatter(format_time_tick)
@@ -5760,7 +5791,7 @@ class rowingdata:
         # distance increments for bar chart
         dist_increments = -df.ix[:, 'cum_dist'].diff()
         dist_increments[0] = dist_increments[1]
-#	dist_increments=abs(dist_increments)+dist_increments
+#       dist_increments=abs(dist_increments)+dist_increments
 
         fig1 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate / Power"
@@ -5819,7 +5850,7 @@ class rowingdata:
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(175,95,-10))
+#       ax2.set_yticks(range(175,95,-10))
         grid(True)
         majorTickFormatter = FuncFormatter(format_pace_tick)
         majorLocator = (5)
@@ -5849,7 +5880,7 @@ class rowingdata:
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
         ax5.set_ylabel('(sec/500)')
-#	ax5.set_yticks(range(175,95,-10))
+#       ax5.set_yticks(range(175,95,-10))
         grid(True)
         ax5.set_title(fig_title)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -5865,7 +5896,7 @@ class rowingdata:
         ax6.set_xlabel('Distance (m)')
         ax6.set_xticks(list(range(1000, end_dist, 1000)))
         ax6.set_ylabel('Stroke Distance (m)')
-#	ax6.set_yticks(np.arange(5.5,11.5,0.5))
+#       ax6.set_yticks(np.arange(5.5,11.5,0.5))
         grid(True)
 
         plt.subplots_adjust(hspace=0)
@@ -5952,7 +5983,7 @@ class rowingdata:
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
         ax2.set_ylabel('(sec/500)')
-#	ax2.set_yticks(range(175,90,-5))
+#       ax2.set_yticks(range(175,90,-5))
         # ax2.set_title('Pace')
         grid(True)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -5964,9 +5995,9 @@ class rowingdata:
         ax3 = fig1.add_subplot(3, 1, 3)
         ax3.plot(df.ix[:, 'TimeStamp (sec)'],
                  df.ix[:, ' Cadence (stokes/min)'])
-#	rate_ewma=pd.ewma(df,span=20)
-#	ax3.plot(rate_ewma.ix[:,'TimeStamp (sec)'],
-#		 rate_ewma.ix[:,' Cadence (stokes/min)'])
+#       rate_ewma=pd.ewma(df,span=20)
+#       ax3.plot(rate_ewma.ix[:,'TimeStamp (sec)'],
+#                rate_ewma.ix[:,' Cadence (stokes/min)'])
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
         ax3.set_xlabel('Time (sec)')
@@ -5995,7 +6026,7 @@ class rowingdata:
         ax5.axis([0, end_time, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(0, end_time, 300)))
         ax5.set_ylabel('(sec/500)')
-#	ax5.set_yticks(range(175,90,-5))
+#       ax5.set_yticks(range(175,90,-5))
         grid(True)
         ax5.set_title(fig_title)
         majorFormatter = FuncFormatter(format_pace_tick)
@@ -6014,7 +6045,7 @@ class rowingdata:
         ax6.set_xticks(list(range(0, end_time, 300)))
         ax6.set_xlabel('Time (sec)')
         ax6.set_ylabel('Stroke Distance (m)')
-#	ax6.set_yticks(np.arange(5.5,11.5,0.5))
+#       ax6.set_yticks(np.arange(5.5,11.5,0.5))
         ax6.xaxis.set_major_formatter(timeTickFormatter)
         grid(True)
 
@@ -6045,7 +6076,7 @@ class rowingdata:
         if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
-#	df.sort_values(by=' ElapsedTime (sec)',ascending=1)
+#       df.sort_values(by=' ElapsedTime (sec)',ascending=1)
         df.sort_values(by='TimeStamp (sec)', ascending=1)
         number_of_rows = self.number_of_rows
 
@@ -6122,7 +6153,7 @@ class rowingdata:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
 
-#	df.sort_values(by=' ElapsedTime (sec)',ascending=1)
+#       df.sort_values(by=' ElapsedTime (sec)',ascending=1)
         df.sort_values(by='TimeStamp (sec)', ascending=1)
         number_of_rows = self.number_of_rows
 
@@ -6151,7 +6182,7 @@ class rowingdata:
         # print(time_in_zone)
         wedge_labels = list(self.rwr.powerzones)
         #['power<ut2','power ut2','power ut1','power at',
-        #		'power tr','power an']
+        #               'power tr','power an']
 
         totaltime = time_in_zone.sum()
         perc = 100. * time_in_zone / totaltime
@@ -6204,7 +6235,7 @@ class rowingdata:
         if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
-#	df.sort_values(by=' ElapsedTime (sec)',ascending=1)
+#       df.sort_values(by=' ElapsedTime (sec)',ascending=1)
         df.sort_values(by='TimeStamp (sec)', ascending=1)
         number_of_rows = self.number_of_rows
 
@@ -6234,7 +6265,7 @@ class rowingdata:
         wedge_labels = list(self.rwr.powerzones)
 
         #['power<ut2','power ut2','power ut1','power at',
-        #		'power tr','power an']
+        #               'power tr','power an']
 
         totaltime = time_in_zone.sum()
         perc = 100. * time_in_zone / totaltime
@@ -6327,7 +6358,7 @@ class rowingdata:
                 wedge_labels[i] = ''
 
         # print(wedge_labels)
-#	fig2=plt.figure(figsize=(5,5))
+#       fig2=plt.figure(figsize=(5,5))
         fig2 = figure.Figure(figsize=(5, 5))
         fig_title = title
         ax9 = fig2.add_subplot(1, 1, 1)
@@ -6343,169 +6374,6 @@ class rowingdata:
         
         return fig2
 
-    def uploadtoc2(self,
-                   comment="uploaded by rowingdata tool\n",
-                   rowerFile="defaultrower.txt"):
-        """ Upload your row to the Concept2 logbook
-
-        Will ask for username and password if not known
-        Will offer to store username and password locally for you.
-        This is not mandatory
-
-        This just fills the online logbook form. It may break if Concept2
-        changes their website. I am waiting for a Concept2 Logbook API
-
-        """
-        if self.empty:
-            return None
-
-        comment += "version %s.\n" % __version__
-        comment += self.readfilename
-
-        # prepare the needed data
-        # Date
-        datestring = "{mo:0>2}/{dd:0>2}/{yr}".format(
-            yr=self.rowdatetime.year,
-            mo=self.rowdatetime.month,
-            dd=self.rowdatetime.day
-        )
-
-        rowtypenr = [1]
-        weightselect = ["L"]
-
-        # row type
-        availabletypes = getrowtype()
-        try:
-            rowtypenr = availabletypes[self.rowtype]
-        except KeyError:
-            rowtypenr = [1]
-
-        # weight
-        if (self.rwr.weightcategory.lower() == "lwt"):
-            weightselect = ["L"]
-        else:
-            weightselect = ["H"]
-
-        df = self.df
-        if self.absolutetimestamps:
-            df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
-                df['TimeStamp (sec)'].values[0]
-
-        # total dist, total time, avg pace, avg hr, max hr, avg dps
-
-        totaldist = df['cum_dist'].max()
-        totaltime = df['TimeStamp (sec)'].max()
-        avgpace = 500 * totaltime / totaldist
-        #avghr = df[' HRCur (bpm)'].mean()
-        avghr = wavg(df,' HRCur (bpm)','deltat')
-        maxhr = df[' HRCur (bpm)'].max()
-        #avgspm = df[' Cadence (stokes/min)'].mean()
-        avgdps = totaldist / (totaltime * avgspm / 60.)
-        avgspm = wavg(df,' Cadence (stokes/min)','deltat')
-
-        hour = int(totaltime / 3600)
-        min = int((totaltime - hour * 3600.) / 60)
-        sec = int((totaltime - hour * 3600. - min * 60.))
-        tenth = int(10 * (totaltime - hour * 3600. - min * 60. - sec))
-
-        # log in to concept2 log, ask for password if it isn't known
-        print("login to concept2 log")
-        save_user = "y"
-        save_pass = "y"
-        if self.rwr.c2username == "":
-            save_user = "n"
-            self.rwr.c2username = input('C2 user name:')
-            save_user = input(
-                'Would you like to save your username (y/n)? ')
-
-        if self.rwr.c2password == "":
-            save_pass = "n"
-            self.rwr.c2password = getpass.getpass('C2 password:')
-            save_pass = input(
-                'Would you like to save your password (y/n)? ')
-
-        # try to log in to logbook
-        br = mechanize.Browser()
-        loginpage = br.open("http://log.concept2.com/login")
-
-        # the login is the first form
-        br.select_form(nr=0)
-        # set user name
-        usercntrl = br.form.find_control("username")
-        usercntrl.value = self.rwr.c2username
-
-        pwcntrl = br.form.find_control("password")
-        pwcntrl.value = self.rwr.c2password
-
-        response = br.submit()
-        if "Incorrect" in response.read():
-            print("Incorrect username/password combination")
-            print("")
-        else:
-            # continue
-            print("login successful")
-            print("")
-            br.select_form(nr=0)
-
-            br.form['type'] = rowtypenr
-            print(("setting type to " + self.rowtype))
-
-            datecntrl = br.form.find_control("date")
-            datecntrl.value = datestring
-            print(("setting date to " + datestring))
-
-            distcntrl = br.form.find_control("distance")
-            distcntrl.value = str(int(totaldist))
-            print(("setting distance to " + str(int(totaldist))))
-
-            hrscntrl = br.form.find_control("hours")
-            hrscntrl.value = str(hour)
-            mincntrl = br.form.find_control("minutes")
-            mincntrl.value = str(min)
-            secscntrl = br.form.find_control("seconds")
-            secscntrl.value = str(sec)
-            tenthscntrl = br.form.find_control("tenths")
-            tenthscntrl.value = str(tenth)
-
-            print(("setting duration to {hour} hours, {min} minutes, {sec} seconds, {tenth} tenths".format(
-                hour=hour,
-                min=min,
-                sec=sec,
-                tenth=tenth
-            )))
-
-            br.form['weight_class'] = weightselect
-
-            print(("Setting weight class to " +
-                  self.rwr.weightcategory + "(" + weightselect[0] + ")"))
-
-            commentscontrol = br.form.find_control("comments")
-            commentscontrol.value = comment
-            print("Setting comment to:")
-            print(comment)
-
-            print("")
-
-            res = br.submit()
-
-            if "New workout added" in res.read():
-
-                # workout added
-                print("workout added")
-            else:
-                print("something went wrong")
-
-        if save_user == "n":
-            self.rwr.c2username = ''
-            print("forgetting user name")
-        if save_pass == "n":
-            self.rwr.c2password = ''
-            print("forgetting password")
-
-        if (save_user == "y" or save_pass == "y"):
-            self.rwr.write(rowerFile)
-
-        print("done")
 
 
 def dorowall(readFile="testdata", window_size=20):

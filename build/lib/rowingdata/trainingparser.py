@@ -102,19 +102,19 @@ def getlist(s,sel='value'):
     s2=s[3:]
 
     if s2 != []:
-	if sel == 'value':
-	    return [s1[0]]+getlist(s2,sel=sel)
-	if sel == 'unit':
-	    return [s1[1]]+getlist(s2,sel=sel)
-	if sel == 'type':
-	    return [s1[2]]+getlist(s2,sel=sel)
+        if sel == 'value':
+            return [s1[0]]+getlist(s2,sel=sel)
+        if sel == 'unit':
+            return [s1[1]]+getlist(s2,sel=sel)
+        if sel == 'type':
+            return [s1[2]]+getlist(s2,sel=sel)
     else:
-	if sel == 'value':
-	    return [s[0]]
-	if sel == 'unit':
-	    return [s[1]]
-	if sel == 'type':
-	    return [s[2]]
+        if sel == 'value':
+            return [s[0]]
+        if sel == 'unit':
+            return [s[1]]
+        if sel == 'type':
+            return [s[2]]
 
     return 0
 
