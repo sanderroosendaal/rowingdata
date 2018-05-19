@@ -5,8 +5,14 @@ import pandas as pd
 from pandas import DataFrame
 from lxml import objectify
 from fitparse import FitFile
-from . import tcxtools
-from .utils import totimestamp, geo_distance
+try:
+    from . import tcxtools
+    from .utils import totimestamp, geo_distance
+except (ValueError,ImportError):
+    import tcxtools
+    from utils import totimestamp, geo_distance
+
+    
 import gzip
 import arrow
 import shutil

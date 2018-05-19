@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 from __future__ import print_function
-from . import rowingdata
+
+try:
+    from . import rowingdata
+except (ValueError,ImportError):
+    import rowingdata
 
 import os
 

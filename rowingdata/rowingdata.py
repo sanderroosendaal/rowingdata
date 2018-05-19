@@ -59,41 +59,74 @@ try:
 except ImportError:
     weknowphysics = 0
 
-
-from . import gpxwrite
-from . import trainingparser
-from . import writetcx
+try:
+    from . import gpxwrite
+    from . import trainingparser
+    from . import writetcx
+except (ValueError,ImportError):
+    import gpxwrite
+    import trainingparser
+    import writetcx
 
 import requests
 
-from . import checkdatafiles
+try:
+    from . import checkdatafiles
+except (ValueError,ImportError):
+    import checkdatafiles
 
-from .csvparsers import (
-    BoatCoachAdvancedParser, BoatCoachOTWParser,
-    BoatCoachParser, CoxMateParser, CSVParser,
-    ErgDataParser, ErgStickParser, KinoMapParser,
-    MysteryParser, RowPerfectParser, RowProParser,
-    QuiskeParser,
-    SpeedCoach2Parser, get_empower_rigging, get_file_line,
-    get_file_type, get_rowpro_footer, lbstoN,
-    make_cumvalues, make_cumvalues_array,
-    painsledDesktopParser, skip_variable_footer,
-    skip_variable_header, speedcoachParser, timestrtosecs,
-    timestrtosecs2, totimestamp, empower_bug_correction,
-    get_empower_firmware
-)
-
-from .otherparsers import TCXParser as TCXParserNoHR
-from .otherparsers import (
-    FITParser, FitSummaryData, fitsummarydata,TCXParser,
-    ExcelTemplate
+try:
+    from .csvparsers import (
+        BoatCoachAdvancedParser, BoatCoachOTWParser,
+        BoatCoachParser, CoxMateParser, CSVParser,
+        ErgDataParser, ErgStickParser, KinoMapParser,
+        MysteryParser, RowPerfectParser, RowProParser,
+        QuiskeParser,
+        SpeedCoach2Parser, get_empower_rigging, get_file_line,
+        get_file_type, get_rowpro_footer, lbstoN,
+        make_cumvalues, make_cumvalues_array,
+        painsledDesktopParser, skip_variable_footer,
+        skip_variable_header, speedcoachParser, timestrtosecs,
+        timestrtosecs2, totimestamp, empower_bug_correction,
+        get_empower_firmware
+    )
+    
+    from .otherparsers import TCXParser as TCXParserNoHR
+    from .otherparsers import (
+        FITParser, FitSummaryData, fitsummarydata,TCXParser,
+        ExcelTemplate
     )
 
-from .utils import (
-    ewmovingaverage, geo_distance, totimestamp, format_pace,
-    format_time, wavg
+    from .utils import (
+        ewmovingaverage, geo_distance, totimestamp, format_pace,
+        format_time, wavg
+    )
+except (ValueError,ImportError):
+    from csvparsers import (
+        BoatCoachAdvancedParser, BoatCoachOTWParser,
+        BoatCoachParser, CoxMateParser, CSVParser,
+        ErgDataParser, ErgStickParser, KinoMapParser,
+        MysteryParser, RowPerfectParser, RowProParser,
+        QuiskeParser,
+        SpeedCoach2Parser, get_empower_rigging, get_file_line,
+        get_file_type, get_rowpro_footer, lbstoN,
+        make_cumvalues, make_cumvalues_array,
+        painsledDesktopParser, skip_variable_footer,
+        skip_variable_header, speedcoachParser, timestrtosecs,
+        timestrtosecs2, totimestamp, empower_bug_correction,
+        get_empower_firmware
+    )
+    
+    from otherparsers import TCXParser as TCXParserNoHR
+    from otherparsers import (
+        FITParser, FitSummaryData, fitsummarydata,TCXParser,
+        ExcelTemplate
     )
 
+    from utils import (
+        ewmovingaverage, geo_distance, totimestamp, format_pace,
+        format_time, wavg
+    )
 
 if tkavail == 0:
     matplotlib.use('Agg')
@@ -244,7 +277,7 @@ def getrigging(fileName="my1x.txt"):
     """
 
     try:
-        rg = pickle.load(open(fileName))
+        rg = pickle.load(open(fileName,'rb'))
     except (IOError, ImportError, ValueError):
         if __name__ == '__main__':
             print("Getrigging: File doesn't exist or is not valid. Creating new")

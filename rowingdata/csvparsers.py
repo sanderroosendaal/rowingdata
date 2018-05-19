@@ -27,11 +27,20 @@ from timezonefinder import TimezoneFinder
 from lxml import objectify
 from fitparse import FitFile
 
-from .utils import (
-    totimestamp, format_pace, format_time,
-)
+try:
+    from .utils import (
+        totimestamp, format_pace, format_time,
+    )
 
-from .tcxtools import strip_control_characters
+    from .tcxtools import strip_control_characters
+except (ValueError,ImportError):
+    from utils import (
+        totimestamp, format_pace, format_time,
+    )
+
+    from tcxtools import strip_control_characters
+
+    
 import six
 from six.moves import range
 from six.moves import zip
