@@ -111,7 +111,7 @@ setup(name='rowingdata',
 #	      'boatedit=rowingdata.boatedit:main',
 #	      'rowproplottime=rowingdata.rowproplottime:main'
 #	  ]
-      },
+#      },
       
 #      scripts=[
 #	  'bin/painsledplot2.py',
