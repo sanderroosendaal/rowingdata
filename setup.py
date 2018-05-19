@@ -1,5 +1,5 @@
 
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 from setuptools import setup, find_packages
 
 import re
@@ -52,33 +52,33 @@ setup(name='rowingdata',
       ],
 
       zip_safe=False,
-      include_package_data=True,
-      # relative to the rowingdata directory
-      package_data={
-	  'testdata':[
-	      'crewnerddata.CSV',
-	      'crewnerddata.tcx',
-	      'example.csv',
-	      'painsled_desktop_example.csv',
-	      'RP_testdata.csv',
-              'SpeedCoach2example.csv',
-	      'testdata.csv'
-	  ],
-          'bin':[
-	      'testdata.csv',
-	      'crewnerddata.csv',
-	      'crewnerddata.tcx',
-	  ],
-	  'rigging':[
-	      '1x.txt',
-	      '2x.txt',
-	      '4x-.txt',
-	      '4-.txt',
-	      '4+.txt',
-	      '2-.txt',
-	      '8+.txt'
-	  ]
-      },
+ #     include_package_data=True,
+ #     # relative to the rowingdata directory
+ #     package_data={
+#	  'testdata':[
+#	      'crewnerddata.CSV',
+#	      'crewnerddata.tcx',
+#	      'example.csv',
+#	      'painsled_desktop_example.csv',
+#	      'RP_testdata.csv',
+ #             'SpeedCoach2example.csv',
+#	      'testdata.csv'
+#	  ],
+ #         'bin':[
+#	      'testdata.csv',
+#	      'crewnerddata.csv',
+#	      'crewnerddata.tcx',
+#	  ],
+#	  'rigging':[
+#	      '1x.txt',
+#	      '2x.txt',
+#	      '4x-.txt',
+#	      '4-.txt',
+#	      '4+.txt',
+#	      '2-.txt',
+#	      '8+.txt'
+#	  ]
+ #     },
       
 #      entry_points={
 #	  "console_scripts": [
