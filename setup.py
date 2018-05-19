@@ -78,7 +78,8 @@ setup(name='rowingdata',
 	      '8+.txt'
 	  ]
       },
-      
+
+    
       entry_points={
 	  "console_scripts": [
 	      'rowingdata=rowingdata.rowingdata:main',
