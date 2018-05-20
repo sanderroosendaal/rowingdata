@@ -10,6 +10,7 @@ addons:
     - tcsh
     - posh
     - ksh
+  update: true
 git:
   depth: 100
 cache: pip
