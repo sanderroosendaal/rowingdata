@@ -22,6 +22,7 @@ requires = [
     'arrow',
     'python-dateutil',
     'docopt',
+    'mechanize',
     'tqdm',
     'rowingphysics>=0.2.3',
     'iso8601',
