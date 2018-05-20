@@ -1,4 +1,4 @@
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import
 #from setuptools import setup, find_packages
 from distutils.core import setup
 
@@ -37,6 +37,7 @@ setup(name='rowingdata',
           'scipy',
           'matplotlib',
           'pandas',
+          'fitparse',
 #          'fitparse',
           'arrow',
 #	  'mechanize',

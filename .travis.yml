@@ -30,12 +30,13 @@ before_install:
 - sudo rm -rf /dev/shm
 - sudo ln -s /run/shm /dev/shm
 install:
-- git clone -b master https://github.com/dtcooper/python-fitparse.git
+- pip install fitparse
+#- git clone -b master https://github.com/dtcooper/python-fitparse.git
 - pip install twine
-- cd python-fitparse
+#- cd python-fitparse
 #- git checkout 5d8bb3a1a2f6a36d9bf645af3e6bf93cc62b9908
-- python setup.py install
-- cd ..
+#- python setup.py install
+#- cd ..
 - conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels
 - pip install arrow docopt tqdm rowingphysics
 - pip install iso8601 lxml xmltodict nose_parameterized timezonefinder
