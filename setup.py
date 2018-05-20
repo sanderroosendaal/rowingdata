@@ -2,7 +2,6 @@ from distutils.core import setup
 
 import re
 
-from rowingdata import rowingdata
 
 def readme():
     with open('README.rst') as f:
