@@ -403,7 +403,7 @@ def skip_variable_footer(f):
 
     extension = f[-3:].lower()
     if extension == '.gz':
-        fop = gzip.open(f,'rb')
+        fop = gzip.open(f,'rt')
     else:
         fop = io.open(f, 'r')
 
@@ -425,7 +425,7 @@ def get_rowpro_footer(f, converters={}):
 
     extension = f[-3:].lower()
     if extension == '.gz':
-        fop = gzip.open(f,'rb')
+        fop = gzip.open(f,'rt')
     else:
         fop = io.open(f, 'r')
 
@@ -452,7 +452,7 @@ def skip_variable_header(f):
     extension = f[-3:].lower()
     firmware = ''
     if extension == '.gz':
-        fop = gzip.open(f,'rb')
+        fop = gzip.open(f,'rt')
     else:
         fop = io.open(f, 'r')
 
@@ -486,7 +486,7 @@ def bc_variable_header(f):
     counter = 0
     extension = f[-3:].lower()
     if extension == '.gz':
-        fop = gzip.open(f,'rb')
+        fop = gzip.open(f,'rt')
     else:
         fop = io.open(f, 'r')
 
@@ -1053,12 +1053,8 @@ class BoatCoachParser(CSVParser):
                 with io.open(csvfile, 'rt') as fop:
                     line = fop.readline()
                     dated = re.split('Date:', line)[1][1:-1]
-            except UnicodeDecodeError:
-                with io.open(csvfile,'r',encoding='utf-8') as fop:
-                    line = fop.readline()
-                    dated = re.split('Date:', line)[1][1:-1]
-            except IndexError:
-                with gzip.open(csvfile,'rb') as fop:
+            except (IndexError,UnicodeDecodeError):
+                with gzip.open(csvfile,'rt') as fop:
                     line = fop.readline()
                     dated = re.split('Date:', line)[1][1:-1]
             row_date = parser.parse(dated, fuzzy=True)
@@ -1139,7 +1135,7 @@ class BoatCoachParser(CSVParser):
         data = []
         try:
 
-            with gzip.open(csvfile,'r') as f:
+            with gzip.open(csvfile,'rt') as f:
                 for line in f:
                     s  = line.split(',')
                     data.append(','.join([str(x) for x in s[26:-1]]))
@@ -1313,8 +1309,8 @@ class BoatCoachAdvancedParser(CSVParser):
             with io.open(csvfile, 'r') as fop:
                 line = fop.readline()
                 dated = re.split('Date:', line)[1][1:-1]
-        except IndexError:
-            with gzip.open(csvfile,'rb') as fop:
+        except (IndexError,UnicodeDecodeError):
+            with gzip.open(csvfile,'rt') as fop:
                 line = fop.readline()
                 dated = re.split('Date:', line)[1][1:-1]
 
