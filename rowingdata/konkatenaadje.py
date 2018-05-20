@@ -13,7 +13,7 @@ def test():
     y=np.concatenate((y1,y2))
     print((len(x),len(y)))
     data=pd.DataFrame({'x':x,
-			 'y':y})
+                         'y':y})
     data=data.drop_duplicates(subset='x').sort('x',ascending=1)
 
     return data
