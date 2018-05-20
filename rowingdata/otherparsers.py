@@ -371,9 +371,11 @@ class FITParser(object):
 
         self.df = pd.DataFrame(recorddicts)
 
-        # columns to lowercase
+        # columns to lowercase - this should be easier
         self.df.columns = [strip_non_ascii(x) for x in self.df.columns]
         self.df.columns = [x.encode('ascii','ignore') for x in self.df.columns]
+#        self.df.columns = [str(x) for x in self.df.columns]
+        self.df.columns = [x.decode('ascii') for x in self.df.columns]
         self.df.rename(columns = str.lower,inplace=True)
 
         # check column dimensions

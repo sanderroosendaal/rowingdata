@@ -1,6 +1,9 @@
 # pylint: disable=C0103, C0303
 from __future__ import absolute_import
+from builtins import (bytes, str, open, super, range,
+                      zip, round, input, int, pow, object)
 import os
+import io
 import csv
 import gzip
 import zipfile
@@ -214,7 +217,21 @@ def get_file_type(f):
         return 'kml'
     if extension == '.gz':
         extension = f[-6:-3].lower()
-        with gzip.open(f, 'r') as fop:
+        if extension == 'fit':
+            newfile = 'temp.fit'
+            with gzip.open(f,'rb') as fop:
+                with io.open(newfile,'wb') as f_out:
+                    shutil.copyfileobj(fop, f_out)
+
+                try:
+                    FitFile(newfile, check_crc=False).parse()
+                    return 'fit'
+                except:
+                    return 'unknown'
+                
+            return 'fit'
+        
+        with gzip.open(f, 'rt') as fop:
             try:
                 if extension == 'csv':
                     return csvtests(fop)
@@ -227,18 +244,6 @@ def get_file_type(f):
                         return 'tcx'
                     except:
                         return 'unknown'
-                elif extension == 'fit':
-                    newfile = 'temp.fit'
-                    with open(newfile,'wb') as f_out:
-                        shutil.copyfileobj(fop, f_out)
-
-                    try:
-                        FitFile(newfile, check_crc=False).parse()
-                        return 'fit'
-                    except:
-                        return 'unknown'
-
-                    return 'fit'
 
             except IOError:
                 return 'notgzip'
@@ -246,11 +251,11 @@ def get_file_type(f):
         if get_file_linecount(f) <= 2:
             return 'nostrokes'
 
-        with open(f, 'r') as fop:
+        with io.open(f, 'r') as fop:
             return csvtests(fop)
 
     if extension == 'tcx':
-        with open(f,'r') as fop:
+        with io.open(f,'r') as fop:
             try:
                 input = fop.read()
                 input = strip_control_characters(input)
@@ -293,7 +298,7 @@ def get_file_linecount(f):
         with gzip.open(f,'rb') as fop:
             count = sum(1 for line in fop if line.rstrip('\n'))
     else:
-        with open(f, 'r') as fop:
+        with io.open(f, 'r') as fop:
             count = sum(1 for line in fop if line.rstrip('\n'))
 
     return count
@@ -302,11 +307,11 @@ def get_file_line(linenr, f):
     line = ''
     extension = f[-3:].lower()
     if extension == '.gz':
-        with gzip.open(f, 'r') as fop:
+        with gzip.open(f, 'rt') as fop:
             for i in range(linenr):
                 line = fop.readline()
     else:
-        with open(f, 'r') as fop:
+        with io.open(f, 'r') as fop:
             for i in range(linenr):
                 line = fop.readline()
 
@@ -317,7 +322,7 @@ def get_separator(linenr, f):
     line = ''
     extension = f[-3:].lower()
     if extension == '.gz':
-        with gzip.open(f, 'r') as fop:
+        with gzip.open(f, 'rt') as fop:
             for i in range(linenr):
                 line = fop.readline()
 
@@ -325,7 +330,7 @@ def get_separator(linenr, f):
             sniffer = csv.Sniffer()
             sep = sniffer.sniff(line).delimiter
     else:
-        with open(f, 'r') as fop:
+        with io.open(f, 'r') as fop:
             for i in range(linenr):
                 line = fop.readline()
 
@@ -362,7 +367,7 @@ def get_empower_rigging(f):
     oarlength = 289.
     inboard = 88.
     line = '1'
-    with open(f, 'r') as fop:
+    with io.open(f, 'r') as fop:
         for line in fop:
             if 'Oar Length' in line:
                 try:
@@ -380,7 +385,7 @@ def get_empower_rigging(f):
 
 def get_empower_firmware(f):
     firmware = ''
-    with open(f,'r') as fop:
+    with io.open(f,'r') as fop:
         for line in fop:
             if 'firmware' in line.lower() and 'oar' in line.lower():
                 firmware = getfirmware(line)
@@ -400,7 +405,7 @@ def skip_variable_footer(f):
     if extension == '.gz':
         fop = gzip.open(f,'rb')
     else:
-        fop = open(f, 'r')
+        fop = io.open(f, 'r')
 
     for line in fop:
         if line.startswith('Type') and counter > 15:
@@ -422,7 +427,7 @@ def get_rowpro_footer(f, converters={}):
     if extension == '.gz':
         fop = gzip.open(f,'rb')
     else:
-        fop = open(f, 'r')
+        fop = io.open(f, 'r')
 
     for line in fop:
         if line.startswith('Type') and counter > 15:
@@ -449,7 +454,7 @@ def skip_variable_header(f):
     if extension == '.gz':
         fop = gzip.open(f,'rb')
     else:
-        fop = open(f, 'r')
+        fop = io.open(f, 'r')
 
 
     for line in fop:
@@ -483,7 +488,7 @@ def bc_variable_header(f):
     if extension == '.gz':
         fop = gzip.open(f,'rb')
     else:
-        fop = open(f, 'r')
+        fop = io.open(f, 'r')
 
 
     for line in fop:
@@ -880,7 +885,7 @@ class CoxMateParser(CSVParser):
         # remove "00 waiting to row"
 
         self.cols = [
-            'Time',
+            '',
             'Distance',
             'Rating',
             'Heart Rate',
@@ -921,6 +926,7 @@ class CoxMateParser(CSVParser):
         unixtimes = tts.apply(lambda x: arrow.get(
             x).timestamp + arrow.get(x).microsecond / 1.e6)
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
+
 
         self.to_standard()
 
@@ -1044,7 +1050,11 @@ class BoatCoachParser(CSVParser):
         # get date from footer
         try:
             try:
-                with open(csvfile, 'r') as fop:
+                with io.open(csvfile, 'rt') as fop:
+                    line = fop.readline()
+                    dated = re.split('Date:', line)[1][1:-1]
+            except UnicodeDecodeError:
+                with io.open(csvfile,'r',encoding='utf-8') as fop:
                     line = fop.readline()
                     dated = re.split('Date:', line)[1][1:-1]
             except IndexError:
@@ -1134,7 +1144,7 @@ class BoatCoachParser(CSVParser):
                     s  = line.split(',')
                     data.append(','.join([str(x) for x in s[26:-1]]))
         except IOError:
-            with open(csvfile,'r') as f:
+            with io.open(csvfile,'r') as f:
                 for line in f:
                     s  = line.split(',')
                     data.append(','.join([str(x) for x in s[26:-1]]))
@@ -1300,7 +1310,7 @@ class BoatCoachAdvancedParser(CSVParser):
 
         # get date from footer
         try:
-            with open(csvfile, 'r') as fop:
+            with io.open(csvfile, 'r') as fop:
                 line = fop.readline()
                 dated = re.split('Date:', line)[1][1:-1]
         except IndexError:
@@ -1884,19 +1894,20 @@ class SpeedCoach2Parser(CSVParser):
 
         firmware = get_empower_firmware(csvfile)
         corr_factor = 1.0
-        if firmware < 2.18 and firmware is not None:
-            # apply correction
-            oarlength, inboard = get_empower_rigging(csvfile)
-            if oarlength is not None and oarlength > 3.30:
-                # sweep
-                a = 0.15
-                b = 0.275
-                corr_factor = empower_bug_correction(oarlength,inboard,a,b)
-            elif oarlength is not None and oarlength <= 3.3:
-                # scull
-                a = 0.06
-                b = 0.225
-                corr_factor = empower_bug_correction(oarlength,inboard,a,b)
+        if firmware is not None:
+            if firmware < 2.18:
+                # apply correction
+                oarlength, inboard = get_empower_rigging(csvfile)
+                if oarlength is not None and oarlength > 3.30:
+                    # sweep
+                    a = 0.15
+                    b = 0.275
+                    corr_factor = empower_bug_correction(oarlength,inboard,a,b)
+                elif oarlength is not None and oarlength <= 3.3:
+                    # scull
+                    a = 0.06
+                    b = 0.225
+                    corr_factor = empower_bug_correction(oarlength,inboard,a,b)
 
 
             
