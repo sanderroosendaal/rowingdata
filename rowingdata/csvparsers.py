@@ -1,7 +1,7 @@
 # pylint: disable=C0103, C0303
 from __future__ import absolute_import
-from builtins import (bytes, str, open, super, range,
-                      zip, round, input, int, pow, object)
+#from builtins import (bytes, str, open, super, range,
+#                      zip, round, input, int, pow, object)
 import os
 import io
 import csv
@@ -48,6 +48,16 @@ import six
 from six.moves import range
 from six.moves import zip
 
+import sys
+if sys.version_info[0]<=2:
+    pythonversion = 2
+    readmode = 'r'
+else:
+    readmode = 'rt'
+    pythonversion = 3
+    from io import open
+
+    
 # we're going to plot SI units - convert pound force to Newton
 lbstoN = 4.44822
 
@@ -220,7 +230,7 @@ def get_file_type(f):
         if extension == 'fit':
             newfile = 'temp.fit'
             with gzip.open(f,'rb') as fop:
-                with io.open(newfile,'wb') as f_out:
+                with open(newfile,'wb') as f_out:
                     shutil.copyfileobj(fop, f_out)
 
                 try:
@@ -230,8 +240,8 @@ def get_file_type(f):
                     return 'unknown'
                 
             return 'fit'
-        
-        with gzip.open(f, 'rt') as fop:
+
+        with gzip.open(f, readmode) as fop:
             try:
                 if extension == 'csv':
                     return csvtests(fop)
@@ -251,11 +261,11 @@ def get_file_type(f):
         if get_file_linecount(f) <= 2:
             return 'nostrokes'
 
-        with io.open(f, 'r') as fop:
+        with open(f, 'r') as fop:
             return csvtests(fop)
 
     if extension == 'tcx':
-        with io.open(f,'r') as fop:
+        with open(f,'r') as fop:
             try:
                 input = fop.read()
                 input = strip_control_characters(input)
@@ -298,7 +308,7 @@ def get_file_linecount(f):
         with gzip.open(f,'rb') as fop:
             count = sum(1 for line in fop if line.rstrip('\n'))
     else:
-        with io.open(f, 'r') as fop:
+        with open(f, 'r') as fop:
             count = sum(1 for line in fop if line.rstrip('\n'))
 
     return count
@@ -307,11 +317,11 @@ def get_file_line(linenr, f):
     line = ''
     extension = f[-3:].lower()
     if extension == '.gz':
-        with gzip.open(f, 'rt') as fop:
+        with gzip.open(f, readmode) as fop:
             for i in range(linenr):
                 line = fop.readline()
     else:
-        with io.open(f, 'r') as fop:
+        with open(f, 'r') as fop:
             for i in range(linenr):
                 line = fop.readline()
 
@@ -322,7 +332,7 @@ def get_separator(linenr, f):
     line = ''
     extension = f[-3:].lower()
     if extension == '.gz':
-        with gzip.open(f, 'rt') as fop:
+        with gzip.open(f, readmode) as fop:
             for i in range(linenr):
                 line = fop.readline()
 
@@ -330,7 +340,7 @@ def get_separator(linenr, f):
             sniffer = csv.Sniffer()
             sep = sniffer.sniff(line).delimiter
     else:
-        with io.open(f, 'r') as fop:
+        with open(f, 'r') as fop:
             for i in range(linenr):
                 line = fop.readline()
 
@@ -367,7 +377,7 @@ def get_empower_rigging(f):
     oarlength = 289.
     inboard = 88.
     line = '1'
-    with io.open(f, 'r') as fop:
+    with open(f, 'r') as fop:
         for line in fop:
             if 'Oar Length' in line:
                 try:
@@ -385,7 +395,7 @@ def get_empower_rigging(f):
 
 def get_empower_firmware(f):
     firmware = ''
-    with io.open(f,'r') as fop:
+    with open(f,'r') as fop:
         for line in fop:
             if 'firmware' in line.lower() and 'oar' in line.lower():
                 firmware = getfirmware(line)
@@ -403,9 +413,9 @@ def skip_variable_footer(f):
 
     extension = f[-3:].lower()
     if extension == '.gz':
-        fop = gzip.open(f,'rt')
+        fop = gzip.open(f,readmode)
     else:
-        fop = io.open(f, 'r')
+        fop = open(f, 'r')
 
     for line in fop:
         if line.startswith('Type') and counter > 15:
@@ -425,9 +435,9 @@ def get_rowpro_footer(f, converters={}):
 
     extension = f[-3:].lower()
     if extension == '.gz':
-        fop = gzip.open(f,'rt')
+        fop = gzip.open(f,readmode)
     else:
-        fop = io.open(f, 'r')
+        fop = open(f, 'r')
 
     for line in fop:
         if line.startswith('Type') and counter > 15:
@@ -452,9 +462,9 @@ def skip_variable_header(f):
     extension = f[-3:].lower()
     firmware = ''
     if extension == '.gz':
-        fop = gzip.open(f,'rt')
+        fop = gzip.open(f,readmode)
     else:
-        fop = io.open(f, 'r')
+        fop = open(f, 'r')
 
 
     for line in fop:
@@ -486,9 +496,9 @@ def bc_variable_header(f):
     counter = 0
     extension = f[-3:].lower()
     if extension == '.gz':
-        fop = gzip.open(f,'rt')
+        fop = gzip.open(f,readmode)
     else:
-        fop = io.open(f, 'r')
+        fop = open(f, 'r')
 
 
     for line in fop:
@@ -1050,11 +1060,11 @@ class BoatCoachParser(CSVParser):
         # get date from footer
         try:
             try:
-                with io.open(csvfile, 'rt') as fop:
+                with open(csvfile, readmode) as fop:
                     line = fop.readline()
                     dated = re.split('Date:', line)[1][1:-1]
             except (IndexError,UnicodeDecodeError):
-                with gzip.open(csvfile,'rt') as fop:
+                with gzip.open(csvfile,readmode) as fop:
                     line = fop.readline()
                     dated = re.split('Date:', line)[1][1:-1]
             row_date = parser.parse(dated, fuzzy=True)
@@ -1135,12 +1145,12 @@ class BoatCoachParser(CSVParser):
         data = []
         try:
 
-            with gzip.open(csvfile,'rt') as f:
+            with gzip.open(csvfile,readmode) as f:
                 for line in f:
                     s  = line.split(',')
                     data.append(','.join([str(x) for x in s[26:-1]]))
         except IOError:
-            with io.open(csvfile,'r') as f:
+            with open(csvfile,'r') as f:
                 for line in f:
                     s  = line.split(',')
                     data.append(','.join([str(x) for x in s[26:-1]]))
@@ -1306,11 +1316,11 @@ class BoatCoachAdvancedParser(CSVParser):
 
         # get date from footer
         try:
-            with io.open(csvfile, 'r') as fop:
+            with open(csvfile, 'r') as fop:
                 line = fop.readline()
                 dated = re.split('Date:', line)[1][1:-1]
         except (IndexError,UnicodeDecodeError):
-            with gzip.open(csvfile,'rt') as fop:
+            with gzip.open(csvfile,readmode) as fop:
                 line = fop.readline()
                 dated = re.split('Date:', line)[1][1:-1]
 

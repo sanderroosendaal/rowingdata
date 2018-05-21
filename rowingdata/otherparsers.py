@@ -12,6 +12,11 @@ except (ValueError,ImportError):
     import tcxtools
     from utils import totimestamp, geo_distance
 
+import sys
+if sys.version_info[0]<=2:
+    pythonversion = 2
+else:
+    pythonversion = 3
     
 import gzip
 import arrow
@@ -374,9 +379,12 @@ class FITParser(object):
         # columns to lowercase - this should be easier
         self.df.columns = [strip_non_ascii(x) for x in self.df.columns]
         self.df.columns = [x.encode('ascii','ignore') for x in self.df.columns]
-#        self.df.columns = [str(x) for x in self.df.columns]
-        self.df.columns = [x.decode('ascii') for x in self.df.columns]
+        if pythonversion == 3:
+            #        self.df.columns = [str(x) for x in self.df.columns]
+            self.df.columns = [x.decode('ascii') for x in self.df.columns]
+
         self.df.rename(columns = str.lower,inplace=True)
+            
 
         # check column dimensions
 
