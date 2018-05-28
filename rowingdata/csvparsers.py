@@ -377,28 +377,51 @@ def get_empower_rigging(f):
     oarlength = 289.
     inboard = 88.
     line = '1'
-    with open(f, 'r') as fop:
-        for line in fop:
-            if 'Oar Length' in line:
-                try:
-                    oarlength = getoarlength(line)
-                except ValueError:
-                    return None,None
-            if 'Inboard' in line:
-                try:
-                    inboard = getinboard(line)
-                except ValueError:
-                    return None,None
+    try:
+        with open(f, readmode) as fop:
+            for line in fop:
+                if 'Oar Length' in line:
+                    try:
+                        oarlength = getoarlength(line)
+                    except ValueError:
+                        return None,None
+                if 'Inboard' in line:
+                    try:
+                        inboard = getinboard(line)
+                    except ValueError:
+                        return None,None
+    except (UnicodeDecodeError,ValueError):
+        with gzip.open(f, readmode) as fop:
+            for line in fop:
+                if 'Oar Length' in line:
+                    try:
+                        oarlength = getoarlength(line)
+                    except ValueError:
+                        return None,None
+                if 'Inboard' in line:
+                    try:
+                        inboard = getinboard(line)
+                    except ValueError:
+                        return None,None
+                
 
 
     return oarlength / 100., inboard / 100.
 
 def get_empower_firmware(f):
     firmware = ''
-    with open(f,'r') as fop:
-        for line in fop:
-            if 'firmware' in line.lower() and 'oar' in line.lower():
-                firmware = getfirmware(line)
+    try:
+        with open(f,readmode) as fop:
+            for line in fop:
+                if 'firmware' in line.lower() and 'oar' in line.lower():
+                    firmware = getfirmware(line)
+    except (IndexError,UnicodeDecodeError):
+        with gzip.open(f,readmode) as fop:
+            for line in fop:
+                if 'firmware' in line.lower() and 'oar' in line.lower():
+                    firmware = getfirmware(line)
+            
+
 
     try:
         firmware = np.float(firmware)
