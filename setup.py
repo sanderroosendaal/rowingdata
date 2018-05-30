@@ -1,5 +1,6 @@
-from distutils.core import setup
+from __future__ import absolute_import
 #from setuptools import setup, find_packages
+from distutils.core import setup
 
 import re
 
@@ -36,14 +37,15 @@ setup(name='rowingdata',
           'scipy',
           'matplotlib',
           'pandas',
+          'fitparse',
 #          'fitparse',
           'arrow',
-          'mechanize',
-          'python-dateutil',
-          'docopt',
-          'tqdm',
-          'rowingphysics>=0.2.3',
-          'iso8601',
+#	  'mechanize',
+	  'python-dateutil',
+	  'docopt',
+	  'tqdm',
+	  'rowingphysics>=0.2.3',
+	  'iso8601',
           'lxml',
           'xmltodict',
           'nose_parameterized',

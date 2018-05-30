@@ -1,14 +1,16 @@
 #! /usr/bin/python
-import rowingdata
+from __future__ import absolute_import
+from __future__ import print_function
+from . import rowingdata
 from sys import argv
 
 def main():
     readFile=argv[1]
 
     try:
-	rowerFile=argv[2]
+        rowerFile=argv[2]
     except IndexError:
-	rowerFile="defaultrower.txt"
+        rowerFile="defaultrower.txt"
 
     rower=rowingdata.getrower(rowerFile)
 
@@ -20,7 +22,7 @@ def main():
     tcx.write_csv(csvoutput,window_size=20)
 
     res=rowingdata.rowingdata(csvoutput,rowtype="On-water",
-				rower=rower)
+                                rower=rower)
 
     res.plottime_otw()
 
@@ -32,4 +34,4 @@ def main():
 
 
 
-    print("done "+readFile)
+    print(("done "+readFile))

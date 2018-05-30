@@ -1,3 +1,4 @@
+from six.moves import range
 class OldTCXParser(object):
     """ Parser for reading TCX files, e.g. from CrewNerd
 
@@ -192,7 +193,7 @@ class OldTCXParser(object):
             deltal = 1000.*res[0]
             dist2[i+1] = dist2[i]+deltal
             velo[i+1] = deltal/(1.0*(unixtimes[i+1]-unixtimes[i]))
-            if spm[i] <> 0:
+            if spm[i] != 0:
                 strokelength[i] = deltal*60/spm[i]
             else:
                 strokelength[i] = 0.
@@ -309,12 +310,12 @@ class OldTCXParser(object):
 
         for i in range(nr_rows-1):
             deltal = distance[i+1]-distance[i]
-            if unixtimes[i+1] <> unixtimes[i]:
+            if unixtimes[i+1] != unixtimes[i]:
                 velo[i+1] = deltal/(unixtimes[i+1]-unixtimes[i])
             else:
                 velo[i+1] = 0
 
-            if spm[i] <> 0:
+            if spm[i] != 0:
                 strokelength[i] = deltal*60/spm[i]
             else:
                 strokelength[i] = 0.
@@ -491,7 +492,7 @@ class TCXParserNoHR(object):
             deltal = 1000.*res[0]
             dist2[i+1] = dist2[i]+deltal
             velo[i+1] = deltal/(1.0*(unixtimes[i+1]-unixtimes[i]))
-            if spm[i] <> 0:
+            if spm[i] != 0:
                 strokelength[i] = deltal*60/spm[i]
             else:
                 strokelength[i] = 0.
@@ -608,12 +609,12 @@ class TCXParserNoHR(object):
 
         for i in range(nr_rows-1):
             deltal = distance[i+1]-distance[i]
-            if unixtimes[i+1] <> unixtimes[i]:
+            if unixtimes[i+1] != unixtimes[i]:
                 velo[i+1] = deltal/(unixtimes[i+1]-unixtimes[i])
             else:
                 velo[i+1] = 0
 
-            if spm[i] <> 0:
+            if spm[i] != 0:
                 strokelength[i] = deltal*60/spm[i]
             else:
                 strokelength[i] = 0.

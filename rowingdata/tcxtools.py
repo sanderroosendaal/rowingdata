@@ -1,4 +1,5 @@
 # pylint: disable=C0103
+from __future__ import absolute_import
 import pandas as pd
 import re
 import sys
@@ -10,6 +11,7 @@ import arrow
 import gzip
 import numpy as np
 import string
+from six import unichr
 
 def strip_control_characters(input):
 
@@ -120,12 +122,12 @@ def tcxtrack_getdata(track):
 
         if key == 'Extensions':
             extensionsdf = df[key].apply(pd.Series)
-            thekeys = extensionsdf.keys()
+            thekeys = list(extensionsdf.keys())
             for counter, key in enumerate(thekeys):
                 if key:
                     df['extension'+str(counter)] = key
                     l = extensionsdf[key].apply(pd.Series)
-                    if 'Extensions' in l.keys():
+                    if 'Extensions' in list(l.keys()):
                         #print 'aap'
                         l = l.apply(pd.Series)['Extensions'].apply(pd.Series)
                     for kk in l.keys():
