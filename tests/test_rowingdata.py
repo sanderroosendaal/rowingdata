@@ -124,7 +124,21 @@ class TestCorrectedRowingData:
             20.339325842696628
         )
 
-                      
+
+class TestTCXExport:
+    def testtcxexport(self):
+        csvfile='testdata/Speedcoach2example.csv'
+        assert_equals(rowingdata.get_file_type(csvfile),'speedcoach2')
+        r=rowingdata.SpeedCoach2Parser(csvfile=csvfile)
+        row=rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,97)
+        tcxfile = 'testdata/testtcx.tcx'
+        row.exporttotcx(tcxfile)
+        assert_equals(rowingdata.get_file_type(tcxfile),'tcx')
+        r2 = rowingdata.TCXParser(tcxfile)
+        row=rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,97)
+        
 class TestErgData:
     def testergdata(self):
         csvfile='testdata/ergdata_example.csv'

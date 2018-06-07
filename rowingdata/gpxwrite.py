@@ -51,9 +51,9 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
         lat=np.zeros(nr_rows)
 
     try:
-        long=df[' longitude'].values
+        lon=df[' longitude'].values
     except KeyError:
-        long=np.zeros(nr_rows)
+        lon=np.zeros(nr_rows)
 
     haspower=1
 
@@ -89,7 +89,7 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     for i in range(nr_rows):
         s = '          <trkpt lat="{lat}" lon="{lon}">\n'.format(
             lat=lat[i],
-            lon=int[i]
+            lon=lon[i]
             )
         f.write(s)
         #s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()

@@ -13,6 +13,8 @@ import numpy as np
 import string
 from six import unichr
 
+
+
 def strip_control_characters(input):
 
     if input:
@@ -140,8 +142,9 @@ def tcxtodf(path):
 
     data = tcx_getdict(path)
     activity = tcxgetactivities(data)
-    laps = tcxactivitygetlaps(activity)
 
+    laps = tcxactivitygetlaps(activity)
+    
     try:
         track = tcxlapgettrack(laps)
         df = tcxtrack_getdata(track)
