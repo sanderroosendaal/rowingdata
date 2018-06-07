@@ -45,7 +45,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:35:04.500000+00:00</Time>
-            <DistanceMeters>15.1</DistanceMeters>
+            <DistanceMeters>15.099999999999998</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>115</Value>
             </HeartRateBpm>
@@ -58,7 +58,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:35:05.600000+00:00</Time>
-            <DistanceMeters>21.4</DistanceMeters>
+            <DistanceMeters>21.399999999999995</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>115</Value>
             </HeartRateBpm>
@@ -71,7 +71,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:35:07.500000+00:00</Time>
-            <DistanceMeters>28.8</DistanceMeters>
+            <DistanceMeters>28.799999999999997</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>118</Value>
             </HeartRateBpm>
@@ -500,7 +500,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:04.800000+00:00</Time>
-            <DistanceMeters>287.7</DistanceMeters>
+            <DistanceMeters>287.70000000000005</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>164</Value>
             </HeartRateBpm>
@@ -513,7 +513,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:06.600000+00:00</Time>
-            <DistanceMeters>295.7</DistanceMeters>
+            <DistanceMeters>295.70000000000005</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>165</Value>
             </HeartRateBpm>
@@ -526,7 +526,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:08.500000+00:00</Time>
-            <DistanceMeters>303.9</DistanceMeters>
+            <DistanceMeters>303.90000000000003</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>165</Value>
             </HeartRateBpm>
@@ -578,7 +578,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:16.100000+00:00</Time>
-            <DistanceMeters>335.6</DistanceMeters>
+            <DistanceMeters>335.59999999999997</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>174</Value>
             </HeartRateBpm>
@@ -591,7 +591,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:17.900000+00:00</Time>
-            <DistanceMeters>343.8</DistanceMeters>
+            <DistanceMeters>343.79999999999995</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>174</Value>
             </HeartRateBpm>
@@ -604,7 +604,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:19.900000+00:00</Time>
-            <DistanceMeters>351.9</DistanceMeters>
+            <DistanceMeters>351.8999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>176</Value>
             </HeartRateBpm>
@@ -617,7 +617,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:21.600000+00:00</Time>
-            <DistanceMeters>359.3</DistanceMeters>
+            <DistanceMeters>359.2999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>176</Value>
             </HeartRateBpm>
@@ -630,7 +630,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:23.600000+00:00</Time>
-            <DistanceMeters>367.3</DistanceMeters>
+            <DistanceMeters>367.2999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>175</Value>
             </HeartRateBpm>
@@ -643,7 +643,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:25.500000+00:00</Time>
-            <DistanceMeters>374.5</DistanceMeters>
+            <DistanceMeters>374.4999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>177</Value>
             </HeartRateBpm>
@@ -656,7 +656,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:27.500000+00:00</Time>
-            <DistanceMeters>382.5</DistanceMeters>
+            <DistanceMeters>382.4999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>177</Value>
             </HeartRateBpm>
@@ -669,7 +669,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:29.200000+00:00</Time>
-            <DistanceMeters>390.1</DistanceMeters>
+            <DistanceMeters>390.09999999999985</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>178</Value>
             </HeartRateBpm>
@@ -682,7 +682,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:31.100000+00:00</Time>
-            <DistanceMeters>397.1</DistanceMeters>
+            <DistanceMeters>397.09999999999985</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>178</Value>
             </HeartRateBpm>
@@ -695,7 +695,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:33.100000+00:00</Time>
-            <DistanceMeters>405.8</DistanceMeters>
+            <DistanceMeters>405.7999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>177</Value>
             </HeartRateBpm>
@@ -708,7 +708,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:34.900000+00:00</Time>
-            <DistanceMeters>413.5</DistanceMeters>
+            <DistanceMeters>413.4999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>177</Value>
             </HeartRateBpm>
@@ -721,7 +721,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:37.100000+00:00</Time>
-            <DistanceMeters>422.0</DistanceMeters>
+            <DistanceMeters>421.9999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>178</Value>
             </HeartRateBpm>
@@ -734,7 +734,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:38.600000+00:00</Time>
-            <DistanceMeters>429.7</DistanceMeters>
+            <DistanceMeters>429.6999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>179</Value>
             </HeartRateBpm>
@@ -747,7 +747,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:40.700000+00:00</Time>
-            <DistanceMeters>438.3</DistanceMeters>
+            <DistanceMeters>438.2999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>179</Value>
             </HeartRateBpm>
@@ -760,7 +760,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:42.500000+00:00</Time>
-            <DistanceMeters>446.2</DistanceMeters>
+            <DistanceMeters>446.1999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>180</Value>
             </HeartRateBpm>
@@ -773,7 +773,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:44.500000+00:00</Time>
-            <DistanceMeters>454.7</DistanceMeters>
+            <DistanceMeters>454.6999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>180</Value>
             </HeartRateBpm>
@@ -786,7 +786,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:46.400000+00:00</Time>
-            <DistanceMeters>462.6</DistanceMeters>
+            <DistanceMeters>462.59999999999985</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>180</Value>
             </HeartRateBpm>
@@ -799,7 +799,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:48.500000+00:00</Time>
-            <DistanceMeters>471.8</DistanceMeters>
+            <DistanceMeters>471.7999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>180</Value>
             </HeartRateBpm>
@@ -812,7 +812,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:50.400000+00:00</Time>
-            <DistanceMeters>480.2</DistanceMeters>
+            <DistanceMeters>480.1999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>180</Value>
             </HeartRateBpm>
@@ -825,7 +825,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:52.300000+00:00</Time>
-            <DistanceMeters>487.0</DistanceMeters>
+            <DistanceMeters>486.99999999999983</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>181</Value>
             </HeartRateBpm>
@@ -838,7 +838,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:54+00:00</Time>
-            <DistanceMeters>495.2</DistanceMeters>
+            <DistanceMeters>495.1999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>181</Value>
             </HeartRateBpm>
@@ -851,7 +851,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:55.400000+00:00</Time>
-            <DistanceMeters>501.3</DistanceMeters>
+            <DistanceMeters>501.2999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>181</Value>
             </HeartRateBpm>
@@ -864,7 +864,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:56.300000+00:00</Time>
-            <DistanceMeters>502.2</DistanceMeters>
+            <DistanceMeters>502.1999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>158</Value>
             </HeartRateBpm>
@@ -877,7 +877,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:36:57.800000+00:00</Time>
-            <DistanceMeters>511.1</DistanceMeters>
+            <DistanceMeters>511.09999999999985</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>160</Value>
             </HeartRateBpm>
@@ -929,7 +929,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:05.100000+00:00</Time>
-            <DistanceMeters>543.2</DistanceMeters>
+            <DistanceMeters>543.1999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>165</Value>
             </HeartRateBpm>
@@ -994,7 +994,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:14.300000+00:00</Time>
-            <DistanceMeters>585.3</DistanceMeters>
+            <DistanceMeters>585.3000000000001</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>173</Value>
             </HeartRateBpm>
@@ -1072,7 +1072,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:25.100000+00:00</Time>
-            <DistanceMeters>636.1</DistanceMeters>
+            <DistanceMeters>636.0999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>179</Value>
             </HeartRateBpm>
@@ -1085,7 +1085,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:26.700000+00:00</Time>
-            <DistanceMeters>643.5</DistanceMeters>
+            <DistanceMeters>643.4999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>180</Value>
             </HeartRateBpm>
@@ -1098,7 +1098,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:28.500000+00:00</Time>
-            <DistanceMeters>651.9</DistanceMeters>
+            <DistanceMeters>651.8999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>181</Value>
             </HeartRateBpm>
@@ -1111,7 +1111,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:30.300000+00:00</Time>
-            <DistanceMeters>660.1</DistanceMeters>
+            <DistanceMeters>660.0999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>181</Value>
             </HeartRateBpm>
@@ -1124,7 +1124,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:32.100000+00:00</Time>
-            <DistanceMeters>667.7</DistanceMeters>
+            <DistanceMeters>667.6999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>181</Value>
             </HeartRateBpm>
@@ -1137,7 +1137,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:33.900000+00:00</Time>
-            <DistanceMeters>676.5</DistanceMeters>
+            <DistanceMeters>676.4999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>182</Value>
             </HeartRateBpm>
@@ -1150,7 +1150,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:35.700000+00:00</Time>
-            <DistanceMeters>684.5</DistanceMeters>
+            <DistanceMeters>684.4999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>182</Value>
             </HeartRateBpm>
@@ -1163,7 +1163,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:37.500000+00:00</Time>
-            <DistanceMeters>692.5</DistanceMeters>
+            <DistanceMeters>692.4999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>182</Value>
             </HeartRateBpm>
@@ -1176,7 +1176,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:39.400000+00:00</Time>
-            <DistanceMeters>701.4</DistanceMeters>
+            <DistanceMeters>701.3999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>183</Value>
             </HeartRateBpm>
@@ -1189,7 +1189,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:41.200000+00:00</Time>
-            <DistanceMeters>708.7</DistanceMeters>
+            <DistanceMeters>708.6999999999998</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>183</Value>
             </HeartRateBpm>
@@ -1202,7 +1202,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:43+00:00</Time>
-            <DistanceMeters>717.4</DistanceMeters>
+            <DistanceMeters>717.3999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>183</Value>
             </HeartRateBpm>
@@ -1215,7 +1215,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:45+00:00</Time>
-            <DistanceMeters>726.0</DistanceMeters>
+            <DistanceMeters>725.9999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>183</Value>
             </HeartRateBpm>
@@ -1228,7 +1228,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:47.100000+00:00</Time>
-            <DistanceMeters>733.7</DistanceMeters>
+            <DistanceMeters>733.6999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>184</Value>
             </HeartRateBpm>
@@ -1241,7 +1241,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:48.600000+00:00</Time>
-            <DistanceMeters>741.9</DistanceMeters>
+            <DistanceMeters>741.8999999999999</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>184</Value>
             </HeartRateBpm>
@@ -1254,7 +1254,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:50.700000+00:00</Time>
-            <DistanceMeters>750.3</DistanceMeters>
+            <DistanceMeters>750.2999999999998</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>184</Value>
             </HeartRateBpm>
@@ -1267,7 +1267,7 @@
           </Trackpoint>
           <Trackpoint>
             <Time>2016-07-28T11:37:51+00:00</Time>
-            <DistanceMeters>751.7</DistanceMeters>
+            <DistanceMeters>751.6999999999998</DistanceMeters>
             <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">
               <Value>184</Value>
             </HeartRateBpm>
@@ -1280,7 +1280,7 @@
           </Trackpoint>
         </Track>
       </Lap>
-      <Notes>&lt;Element 'Notes' at 0xccbf550&gt;</Notes>
+      <Notes>&lt;Element 'Notes' at 0x000001E67D6DDCC8&gt;</Notes>
     </Activity>
   </Activities>
   <Creator>

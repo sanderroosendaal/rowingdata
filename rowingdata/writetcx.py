@@ -16,6 +16,15 @@ import xml.etree.ElementTree as et
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring
 from xml.dom import minidom
 
+import sys
+if sys.version_info[0]<=2:
+    pythonversion = 2
+    textwritemode = 'w'
+else:
+    pythonversion = 3
+    textwritemode = 'wt'
+    from io import open
+
 def prettify(elem):
     """Return a pretty-printed XML string for the Element.
     """
@@ -253,8 +262,11 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
         xsd_file=six.moves.urllib.request.urlopen("https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd",context=ctx)
-        output=open('TrainingCenterDatabasev2.xsd','w') 
-        output.write(xsd_file.read().replace('\n',''))
+        output=open('TrainingCenterDatabasev2.xsd',textwritemode)
+        if pythonversion <= 2:
+            output.write(xsd_file.read().replace('\n',''))
+        else:
+            output.write(xsd_file.read().decode('utf-8').replace('\n',''))
         output.close()
         xsd_filename="TrainingCenterDatabasev2.xsd"
 
