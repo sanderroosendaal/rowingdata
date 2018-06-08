@@ -2136,7 +2136,7 @@ class rowingdata:
                 row_date=self.rowdatetime.isoformat(), notes=notes
             )
         else:
-            emptytcx = writetcx.empty_tcx
+            emptytcx = writetcx.get_empty_tcx()
             with open(fileName,'wb') as f_out:
                 f_out.write(emptytcx)
 

@@ -115,9 +115,9 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata"):
         lat=np.zeros(nr_rows)
 
     try:
-        long=df[' longitude'].values
+        lon=df[' longitude'].values
     except KeyError:
-        long=np.zeros(nr_rows)
+        lon=np.zeros(nr_rows)
 
     haspower=1
 

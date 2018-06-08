@@ -11,22 +11,49 @@ from lxml.etree import XMLSyntaxError
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 import ssl
 from six.moves import range
+import xml.etree.ElementTree as et
 
-empty_tcx = """
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<TrainingCenterDatabase xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2">
-    <Activities>
-        <Activity Sport="Other">
-            <Id>2015-03-28T20:45:15.000Z</Id>
-            <Creator xsi:type="Device_t" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                <Name>Empty File</Name>
-                <UnitId>0</UnitId>
-                <ProductID>0</ProductID>
-            </Creator>
-        </Activity>
-    </Activities>
-</TrainingCenterDatabase>   
-"""
+from xml.etree.ElementTree import Element, SubElement, Comment, tostring
+from xml.dom import minidom
+
+import sys
+if sys.version_info[0]<=2:
+    pythonversion = 2
+    textwritemode = 'w'
+else:
+    pythonversion = 3
+    textwritemode = 'wt'
+    from io import open
+
+def prettify(elem):
+    """Return a pretty-printed XML string for the Element.
+    """
+    rough_string = tostring(elem, 'utf-8')
+    reparsed = minidom.parseString(rough_string)
+    return reparsed.toprettyxml(indent="  ")
+
+
+
+def get_empty_tcx():
+    top = Element('TrainingCenterDatabase')
+    top.attrib['xmlns'] = "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"
+    activities = SubElement(top,'Activities')
+    activity = SubElement(activities,'Activity')
+    activity.attrib['Sport'] = "Other"
+    id = SubElement(activity,'Id')
+    id.text = '2015-03-28T20:45:15.000Z'
+    creator = SubElement(activity,'Creator')
+    creator.attrib['xsi:type'] = 'Device_t'
+    creator.attrib['xmlns:xsi'] = 'http://www.w3.org/2001/XMLSchema-instance'
+    name = SubElement(creator,'Name')
+    name.text = 'Empty File'
+    unitid = SubElement(creator,'UnitId')
+    unitid.text = '0'
+    productid = SubElement(creator,'ProductID')
+    productid.text = '0'
+
+    return prettify(top)
+
 
 namespace='http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -53,12 +80,11 @@ def lap_end(f):
     f.write('          <Notes>rowingdata export</Notes>\n')
     f.write('        </Lap>\n')
 
-
-def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
-    if notes==None:
+def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata"):
+    if notes is None:
         notes="Exported by rowingdata"
+
     notes = notes.encode('utf-8')
-    f=open(tcxFile,'w')
     
     totalseconds=int(df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min())
     totalmeters=int(df['cum_dist'].max())
@@ -89,9 +115,9 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
         lat=np.zeros(nr_rows)
 
     try:
-        long=df[' longitude'].values
+        lon=df[' longitude'].values
     except KeyError:
-        long=np.zeros(nr_rows)
+        lon=np.zeros(nr_rows)
 
     haspower=1
 
@@ -102,101 +128,145 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
         
     s="2000-01-01"
     tt=ps.parse(s)
-    #timezero=time.mktime(tt.timetuple())
+
     timezero=arrow.get(tt).timestamp
     if seconds[0]<timezero:
-        # print("Taking Row_Date ",row_date)
         dateobj=ps.parse(row_date)
         unixtimes=seconds+arrow.get(dateobj).timestamp #time.mktime(dateobj.timetuple())
 
+    top = Element('TrainingCenterDatabase')
+    top.attrib['xmlns'] = "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"
+    top.attrib['xmlns:ax'] = "http://www.garmin.com/xmlschemas/ActivityExtension/v2"
+    top.attrib['xmlns:xsi'] = "http://www.w3.org/2001/XMLSchema-instance"
+    top.attrib['xsi:schemaLocation'] = "http://www.garmin.com/xmlschemas/ActivityExtension/v2 http://www.garmin.com/xmlschemas/ActivityExtensionv2.xsd http://www.garmin.com/xmlschemas/FatCalories/v1 http://www.garmin.com/xmlschemas/fatcalorieextensionv1.xsd http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd"
+
+    activities = SubElement(top,'Activities')
+    activity = SubElement(activities,'Activity')
+    activity.attrib['Sport'] = "Other"
+    id = SubElement(activity,'Id')
+    id.text = row_date
+
+
+    # Lap averages
+    lap = SubElement(activity,'Lap')
+    lap.attrib['StartTime'] = row_date
+    totaltime = SubElement(lap,'TotalTimeSeconds')
+    totaltime.text = '{s}'.format(s=totalseconds)
+    distancemeters_el = SubElement(lap,'DistanceMeters')
+    distancemeters_el.text = '{m}'.format(m=totalmeters)
+    calories = SubElement(lap,'Calories')
+    calories.text = '1'
+    avghr_el = SubElement(lap,'AverageHeartRateBpm')
+    avghr_el.attrib['xsi:type'] = 'HeartRateInBeatsPerMinute_t'
+    value = SubElement(avghr_el,'Value')
+    value.text = '{s}'.format(s=avghr)
+    
+    maxhr_el = SubElement(lap,'MaximumHeartRateBpm')
+    maxhr_el.attrib['xsi:type'] = 'HeartRateInBeatsPerMinute_t'
+    value = SubElement(maxhr_el,'Value')
+    value.text = '{s}'.format(s=maxhr)
+
+    intensity = SubElement(lap,'Intensity')
+    intensity.text = 'Active'
+
+    cadence_el = SubElement(lap,'Cadence')
+    cadence_el.text = '{s}'.format(s=avgspm)
+
+    triggermethod = SubElement(lap,'TriggerMethod')
+    triggermethod.text = 'Manual'
+
+    track  = SubElement(lap,'Track')
 
     
-    f.write('<?xml version="1.0" encoding="UTF-8" standalone="no" ?>\n')
-    f.write('<TrainingCenterDatabase')
-    f.write('  xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"\n')
-    f.write('  xmlns:ax="http://www.garmin.com/xmlschemas/ActivityExtension/v2"\n')
-    f.write('  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n')
-    f.write('xsi:schemaLocation="http://www.garmin.com/xmlschemas/ActivityExtension/v2 http://www.garmin.com/xmlschemas/ActivityExtensionv2.xsd http://www.garmin.com/xmlschemas/FatCalories/v1 http://www.garmin.com/xmlschemas/fatcalorieextensionv1.xsd http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd">\n')
-    f.write('  <Activities>\n')
-    f.write('    <Activity Sport="Other">\n')
-
-    datetimestring=row_date
-
-    f.write('      <Id>{s}</Id>\n'.format(s=datetimestring))
-
-    lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds)
-
     for i in range(nr_rows):
         hri=heartrate[i]
         if hri == 0:
             hri=1
-        f.write('          <Trackpoint>\n')
-        #s=datetime.datetime.fromtimestamp(unixtimes[i]).isoformat()
+
+        trackpoint = SubElement(track,'Trackpoint')
+
         s = arrow.get(unixtimes[i]).isoformat()
-        f.write('            <Time>{s}</Time>\n'.format(s=s))
-        if (lat[i] != 0) & (int[i] != 0 ):
-            f.write('            <Position>\n')
-            f.write('              <LatitudeDegrees>{lat}</LatitudeDegrees>\n'.format(
-                lat=lat[i]
-                ))
-            f.write('              <LongitudeDegrees>{long}</LongitudeDegrees>\n'.format(
-                int=int[i]
-                ))
-            f.write('            </Position>\n')
-        f.write('            <DistanceMeters>{d}</DistanceMeters>\n'.format(
-            d=distancemeters[i]
-            ))
-        f.write('            <HeartRateBpm xsi:type="HeartRateInBeatsPerMinute_t">\n')
-        f.write('              <Value>{h}</Value>\n'.format(h=hri))
-        f.write('            </HeartRateBpm>\n')
-        f.write('            <Cadence>{c}</Cadence>\n'.format(c=cadence[i]))
+        time = SubElement(trackpoint,'Time')
+        time.text = '{s}'.format(s=s)
+
+        if (lat[i] != 0) and (lon[i] != 0):
+            position = SubElement(trackpoint,'Position')
+            latitudedegrees = SubElement(position,'LatitudeDegrees')
+            latitudedegrees.text = '{lat}'.format(lat=lat[i])
+            longitudedegrees = SubElement(position,'LongitudeDegrees')
+            longitudedegrees.text = '{lon}'.format(lon=lon[i])
+
+        dist = SubElement(trackpoint,'DistanceMeters')
+        dist.text = '{d}'.format(d=distancemeters[i])
+
+        hrbpm = SubElement(trackpoint,'HeartRateBpm')
+        hrbpm.attrib['xsi:type'] = 'HeartRateInBeatsPerMinute_t'
+        val = SubElement(hrbpm,'Value')
+        val.text = '{s}'.format(s=hri)
+
+        spm_el = SubElement(trackpoint,'Cadence')
+        spm_el.text = '{s}'.format(s=cadence[i])
+
         if haspower:
-            f.write('            <Extensions>\n')
-            f.write('              <TPX xmlns="http://www.garmin.com/xmlschemas/ActivityExtension/v2">\n')
-            f.write('                <Watts>{p}</Watts>\n'.format(p=int(power[i])))
-            f.write('              </TPX>\n')
-            f.write('            </Extensions>\n')
-        f.write('          </Trackpoint>\n')
+            ext = SubElement(trackpoint,'Extensions')
+            tpx = SubElement(ext,'TPX')
+            tpx.attrib['xmlns'] = "http://www.garmin.com/xmlschemas/ActivityExtension/v2"
+            watts = SubElement(tpx,'Watts')
+            watts.text = '{s}'.format(s=int(power[i]))
 
 
+    notes = SubElement(activity,'Notes')
+    notes.text = '{n}'.format(n=notes)
 
-    f.write('          </Track>\n')
-    f.write('        </Lap>\n')
-    f.write('      <Notes>'+notes+'</Notes>\n')
-    f.write('    </Activity>\n')
-    f.write('  </Activities>\n')
-    f.write('  <Creator>\n')
-    f.write('    <Name>rowsandall.com/rowingdata</Name>\n')
-    f.write('  </Creator>\n')
-    f.write('  <Author xsi:type="Application_t">\n')
-    f.write('    <Name>rowingdata</Name>\n')
-    f.write('    <Build>\n')
-    f.write('      <Version>\n')
-    f.write('        <VersionMajor>0</VersionMajor>\n')
-    f.write('        <VersionMinor>75</VersionMinor>\n')
-    f.write('      </Version>\n')
-    f.write('      <Type>Release</Type>\n')
-    f.write('    </Build>\n')
-    f.write('    <LangID>EN</LangID>\n')
-    f.write('    <PartNumber>000-00000-00</PartNumber>\n')
-    f.write('  </Author>\n')
-    f.write('</TrainingCenterDatabase>\n')
+    creator = SubElement(top,'Creator')
+    name = SubElement(creator,'Name')
+    name.text = 'rowsandall.com/rowingdata'
+        
+    author = SubElement(top,'Author')
+    author.attrib['xsi:type'] = 'Application_t'
 
-    f.close()
-
-    file=open(tcxFile,'r')
+    name = SubElement(author,'Name')
+    name.text = 'rowingdata'
     
-    some_xml_string=file.read()
+    build = SubElement(author,'Build')
+    
+    version = SubElement(build,'Version')
+    
+    versionmajor = SubElement(version,'VersionMajor')
+    versionmajor.text = '0'
+    
+    versionminor = SubElement(version,'VersionMinor')
+    versionminor.text = '75'
 
-    file.close()
+    type = SubElement(build,'Type')
+    type.text = 'Release'
+    
+    lang = SubElement(author,'LangID')
+    lang.text = 'EN'
+    
+    partnumber = SubElement(author,'PartNumber')
+    partnumber.text = '000-00000-00'
+    
+    return prettify(top)
+    
+def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
+
+    tcxtext = create_tcx(df,row_date=row_date, notes=notes)
+
+    with open(tcxFile,'w') as fop:
+        fop.write(tcxtext)
+    
     
     try:
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
         xsd_file=six.moves.urllib.request.urlopen("https://www8.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd",context=ctx)
-        output=open('TrainingCenterDatabasev2.xsd','w') 
-        output.write(xsd_file.read().replace('\n',''))
+        output=open('TrainingCenterDatabasev2.xsd',textwritemode)
+        if pythonversion <= 2:
+            output.write(xsd_file.read().replace('\n',''))
+        else:
+            output.write(xsd_file.read().decode('utf-8').replace('\n',''))
         output.close()
         xsd_filename="TrainingCenterDatabasev2.xsd"
 
