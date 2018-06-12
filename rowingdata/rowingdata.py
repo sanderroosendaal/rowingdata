@@ -2586,6 +2586,195 @@ class rowingdata:
 
         self.df = df
 
+    def updateinterval_pace(self, pace, debug=False):
+        if self.empty:
+            return None
+
+        df = self.df
+
+        try:
+            origdist = df['orig_dist']
+            df[' Horizontal (meters)'] = df['orig_dist']
+            df['TimeStamp (sec)'] = df['orig_time']
+            df[' ElapsedTime (sec)'] = df['orig_reltime']
+            df[' LapIdx'] = df['orig_idx']
+            df[' WorkoutState'] = df['orig_state']
+        except KeyError:
+            df['orig_dist'] = df[' Horizontal (meters)']
+            df['orig_time'] = df['TimeStamp (sec)']
+            df['orig_reltime'] = df[' ElapsedTime (sec)']
+            df['orig_idx'] = df[' lapIdx']
+            try:
+                df['orig_state'] = df[' WorkoutState']
+            except KeyError:
+                df['orig_state'] = 1
+
+        timezero = -df.ix[0, 'TimeStamp (sec)'] + \
+            df.ix[0, ' ElapsedTime (sec)']
+
+        # erase existing lap data
+        df[' lapIdx'] = 0
+        df[' WorkoutState'] = 5
+        df[' ElapsedTime (sec)'] = df['TimeStamp (sec)'] + timezero
+        df[' Horizontal (meters)'] = df['cum_dist']
+
+        workouttype = 5
+
+        mask = (df[' Stroke500mPace (sec/500m)'] < pace)
+        df.loc[mask, ' WorkoutState'] = workouttype
+        mask = (df[' Stroke500mPace (sec/500m)'] >= pace)
+        df.loc[mask, ' WorkoutState'] = 3
+
+        steps = df[' WorkoutState'].diff()
+
+        indices = df.index[steps!=0].tolist()
+        intervalnr = 0
+        
+        for i in indices:
+            startmeters = df.ix[i,' Horizontal (meters)']
+            startseconds = df.ix[i,' ElapsedTime (sec)']
+            
+            df.ix[
+                i:,' Horizontal (meters)'
+            ] =  df.ix[i:,' Horizontal (meters)'] - startmeters
+
+            df.ix[
+                i:,' ElapsedTime (sec)'
+            ] =  df.ix[i:,' ElapsedTime (sec)'] - startseconds
+
+            df.ix[i:,' lapIdx'] = intervalnr
+            intervalnr += 1
+            
+        df[' WorkoutState'] = 5
+                    
+        self.df = df
+
+    def updateinterval_power(self, power, debug=False):
+        if self.empty:
+            return None
+
+        df = self.df
+
+        try:
+            origdist = df['orig_dist']
+            df[' Horizontal (meters)'] = df['orig_dist']
+            df['TimeStamp (sec)'] = df['orig_time']
+            df[' ElapsedTime (sec)'] = df['orig_reltime']
+            df[' LapIdx'] = df['orig_idx']
+            df[' WorkoutState'] = df['orig_state']
+        except KeyError:
+            df['orig_dist'] = df[' Horizontal (meters)']
+            df['orig_time'] = df['TimeStamp (sec)']
+            df['orig_reltime'] = df[' ElapsedTime (sec)']
+            df['orig_idx'] = df[' lapIdx']
+            try:
+                df['orig_state'] = df[' WorkoutState']
+            except KeyError:
+                df['orig_state'] = 1
+
+        timezero = -df.ix[0, 'TimeStamp (sec)'] + \
+            df.ix[0, ' ElapsedTime (sec)']
+
+        # erase existing lap data
+        df[' lapIdx'] = 0
+        df[' WorkoutState'] = 5
+        df[' ElapsedTime (sec)'] = df['TimeStamp (sec)'] + timezero
+        df[' Horizontal (meters)'] = df['cum_dist']
+
+        workouttype = 5
+
+        mask = (df[' Power (watts)'] < power)
+        df.loc[mask, ' WorkoutState'] = workouttype
+        mask = (df[' Power (watts)'] >= power)
+        df.loc[mask, ' WorkoutState'] = 3
+
+        steps = df[' WorkoutState'].diff()
+
+        indices = df.index[steps!=0].tolist()
+        intervalnr = 0
+        
+        for i in indices:
+            startmeters = df.ix[i,' Horizontal (meters)']
+            startseconds = df.ix[i,' ElapsedTime (sec)']
+            
+            df.ix[
+                i:,' Horizontal (meters)'
+            ] =  df.ix[i:,' Horizontal (meters)'] - startmeters
+
+            df.ix[
+                i:,' ElapsedTime (sec)'
+            ] =  df.ix[i:,' ElapsedTime (sec)'] - startseconds
+
+            df.ix[i:,' lapIdx'] = intervalnr
+            intervalnr += 1
+            
+        df[' WorkoutState'] = 5
+                    
+        self.df = df
+
+    def updateinterval_spm(self, spm, debug=False):
+        if self.empty:
+            return None
+
+        df = self.df
+
+        try:
+            origdist = df['orig_dist']
+            df[' Horizontal (meters)'] = df['orig_dist']
+            df['TimeStamp (sec)'] = df['orig_time']
+            df[' ElapsedTime (sec)'] = df['orig_reltime']
+            df[' LapIdx'] = df['orig_idx']
+            df[' WorkoutState'] = df['orig_state']
+        except KeyError:
+            df['orig_dist'] = df[' Horizontal (meters)']
+            df['orig_time'] = df['TimeStamp (sec)']
+            df['orig_reltime'] = df[' ElapsedTime (sec)']
+            df['orig_idx'] = df[' lapIdx']
+            try:
+                df['orig_state'] = df[' WorkoutState']
+            except KeyError:
+                df['orig_state'] = 1
+
+        timezero = -df.ix[0, 'TimeStamp (sec)'] + \
+            df.ix[0, ' ElapsedTime (sec)']
+
+        # erase existing lap data
+        df[' lapIdx'] = 0
+        df[' WorkoutState'] = 5
+        df[' ElapsedTime (sec)'] = df['TimeStamp (sec)'] + timezero
+        df[' Horizontal (meters)'] = df['cum_dist']
+
+        workouttype = 5
+
+        mask = (df[' Cadence (stokes/min)'] < spm)
+        df.loc[mask, ' WorkoutState'] = workouttype
+        mask = (df[' Cadence (stokes/min)'] >= spm)
+        df.loc[mask, ' WorkoutState'] = 3
+
+        steps = df[' WorkoutState'].diff()
+
+        indices = df.index[steps!=0].tolist()
+        intervalnr = 0
+        
+        for i in indices:
+            startmeters = df.ix[i,' Horizontal (meters)']
+            startseconds = df.ix[i,' ElapsedTime (sec)']
+            
+            df.ix[
+                i:,' Horizontal (meters)'
+            ] =  df.ix[i:,' Horizontal (meters)'] - startmeters
+
+            df.ix[
+                i:,' ElapsedTime (sec)'
+            ] =  df.ix[i:,' ElapsedTime (sec)'] - startseconds
+
+            df.ix[i:,' lapIdx'] = intervalnr
+            intervalnr += 1
+            
+        df[' WorkoutState'] = 5
+                    
+        self.df = df
+        
     def updateinterval_string(self, s, debug=False):
         res = trainingparser.parse(s)
         res = trainingparser.cleanzeros(res)
