@@ -48,7 +48,7 @@ sudo: required
 after_success:
 - coveralls --config_file .coveragerc
 before_deploy:
-- python setup.py develop install
+- python setup.py install
 - python setup.py sdist
 deploy:
   provider: pypi
