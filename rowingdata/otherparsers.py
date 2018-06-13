@@ -552,7 +552,12 @@ class TCXParser(object):
         try:
             power = self.df['Watts']
         except KeyError:
-            self.df['Watts'] = 0*spm
+            try:
+                power = self.df['ns3:Watts']
+            except KeyError:
+                power = 0*spm
+
+            self.df['Watts'] = power
 
         p = 500./velo
 
