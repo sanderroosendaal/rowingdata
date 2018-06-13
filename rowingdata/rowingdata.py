@@ -2586,7 +2586,9 @@ class rowingdata:
 
         self.df = df
 
-    def updateinterval_pace(self, pace, debug=False):
+    def updateinterval_metric(self, metricname, value, debug=False,
+                              mode='split',unit='seconds',
+                              smoothwindow = 10):
         if self.empty:
             return None
 
@@ -2618,162 +2620,62 @@ class rowingdata:
         df[' ElapsedTime (sec)'] = df['TimeStamp (sec)'] + timezero
         df[' Horizontal (meters)'] = df['cum_dist']
 
-        workouttype = 5
+        if mode == 'larger':
+            largerthantype = 5
+            smallerthantype = 3
+        else:
+            largerthantype = 3
+            smallerthantype = 5
 
-        mask = (df[' Stroke500mPace (sec/500m)'] < pace)
-        df.loc[mask, ' WorkoutState'] = workouttype
-        mask = (df[' Stroke500mPace (sec/500m)'] >= pace)
-        df.loc[mask, ' WorkoutState'] = 3
+        values = self.get_smoothed(metricname,smoothwindow)
+            
+        mask = (values < value)
+        df.loc[mask, ' WorkoutState'] = largerthantype
+        mask = (values >= value)
+        df.loc[mask, ' WorkoutState'] = smallerthantype
 
         steps = df[' WorkoutState'].diff()
 
         indices = df.index[steps!=0].tolist()
         intervalnr = 0
+
         
-        for i in indices:
-            startmeters = df.ix[i,' Horizontal (meters)']
-            startseconds = df.ix[i,' ElapsedTime (sec)']
-            
-            df.ix[
-                i:,' Horizontal (meters)'
-            ] =  df.ix[i:,' Horizontal (meters)'] - startmeters
+        if unit == 'meters':
+            elapsemetric = 'cum_dist'
+        else:
+            elapsemetric = 'TimeStamp (sec)'
 
-            df.ix[
-                i:,' ElapsedTime (sec)'
-            ] =  df.ix[i:,' ElapsedTime (sec)'] - startseconds
+        previouselapsed = self.df.ix[indices[0],elapsemetric]
 
-            df.ix[i:,' lapIdx'] = intervalnr
-            intervalnr += 1
+        units = []
+        typ = []
+        vals = []
             
-        df[' WorkoutState'] = 5
+        for i in indices[1:]:
+            startelapsed = self.df.ix[i,elapsemetric]
+
+            units.append(unit)
+            vals.append(startelapsed-previouselapsed)
+
+            if self.df.ix[i,' WorkoutState'] == 3:
+                tt = 'rest'
+            else:
+                tt = 'work'
+
+            typ.append(tt)
+
+            previouselapsed = startelapsed
+            
+            if debug:
+                print(i,startelapsed-previouselapsed,unit,tt)
+
+        self.updateintervaldata(vals,units,typ,debug=debug)
+                
+            
+        if mode == 'split':
+            self.df[' WorkoutState'] = 5
                     
-        self.df = df
 
-    def updateinterval_power(self, power, debug=False):
-        if self.empty:
-            return None
-
-        df = self.df
-
-        try:
-            origdist = df['orig_dist']
-            df[' Horizontal (meters)'] = df['orig_dist']
-            df['TimeStamp (sec)'] = df['orig_time']
-            df[' ElapsedTime (sec)'] = df['orig_reltime']
-            df[' LapIdx'] = df['orig_idx']
-            df[' WorkoutState'] = df['orig_state']
-        except KeyError:
-            df['orig_dist'] = df[' Horizontal (meters)']
-            df['orig_time'] = df['TimeStamp (sec)']
-            df['orig_reltime'] = df[' ElapsedTime (sec)']
-            df['orig_idx'] = df[' lapIdx']
-            try:
-                df['orig_state'] = df[' WorkoutState']
-            except KeyError:
-                df['orig_state'] = 1
-
-        timezero = -df.ix[0, 'TimeStamp (sec)'] + \
-            df.ix[0, ' ElapsedTime (sec)']
-
-        # erase existing lap data
-        df[' lapIdx'] = 0
-        df[' WorkoutState'] = 5
-        df[' ElapsedTime (sec)'] = df['TimeStamp (sec)'] + timezero
-        df[' Horizontal (meters)'] = df['cum_dist']
-
-        workouttype = 5
-
-        mask = (df[' Power (watts)'] < power)
-        df.loc[mask, ' WorkoutState'] = workouttype
-        mask = (df[' Power (watts)'] >= power)
-        df.loc[mask, ' WorkoutState'] = 3
-
-        steps = df[' WorkoutState'].diff()
-
-        indices = df.index[steps!=0].tolist()
-        intervalnr = 0
-        
-        for i in indices:
-            startmeters = df.ix[i,' Horizontal (meters)']
-            startseconds = df.ix[i,' ElapsedTime (sec)']
-            
-            df.ix[
-                i:,' Horizontal (meters)'
-            ] =  df.ix[i:,' Horizontal (meters)'] - startmeters
-
-            df.ix[
-                i:,' ElapsedTime (sec)'
-            ] =  df.ix[i:,' ElapsedTime (sec)'] - startseconds
-
-            df.ix[i:,' lapIdx'] = intervalnr
-            intervalnr += 1
-            
-        df[' WorkoutState'] = 5
-                    
-        self.df = df
-
-    def updateinterval_spm(self, spm, debug=False):
-        if self.empty:
-            return None
-
-        df = self.df
-
-        try:
-            origdist = df['orig_dist']
-            df[' Horizontal (meters)'] = df['orig_dist']
-            df['TimeStamp (sec)'] = df['orig_time']
-            df[' ElapsedTime (sec)'] = df['orig_reltime']
-            df[' LapIdx'] = df['orig_idx']
-            df[' WorkoutState'] = df['orig_state']
-        except KeyError:
-            df['orig_dist'] = df[' Horizontal (meters)']
-            df['orig_time'] = df['TimeStamp (sec)']
-            df['orig_reltime'] = df[' ElapsedTime (sec)']
-            df['orig_idx'] = df[' lapIdx']
-            try:
-                df['orig_state'] = df[' WorkoutState']
-            except KeyError:
-                df['orig_state'] = 1
-
-        timezero = -df.ix[0, 'TimeStamp (sec)'] + \
-            df.ix[0, ' ElapsedTime (sec)']
-
-        # erase existing lap data
-        df[' lapIdx'] = 0
-        df[' WorkoutState'] = 5
-        df[' ElapsedTime (sec)'] = df['TimeStamp (sec)'] + timezero
-        df[' Horizontal (meters)'] = df['cum_dist']
-
-        workouttype = 5
-
-        mask = (df[' Cadence (stokes/min)'] < spm)
-        df.loc[mask, ' WorkoutState'] = workouttype
-        mask = (df[' Cadence (stokes/min)'] >= spm)
-        df.loc[mask, ' WorkoutState'] = 3
-
-        steps = df[' WorkoutState'].diff()
-
-        indices = df.index[steps!=0].tolist()
-        intervalnr = 0
-        
-        for i in indices:
-            startmeters = df.ix[i,' Horizontal (meters)']
-            startseconds = df.ix[i,' ElapsedTime (sec)']
-            
-            df.ix[
-                i:,' Horizontal (meters)'
-            ] =  df.ix[i:,' Horizontal (meters)'] - startmeters
-
-            df.ix[
-                i:,' ElapsedTime (sec)'
-            ] =  df.ix[i:,' ElapsedTime (sec)'] - startseconds
-
-            df.ix[i:,' lapIdx'] = intervalnr
-            intervalnr += 1
-            
-        df[' WorkoutState'] = 5
-                    
-        self.df = df
         
     def updateinterval_string(self, s, debug=False):
         res = trainingparser.parse(s)
@@ -2896,6 +2798,33 @@ class rowingdata:
 
         self.df = df
 
+    def get_smoothed(self, metricname, windowseconds):
+        if metricname == ' Stroke500mPace (sec/500m)':
+            pace = self.df[' Stroke500mPace (sec/500m)'].values
+            thevalues = 500. / pace
+        else:
+            thevalues = self.df[metricname].values
+            
+        f = self.df['TimeStamp (sec)'].diff().mean()
+        if f!= 0 and not np.isnan(f):
+            windowsize = 2 * (int(windowseconds/(f))) + 1
+        else:
+            windowsize = 1
+
+        if windowsize > 3 and windowsize < len(thevalues):
+            newvalues = savgol_filter(thevalues, windowsize, 3)
+        else:
+            newvalues = thevalues
+
+        newvalues = pd.Series(newvalues)
+        newvalues = newvalues.replace([-np.inf,np.inf],np.nan)
+        newvalues = newvalues.fillna(method='ffill')
+
+        if metricname == ' Stroke500mPace (sec/500m)':
+            newvalues = 500./newvalues
+
+        return newvalues
+            
     def update_wind(self, vwind1, vwind2, winddirection1,
                     winddirection2, dist1, dist2, units='m'):
 
