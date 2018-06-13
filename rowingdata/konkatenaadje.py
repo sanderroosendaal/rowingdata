@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+from __future__ import print_function
 import numpy as np
 import pandas as pd
 
@@ -9,9 +11,9 @@ y2=x2*2-1
 def test():
     x=np.concatenate((x1,x2))
     y=np.concatenate((y1,y2))
-    print(len(x),len(y))
+    print((len(x),len(y)))
     data=pd.DataFrame({'x':x,
-			 'y':y})
+                         'y':y})
     data=data.drop_duplicates(subset='x').sort('x',ascending=1)
 
     return data

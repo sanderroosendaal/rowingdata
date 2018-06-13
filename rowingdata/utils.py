@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import math
 import numpy as np
 import re
@@ -61,7 +62,7 @@ def geo_distance(lat1,lon1,lat2,lon2):
     distance=R * c
 
     tc1=atan2(sin(lon2-lon1)*cos(lat2),
-		cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(lon2-lon1))
+                cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(lon2-lon1))
 
     tc1=tc1 % (2*pi)
 
@@ -81,14 +82,14 @@ def totimestamp(dt, epoch=datetime.datetime(1970,1,1,0,0,0,0,pytz.UTC)):
 
 def format_pace(x,pos=None):
     if np.isinf(x) or np.isnan(x):
-	x=0
-	
+        x=0
+        
     min=int(x/60)
     sec=(x-min*60.)
 
     str1="{min:0>2}:{sec:0>4.1f}".format(
-	min=min,
-	sec=sec
+        min=min,
+        sec=sec
     )
 
     return str1
@@ -100,9 +101,9 @@ def format_time(x,pos=None):
     sec=int(x-min*60)
 
     str1="{min:0>2}:{sec:0>4.1f}".format(
-	min=min,
-	sec=sec,
-	)
+        min=min,
+        sec=sec,
+        )
 
     return str1
 

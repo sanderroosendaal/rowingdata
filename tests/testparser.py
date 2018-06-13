@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from rowingdata.trainingparser import parse
 from nose.tools import assert_equals
 import unittest

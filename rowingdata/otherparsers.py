@@ -1,15 +1,28 @@
 # pylint: disable=C0103, C0303
+from __future__ import absolute_import
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from lxml import objectify
 from fitparse import FitFile
-import tcxtools
-from utils import totimestamp, geo_distance
+try:
+    from . import tcxtools
+    from .utils import totimestamp, geo_distance
+except (ValueError,ImportError):
+    import tcxtools
+    from utils import totimestamp, geo_distance
+
+import sys
+if sys.version_info[0]<=2:
+    pythonversion = 2
+else:
+    pythonversion = 3
+    
 import gzip
 import arrow
 import shutil
 from datetime import datetime
+from six.moves import range
 
 NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -362,10 +375,27 @@ class FITParser(object):
         
 
         self.df = pd.DataFrame(recorddicts)
-        # columns to lowercase
+
+        # columns to lowercase - this should be easier
         self.df.columns = [strip_non_ascii(x) for x in self.df.columns]
         self.df.columns = [x.encode('ascii','ignore') for x in self.df.columns]
+        if pythonversion == 3:
+            #        self.df.columns = [str(x) for x in self.df.columns]
+            self.df.columns = [x.decode('ascii') for x in self.df.columns]
+
         self.df.rename(columns = str.lower,inplace=True)
+            
+
+        # check column dimensions
+
+        for c in self.df.columns:
+            x = self.df[c]
+            if len(x.shape)>1:
+                newdf = pd.DataFrame({
+                    c: x.ix[:,0].values
+                    })
+                self.df.drop(labels=c,axis=1,inplace=True)
+                self.df[c] = newdf[c]
 
         try:
             latitude = self.df['position_lat']*(180./2**31)            
@@ -380,6 +410,7 @@ class FITParser(object):
         self.df['position_lat'] = latitude
         self.df['position_long'] = longitude
 
+        
         if pd.isnull(distance).all():
             dist2 = np.zeros(len(distance))
             for i in range(len(distance)-1):
@@ -513,7 +544,7 @@ class TCXParser(object):
                     velo[i+1] = deltal/(1.0*(unixtimes[i+1]-unixtimes[i]))
                 except ZeroDivisionError:
                     velo[i+1] = velo[i]
-                if spm[i] <> 0:
+                if spm[i] != 0:
                     strokelength[i] = deltal*60/spm[i]
                 else:
                     strokelength[i] = 0.
@@ -521,7 +552,12 @@ class TCXParser(object):
         try:
             power = self.df['Watts']
         except KeyError:
-            self.df['Watts'] = 0*spm
+            try:
+                power = self.df['ns3:Watts']
+            except KeyError:
+                power = 0*spm
+
+            self.df['Watts'] = power
 
         p = 500./velo
 

@@ -1,4 +1,6 @@
 #! /usr/bin/python
+from __future__ import absolute_import
+from __future__ import print_function
 import rowingdata
 from sys import argv
 
@@ -16,11 +18,11 @@ def main():
     row = rowingdata.rowingdata(readFile,rowtype="Indoor Rower",
 				    rower=rower)
 
-    print row.allstats()
+    print(row.allstats())
 	
     row.plotmeters_erg()
 
 
 
 
-    print "done "+readFile
+    print("done "+readFile)

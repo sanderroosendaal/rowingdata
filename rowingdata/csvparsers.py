@@ -1,5 +1,9 @@
 # pylint: disable=C0103, C0303
+from __future__ import absolute_import
+#from builtins import (bytes, str, open, super, range,
+#                      zip, round, input, int, pow, object)
 import os
+import io
 import csv
 import gzip
 import zipfile
@@ -14,7 +18,10 @@ import numpy as np
 import pandas as pd
 from pandas.core.indexing import IndexingError
 
-from StringIO import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from pandas import Series, DataFrame
 from dateutil import parser
@@ -23,12 +30,34 @@ from timezonefinder import TimezoneFinder
 from lxml import objectify
 from fitparse import FitFile
 
-from utils import (
-    totimestamp, format_pace, format_time,
-)
+try:
+    from .utils import (
+        totimestamp, format_pace, format_time,
+    )
 
-from tcxtools import strip_control_characters
+    from .tcxtools import strip_control_characters
+except (ValueError,ImportError):
+    from utils import (
+        totimestamp, format_pace, format_time,
+    )
 
+    from tcxtools import strip_control_characters
+
+    
+import six
+from six.moves import range
+from six.moves import zip
+
+import sys
+if sys.version_info[0]<=2:
+    pythonversion = 2
+    readmode = 'r'
+else:
+    readmode = 'rt'
+    pythonversion = 3
+    from io import open
+
+    
 # we're going to plot SI units - convert pound force to Newton
 lbstoN = 4.44822
 
@@ -198,7 +227,21 @@ def get_file_type(f):
         return 'kml'
     if extension == '.gz':
         extension = f[-6:-3].lower()
-        with gzip.open(f, 'r') as fop:
+        if extension == 'fit':
+            newfile = 'temp.fit'
+            with gzip.open(f,'rb') as fop:
+                with open(newfile,'wb') as f_out:
+                    shutil.copyfileobj(fop, f_out)
+
+                try:
+                    FitFile(newfile, check_crc=False).parse()
+                    return 'fit'
+                except:
+                    return 'unknown'
+                
+            return 'fit'
+
+        with gzip.open(f, readmode) as fop:
             try:
                 if extension == 'csv':
                     return csvtests(fop)
@@ -211,18 +254,6 @@ def get_file_type(f):
                         return 'tcx'
                     except:
                         return 'unknown'
-                elif extension == 'fit':
-                    newfile = 'temp.fit'
-                    with open(newfile,'wb') as f_out:
-                        shutil.copyfileobj(fop, f_out)
-
-                    try:
-                        FitFile(newfile, check_crc=False).parse()
-                        return 'fit'
-                    except:
-                        return 'unknown'
-
-                    return 'fit'
 
             except IOError:
                 return 'notgzip'
@@ -286,7 +317,7 @@ def get_file_line(linenr, f):
     line = ''
     extension = f[-3:].lower()
     if extension == '.gz':
-        with gzip.open(f, 'r') as fop:
+        with gzip.open(f, readmode) as fop:
             for i in range(linenr):
                 line = fop.readline()
     else:
@@ -301,7 +332,7 @@ def get_separator(linenr, f):
     line = ''
     extension = f[-3:].lower()
     if extension == '.gz':
-        with gzip.open(f, 'r') as fop:
+        with gzip.open(f, readmode) as fop:
             for i in range(linenr):
                 line = fop.readline()
 
@@ -346,28 +377,51 @@ def get_empower_rigging(f):
     oarlength = 289.
     inboard = 88.
     line = '1'
-    with open(f, 'r') as fop:
-        for line in fop:
-            if 'Oar Length' in line:
-                try:
-                    oarlength = getoarlength(line)
-                except ValueError:
-                    return None,None
-            if 'Inboard' in line:
-                try:
-                    inboard = getinboard(line)
-                except ValueError:
-                    return None,None
+    try:
+        with open(f, readmode) as fop:
+            for line in fop:
+                if 'Oar Length' in line:
+                    try:
+                        oarlength = getoarlength(line)
+                    except ValueError:
+                        return None,None
+                if 'Inboard' in line:
+                    try:
+                        inboard = getinboard(line)
+                    except ValueError:
+                        return None,None
+    except (UnicodeDecodeError,ValueError):
+        with gzip.open(f, readmode) as fop:
+            for line in fop:
+                if 'Oar Length' in line:
+                    try:
+                        oarlength = getoarlength(line)
+                    except ValueError:
+                        return None,None
+                if 'Inboard' in line:
+                    try:
+                        inboard = getinboard(line)
+                    except ValueError:
+                        return None,None
+                
 
 
     return oarlength / 100., inboard / 100.
 
 def get_empower_firmware(f):
     firmware = ''
-    with open(f,'r') as fop:
-        for line in fop:
-            if 'firmware' in line.lower() and 'oar' in line.lower():
-                firmware = getfirmware(line)
+    try:
+        with open(f,readmode) as fop:
+            for line in fop:
+                if 'firmware' in line.lower() and 'oar' in line.lower():
+                    firmware = getfirmware(line)
+    except (IndexError,UnicodeDecodeError):
+        with gzip.open(f,readmode) as fop:
+            for line in fop:
+                if 'firmware' in line.lower() and 'oar' in line.lower():
+                    firmware = getfirmware(line)
+            
+
 
     try:
         firmware = np.float(firmware)
@@ -382,7 +436,7 @@ def skip_variable_footer(f):
 
     extension = f[-3:].lower()
     if extension == '.gz':
-        fop = gzip.open(f,'rb')
+        fop = gzip.open(f,readmode)
     else:
         fop = open(f, 'r')
 
@@ -404,7 +458,7 @@ def get_rowpro_footer(f, converters={}):
 
     extension = f[-3:].lower()
     if extension == '.gz':
-        fop = gzip.open(f,'rb')
+        fop = gzip.open(f,readmode)
     else:
         fop = open(f, 'r')
 
@@ -431,7 +485,7 @@ def skip_variable_header(f):
     extension = f[-3:].lower()
     firmware = ''
     if extension == '.gz':
-        fop = gzip.open(f,'rb')
+        fop = gzip.open(f,readmode)
     else:
         fop = open(f, 'r')
 
@@ -465,7 +519,7 @@ def bc_variable_header(f):
     counter = 0
     extension = f[-3:].lower()
     if extension == '.gz':
-        fop = gzip.open(f,'rb')
+        fop = gzip.open(f,readmode)
     else:
         fop = open(f, 'r')
 
@@ -648,7 +702,7 @@ class CSVParser(object):
         self.columns = {c: c for c in self.defaultcolumnnames}
 
     def to_standard(self):
-        inverted = {value: key for key, value in self.columns.iteritems()}
+        inverted = {value: key for key, value in six.iteritems(self.columns)}
         self.df.rename(columns=inverted, inplace=True)
         self.columns = {c: c for c in self.defaultcolumnnames}
 
@@ -739,7 +793,7 @@ class QuiskeParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         velo = self.df['speed (m/s)']
         pace = 500./velo
@@ -817,7 +871,7 @@ class BoatCoachOTWParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         try:
             row_datetime = self.df[self.columns['TimeStamp (sec)']]
@@ -864,7 +918,7 @@ class CoxMateParser(CSVParser):
         # remove "00 waiting to row"
 
         self.cols = [
-            'Time',
+            '',
             'Distance',
             'Rating',
             'Heart Rate',
@@ -886,7 +940,7 @@ class CoxMateParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations / speed
         dd = self.df[self.columns[' Horizontal (meters)']].diff()
@@ -905,6 +959,7 @@ class CoxMateParser(CSVParser):
         unixtimes = tts.apply(lambda x: arrow.get(
             x).timestamp + arrow.get(x).microsecond / 1.e6)
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
+
 
         self.to_standard()
 
@@ -940,7 +995,7 @@ class painsledDesktopParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']] / 2.
@@ -964,7 +1019,7 @@ class BoatCoachParser(CSVParser):
 
     def __init__(self, *args, **kwargs):
         kwargs['skiprows'] = 1
-        kwargs['usecols'] = range(25)
+        kwargs['usecols'] = list(range(25))
 
         if args:
             csvfile = args[0]
@@ -1023,16 +1078,16 @@ class BoatCoachParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # get date from footer
         try:
             try:
-                with open(csvfile, 'r') as fop:
+                with open(csvfile, readmode) as fop:
                     line = fop.readline()
                     dated = re.split('Date:', line)[1][1:-1]
-            except IndexError:
-                with gzip.open(csvfile,'rb') as fop:
+            except (IndexError,UnicodeDecodeError):
+                with gzip.open(csvfile,readmode) as fop:
                     line = fop.readline()
                     dated = re.split('Date:', line)[1][1:-1]
             row_date = parser.parse(dated, fuzzy=True)
@@ -1113,7 +1168,7 @@ class BoatCoachParser(CSVParser):
         data = []
         try:
 
-            with gzip.open(csvfile,'r') as f:
+            with gzip.open(csvfile,readmode) as f:
                 for line in f:
                     s  = line.split(',')
                     data.append(','.join([str(x) for x in s[26:-1]]))
@@ -1189,7 +1244,7 @@ class KinoMapParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         row_datetime = self.df[self.columns['TimeStamp (sec)']]
         row_datetime = row_datetime.apply(
@@ -1223,7 +1278,7 @@ class BoatCoachAdvancedParser(CSVParser):
 
     def __init__(self, *args, **kwargs):
         kwargs['skiprows'] = 1
-        kwargs['usecols'] = range(25)
+        kwargs['usecols'] = list(range(25))
 
         if args:
             csvfile = args[0]
@@ -1280,15 +1335,15 @@ class BoatCoachAdvancedParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # get date from footer
         try:
             with open(csvfile, 'r') as fop:
                 line = fop.readline()
                 dated = re.split('Date:', line)[1][1:-1]
-        except IndexError:
-            with gzip.open(csvfile,'rb') as fop:
+        except (IndexError,UnicodeDecodeError):
+            with gzip.open(csvfile,readmode) as fop:
                 line = fop.readline()
                 dated = re.split('Date:', line)[1][1:-1]
 
@@ -1422,7 +1477,7 @@ class ErgDataParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
         # get date from footer
@@ -1480,7 +1535,7 @@ class speedcoachParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
         # get date from footer
@@ -1526,7 +1581,7 @@ class ErgStickParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
         self.df[self.columns[' DriveTime (ms)']] *= 1000.
@@ -1572,7 +1627,7 @@ class RowPerfectParser(CSVParser):
                 s.append(str(row)[1:-1])
 
             self.df['curve_data'] = s
-        except AttributeError,e:
+        except AttributeError as e:
             pass
             # print traceback.format_exc()
 
@@ -1609,7 +1664,7 @@ class RowPerfectParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
 
         # calculations
@@ -1688,7 +1743,7 @@ class MysteryParser(CSVParser):
 
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
         velo = pd.to_numeric(self.df['Speed (m/s)'], errors='coerce')
@@ -1831,7 +1886,7 @@ class RowProParser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
         self.df[self.columns[' Stroke500mPace (sec/500m)']] *= 500.0
@@ -1868,19 +1923,20 @@ class SpeedCoach2Parser(CSVParser):
 
         firmware = get_empower_firmware(csvfile)
         corr_factor = 1.0
-        if firmware < 2.18 and firmware is not None:
-            # apply correction
-            oarlength, inboard = get_empower_rigging(csvfile)
-            if oarlength is not None and oarlength > 3.30:
-                # sweep
-                a = 0.15
-                b = 0.275
-                corr_factor = empower_bug_correction(oarlength,inboard,a,b)
-            elif oarlength is not None and oarlength <= 3.3:
-                # scull
-                a = 0.06
-                b = 0.225
-                corr_factor = empower_bug_correction(oarlength,inboard,a,b)
+        if firmware is not None:
+            if firmware < 2.18:
+                # apply correction
+                oarlength, inboard = get_empower_rigging(csvfile)
+                if oarlength is not None and oarlength > 3.30:
+                    # sweep
+                    a = 0.15
+                    b = 0.275
+                    corr_factor = empower_bug_correction(oarlength,inboard,a,b)
+                elif oarlength is not None and oarlength <= 3.3:
+                    # scull
+                    a = 0.06
+                    b = 0.225
+                    corr_factor = empower_bug_correction(oarlength,inboard,a,b)
 
 
             
@@ -1945,7 +2001,7 @@ class SpeedCoach2Parser(CSVParser):
         self.cols = [b if a == '' else a
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
-        self.columns = dict(zip(self.defaultcolumnnames, self.cols))
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # correct Power, Work per Stroke
         try:

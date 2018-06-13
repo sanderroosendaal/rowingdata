@@ -1,5 +1,7 @@
 #! /usr/bin/python
-import rowingdata
+from __future__ import absolute_import
+from __future__ import print_function
+from . import rowingdata
 from sys import argv
 
 def main():
@@ -21,7 +23,7 @@ def main():
     res=rowingdata.rowingdata(csvoutput,rowtype="On-water",
 				rower=rower)
 
-    print(res.allstats())
+    print((res.allstats()))
     rowingdata.copytocb(res.allstats())
 
 
@@ -33,4 +35,4 @@ def main():
 
 
 
-    print("done "+readFile)
+    print(("done "+readFile))

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from nose.tools import assert_equals, assert_not_equal
 from nose import with_setup
 import rowingdata
@@ -7,6 +8,7 @@ import pandas as pd
 from nose_parameterized import parameterized
 import unittest
 from pytz import utc
+import six
 
 class TestBasicRowingData:
     row=rowingdata.rowingdata(csvfile='testdata/testdata.csv')
@@ -122,7 +124,21 @@ class TestCorrectedRowingData:
             20.339325842696628
         )
 
-                      
+
+class TestTCXExport:
+    def testtcxexport(self):
+        csvfile='testdata/Speedcoach2example.csv'
+        assert_equals(rowingdata.get_file_type(csvfile),'speedcoach2')
+        r=rowingdata.SpeedCoach2Parser(csvfile=csvfile)
+        row=rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,97)
+        tcxfile = 'testdata/testtcx.tcx'
+        row.exporttotcx(tcxfile)
+        assert_equals(rowingdata.get_file_type(tcxfile),'tcx')
+        r2 = rowingdata.TCXParser(tcxfile)
+        row=rowingdata.rowingdata(df=r.df)
+        assert_equals(row.number_of_rows,97)
+        
 class TestErgData:
     def testergdata(self):
         csvfile='testdata/ergdata_example.csv'
@@ -341,7 +357,7 @@ class TestSequence(unittest.TestCase):
         if filetype  not in ['unknown','c2log']:
             assert_not_equal(res,0)
         if res != 0:
-            for key,value in res.iteritems():
+            for key,value in six.iteritems(res):
                 if key != 'summary':
                     if expected[key] != 0:
                         assert_equals(value,expected[key])
