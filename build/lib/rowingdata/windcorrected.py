@@ -9,16 +9,16 @@ def main():
     readFile=argv[1]
 
     try:
-	rowerFile=argv[2]
+        rowerFile=argv[2]
     except IndexError:
-	rowerFile="defaultrower.txt"
+        rowerFile="defaultrower.txt"
 
     rower=rowingdata.getrower(rowerFile)
 
     try:
-	boatFile=argv[3]
+        boatFile=argv[3]
     except IndexError:
-	boatFile="my1x.txt"
+        boatFile="my1x.txt"
 
 
     csvoutput=readFile+'_p.csv'
@@ -27,7 +27,7 @@ def main():
     tcx.write_csv(csvoutput,window_size=20)
 
     res=rowingdata.rowingdata(csvoutput,rowtype="On-water",
-				rower=rower)
+                                rower=rower)
 
     s=input('Enter wind speed: ')
     windv=float(s)

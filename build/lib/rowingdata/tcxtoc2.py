@@ -8,9 +8,9 @@ def main():
     readFile=argv[1]
 
     try:
-	rowerFile=argv[2]
+        rowerFile=argv[2]
     except IndexError:
-	rowerFile="defaultrower.txt"
+        rowerFile="defaultrower.txt"
 
     rower=rowingdata.getrower(rowerFile)
 
@@ -21,7 +21,7 @@ def main():
     tcx.write_csv(file2)
 
     row=rowingdata.rowingdata(file2,rowtype="On-water",
-				rower=rower)
+                                rower=rower)
 
     row.uploadtoc2(rowerFile=rowerFile)
 
