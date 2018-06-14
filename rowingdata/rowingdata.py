@@ -6,6 +6,8 @@ from six.moves import range
 from six.moves import input
 __version__ = "1.8.5"
 
+from collections import Counter
+
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -1642,20 +1644,18 @@ class rowingdata:
                 if name == ' WorkoutState':
                     sled_df[name] = 4
                 if name == ' Stroke500mPace (sec/500m)':
-                    try:
-                        velo = sled_df[' Horizontal (meters)'] / \
-                            sled_df[' ElapsedTime (sec)']
-                        sled_df[name] = 500. / velo
-                    except KeyError:
-                        velo = sled_df[' Horizontal (meters)'] / (
-                            sled_df['TimeStamp (sec)'] - sled_df['TimeStamp (sec)'].min())
-                        sled_df[name] = 500. / velo
+                    dd = sled_df[' Horizontal (meters)'].diff()
+                    dt = sled_df[' ElapsedTime (sec)'].diff()
+                    velo = dd / dt
+                    sled_df[name] = 500. / velo
                 if name == ' AverageBoatSpeed (m/s)':
                     try:
                         velo = 500./sled_df[' Stroke500mPace (sec/500m)']
                     except (KeyError,ValueError):
-                        velo = sled_df[' Horizontal (meters)'] / (
-                            sled_df['TimeStamp (sec)'] - sled_df['TimeStamp (sec)'].min())
+                        dd = sled_df[' Horizontal (meters)'].diff()
+                        dt = sled_df[' ElapsedTime (sec)'].diff()
+                        velo = dd / dt
+
                     sled_df[name] = velo
                 if name == ' AverageDriveForce (lbs)':
                     try:
@@ -2611,6 +2611,7 @@ class rowingdata:
             except KeyError:
                 df['orig_state'] = 1
 
+            
         timezero = -df.ix[0, 'TimeStamp (sec)'] + \
             df.ix[0, ' ElapsedTime (sec)']
 
@@ -2620,6 +2621,16 @@ class rowingdata:
         df[' ElapsedTime (sec)'] = df['TimeStamp (sec)'] + timezero
         df[' Horizontal (meters)'] = df['cum_dist']
 
+
+        df.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+        df[' AverageBoatSpeed (m/s)'] = df[' AverageBoatSpeed (m/s)'].replace(np.nan,0)
+        
+        df = df.fillna(method='bfill',axis=0)
+        self.df = df
+        
+        values = self.get_smoothed(metricname,smoothwindow)
+                
         if mode == 'larger':
             largerthantype = 5
             smallerthantype = 3
@@ -2627,11 +2638,6 @@ class rowingdata:
             largerthantype = 3
             smallerthantype = 5
 
-        df.replace([np.inf, -np.inf], np.nan, inplace=True)
-        df = df.fillna(method='bfill',axis=1)
-        self.df = df
-            
-        values = self.get_smoothed(metricname,smoothwindow)
 
         mask = (values > value)
         df.loc[mask, ' WorkoutState'] = largerthantype
@@ -2641,10 +2647,52 @@ class rowingdata:
         steps = df[' WorkoutState'].diff()
 
         indices = df.index[steps!=0].tolist()
+        if debug:
+            print('indices ',indices)
+            print('----------------------')
+
+        intervalnr = 0
+
+        for i in range(len(indices[1:])):
+            if debug:
+                print(indices[i+1]-indices[i])
+            df.ix[indices[i]:indices[i+1],' lapIdx'] = intervalnr
+            intervalnr += 1
+
+        df.ix[indices[-1]:,' lapIdx'] = intervalnr
+        df['values'] = (1+df[' lapIdx'])*10 + df[' WorkoutState']
+
+        valuecounts = Counter(df['values'])
+        if debug:
+            print(valuecounts)
+            print('----------------------------')
+
+
+        f = df['TimeStamp (sec)'].diff().mean()
+
+        tenstrokes = int(25/f)
+        if debug:
+            print('Ten Strokes = ',tenstrokes,' data points')
+        
+        for key, value in valuecounts.items():
+            if value < tenstrokes:
+                if debug:
+                    print(key,value)
+                mask = df['values'] == key
+                df.loc[mask,' WorkoutState'] = np.nan
+
+        df = df.fillna(method='ffill',axis=0)
+        self.df = df
+
+        df[' lapIdx'] = 0
+            
+        steps = df[' WorkoutState'].diff()
+
+        indices = df.index[steps!=0].tolist()
+                              
 
         if debug:
             print('indices ',indices)
-            print(steps[indices])
             print('----------------------')
 
         intervalnr = 0
@@ -2655,7 +2703,7 @@ class rowingdata:
         else:
             elapsemetric = 'TimeStamp (sec)'
 
-        previouselapsed = self.df.ix[indices[0],elapsemetric]
+        previouselapsed = df.ix[indices[0],elapsemetric]
 
         units = []
         typ = []
@@ -2671,7 +2719,7 @@ class rowingdata:
             if debug:
                 print(df.ix[startindex,'cum_dist'])
                 
-            startelapsed = self.df.ix[startindex,elapsemetric]
+            startelapsed = df.ix[startindex,elapsemetric]
 
             units.append(unit)
             vals.append(startelapsed-previouselapsed)
@@ -2693,7 +2741,7 @@ class rowingdata:
 
         # final part
         startindex = df.index[-1]
-        startelapsed = self.df.ix[startindex,elapsemetric]
+        startelapsed = df.ix[startindex,elapsemetric]
 
         if debug:
             print(df.ix[startindex,'cum_dist'])
