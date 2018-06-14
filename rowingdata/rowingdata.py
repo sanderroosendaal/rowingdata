@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from six.moves import range
 from six.moves import input
-__version__ = "1.8.4"
+__version__ = "1.8.5"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -2699,7 +2699,7 @@ class rowingdata:
             print(df.ix[startindex,'cum_dist'])
                 
         units.append(unit)
-        vals.append(startindex-previouselapsed)
+        vals.append(startelapsed-previouselapsed)
 
         if df.ix[startindex,' WorkoutState'] == 3:
             tt = 'rest'
