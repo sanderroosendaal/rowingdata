@@ -1644,20 +1644,18 @@ class rowingdata:
                 if name == ' WorkoutState':
                     sled_df[name] = 4
                 if name == ' Stroke500mPace (sec/500m)':
-                    try:
-                        velo = sled_df[' Horizontal (meters)'] / \
-                            sled_df[' ElapsedTime (sec)']
-                        sled_df[name] = 500. / velo
-                    except KeyError:
-                        velo = sled_df[' Horizontal (meters)'] / (
-                            sled_df['TimeStamp (sec)'] - sled_df['TimeStamp (sec)'].min())
-                        sled_df[name] = 500. / velo
+                    dd = sled_df[' Horizontal (meters)'].diff()
+                    dt = sled_df[' ElapsedTime (sec)'].diff()
+                    velo = dd / dt
+                    sled_df[name] = 500. / velo
                 if name == ' AverageBoatSpeed (m/s)':
                     try:
                         velo = 500./sled_df[' Stroke500mPace (sec/500m)']
                     except (KeyError,ValueError):
-                        velo = sled_df[' Horizontal (meters)'] / (
-                            sled_df['TimeStamp (sec)'] - sled_df['TimeStamp (sec)'].min())
+                        dd = sled_df[' Horizontal (meters)'].diff()
+                        dt = sled_df[' ElapsedTime (sec)'].diff()
+                        velo = dd / dt
+
                     sled_df[name] = velo
                 if name == ' AverageDriveForce (lbs)':
                     try:
@@ -2625,6 +2623,9 @@ class rowingdata:
 
 
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+        df[' AverageBoatSpeed (m/s)'] = df[' AverageBoatSpeed (m/s)'].replace(np.nan,0)
+        
         df = df.fillna(method='bfill',axis=0)
         self.df = df
         
