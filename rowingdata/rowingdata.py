@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from six.moves import range
 from six.moves import input
-__version__ = "1.8.0"
+__version__ = "1.8.4"
 
 import matplotlib
 matplotlib.use('Agg')
@@ -2588,7 +2588,7 @@ class rowingdata:
 
     def updateinterval_metric(self, metricname, value, debug=False,
                               mode='split',unit='seconds',
-                              smoothwindow = 10):
+                              smoothwindow = 60.):
         if self.empty:
             return None
 
@@ -2627,16 +2627,26 @@ class rowingdata:
             largerthantype = 3
             smallerthantype = 5
 
-        values = self.get_smoothed(metricname,smoothwindow)
+        df.replace([np.inf, -np.inf], np.nan, inplace=True)
+        df = df.fillna(method='bfill',axis=1)
+        self.df = df
             
-        mask = (values < value)
+        values = self.get_smoothed(metricname,smoothwindow)
+
+        mask = (values > value)
         df.loc[mask, ' WorkoutState'] = largerthantype
-        mask = (values >= value)
+        mask = (values <= value)
         df.loc[mask, ' WorkoutState'] = smallerthantype
 
         steps = df[' WorkoutState'].diff()
 
         indices = df.index[steps!=0].tolist()
+
+        if debug:
+            print('indices ',indices)
+            print(steps[indices])
+            print('----------------------')
+
         intervalnr = 0
 
         
@@ -2652,26 +2662,70 @@ class rowingdata:
         vals = []
             
         for i in indices[1:]:
-            startelapsed = self.df.ix[i,elapsemetric]
+            try:
+                startindex = df.index[i-1]
+            except KeyError:
+                startindex = 0
+
+
+            if debug:
+                print(df.ix[startindex,'cum_dist'])
+                
+            startelapsed = self.df.ix[startindex,elapsemetric]
 
             units.append(unit)
             vals.append(startelapsed-previouselapsed)
 
-            if self.df.ix[i,' WorkoutState'] == 3:
+            if df.ix[startindex,' WorkoutState'] == 3:
                 tt = 'rest'
             else:
                 tt = 'work'
 
+            if mode == 'split':
+                tt = 'work'
+
             typ.append(tt)
 
-            previouselapsed = startelapsed
-            
             if debug:
-                print(i,startelapsed-previouselapsed,unit,tt)
+                print(startindex,startelapsed-previouselapsed,unit,tt)
 
+            previouselapsed = startelapsed
+
+        # final part
+        startindex = df.index[-1]
+        startelapsed = self.df.ix[startindex,elapsemetric]
+
+        if debug:
+            print(df.ix[startindex,'cum_dist'])
+                
+        units.append(unit)
+        vals.append(startindex-previouselapsed)
+
+        if df.ix[startindex,' WorkoutState'] == 3:
+            tt = 'rest'
+        else:
+            tt = 'work'
+
+        if mode == 'split':
+            tt = 'work'
+
+        typ.append(tt)
+
+        if debug:
+            print(startindex,startelapsed-previouselapsed,unit,tt)
+            
+        if debug:
+            print('--------------------------------')
+
+        self.df = df
         self.updateintervaldata(vals,units,typ,debug=debug)
                 
-            
+
+        if debug:
+            print(vals)
+            print(units)
+            print(typ)
+        
         if mode == 'split':
             self.df[' WorkoutState'] = 5
                     
