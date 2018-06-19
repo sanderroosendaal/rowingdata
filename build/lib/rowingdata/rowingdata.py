@@ -4,7 +4,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 from six.moves import range
 from six.moves import input
-__version__ = "1.8.6"
+
+__version__ = "1.8.8"
 
 from collections import Counter
 
@@ -80,6 +81,7 @@ except (ValueError,ImportError):
 try:
     from .csvparsers import (
         BoatCoachAdvancedParser, BoatCoachOTWParser,
+        RitmoTimeParser,
         BoatCoachParser, CoxMateParser, CSVParser,
         ErgDataParser, ErgStickParser, KinoMapParser,
         MysteryParser, RowPerfectParser, RowProParser,
@@ -106,6 +108,7 @@ try:
 except (ValueError,ImportError):
     from csvparsers import (
         BoatCoachAdvancedParser, BoatCoachOTWParser,
+        RitmoTimeParser,
         BoatCoachParser, CoxMateParser, CSVParser,
         ErgDataParser, ErgStickParser, KinoMapParser,
         MysteryParser, RowPerfectParser, RowProParser,
