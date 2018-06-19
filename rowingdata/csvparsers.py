@@ -130,6 +130,9 @@ def csvtests(fop):
 
     fop.close()
 
+    if 'RitmoTime' in firstline:
+        return 'ritmotime'
+
     if 'Quiske' in firstline:
         return 'quiske'
 
@@ -515,6 +518,23 @@ def skip_variable_header(f):
 
     return counter2 + 2, summaryc + 2, blanklines, sessionc + 2
 
+def ritmo_variable_header(f):
+    counter = 0
+    extension = f[-3:].lower()
+    if extension == '.gz':
+        fop = gzip.open(f,readmode)
+    else:
+        fop = open(f, 'r')
+
+    for line in fop:
+        if line.startswith('#'):
+            counter += 1
+        else:
+            fop.close()
+            return counter
+
+    return counter
+
 def bc_variable_header(f):
     counter = 0
     extension = f[-3:].lower()
@@ -753,6 +773,78 @@ class CSVParser(object):
         else:
             return data.to_csv(writeFile, index_label='index')
 
+class RitmoTimeParser(CSVParser):
+    def __init__(self, *args, **kwargs):
+        if args:
+            csvfile = args[0]
+        else:
+            csvfile = kwargs['csvfile']
+
+        skiprows = ritmo_variable_header(csvfile)
+        kwargs['skiprows'] = skiprows
+
+        separator = get_separator(skiprows+2, csvfile)
+        kwargs['sep'] = separator
+
+        super(RitmoTimeParser, self).__init__(*args, **kwargs)
+        # crude EU format detector
+        try:
+            ll = self.df['Longitude (deg)']*10.0
+        except TypeError:
+            convertlistbase = [
+                'Total Time (sec)',
+                'Rate (spm)',
+                'Distance (m)',
+                'Speed (m/s)',
+                'Latitude (deg)',
+                'Longitude (deg)',                
+            ]
+            converters = make_converter(convertlistbase,self.df)
+
+            kwargs['converters'] = converters
+
+            super(RitmoTimeParser, self).__init__(*args, **kwargs)
+
+        self.cols = [
+            '',
+            'Distance (m)',
+            'Rate (spm)',
+            'Heart Rate (bpm)',
+            'Split (/500m)',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            'Piece#',
+            'Total Time (sec)',
+            'Latitude (deg)',
+            'Longitude (deg)',
+        ]
+
+        self.cols = [b if a == '' else a
+                     for a, b in zip(self.cols, self.defaultcolumnnames)]
+
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
+
+        # calculations / speed
+        velo = self.df['Speed (m/s)']
+        pace = 500. / velo
+        self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+
+        now = datetime.datetime.utcnow()
+        elapsed = self.df[self.columns[' ElapsedTime (sec)']]
+        tts = now + elapsed.apply(lambda x: datetime.timedelta(seconds=x))
+        #unixtimes=tts.apply(lambda x: time.mktime(x.utctimetuple()))
+        unixtimes = tts.apply(lambda x: arrow.get(
+            x).timestamp + arrow.get(x).microsecond / 1.e6)
+        self.df[self.columns['TimeStamp (sec)']] = unixtimes
+
+        self.to_standard()
+            
 class QuiskeParser(CSVParser):
     def __init__(self, *args, **kwargs):
         kwargs['skiprows'] = 1
