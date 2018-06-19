@@ -44,6 +44,10 @@ def checkfile(f2, verbose=False):
         # handle Quiske
         if (fileformat == 'quiske'):
             row = rowingdata.QuiskeParser(f2)
+
+        # handle RitmoTime
+        if (fileformat == 'ritmotime'):
+            row = rowingdata.RitmoTimeParser(f2)
             
         # handle TCX no HR
         if (fileformat == 'tcxnohr'):
