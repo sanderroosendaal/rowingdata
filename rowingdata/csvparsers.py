@@ -1241,8 +1241,16 @@ class BoatCoachParser(CSVParser):
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
         velocity = 500. / (1.0 * pace)
         power = 2.8 * velocity**3
+        
         dif = abs(power - self.df[self.columns[' Power (watts)']])
+
+        moving = self.df[self.columns[' Horizontal (meters)']].diff()
+
+        
+        
         power[dif < 5] = self.df[self.columns[' Power (watts)']][dif < 5]
+        power[moving <= 0] = 0
+
         self.df[self.columns[' Power (watts)']] = power
 
         # Calculate Stroke Rate during rest
