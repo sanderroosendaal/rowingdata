@@ -36,7 +36,7 @@ install:
 #- git checkout 5d8bb3a1a2f6a36d9bf645af3e6bf93cc62b9908
 #- python setup.py install
 #- cd ..
-- conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels setuptools
+- conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels setuptools libgfortran
 - pip install arrow docopt tqdm rowingphysics
 - pip install iso8601 lxml xmltodict nose_parameterized timezonefinder
 - pip install fitparse
