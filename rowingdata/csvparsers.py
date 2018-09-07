@@ -1996,13 +1996,20 @@ class RowProParser(CSVParser):
         lapidx = res[1]
         seconds3 = seconds2.interpolate()
         seconds3[0] = seconds[0]
-        seconds3 = pd.to_timedelta(seconds3, unit='s')
-        tts = self.row_date + seconds3
+        unixtimes = seconds3 + arrow.get(self.row_date).timestamp 
 
-        #unixtimes=tts.apply(lambda x: time.mktime(x.utctimetuple()))
-        unixtimes = tts.apply(lambda x: arrow.get(
-            x).timestamp + arrow.get(x).microsecond / 1.e6)
-        # unixtimes=totimestamp(self.row_date+seconds3)
+#        seconds3 = pd.to_timedelta(seconds3, unit='s')
+
+        
+#        try:
+#            tts = self.row_date + seconds3
+#            unixtimes = tts.apply(lambda x: arrow.get(
+#                x).timestamp + arrow.get(x).microsecond / 1.e6)
+#        except ValueError:
+#            seconds3 = seconds2.interpolate()
+
+
+
         self.df[self.columns[' lapIdx']] = lapidx
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
