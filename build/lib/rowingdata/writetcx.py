@@ -212,7 +212,10 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata"):
             tpx = SubElement(ext,'TPX')
             tpx.attrib['xmlns'] = "http://www.garmin.com/xmlschemas/ActivityExtension/v2"
             watts = SubElement(tpx,'Watts')
-            watts.text = '{s}'.format(s=int(power[i]))
+            try:
+                watts.text = '{s}'.format(s=int(power[i]))
+            except ValueError:
+                watts.text = 'NaN'
 
 
     notes = SubElement(activity,'Notes')
