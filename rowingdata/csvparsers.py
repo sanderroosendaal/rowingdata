@@ -1236,8 +1236,11 @@ class BoatCoachParser(CSVParser):
 
         # Recalculate power
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']]
+
+        
         pace = np.clip(pace, 0, 1e4)
         pace = pace.replace(0, 300)
+
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
         velocity = 500. / (1.0 * pace)
         power = 2.8 * velocity**3
@@ -1249,6 +1252,9 @@ class BoatCoachParser(CSVParser):
         
         
         power[dif < 5] = self.df[self.columns[' Power (watts)']][dif < 5]
+
+        power[dif > 1000] = self.df[self.columns[' Power (watts)']][dif > 1000]
+        
         power[moving <= 0] = 0
 
         self.df[self.columns[' Power (watts)']] = power
