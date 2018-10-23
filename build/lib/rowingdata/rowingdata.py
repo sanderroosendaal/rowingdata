@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "1.9.0"
+__version__ = "1.9.2"
 
 from collections import Counter
 
@@ -1712,7 +1712,10 @@ class rowingdata:
             starttime = 0
 
         # create start time timezone aware time object
-        self.rowdatetime = arrow.get(starttime).datetime
+        try:
+            self.rowdatetime = arrow.get(starttime).datetime
+        except ValueError:
+            self.rowdatetime = datetime.datetime.utcnow()
 
         # remove the start time from the time stamps
         if not self.absolutetimestamps and len(sled_df):
