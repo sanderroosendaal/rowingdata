@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "1.9.2"
+__version__ = "1.9.3"
 
 from collections import Counter
 
@@ -5454,6 +5454,8 @@ class rowingdata:
                  df.ix[:, ' Stroke500mPace (sec/500m)'])
 
         end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        if np.isnan(end_time):
+            end_time = 3600.
         yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, .9])
         ax2.axis([0, end_time, yrange[1], yrange[0]])
