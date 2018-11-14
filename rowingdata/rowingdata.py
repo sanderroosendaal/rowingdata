@@ -2132,14 +2132,16 @@ class rowingdata:
             df[' Power (watts)'] = pwr
             self.df = df
 
-    def exporttotcx(self, fileName, notes="Exported by Rowingdata"):
+    def exporttotcx(self, fileName, notes="Exported by Rowingdata",
+                    sport="Other"):
         if not self.empty:
             df = self.df
 
             writetcx.write_tcx(
                 fileName,
                 df,
-                row_date=self.rowdatetime.isoformat(), notes=notes
+                row_date=self.rowdatetime.isoformat(), notes=notes,
+                sport=sport
             )
         else:
             emptytcx = writetcx.get_empty_tcx()
