@@ -80,7 +80,8 @@ def lap_end(f):
     f.write('          <Notes>rowingdata export</Notes>\n')
     f.write('        </Lap>\n')
 
-def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata"):
+def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
+               sport="Other"):
     if notes is None:
         notes="Exported by rowingdata"
 
@@ -142,7 +143,7 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata"):
 
     activities = SubElement(top,'Activities')
     activity = SubElement(activities,'Activity')
-    activity.attrib['Sport'] = "Other"
+    activity.attrib['Sport'] = sport
     id = SubElement(activity,'Id')
     id.text = row_date
 
@@ -252,9 +253,10 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata"):
     
     return prettify(top)
     
-def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
+def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata",
+              sport="Other"):
 
-    tcxtext = create_tcx(df,row_date=row_date, notes=notes)
+    tcxtext = create_tcx(df,row_date=row_date, notes=notes, sport=sport)
 
     with open(tcxFile,'w') as fop:
         fop.write(tcxtext)

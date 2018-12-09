@@ -310,9 +310,20 @@ def get_file_linecount(f):
     if extension == '.gz':
         with gzip.open(f,'rb') as fop:
             count = sum(1 for line in fop if line.rstrip('\n'))
+        if count <= 2:
+            # test for \r
+            with gzip.open(f,'rb') as fop:
+                s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
+                count = len(s)
+                
     else:
         with open(f, 'r') as fop:
             count = sum(1 for line in fop if line.rstrip('\n'))
+        if count <= 2:
+            # test for \r
+            with open(f,'rb') as fop:
+                s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
+                count = len(s)
 
     return count
 
