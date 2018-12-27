@@ -16,6 +16,7 @@ import traceback
 import shutil
 import numpy as np
 import pandas as pd
+import codecs
 from pandas.core.indexing import IndexingError
 
 try:
