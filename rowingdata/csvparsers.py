@@ -119,17 +119,34 @@ def flexistrftime(t):
 
     return string
 
-def csvtests(fop):
+def csvtests(s):
     # get first and 7th line of file
-    firstline = fop.readline()
-    secondline = fop.readline()
-    thirdline = fop.readline()
-    fourthline = fop.readline()
 
-    for i in range(3):
-        seventhline = fop.readline()
+    try:
+        firstline = s[0]
+    except IndexError:
+        firstline = ''
 
-    fop.close()
+    try:
+        secondline = s[1]
+    except IndexError:
+        secondline = ''
+
+    try:
+        thirdline = s[2]
+    except IndexError:
+        thirdline = ''
+
+    try:
+        fourthline = s[3]
+    except IndexError:
+        fourthline = ''
+
+    try:
+        seventhline = s[6]
+    except IndexError:
+        seventhline = ''
+
 
     if 'RitmoTime' in firstline:
         return 'ritmotime'
@@ -248,7 +265,8 @@ def get_file_type(f):
         with gzip.open(f, readmode) as fop:
             try:
                 if extension == 'csv':
-                    return csvtests(fop)
+                    s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
+                    return csvtests(s)
                 elif extension == 'tcx':
                     try:
                         input = fop.read()
@@ -262,11 +280,18 @@ def get_file_type(f):
             except IOError:
                 return 'notgzip'
     if extension == 'csv':
-        if get_file_linecount(f) <= 2:
+        linecount,isbinary = get_file_linecount(f)
+        if linecount <= 2:
             return 'nostrokes'
 
-        with open(f, 'r') as fop:
-            return csvtests(fop)
+        if isbinary:
+            with open(f,'rb') as fop:
+                s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
+        else:
+            with open(f, 'r') as fop:
+                s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
+                
+        return csvtests(s)
 
     if extension == 'tcx':
         with open(f,'r') as fop:
@@ -308,6 +333,7 @@ def get_file_type(f):
 
 def get_file_linecount(f):
     extension = f[-3:].lower()
+    isbinary = False
     if extension == '.gz':
         with gzip.open(f,'rb') as fop:
             count = sum(1 for line in fop if line.rstrip('\n'))
@@ -323,24 +349,23 @@ def get_file_linecount(f):
         if count <= 2:
             # test for \r
             with open(f,'rb') as fop:
+                isbinary = True
                 s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
                 count = len(s)
 
-    return count
+    return count,isbinary
 
-def get_file_line(linenr, f):
+def get_file_line(linenr, f, isbinary=False):
     line = ''
     extension = f[-3:].lower()
     if extension == '.gz':
         with gzip.open(f, readmode) as fop:
-            for i in range(linenr):
-                line = fop.readline()
+            s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
     else:
-        with open(f, 'r') as fop:
-            for i in range(linenr):
-                line = fop.readline()
+        with open(f, 'rb') as fop:
+            s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
 
-    return line
+    return s[linenr-1]
 
 
 def get_separator(linenr, f):
@@ -500,12 +525,17 @@ def skip_variable_header(f):
     extension = f[-3:].lower()
     firmware = ''
     if extension == '.gz':
-        fop = gzip.open(f,readmode)
+        with gzip.open(f,readmode) as fop:
+            s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
     else:
-        fop = open(f, 'r')
+        with open(f, 'r') as fop:
+            s = fop.read()
+
+        with open(f,'rb') as fop:
+            s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
 
 
-    for line in fop:
+    for line in s:
         if line.startswith('Session Summary'):
             sessionc = counter
         if line.startswith('Interval Summaries'):
@@ -516,11 +546,12 @@ def skip_variable_header(f):
             counter2 = counter
         else:
             counter += 1
+            
 
-    fop.close()
 
     # test for blank line
-    l = get_file_line(counter2 + 2, f)
+    l = s[counter2+1]
+    # l = get_file_line(counter2 + 2, f)
     if 'Interval' in l:
         counter2 = counter2 - 1
         summaryc = summaryc - 1
@@ -2165,12 +2196,21 @@ class SpeedCoach2Parser(CSVParser):
                 except KeyError:
                     pass
             except KeyError:
-                dist2 = self.df['Imp Distance']
-                self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
-                self.columns[' Stroke500mPace (sec/500m)'] = 'Imp Split'
-                self.columns[' Power (watts)'] = 'Work'
-                self.columns['Work'] = 'Power'
-                self.columns['GPS Speed'] = 'Imp Speed'
+                try:
+                    dist2 = self.df['Imp Distance']
+                    self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
+                    self.columns[' Stroke500mPace (sec/500m)'] = 'Imp Split'
+                    self.columns[' Power (watts)'] = 'Work'
+                    self.columns['Work'] = 'Power'
+                    self.columns['GPS Speed'] = 'Imp Speed'
+                except KeyError:
+                    dist2 = self.df['Distance (IMP)']
+                    self.columns[' Stroke500mPace (sec/500m)'] = 'Split (IMP)'
+                    self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
+                    self.columns[' Power (watts)'] = 'Work'
+                    self.columns['Work'] = 'Power'
+                    self.columns['GPS Speed'] = 'Speed (IMP)'
+                    
                 try:
                     self.df[self.columns[' PeakDriveForce (lbs)']] /= lbstoN
                     self.df[self.columns[' AverageDriveForce (lbs)']] /= lbstoN
@@ -2241,11 +2281,14 @@ class SpeedCoach2Parser(CSVParser):
         if not blanklines:
             skipfooter = skipfooter - 3
         if summaryline:
-            self.summarydata = pd.read_csv(csvfile,
-                                           skiprows=summaryline,
-                                           skipfooter=skipfooter,
-                                           engine='python')
-            self.summarydata.drop(0, inplace=True)
+            try:
+                self.summarydata = pd.read_csv(csvfile,
+                                               skiprows=summaryline,
+                                               skipfooter=skipfooter,
+                                               engine='python')
+                self.summarydata.drop(0, inplace=True)
+            except:
+                self.summarydata = pd.DataFrame()
         else:
             self.summarydata = pd.DataFrame()
 
@@ -2253,11 +2296,14 @@ class SpeedCoach2Parser(CSVParser):
         if not blanklines:
             skipfooter = skipfooter - 3
         if sessionline:
-            self.sessiondata = pd.read_csv(csvfile,
-                                           skiprows= sessionline,
-                                           skipfooter=skipfooter,
-                                           engine='python')
-            self.sessiondata.drop(0,inplace=True)
+            try:
+                self.sessiondata = pd.read_csv(csvfile,
+                                               skiprows= sessionline,
+                                               skipfooter=skipfooter,
+                                               engine='python')
+                self.sessiondata.drop(0,inplace=True)
+            except:
+                self.sessiondata = pd.DataFrame()
         else:
             self.sessiondata = pd.DataFrame()
 
