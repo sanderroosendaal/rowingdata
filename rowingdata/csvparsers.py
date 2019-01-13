@@ -1835,9 +1835,11 @@ class RowPerfectParser(CSVParser):
         self.df[' Stroke500mPace (sec/500m)'] = pace
 
         seconds = self.df[self.columns['TimeStamp (sec)']]
+        newseconds,lapidx = make_cumvalues_array(seconds)
+        seconds2 = pd.Series(newseconds)+newseconds[0]
         res = make_cumvalues(seconds)
-        seconds2 = res[0] + seconds[0]
-        lapidx = res[1]
+        #seconds2 = res[0] + seconds[0]
+        #lapidx = res[1]
         unixtime = seconds2 + totimestamp(self.row_date)
 
 
