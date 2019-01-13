@@ -53,8 +53,10 @@ import sys
 if sys.version_info[0]<=2:
     pythonversion = 2
     readmode = 'r'
+    readmodebin = 'rb'
 else:
     readmode = 'rt'
+    readmodebin = 'rt'
     pythonversion = 3
     from io import open
 
@@ -285,10 +287,10 @@ def get_file_type(f):
             return 'nostrokes'
 
         if isbinary:
-            with open(f,'rb') as fop:
+            with open(f,readmodebin) as fop:
                 s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
         else:
-            with open(f, 'r') as fop:
+            with open(f, readmode) as fop:
                 s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
                 
         return csvtests(s)
@@ -339,7 +341,7 @@ def get_file_linecount(f):
             count = sum(1 for line in fop if line.rstrip('\n'))
         if count <= 2:
             # test for \r
-            with gzip.open(f,'rb') as fop:
+            with gzip.open(f,readmodebin) as fop:
                 s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
                 count = len(s)
                 
@@ -348,7 +350,7 @@ def get_file_linecount(f):
             count = sum(1 for line in fop if line.rstrip('\n'))
         if count <= 2:
             # test for \r
-            with open(f,'rb') as fop:
+            with open(f,readmodebin) as fop:
                 isbinary = True
                 s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
                 count = len(s)
@@ -362,7 +364,7 @@ def get_file_line(linenr, f, isbinary=False):
         with gzip.open(f, readmode) as fop:
             s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
     else:
-        with open(f, 'rb') as fop:
+        with open(f, readmodebin) as fop:
             s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
 
     return s[linenr-1]
@@ -528,10 +530,7 @@ def skip_variable_header(f):
         with gzip.open(f,readmode) as fop:
             s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
     else:
-        with open(f, 'r') as fop:
-            s = fop.read()
-
-        with open(f,'rb') as fop:
+        with open(f,readmodebin) as fop:
             s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
 
 
