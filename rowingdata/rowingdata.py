@@ -169,7 +169,10 @@ def post_progress(secret,progressurl,progress):
         "value":progress,
     }
 
-    s = requests.post(progressurl, data=post_data)
+    try:
+        s = requests.post(progressurl, data=post_data)
+    except:
+        return 408
     return s.status_code
 
 def make_cumvalues_rowingdata(df):
