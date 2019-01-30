@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "1.9.7"
+__version__ = "1.9.8"
 
 from collections import Counter
 
@@ -108,7 +108,7 @@ try:
 except (ValueError,ImportError):
     from csvparsers import (
         BoatCoachAdvancedParser, BoatCoachOTWParser,
-        RitmoTimeParser,
+        RitmoTimeParser,HumonParser,
         BoatCoachParser, CoxMateParser, CSVParser,
         ErgDataParser, ErgStickParser, KinoMapParser,
         MysteryParser, RowPerfectParser, RowProParser,
@@ -169,7 +169,10 @@ def post_progress(secret,progressurl,progress):
         "value":progress,
     }
 
-    s = requests.post(progressurl, data=post_data)
+    try:
+        s = requests.post(progressurl, data=post_data)
+    except:
+        return 408
     return s.status_code
 
 def make_cumvalues_rowingdata(df):
