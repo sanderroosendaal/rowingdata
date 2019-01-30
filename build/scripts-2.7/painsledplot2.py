@@ -1,4 +1,4 @@
-#!C:\Users\e408191\AppData\Local\Continuum\Anaconda\python.exe
+#!C:\Users\e408191\AppData\Local\Continuum\Anaconda2\python.exe
 from __future__ import absolute_import
 from __future__ import print_function
 import rowingdata
