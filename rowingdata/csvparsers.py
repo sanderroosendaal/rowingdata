@@ -818,6 +818,7 @@ class CSVParser(object):
         else:
             return data.to_csv(writeFile, index_label='index')
 
+# Parsing CSV files from Humon        
 class HumonParser(CSVParser):
     def __init__(self, *args, **kwargs):
         if args:
