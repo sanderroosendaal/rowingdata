@@ -1,4 +1,5 @@
 filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrintervals,lap 1 time,lap 1 dist,timezone
+humon,humon,2935,2019,1,21,7,47,40,769,2934,1,2934,769,UTC
 rp3intervals.csv,rowperfect3,855,0,0,0,0,0,0,8829,2758,5,598,2947,UTC
 aritmo.csv,ritmotime,581,0,0,0,0,0,0,7538,3374,1,3374,7538,UTC
 invalidchar.tcx,tcx,0,2018,3,5,17,50,46,5019,1887,7,322,763,UTC

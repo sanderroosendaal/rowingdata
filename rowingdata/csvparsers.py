@@ -213,6 +213,9 @@ def csvtests(s):
     if 'Hair' in seventhline:
         return 'rp'
 
+    if 'smo2' in thirdline:
+        return 'humon'
+
     if 'Total elapsed time (s)' in firstline:
         return 'ergstick'
 
@@ -815,6 +818,60 @@ class CSVParser(object):
         else:
             return data.to_csv(writeFile, index_label='index')
 
+class HumonParser(CSVParser):
+    def __init__(self, *args, **kwargs):
+        if args:
+            csvfile = args[0]
+        else:
+            csvfile = kwargs['csvfile']
+
+        skiprows = 2
+        kwargs['skiprows'] = skiprows
+
+        super(HumonParser, self).__init__(*args, **kwargs)
+
+        self.cols = [
+            'Time [seconds]',
+            'distance [meters]',
+            '',
+            'heartRate [bpm]',
+            'speed [meters/sec]',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            'Time [seconds]',
+            'latitude [degrees]',
+            'longitude [degrees]',
+        ]
+
+
+        self.cols = [b if a == '' else a
+                     for a,b in zip(self.cols, self.defaultcolumnnames)]
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
+
+        # calculations
+        velo = self.df[self.columns[' Stroke500mPace (sec/500m)']]
+        pace = 500./velo
+        self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+
+        # get date from header
+        dateline = get_file_line(2,csvfile)
+        row_datetime = parser.parse(dateline, fuzzy=True)
+
+        timestamp = arrow.get(row_datetime).timestamp
+
+        time = self.df[self.columns['TimeStamp (sec)']]
+        time += timestamp
+        self.df[self.columns['TimeStamp (sec)']] = time
+
+        self.to_standard()
+        
 class RitmoTimeParser(CSVParser):
     def __init__(self, *args, **kwargs):
         if args:

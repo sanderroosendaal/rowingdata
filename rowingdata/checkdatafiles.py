@@ -107,6 +107,15 @@ def checkfile(f2, verbose=False):
             os.remove(f2 + 'o.csv')
             notread = 0
 
+        # handle Humon
+        if (fileformat == 'humon'):
+            row = rowingdata.HumonParser(f2)
+            row.write_csv(f2 + 'o.csv')
+            row = rowingdata.rowingdata(csvfile=f2 + 'o.csv')
+            os.remove(f2 + 'o.csv')
+            notread = 0
+
+
         # handle workout log (no stroke data)
         if (fileformat == 'c2log'):
             return 0
