@@ -102,6 +102,17 @@ class TestStringParser:
         assert_equals(t5,r5)
         assert_equals(t6,r6)
         assert_equals(t7,r7)
+
+class TestPhysics:
+    row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+
+    def test_getpower(self):
+        velo = 4.0
+        r = rowingdata.getrower()
+        rg = rowingdata.getrigging()
+        row = rowingdata.SpeedCoach2Parser('testdata/speedcoach2example.csv')
+        row = rowingdata.rowingdata(df=row.df)
+        row.otw_setpower_silent(skiprows=20)
         
 class TestCorrectedRowingData:
     row=rowingdata.rowingdata(csvfile='testdata/correctedpainsled.csv')

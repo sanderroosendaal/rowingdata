@@ -277,7 +277,7 @@ def read_obj(filename):
     """ Read an object (e.g. your rower, including passwords) from a file
         Usage: john=rowingdata.read_obj("john.txt")
     """
-    res = pickle.load(open(filename))
+    res = pickle.load(open(filename,'rb'))
     return res
 
 def getrigging(fileName="my1x.txt"):
@@ -303,7 +303,7 @@ def getrower(fileName="defaultrower.txt", mc=70.0):
     """
 
     try:
-        r = pickle.load(open(fileName))
+        r = pickle.load(open(fileName,'rb'))
     except (IOError, ImportError):
         if __name__ == '__main__':
             print("Getrower: Default rower file doesn't exist. Create new rower")
@@ -1042,7 +1042,7 @@ def roweredit(fileName="defaultrower.txt"):
     """
 
     try:
-        r = pickle.load(open(fileName))
+        r = pickle.load(open(fileName,'rb'))
     except IOError:
         print("Roweredit: File does not exist. Reverting to defaultrower.txt")
         r = getrower()
@@ -1247,7 +1247,7 @@ def boatedit(fileName="my1x.txt"):
     """
 
     try:
-        rg = pickle.load(open(fileName))
+        rg = pickle.load(open(fileName,'rb'))
     except IOError:
         print("Boatedit: File does not exist. Reverting to my1x.txt")
         rg = getrigging()
