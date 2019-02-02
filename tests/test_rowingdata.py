@@ -5,7 +5,7 @@ import rowingdata
 import datetime
 import numpy as np
 import pandas as pd
-from nose_parameterized import parameterized
+from parameterized import parameterized
 import unittest
 from pytz import utc
 import six
