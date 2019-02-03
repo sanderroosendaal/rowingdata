@@ -76,7 +76,7 @@ import requests
 try:
     from . import checkdatafiles
 except (ValueError,ImportError):
-    import checkdatafiles
+    import rowingdata.checkdatafiles
 
 try:
     from .csvparsers import (
