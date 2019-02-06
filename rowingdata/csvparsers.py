@@ -38,11 +38,11 @@ try:
 
     from .tcxtools import strip_control_characters
 except (ValueError,ImportError):
-    from utils import (
+    from rowingdata.utils import (
         totimestamp, format_pace, format_time,
     )
 
-    from tcxtools import strip_control_characters
+    from rowingdata.tcxtools import strip_control_characters
 
     
 import six
@@ -710,29 +710,26 @@ class CSVParser(object):
         usecols = kwargs.pop('usecols', None)
         sep = kwargs.pop('sep', ',')
         engine = kwargs.pop('engine', 'c')
-        skipfooter = kwargs.pop('skipfooter', None)
+        skipfooter = kwargs.pop('skipfooter', 0)
         converters = kwargs.pop('converters', None)
 
         self.csvfile = csvfile
 
-        try:
-            if engine == 'python':
-                self.df = pd.read_csv(
-                    csvfile, skiprows=skiprows, usecols=usecols,
-                    sep=sep, engine=engine, skipfooter=skipfooter,
-                    converters=converters, index_col=False,
-                    compression='infer',
-                    )
-            else:
-                self.df = pd.read_csv(
-                    csvfile, skiprows=skiprows, usecols=usecols,
-                    sep=sep, engine=engine, skipfooter=skipfooter,
-                    converters=converters, index_col=False,
-                    compression='infer',
-                    error_bad_lines = False
-                )
-        except:
-            self.df = pd.DataFrame()
+        if engine == 'python':
+            self.df = pd.read_csv(
+                csvfile, skiprows=skiprows, usecols=usecols,
+                sep=sep, engine=engine, skipfooter=skipfooter,
+                converters=converters, index_col=False,
+                compression='infer',
+            )
+        else:
+            self.df = pd.read_csv(
+                csvfile, skiprows=skiprows, usecols=usecols,
+                sep=sep, engine=engine, skipfooter=skipfooter,
+                converters=converters, index_col=False,
+                compression='infer',
+                error_bad_lines = False
+            )
 
 
         self.df = self.df.fillna(method='ffill')
@@ -1738,6 +1735,7 @@ class speedcoachParser(CSVParser):
 
         # calculations
         # get date from footer
+
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']]
         pace = np.clip(pace, 0, 1e4)
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace

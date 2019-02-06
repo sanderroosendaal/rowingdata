@@ -67,16 +67,16 @@ try:
     from . import trainingparser
     from . import writetcx
 except (ValueError,ImportError):
-    import gpxwrite
-    import trainingparser
-    import writetcx
+    import rowingdata.gpxwrite
+    import rowingdata.trainingparser
+    import rowingdata.writetcx
 
 import requests
 
 try:
     from . import checkdatafiles
 except (ValueError,ImportError):
-    import checkdatafiles
+    import rowingdata.checkdatafiles
 
 try:
     from .csvparsers import (
@@ -106,7 +106,7 @@ try:
         format_time, wavg
     )
 except (ValueError,ImportError):
-    from csvparsers import (
+    from rowingdata.csvparsers import (
         BoatCoachAdvancedParser, BoatCoachOTWParser,
         RitmoTimeParser, HumonParser,
         BoatCoachParser, CoxMateParser, CSVParser,
@@ -122,13 +122,13 @@ except (ValueError,ImportError):
         get_empower_firmware
     )
     
-    from otherparsers import TCXParser as TCXParserNoHR
-    from otherparsers import (
+    from rowingdata.otherparsers import TCXParser as TCXParserNoHR
+    from rowingdata.otherparsers import (
         FITParser, FitSummaryData, fitsummarydata,TCXParser,
         ExcelTemplate
     )
 
-    from utils import (
+    from rowingdata.utils import (
         ewmovingaverage, geo_distance, totimestamp, format_pace,
         format_time, wavg
     )
