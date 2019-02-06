@@ -504,8 +504,8 @@ def cumcpdata_old(rows):
         powerpresent = (ww.std > 0)
 
         for i in range(len(cumdist) - 2):
-            resdist = cumdist.ix[i + 1:] - cumdist.ix[i]
-            restime = elapsedtime.ix[i + 1:] - elapsedtime[i]
+            resdist = cumdist.iloc[i + 1:] - cumdist.iloc[i] # replaced ix with iloc
+            restime = elapsedtime.iloc[i + 1:] - elapsedtime[i] # replace ix with iloc
             timedeltas = np.nan_to_num(restime.diff())
 
             if not powerpresent:
@@ -1740,7 +1740,7 @@ class rowingdata:
 
         try:
             dt = sled_df['TimeStamp (sec)'].diff()
-            dt.ix[0] = dt.ix[1]
+            dt.iloc[0] = dt.iloc[1] # replaced ix with iloc
             dt.fillna(inplace=True, method='ffill')
             dt.fillna(inplace=True, method='bfill')
             strokenumbers = pd.Series(
@@ -2008,7 +2008,7 @@ class rowingdata:
         df = self.get_instroke_data(c)
         aantalcol = len(df.columns)
         minpos = aantalcol/10
-        dfnorm = df.copy().ix[:,minpos:]
+        dfnorm = df.copy().iloc[:,minpos:] # replaced ix with iloc
         min_idxs = dfnorm.idxmin(axis=1)
         max_idxs = dfnorm.idxmax(axis=1)
 
@@ -2058,11 +2058,12 @@ class rowingdata:
 
         aantalcol = len(dfnorm.columns)
         markers = (np.arange(4))*aantalcol/4
-        
-        first = dfnorm.ix[:,markers[0]:markers[1]].mean(axis=1).rolling(10,min_periods=1).std()
-        second = dfnorm.ix[:,markers[1]+1:markers[2]].mean(axis=1).rolling(10,min_periods=1).std()
-        third = dfnorm.ix[:,markers[2]+1:markers[3]].mean(axis=1).rolling(10,min_periods=1).std()
-        fourth = dfnorm.ix[:,markers[3]+1:].mean(axis=1).rolling(10,min_periods=1).std()
+
+        # replaced ix with iloc in below
+        first = dfnorm.iloc[:,markers[0]:markers[1]].mean(axis=1).rolling(10,min_periods=1).std()
+        second = dfnorm.iloc[:,markers[1]+1:markers[2]].mean(axis=1).rolling(10,min_periods=1).std()
+        third = dfnorm.iloc[:,markers[2]+1:markers[3]].mean(axis=1).rolling(10,min_periods=1).std()
+        fourth = dfnorm.iloc[:,markers[3]+1:].mean(axis=1).rolling(10,min_periods=1).std()
 
         self.df[c+'_q1'] = first
         self.df[c+'_q2'] = second
@@ -2281,7 +2282,8 @@ class rowingdata:
             tdrest = td[td[' WorkoutState'].isin(workoutstatesrest)]
 
             try:
-                workoutstate = tdwork.ix[tdwork.index[-1], ' WorkoutState']
+                # replaced ix with loc
+                workoutstate = tdwork.loc[tdwork.index[-1],' WorkoutState']
             except IndexError:
                 workoutstate = 4
 
@@ -2461,8 +2463,9 @@ class rowingdata:
 
         intervalnr = 0
         startmeters = 0
-        timezero = -df.ix[0, 'TimeStamp (sec)'] + \
-            df.ix[0, ' ElapsedTime (sec)']
+        # replaced ix with loc/iloc
+        timezero = -df.loc[:, 'TimeStamp (sec)'].iloc[0] + \
+            df.loc[:, ' ElapsedTime (sec)'].iloc[0]
         startseconds = 0
 
         endseconds = startseconds
@@ -2632,9 +2635,9 @@ class rowingdata:
             except KeyError:
                 df['orig_state'] = 1
 
-            
-        timezero = -df.ix[0, 'TimeStamp (sec)'] + \
-            df.ix[0, ' ElapsedTime (sec)']
+        # replaced ix with loc/iloc
+        timezero = -df.loc[:, 'TimeStamp (sec)'].iloc[0] + \
+            df.loc[:, ' ElapsedTime (sec)'].iloc[0]
 
         # erase existing lap data
         df[' lapIdx'] = 0
@@ -2677,10 +2680,12 @@ class rowingdata:
         for i in range(len(indices[1:])):
             if debug:
                 print(indices[i+1]-indices[i])
-            df.ix[indices[i]:indices[i+1],' lapIdx'] = intervalnr
+            # replacing ix with loc/iloc
+            df.loc[:,' lapIdx'].iloc[indices[i]:indices[i+1]] = intervalnr
             intervalnr += 1
 
-        df.ix[indices[-1]:,' lapIdx'] = intervalnr
+        # replacing ix with loc/iloc
+        df.loc[:,' lapIdx'].iloc[indices[-1]:] = intervalnr
         df['values'] = (1+df[' lapIdx'])*10 + df[' WorkoutState']
 
         valuecounts = Counter(df['values'])
@@ -2724,7 +2729,8 @@ class rowingdata:
         else:
             elapsemetric = 'TimeStamp (sec)'
 
-        previouselapsed = df.ix[indices[0],elapsemetric]
+            
+        previouselapsed = df.loc[indices[0],elapsemetric] # replaced ix with loc
 
         units = []
         typ = []
@@ -2738,14 +2744,14 @@ class rowingdata:
 
 
             if debug:
-                print(df.ix[startindex,'cum_dist'])
+                print(df.loc[startindex,'cum_dist']) # replaced ix with loc
                 
-            startelapsed = df.ix[startindex,elapsemetric]
+            startelapsed = df.loc[startindex,elapsemetric] # replaced ix with loc
 
             units.append(unit)
             vals.append(startelapsed-previouselapsed)
 
-            if df.ix[startindex,' WorkoutState'] == 3:
+            if df.loc[startindex,' WorkoutState'] == 3: # replaced ix with loc
                 tt = 'rest'
             else:
                 tt = 'work'
@@ -2762,15 +2768,15 @@ class rowingdata:
 
         # final part
         startindex = df.index[-1]
-        startelapsed = df.ix[startindex,elapsemetric]
+        startelapsed = df.loc[startindex,elapsemetric] # replaced ix with loc
 
         if debug:
-            print(df.ix[startindex,'cum_dist'])
+            print(df.loc[startindex,'cum_dist']) # replaced ix with loc
                 
         units.append(unit)
         vals.append(startelapsed-previouselapsed)
 
-        if df.ix[startindex,' WorkoutState'] == 3:
+        if df.loc[startindex,' WorkoutState'] == 3: # replaced ix with loc
             tt = 'rest'
         else:
             tt = 'work'
@@ -2819,12 +2825,14 @@ class rowingdata:
 
         bearing = np.zeros(nr_of_rows)
 
-        for i in range(nr_of_rows - 1):
+        # replacing ix with loc below
+        for i in range(len(df.index)):
+            index = df.index[i]
             try:
-                long1 = df.ix[i, ' longitude']
-                lat1 = df.ix[i, ' latitude']
-                long2 = df.ix[i + 1, ' longitude']
-                lat2 = df.ix[i + 1, ' latitude']
+                long1 = df.loc[index, ' longitude']
+                lat1 = df.loc[index, ' latitude']
+                long2 = df.loc[:, ' longitude'].iloc[i+1]
+                lat2 = df.loc[:, ' latitude'].iloc[i+1]
             except KeyError:
                 long1 = 0
                 lat1 = 0
@@ -2885,7 +2893,7 @@ class rowingdata:
 
     def update_stream(self, stream1, stream2, dist1, dist2, units='m'):
         try:
-            vs = self.df.ix[:, 'vstream']
+            vs = self.df.loc[:, 'vstream'] # replaced ix with loc
         except KeyError:
             self.add_stream(0)
 
@@ -2908,14 +2916,15 @@ class rowingdata:
 
         aantal = len(df)
 
-        for i in range(aantal):
-            if (df.ix[i, 'cum_dist'] > dist1 and df.ix[i, 'cum_dist'] < dist2):
+        # replaced ix with loc below
+        for i in df.index:
+            if (df.loc[i, 'cum_dist'] > dist1 and df.loc[i, 'cum_dist'] < dist2):
                 # doe iets
-                x = df.ix[i, 'cum_dist']
+                x = df.loc[i, 'cum_dist']
                 r = (x - dist1) / (dist2 - dist1)
                 stream = stream1 + (stream2 - stream1) * r
                 try:
-                    df.ix[i, 'vstream'] = stream
+                    df.loc[i, 'vstream'] = stream
                 except:
                     pass
 
@@ -2952,7 +2961,7 @@ class rowingdata:
                     winddirection2, dist1, dist2, units='m'):
 
         try:
-            vw = self.df.ix[:, 'vwind']
+            vw = self.df.loc[:, 'vwind'] # replaced ix with loc
         except KeyError:
             self.add_wind(0, 0)
 
@@ -2980,20 +2989,21 @@ class rowingdata:
 
         aantal = len(df)
 
-        for i in range(aantal):
-            if (df.ix[i, 'cum_dist'] > dist1 and df.ix[i, 'cum_dist'] < dist2):
+        # replaced ix with loc below
+        for i in df.index:
+            if (df.loc[i, 'cum_dist'] > dist1 and df.loc[i, 'cum_dist'] < dist2):
                 # doe iets
-                x = df.ix[i, 'cum_dist']
+                x = df.loc[i, 'cum_dist']
                 r = (x - dist1) / (dist2 - dist1)
                 try:
                     vwind = vwind1 + (vwind2 - vwind1) * r
-                    df.ix[i, 'vwind'] = vwind
+                    df.loc[i, 'vwind'] = vwind
                 except:
                     pass
                 try:
                     dirwind = winddirection1 + \
                         (winddirection2 - winddirection1) * r
-                    df.ix[i, 'winddirection'] = dirwind
+                    df.loc[i, 'winddirection'] = dirwind
                 except:
                     pass
 
@@ -3074,8 +3084,8 @@ class rowingdata:
                 if secret and progressurl:
                     status_code = post_progress(secret,progressurl,progress)
 
-            p = ps.ix[i]
-            spm = spms.ix[i]
+            p = ps.iloc[i] # replaced ix with iloc
+            spm = spms.iloc[i] # replaced ix with iloc
             r.tempo = spm
             try:
                 drivetime = 60. * 1000. / float(spm)  # in milliseconds
@@ -3084,15 +3094,17 @@ class rowingdata:
             if (p != 0) & (spm != 0) & (p < 210):
                 velo = 500. / p
                 try:
-                    vwind = df.ix[i, 'vwind']
-                    winddirection = df.ix[i, 'winddirection']
-                    bearing = df.ix[i, 'bearing']
+                    # replaced ix with loc/iloc below
+                    vwind = df.loc[:, 'vwind'].iloc[i]
+                    winddirection = df.loc[:, 'winddirection'].iloc[i]
+                    bearing = df.loc[:, 'bearing'].iloc[i]
                 except KeyError:
                     vwind = 0.0
                     winddirection = 0.0
                     bearing = 0.0
                 try:
-                    vstream = df.ix[i, 'vstream']
+                    # replaced ix with loc/iloc
+                    vstream = df.loc[:, 'vstream'].iloc[i]
                 except KeyError:
                     vstream = 0
 
@@ -3132,15 +3144,16 @@ class rowingdata:
                 else:
                     res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 if not np.isnan(res[0]) and res[0] < 800:
-                    df.ix[i, 'power (model)'] = res[0]
+                    df.loc[:, 'power (model)'].iloc[i] = res[0] # ix -> loc/iloc
                 else:
-                    df.ix[i, 'power (model)'] = np.nan
-                df.ix[i, 'averageforce (model)'] = res[2] / lbstoN
-                df.ix[i, ' DriveTime (ms)'] = res[1] * drivetime
-                df.ix[i, ' StrokeRecoveryTime (ms)'] = (1 - res[1]) * drivetime
-                df.ix[i, 'drivelength (model)'] = r.strokelength
-                df.ix[i, 'nowindpace'] = res[3]
-                df.ix[i, 'equivergpower'] = res[4]
+                    df.loc[:, 'power (model)'].iloc[i] = np.nan # ix -> loc/iloc
+                # replacing ix with loc/iloc below
+                df.loc[:, 'averageforce (model)'].iloc[i] = res[2] / lbstoN
+                df.loc[:, ' DriveTime (ms)'].iloc[i] = res[1] * drivetime
+                df.loc[:, ' StrokeRecoveryTime (ms)'].iloc[i] = (1 - res[1]) * drivetime
+                df.loc[:, 'drivelength (model)'].iloc[i] = r.strokelength
+                df.loc[:, 'nowindpace'].iloc[i] = res[3]
+                df.loc[:, 'equivergpower'].iloc[i] = res[4]
 
                 if (res[4] > res[0]) and not silent:
                     print(("Power ", res[0]))
@@ -3236,8 +3249,8 @@ class rowingdata:
                 if secret and progressurl:
                     status_code = post_progress(secret,progressurl,progress)
 
-            p = ps.ix[i]
-            spm = spms.ix[i]
+            p = ps.iloc[i]
+            spm = spms.iloc[i]
             r.tempo = spm
 
             try:
@@ -3247,15 +3260,15 @@ class rowingdata:
             if (p != 0) & (spm != 0) & (p < 210):
                 velo = 500. / p
                 try:
-                    vwind = df.ix[i, 'vwind']
-                    winddirection = df.ix[i, 'winddirection']
-                    bearing = df.ix[i, 'bearing']
+                    vwind = df.loc[:, 'vwind'].iloc[i] # ix -> loc/iloc
+                    winddirection = df.loc[:, 'winddirection'].iloc[i] # ix -> loc/ilic
+                    bearing = df.loc[:, 'bearing'].iloc[i] # ix -> loc/ilic
                 except KeyError:
                     vwind = 0.0
                     winddirection = 0.0
                     bearing = 0.0
                 try:
-                    vstream = df.ix[i, 'vstream']
+                    vstream = df.loc[:, 'vstream'].iloc[i] # ix -> loc/ilic
                 except KeyError:
                     vstream = 0
 
@@ -3299,16 +3312,17 @@ class rowingdata:
                 else:
                     res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 if not np.isnan(res[0]) and res[0] < 800:
-                    df.ix[i, 'power (model)'] = res[0]
+                    df.loc[:, 'power (model)'].iloc[i] = res[0] # ix -> loc/ilic
                 else:
-                    df.ix[i, 'power (model)'] = np.nan
+                    df.loc[:, 'power (model)'].iloc[i] = np.nan # ix -> loc/ilic
 
-                df.ix[i, 'averageforce (model)'] = res[2] / lbstoN
-                df.ix[i, ' DriveTime (ms)'] = res[1] * drivetime
-                df.ix[i, ' StrokeRecoveryTime (ms)'] = (1 - res[1]) * drivetime
-                df.ix[i, 'drivelength (model)'] = r.strokelength
-                df.ix[i, 'nowindpace'] = res[3]
-                df.ix[i, 'equivergpower'] = res[4]
+                # replacing ix with loc/iloc below
+                df.loc[:, 'averageforce (model)'].iloc[i] = res[2] / lbstoN
+                df.loc[:, ' DriveTime (ms)'].iloc[i] = res[1] * drivetime
+                df.loc[:, ' StrokeRecoveryTime (ms)'].iloc[i] = (1 - res[1]) * drivetime
+                df.loc[:, 'drivelength (model)'].iloc[i] = r.strokelength
+                df.loc[:, 'nowindpace'].iloc[i] = res[3]
+                df.loc[:, 'equivergpower'].iloc[i] = res[4]
                 # update_progress(i,nr_of_rows)
 
             else:
@@ -3351,8 +3365,8 @@ class rowingdata:
 
         # this is slow ... need alternative (read from table)
         for i in range(nr_of_rows):
-            p = df.ix[i, ' Stroke500mPace (sec/500m)']
-            spm = df.ix[i, ' Cadence (stokes/min)']
+            p = df.loc[:, ' Stroke500mPace (sec/500m)'].iloc[i] # ix -> loc/iloc
+            spm = df.loc[:, ' Cadence (stokes/min)'].iloc[i] # ix -> loc/iloc
             r.tempo = spm
             try:
                 drivetime = 60. * 1000. / float(spm)  # in milliseconds
@@ -3361,15 +3375,15 @@ class rowingdata:
             if (p != 0) & (spm != 0) & (p < 210):
                 velo = 500. / p
                 try:
-                    vwind = df.ix[i, 'vwind']
-                    winddirection = df.ix[i, 'winddirection']
-                    bearing = df.ix[i, 'bearing']
+                    vwind = df.loc[:, 'vwind'].iloc[i] # ix -> loc/iloc
+                    winddirection = df.loc[:, 'winddirection'].iloc[i] # ix -> loc/iloc
+                    bearing = df.loc[:, 'bearing'].iloc[i] # ix -> loc/iloc
                 except KeyError:
                     vwind = 0.0
                     winddirection = 0.0
                     bearing = 0.0
                 try:
-                    vstream = df.ix[i, 'vstream']
+                    vstream = df.loc[:, 'vstream'].iloc[i] # ix -> loc/iloc
                 except KeyError:
                     vstream = 0
 
@@ -3382,13 +3396,14 @@ class rowingdata:
                         res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 else:
                     res = [np.nan, np.nan, np.nan, np.nan, np.nan]
-                df.ix[i, 'power (model)'] = res[0]
-                df.ix[i, 'averageforce (model)'] = res[2] / lbstoN
-                df.ix[i, ' DriveTime (ms)'] = res[1] * drivetime
-                df.ix[i, ' StrokeRecoveryTime (ms)'] = (1 - res[1]) * drivetime
-                df.ix[i, 'drivelength (model)'] = r.strokelength
-                df.ix[i, 'nowindpace'] = res[3]
-                df.ix[i, 'equivergpower'] = res[4]
+                # replacing ix with loc/iloc
+                df.loc[:, 'power (model)'].iloc[i] = res[0]
+                df.loc[:, 'averageforce (model)'].iloc[i] = res[2] / lbstoN
+                df.loc[:, ' DriveTime (ms)'] = res[1].iloc[i] * drivetime
+                df.loc[:, ' StrokeRecoveryTime (ms)'].iloc[i] = (1 - res[1]) * drivetime
+                df.loc[:, 'drivelength (model)'].iloc[i] = r.strokelength
+                df.loc[:, 'nowindpace'].iloc[i] = res[3]
+                df.loc[:, 'equivergpower'].iloc[i] = res[4]
                 # update_progress(i,nr_of_rows)
             else:
                 velo = 0.0
@@ -3658,8 +3673,8 @@ class rowingdata:
         cpvalue = []
 
         for i in range(len(cumdist) - 1):
-            resdist = cumdist.ix[i + 1:] - cumdist.ix[i]
-            restime = elapsedtime.ix[i + 1:] - elapsedtime[i]
+            resdist = cumdist.iloc[i + 1:] - cumdist.iloc[i]  # ix -> iloc
+            restime = elapsedtime.iloc[i + 1:] - elapsedtime[i] # ix -> iloc
             velo = resdist / restime
             power = 2.8 * velo**3
             power.name = 'Power'
@@ -3684,8 +3699,8 @@ class rowingdata:
         cpvalue = []
 
         for i in range(len(cumdist) - 1):
-            resdist = cumdist.ix[i + 1:] - cumdist.ix[i]
-            restime = elapsedtime.ix[i + 1:] - elapsedtime[i]
+            resdist = cumdist.iloc[i + 1:] - cumdist.iloc[i] # ix -> iloc
+            restime = elapsedtime.iloc[i + 1:] - elapsedtime[i] # ix -> iloc
             velo = resdist / restime
             power = 2.8 * velo**3
             power.name = 'Power'
@@ -3734,7 +3749,7 @@ class rowingdata:
         df = self.df
 
         # distance increments for bar chart
-        dist_increments = -df.ix[:, 'cum_dist'].diff()
+        dist_increments = -df.loc[:, 'cum_dist'].diff() # replaced ix with loc
         dist_increments[0] = dist_increments[1]
 
         fig1 = plt.figure(figsize=(12, 10))
@@ -3742,32 +3757,33 @@ class rowingdata:
         fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
+        # replaced ix with loc below
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut2'],
                 width=dist_increments,
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut1'],
                 width=dist_increments,
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_at'],
                 width=dist_increments,
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_tr'],
                 width=dist_increments,
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_an'],
                 width=dist_increments,
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_max'],
                 width=dist_increments,
                 color='r', ec='r')
 
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
 
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
@@ -3776,7 +3792,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[:, 'cum_dist'].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
 
         ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
@@ -3788,8 +3804,8 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax2.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 160], quantiles=[0, .9])
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
@@ -3802,7 +3818,7 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
         ax3.set_ylabel('SPM')
@@ -3812,8 +3828,8 @@ class rowingdata:
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Power (watts)'])
-        yrange = y_axis_range(df.ix[:, ' Power (watts)'],
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Power (watts)'])
+        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
                               ultimate=[50, 550])
         ax4.axis([0, end_dist, yrange[0], yrange[1]])
         ax4.set_xticks(list(range(1000, end_dist, 1000)))
@@ -3832,8 +3848,8 @@ class rowingdata:
 
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
-        ax5.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax5.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
@@ -3847,8 +3863,8 @@ class rowingdata:
 
         # next we plot the drive length
         ax6 = fig2.add_subplot(4, 1, 2)
-        ax6.plot(df.ix[:, 'cum_dist'], df.ix[:, ' DriveLength (meters)'])
-        yrange = y_axis_range(df.ix[:, ' DriveLength (meters)'],
+        ax6.plot(df.loc[:, 'cum_dist'], df.loc[:, ' DriveLength (meters)'])
+        yrange = y_axis_range(df.loc[:, ' DriveLength (meters)'],
                               ultimate=[1, 15])
         ax6.axis([0, end_dist, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(1000, end_dist, 1000)))
@@ -3858,11 +3874,11 @@ class rowingdata:
 
         # next we plot the drive time and recovery time
         ax7 = fig2.add_subplot(4, 1, 3)
-        ax7.plot(df.ix[:, 'cum_dist'], df.ix[:, ' DriveTime (ms)'] / 1000.)
-        ax7.plot(df.ix[:, 'cum_dist'],
-                 df.ix[:, ' StrokeRecoveryTime (ms)'] / 1000.)
-        s = np.concatenate((df.ix[:, ' DriveTime (ms)'].values / 1000.,
-                            df.ix[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
+        ax7.plot(df.loc[:, 'cum_dist'], df.loc[:, ' DriveTime (ms)'] / 1000.)
+        ax7.plot(df.loc[:, 'cum_dist'],
+                 df.loc[:, ' StrokeRecoveryTime (ms)'] / 1000.)
+        s = np.concatenate((df.loc[:, ' DriveTime (ms)'].values / 1000.,
+                            df.loc[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
         yrange = y_axis_range(s, ultimate=[0.5, 4])
 
         ax7.axis([0, end_dist, yrange[0], yrange[1]])
@@ -3873,12 +3889,12 @@ class rowingdata:
 
         # Peak and average force
         ax8 = fig2.add_subplot(4, 1, 4)
-        ax8.plot(df.ix[:, 'cum_dist'],
-                 df.ix[:, ' AverageDriveForce (lbs)'] * lbstoN)
-        ax8.plot(df.ix[:, 'cum_dist'],
-                 df.ix[:, ' PeakDriveForce (lbs)'] * lbstoN)
-        s = np.concatenate((df.ix[:, ' AverageDriveForce (lbs)'].values * lbstoN,
-                            df.ix[:, ' PeakDriveForce (lbs)'].values * lbstoN))
+        ax8.plot(df.loc[:, 'cum_dist'],
+                 df.loc[:, ' AverageDriveForce (lbs)'] * lbstoN)
+        ax8.plot(df.loc[:, 'cum_dist'],
+                 df.loc[:, ' PeakDriveForce (lbs)'] * lbstoN)
+        s = np.concatenate((df.loc[:, ' AverageDriveForce (lbs)'].values * lbstoN,
+                            df.loc[:, ' PeakDriveForce (lbs)'].values * lbstoN))
         yrange = y_axis_range(s, ultimate=[0, 1000])
 
         ax8.axis([0, end_dist, yrange[0], yrange[1]])
@@ -3910,7 +3926,7 @@ class rowingdata:
         df = self.df
 
         # distance increments for bar chart
-        dist_increments = -df.ix[:, 'cum_dist'].diff()
+        dist_increments = -df.loc[:, 'cum_dist'].diff()
         dist_increments[0] = dist_increments[1]
 
         fig1 = plt.figure(figsize=(12, 10))
@@ -3919,30 +3935,30 @@ class rowingdata:
 
         # First panel, Power
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_ut2'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut2'],
                 width=dist_increments,
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_ut1'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut1'],
                 width=dist_increments,
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_at'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_at'],
                 width=dist_increments,
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_tr'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_tr'],
                 width=dist_increments,
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_an'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_an'],
                 width=dist_increments,
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_max'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_max'],
                 width=dist_increments,
                 color='r', ec='r')
 
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_ut2'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_ut1'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_at'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_tr'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_an'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut2'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut1'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_at'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_tr'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_an'], color='k')
 
         ut2, ut1, at, tr, an = self.rwr.ftp * \
             np.array(self.rwr.powerperc) / 100.
@@ -3953,7 +3969,7 @@ class rowingdata:
         ax1.text(5, tr + 1.5, self.rwr.powerzones[4], size=8)
         ax1.text(5, an + 1.5, self.rwr.powerzones[5], size=8)
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[:, 'cum_dist'].iloc[df.shape[0] - 1])
 
         ax1.axis([0, end_dist, 50, 1.5 * an])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
@@ -3965,8 +3981,8 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax2.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
@@ -3979,7 +3995,7 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
         ax3.set_ylabel('SPM')
@@ -3989,31 +4005,31 @@ class rowingdata:
 
         # Fourth Panel, HR
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut2'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut2'],
                 width=dist_increments,
                 color='gray', ec='gray')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut1'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut1'],
                 width=dist_increments,
                 color='y', ec='y')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_at'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_at'],
                 width=dist_increments,
                 color='g', ec='g')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_tr'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_tr'],
                 width=dist_increments,
                 color='blue', ec='blue')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_an'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_an'],
                 width=dist_increments,
                 color='violet', ec='violet')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_max'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_max'],
                 width=dist_increments,
                 color='r', ec='r')
 
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut2'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut1'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_at'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_tr'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_an'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_max'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut2'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut1'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_at'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_tr'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
 
         ax4.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax4.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
@@ -4022,7 +4038,7 @@ class rowingdata:
         ax4.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax4.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[:, 'cum_dist'].iloc[df.shape[0] - 1])
 
         ax4.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax4.set_xticks(list(range(1000, end_dist, 1000)))
@@ -4041,8 +4057,8 @@ class rowingdata:
 
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
-        ax5.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax5.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 160], quantiles=[0, .9])
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
@@ -4056,8 +4072,8 @@ class rowingdata:
 
         # next we plot the drive length
         ax6 = fig2.add_subplot(4, 1, 2)
-        ax6.plot(df.ix[:, 'cum_dist'], df.ix[:, ' DriveLength (meters)'])
-        yrange = y_axis_range(df.ix[:, ' DriveLength (meters)'],
+        ax6.plot(df.loc[:, 'cum_dist'], df.loc[:, ' DriveLength (meters)'])
+        yrange = y_axis_range(df.loc[:, ' DriveLength (meters)'],
                               ultimate=[1, 15])
         ax6.axis([0, end_dist, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(1000, end_dist, 1000)))
@@ -4067,11 +4083,11 @@ class rowingdata:
 
         # next we plot the drive time and recovery time
         ax7 = fig2.add_subplot(4, 1, 3)
-        ax7.plot(df.ix[:, 'cum_dist'], df.ix[:, ' DriveTime (ms)'] / 1000.)
-        ax7.plot(df.ix[:, 'cum_dist'],
-                 df.ix[:, ' StrokeRecoveryTime (ms)'] / 1000.)
-        s = np.concatenate((df.ix[:, ' DriveTime (ms)'].values / 1000.,
-                            df.ix[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
+        ax7.plot(df.loc[:, 'cum_dist'], df.loc[:, ' DriveTime (ms)'] / 1000.)
+        ax7.plot(df.loc[:, 'cum_dist'],
+                 df.loc[:, ' StrokeRecoveryTime (ms)'] / 1000.)
+        s = np.concatenate((df.loc[:, ' DriveTime (ms)'].values / 1000.,
+                            df.loc[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
         yrange = y_axis_range(s, ultimate=[0.5, 4])
 
         ax7.axis([0, end_dist, yrange[0], yrange[1]])
@@ -4082,12 +4098,12 @@ class rowingdata:
 
         # Peak and average force
         ax8 = fig2.add_subplot(4, 1, 4)
-        ax8.plot(df.ix[:, 'cum_dist'],
-                 df.ix[:, ' AverageDriveForce (lbs)'] * lbstoN)
-        ax8.plot(df.ix[:, 'cum_dist'],
-                 df.ix[:, ' PeakDriveForce (lbs)'] * lbstoN)
-        s = np.concatenate((df.ix[:, ' AverageDriveForce (lbs)'].values * lbstoN,
-                            df.ix[:, ' PeakDriveForce (lbs)'].values * lbstoN))
+        ax8.plot(df.loc[:, 'cum_dist'],
+                 df.loc[:, ' AverageDriveForce (lbs)'] * lbstoN)
+        ax8.plot(df.loc[:, 'cum_dist'],
+                 df.loc[:, ' PeakDriveForce (lbs)'] * lbstoN)
+        s = np.concatenate((df.loc[:, ' AverageDriveForce (lbs)'].values * lbstoN,
+                            df.loc[:, ' PeakDriveForce (lbs)'].values * lbstoN))
         yrange = y_axis_range(s, ultimate=[0, 1000])
 
         ax8.axis([0, end_dist, yrange[0], yrange[1]])
@@ -4121,7 +4137,7 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
 
         # time increments for bar chart
-        time_increments = df.ix[:, ' ElapsedTime (sec)'].diff()
+        time_increments = df.loc[:, ' ElapsedTime (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
@@ -4131,31 +4147,31 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut2'],
                 width=time_increments,
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut1'],
                 width=time_increments,
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_at'],
                 width=time_increments,
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_tr'],
                 width=time_increments,
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_an'],
                 width=time_increments,
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_max'],
                 width=time_increments,
                 color='r', ec='r')
 
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
         ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
@@ -4163,7 +4179,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[:, 'TimeStamp (sec)'].iloc[df.shape[0] - 1])
 
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
@@ -4177,11 +4193,11 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Stroke500mPace (sec/500m)'])
+        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Stroke500mPace (sec/500m)'])
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 160], quantiles=[0.0, 0.9])
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
@@ -4196,8 +4212,8 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Cadence (stokes/min)'])
 #       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
@@ -4210,8 +4226,8 @@ class rowingdata:
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, ' Power (watts)'])
-        yrange = y_axis_range(df.ix[:, ' Power (watts)'],
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, ' Power (watts)'])
+        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
                               ultimate=[0, 555], miny=0)
         ax4.axis([0, end_time, yrange[0], yrange[1]])
         ax4.set_xticks(list(range(0, end_time, 300)))
@@ -4231,11 +4247,11 @@ class rowingdata:
 
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
-        ax5.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Stroke500mPace (sec/500m)'])
+        ax5.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Stroke500mPace (sec/500m)'])
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax5.axis([0, end_time, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(0, end_time, 300)))
@@ -4250,9 +4266,9 @@ class rowingdata:
 
         # next we plot the drive length
         ax6 = fig2.add_subplot(4, 1, 2)
-        ax6.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' DriveLength (meters)'])
-        yrange = y_axis_range(df.ix[:, ' DriveLength (meters)'],
+        ax6.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' DriveLength (meters)'])
+        yrange = y_axis_range(df.loc[:, ' DriveLength (meters)'],
                               ultimate=[1.0, 15])
         ax6.axis([0, end_time, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(0, end_time, 300)))
@@ -4264,12 +4280,12 @@ class rowingdata:
 
         # next we plot the drive time and recovery time
         ax7 = fig2.add_subplot(4, 1, 3)
-        ax7.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' DriveTime (ms)'] / 1000.)
-        ax7.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' StrokeRecoveryTime (ms)'] / 1000.)
-        s = np.concatenate((df.ix[:, ' DriveTime (ms)'].values / 1000.,
-                            df.ix[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
+        ax7.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' DriveTime (ms)'] / 1000.)
+        ax7.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' StrokeRecoveryTime (ms)'] / 1000.)
+        s = np.concatenate((df.loc[:, ' DriveTime (ms)'].values / 1000.,
+                            df.loc[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
         yrange = y_axis_range(s, ultimate=[0.5, 4])
 
         ax7.axis([0, end_time, yrange[0], yrange[1]])
@@ -4282,12 +4298,12 @@ class rowingdata:
 
         # Peak and average force
         ax8 = fig2.add_subplot(4, 1, 4)
-        ax8.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' AverageDriveForce (lbs)'] * lbstoN)
-        ax8.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' PeakDriveForce (lbs)'] * lbstoN)
-        s = np.concatenate((df.ix[:, ' AverageDriveForce (lbs)'].values * lbstoN,
-                            df.ix[:, ' PeakDriveForce (lbs)'].values * lbstoN))
+        ax8.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' AverageDriveForce (lbs)'] * lbstoN)
+        ax8.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' PeakDriveForce (lbs)'] * lbstoN)
+        s = np.concatenate((df.loc[:, ' AverageDriveForce (lbs)'].values * lbstoN,
+                            df.loc[:, ' PeakDriveForce (lbs)'].values * lbstoN))
         yrange = y_axis_range(s, ultimate=[0, 1000])
 
         ax8.axis([0, end_time, yrange[0], yrange[1]])
@@ -4316,7 +4332,7 @@ class rowingdata:
             df['TimeStamp (sec)'].values[0]
 
         # distance increments for bar chart
-        dist_increments = -df.ix[:, 'cum_dist'].diff()
+        dist_increments = -df.loc[:, 'cum_dist'].diff()
         dist_increments[0] = dist_increments[1]
 #       dist_increments=abs(dist_increments)+dist_increments
 
@@ -4326,31 +4342,31 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(3, 1, 1)
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut2'],
                 width=dist_increments, align='edge',
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut1'],
                 width=dist_increments, align='edge',
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_at'],
                 width=dist_increments, align='edge',
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_tr'],
                 width=dist_increments, align='edge',
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_an'],
                 width=dist_increments, align='edge',
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_max'],
                 width=dist_increments, align='edge',
                 color='r', ec='r')
 
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
 
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
@@ -4359,7 +4375,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
 
         ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
@@ -4371,8 +4387,8 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(3, 1, 2)
-        ax2.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax2.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, .9])
 
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
@@ -4386,7 +4402,7 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(3, 1, 3)
-        ax3.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
         ax3.set_xlabel('Distance (m)')
@@ -4407,15 +4423,15 @@ class rowingdata:
         if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
         fig2 = plt.figure(figsize=(12, 10))
         fig_title = title
         fig_title += " Drag %d" % self.dragfactor
 
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
-        ax5.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax5.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
@@ -4429,8 +4445,8 @@ class rowingdata:
 
         # next we plot the drive length
         ax6 = fig2.add_subplot(4, 1, 2)
-        ax6.plot(df.ix[:, 'cum_dist'], df.ix[:, ' DriveLength (meters)'])
-        yrange = y_axis_range(df.ix[:, ' DriveLength (meters)'],
+        ax6.plot(df.loc[:, 'cum_dist'], df.loc[:, ' DriveLength (meters)'])
+        yrange = y_axis_range(df.loc[:, ' DriveLength (meters)'],
                               ultimate=[1, 15])
         ax6.axis([0, end_dist, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(1000, end_dist, 1000)))
@@ -4440,11 +4456,11 @@ class rowingdata:
 
         # next we plot the drive time and recovery time
         ax7 = fig2.add_subplot(4, 1, 3)
-        ax7.plot(df.ix[:, 'cum_dist'], df.ix[:, ' DriveTime (ms)'] / 1000.)
-        ax7.plot(df.ix[:, 'cum_dist'],
-                 df.ix[:, ' StrokeRecoveryTime (ms)'] / 1000.)
-        s = np.concatenate((df.ix[:, ' DriveTime (ms)'].values / 1000.,
-                            df.ix[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
+        ax7.plot(df.loc[:, 'cum_dist'], df.loc[:, ' DriveTime (ms)'] / 1000.)
+        ax7.plot(df.loc[:, 'cum_dist'],
+                 df.loc[:, ' StrokeRecoveryTime (ms)'] / 1000.)
+        s = np.concatenate((df.loc[:, ' DriveTime (ms)'].values / 1000.,
+                            df.loc[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
         yrange = y_axis_range(s, ultimate=[0.5, 4])
 
         ax7.axis([0, end_dist, yrange[0], yrange[1]])
@@ -4455,12 +4471,12 @@ class rowingdata:
 
         # Peak and average force
         ax8 = fig2.add_subplot(4, 1, 4)
-        ax8.plot(df.ix[:, 'cum_dist'],
-                 df.ix[:, ' AverageDriveForce (lbs)'] * lbstoN)
-        ax8.plot(df.ix[:, 'cum_dist'],
-                 df.ix[:, ' PeakDriveForce (lbs)'] * lbstoN)
-        s = np.concatenate((df.ix[:, ' AverageDriveForce (lbs)'].values * lbstoN,
-                            df.ix[:, ' PeakDriveForce (lbs)'].values * lbstoN))
+        ax8.plot(df.loc[:, 'cum_dist'],
+                 df.loc[:, ' AverageDriveForce (lbs)'] * lbstoN)
+        ax8.plot(df.loc[:, 'cum_dist'],
+                 df.loc[:, ' PeakDriveForce (lbs)'] * lbstoN)
+        s = np.concatenate((df.loc[:, ' AverageDriveForce (lbs)'].values * lbstoN,
+                            df.loc[:, ' PeakDriveForce (lbs)'].values * lbstoN))
         yrange = y_axis_range(s, ultimate=[0, 1000])
 
         ax8.axis([0, end_dist, yrange[0], yrange[1]])
@@ -4486,17 +4502,17 @@ class rowingdata:
         if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         fig2 = plt.figure(figsize=(12, 10))
         fig_title = title
         fig_title += " Drag %d" % self.dragfactor
 
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
-        ax5.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Stroke500mPace (sec/500m)'])
+        ax5.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Stroke500mPace (sec/500m)'])
 
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax5.axis([0, end_time, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(0, end_time, 300)))
@@ -4513,9 +4529,9 @@ class rowingdata:
 
         # next we plot the drive length
         ax6 = fig2.add_subplot(4, 1, 2)
-        ax6.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' DriveLength (meters)'])
-        yrange = y_axis_range(df.ix[:, ' DriveLength (meters)'],
+        ax6.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' DriveLength (meters)'])
+        yrange = y_axis_range(df.loc[:, ' DriveLength (meters)'],
                               ultimate=[1.0, 15])
         ax6.axis([0, end_time, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(0, end_time, 300)))
@@ -4527,12 +4543,12 @@ class rowingdata:
 
         # next we plot the drive time and recovery time
         ax7 = fig2.add_subplot(4, 1, 3)
-        ax7.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' DriveTime (ms)'] / 1000.)
-        ax7.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' StrokeRecoveryTime (ms)'] / 1000.)
-        s = np.concatenate((df.ix[:, ' DriveTime (ms)'].values / 1000.,
-                            df.ix[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
+        ax7.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' DriveTime (ms)'] / 1000.)
+        ax7.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' StrokeRecoveryTime (ms)'] / 1000.)
+        s = np.concatenate((df.loc[:, ' DriveTime (ms)'].values / 1000.,
+                            df.loc[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
         yrange = y_axis_range(s, ultimate=[0.5, 4])
 
         ax7.axis([0, end_time, yrange[0], yrange[1]])
@@ -4545,12 +4561,12 @@ class rowingdata:
 
         # Peak and average force
         ax8 = fig2.add_subplot(4, 1, 4)
-        ax8.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' AverageDriveForce (lbs)'] * lbstoN)
-        ax8.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' PeakDriveForce (lbs)'] * lbstoN)
-        s = np.concatenate((df.ix[:, ' AverageDriveForce (lbs)'].values * lbstoN,
-                            df.ix[:, ' PeakDriveForce (lbs)'].values * lbstoN))
+        ax8.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' AverageDriveForce (lbs)'] * lbstoN)
+        ax8.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' PeakDriveForce (lbs)'] * lbstoN)
+        s = np.concatenate((df.loc[:, ' AverageDriveForce (lbs)'].values * lbstoN,
+                            df.loc[:, ' PeakDriveForce (lbs)'].values * lbstoN))
         yrange = y_axis_range(s, ultimate=[0, 1000])
 
         ax8.axis([0, end_time, yrange[0], yrange[1]])
@@ -4578,7 +4594,7 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
 
         # time increments for bar chart
-        time_increments = df.ix[:, ' ElapsedTime (sec)'].diff()
+        time_increments = df.loc[:, ' ElapsedTime (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
@@ -4588,30 +4604,30 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(3, 1, 1)
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut2'],
                 width=time_increments,
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut1'],
                 width=time_increments,
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_at'],
                 width=time_increments,
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_tr'],
                 width=time_increments,
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_an'],
                 width=time_increments,
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_max'],
                 width=time_increments,
                 color='r', ec='r')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
         ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
@@ -4619,7 +4635,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
         ax1.set_ylabel('BPM')
@@ -4632,10 +4648,10 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(3, 1, 2)
-        ax2.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Stroke500mPace (sec/500m)'])
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Stroke500mPace (sec/500m)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, .9])
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
@@ -4650,11 +4666,11 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(3, 1, 3)
-        ax3.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Cadence (stokes/min)'])
 #       rate_ewma=pd.ewma(df,span=20)
-#       ax3.plot(rate_ewma.ix[:,'TimeStamp (sec)'],
-#                rate_ewma.ix[:,' Cadence (stokes/min)'])
+#       ax3.plot(rate_ewma.loc[:,'TimeStamp (sec)'],
+#                rate_ewma.loc[:,' Cadence (stokes/min)'])
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
         ax3.set_xlabel('Time (sec)')
@@ -4681,10 +4697,10 @@ class rowingdata:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
 
-        t = df.ix[:, ' ElapsedTime (sec)']
-        p = df.ix[:, ' Stroke500mPace (sec/500m)']
-        hr = df.ix[:, ' HRCur (bpm)']
-        end_time = int(df.ix[df.shape[0] - 1, ' ElapsedTime (sec)'])
+        t = df.loc[:, ' ElapsedTime (sec)']
+        p = df.loc[:, ' Stroke500mPace (sec/500m)']
+        hr = df.loc[:, ' HRCur (bpm)']
+        end_time = int(df.loc[df.index[-1], ' ElapsedTime (sec)'])
 
         fig, ax1 = plt.subplots(figsize=(5, 4))
 
@@ -4692,7 +4708,7 @@ class rowingdata:
         ax1.set_xlabel('Time (h:m)')
         ax1.set_ylabel('(sec/500)')
 
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, .9])
         plt.axis([0, end_time, yrange[1], yrange[0]])
 
@@ -4733,16 +4749,16 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
 
         # time increments for bar chart
-        time_increments = df.ix[:, 'TimeStamp (sec)'].diff()
+        time_increments = df.loc[:, 'TimeStamp (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
 
-        t = df.ix[:, ' ElapsedTime (sec)']
-        p = df.ix[:, ' Stroke500mPace (sec/500m)']
-        hr = df.ix[:, ' HRCur (bpm)']
+        t = df.loc[:, ' ElapsedTime (sec)']
+        p = df.loc[:, ' Stroke500mPace (sec/500m)']
+        hr = df.loc[:, ' HRCur (bpm)']
 
         return 1
 
@@ -4756,23 +4772,23 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
 
         # time increments for bar chart
-        time_increments = df.ix[:, 'TimeStamp (sec)'].diff()
+        time_increments = df.loc[:, 'TimeStamp (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
 
-        t = df.ix[:, ' ElapsedTime (sec)']
-        p = df.ix[:, ' Stroke500mPace (sec/500m)']
-        hr = df.ix[:, ' HRCur (bpm)']
+        t = df.loc[:, ' ElapsedTime (sec)']
+        p = df.loc[:, ' Stroke500mPace (sec/500m)']
+        hr = df.loc[:, ' HRCur (bpm)']
 
         fig, ax1 = plt.subplots()
         ax1.plot(t, p, 'b-')
         ax1.set_xlabel('Time')
         ax1.set_ylabel('Pace (sec/500)')
 
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, 0.9])
         plt.axis([0, end_time, yrange[1], yrange[0]])
 
@@ -4811,7 +4827,7 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
 
         # distance increments for bar chart
-        dist_increments = df.ix[:, 'cum_dist'].diff()
+        dist_increments = df.loc[:, 'cum_dist'].diff()
         dist_increments[0] = dist_increments[1]
         dist_increments = 0.5 * (dist_increments + abs(dist_increments))
 
@@ -4822,31 +4838,31 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut2'],
                 width=dist_increments,
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut1'],
                 width=dist_increments,
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_at'],
                 width=dist_increments,
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_tr'],
                 width=dist_increments,
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_an'],
                 width=dist_increments,
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_max'],
                 width=dist_increments,
                 color='r', ec='r')
 
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
 
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
@@ -4855,7 +4871,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
 
         ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
@@ -4867,8 +4883,8 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax2.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
@@ -4881,7 +4897,7 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
         ax3.set_ylabel('SPM')
@@ -4891,34 +4907,34 @@ class rowingdata:
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_ut2'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut2'],
                 width=dist_increments,
                 color='gray', ec='gray')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_ut1'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut1'],
                 width=dist_increments,
                 color='y', ec='y')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_at'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_at'],
                 width=dist_increments,
                 color='g', ec='g')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_tr'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_tr'],
                 width=dist_increments,
                 color='blue', ec='blue')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_an'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_an'],
                 width=dist_increments,
                 color='violet', ec='violet')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_max'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_max'],
                 width=dist_increments,
                 color='r', ec='r')
 
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_ut2'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_ut1'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_at'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_tr'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_an'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut2'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut1'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_at'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_tr'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_an'], color='k')
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
 
-        yrange = y_axis_range(df.ix[:, ' Power (watts)'],
+        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
                               ultimate=[0, 555], miny=0)
         ax4.axis([0, end_dist, yrange[0], yrange[1]])
 
@@ -4957,7 +4973,7 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
 
         # distance increments for bar chart
-        dist_increments = df.ix[:, 'cum_dist'].diff()
+        dist_increments = df.loc[:, 'cum_dist'].diff()
         dist_increments[0] = dist_increments[1]
         dist_increments = 0.5 * (dist_increments + abs(dist_increments))
 
@@ -4968,31 +4984,31 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut2'],
                 width=dist_increments,
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut1'],
                 width=dist_increments,
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_at'],
                 width=dist_increments,
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_tr'],
                 width=dist_increments,
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_an'],
                 width=dist_increments,
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_max'],
                 width=dist_increments,
                 color='r', ec='r')
 
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
 
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
@@ -5001,7 +5017,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
 
         ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
@@ -5013,8 +5029,8 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax2.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, 0.9])
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
@@ -5027,7 +5043,7 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
         ax3.set_ylabel('SPM')
@@ -5037,34 +5053,34 @@ class rowingdata:
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_ut2'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut2'],
                 width=dist_increments,
                 color='gray', ec='gray')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_ut1'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut1'],
                 width=dist_increments,
                 color='y', ec='y')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_at'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_at'],
                 width=dist_increments,
                 color='g', ec='g')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_tr'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_tr'],
                 width=dist_increments,
                 color='blue', ec='blue')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_an'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_an'],
                 width=dist_increments,
                 color='violet', ec='violet')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_max'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_max'],
                 width=dist_increments,
                 color='r', ec='r')
 
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_ut2'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_ut1'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_at'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_tr'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_an'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut2'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut1'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_at'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_tr'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_an'], color='k')
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
 
-        yrange = y_axis_range(df.ix[:, ' Power (watts)'],
+        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
                               ultimate=[0, 555], miny=0)
         ax4.axis([0, end_dist, yrange[0], yrange[1]])
 
@@ -5103,7 +5119,7 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
 
         # distance increments for bar chart
-        dist_increments = df.ix[:, 'cum_dist'].diff()
+        dist_increments = df.loc[:, 'cum_dist'].diff()
         dist_increments[0] = dist_increments[1]
         dist_increments = 0.5 * (dist_increments + abs(dist_increments))
 
@@ -5114,31 +5130,31 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut2'],
                 width=dist_increments,
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut1'],
                 width=dist_increments,
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_at'],
                 width=dist_increments,
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_tr'],
                 width=dist_increments,
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_an'],
                 width=dist_increments,
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_max'],
                 width=dist_increments,
                 color='r', ec='r')
 
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
 
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
@@ -5147,7 +5163,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
 
         ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
@@ -5159,8 +5175,8 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax2.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, .9])
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
@@ -5173,7 +5189,7 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
         ax3.set_ylabel('SPM')
@@ -5183,34 +5199,34 @@ class rowingdata:
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_ut2'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut2'],
                 width=dist_increments,
                 color='gray', ec='gray')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_ut1'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut1'],
                 width=dist_increments,
                 color='y', ec='y')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_at'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_at'],
                 width=dist_increments,
                 color='g', ec='g')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_tr'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_tr'],
                 width=dist_increments,
                 color='blue', ec='blue')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_an'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_an'],
                 width=dist_increments,
                 color='violet', ec='violet')
-        ax4.bar(df.ix[:, 'cum_dist'], df.ix[:, 'pw_max'],
+        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_max'],
                 width=dist_increments,
                 color='r', ec='r')
 
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_ut2'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_ut1'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_at'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_tr'], color='k')
-        ax4.plot(df.ix[:, 'cum_dist'], df.ix[:, 'limpw_an'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut2'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut1'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_at'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_tr'], color='k')
+        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_an'], color='k')
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
 
-        yrange = y_axis_range(df.ix[:, ' Power (watts)'],
+        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
                               ultimate=[0, 555], miny=0)
         ax4.axis([0, end_dist, yrange[0], yrange[1]])
 
@@ -5249,7 +5265,7 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
 
         # time increments for bar chart
-        time_increments = df.ix[:, ' ElapsedTime (sec)'].diff()
+        time_increments = df.loc[:, ' ElapsedTime (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
@@ -5260,31 +5276,31 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut2'],
                 width=time_increments,
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut1'],
                 width=time_increments,
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_at'],
                 width=time_increments,
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_tr'],
                 width=time_increments,
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_an'],
                 width=time_increments,
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_max'],
                 width=time_increments,
                 color='r', ec='r')
 
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
         ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
@@ -5292,7 +5308,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
 
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
@@ -5306,11 +5322,11 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Stroke500mPace (sec/500m)'])
+        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Stroke500mPace (sec/500m)'])
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 160], quantiles=[0, .9])
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
@@ -5325,8 +5341,8 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Cadence (stokes/min)'])
 #       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
@@ -5339,34 +5355,34 @@ class rowingdata:
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'pw_ut2'],
+        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_ut2'],
                 width=time_increments,
                 color='gray', ec='gray')
-        ax4.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'pw_ut1'],
+        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_ut1'],
                 width=time_increments,
                 color='y', ec='y')
-        ax4.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'pw_at'],
+        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_at'],
                 width=time_increments,
                 color='g', ec='g')
-        ax4.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'pw_tr'],
+        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_tr'],
                 width=time_increments,
                 color='blue', ec='blue')
-        ax4.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'pw_an'],
+        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_an'],
                 width=time_increments,
                 color='violet', ec='violet')
-        ax4.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'pw_max'],
+        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_max'],
                 width=time_increments,
                 color='r', ec='r')
 
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'limpw_ut2'], color='k')
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'limpw_ut1'], color='k')
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'limpw_at'], color='k')
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'limpw_tr'], color='k')
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'limpw_an'], color='k')
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_ut2'], color='k')
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_ut1'], color='k')
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_at'], color='k')
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_tr'], color='k')
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_an'], color='k')
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
 
-        yrange = y_axis_range(df.ix[:, ' Power (watts)'],
+        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
                               ultimate=[0, 555], miny=0)
         ax4.axis([0, end_time, yrange[0], yrange[1]])
 
@@ -5408,7 +5424,7 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
 
         # time increments for bar chart
-        time_increments = df.ix[:, ' ElapsedTime (sec)'].diff()
+        time_increments = df.loc[:, ' ElapsedTime (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
@@ -5419,31 +5435,31 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut2'],
                 width=time_increments,
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut1'],
                 width=time_increments,
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_at'],
                 width=time_increments,
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_tr'],
                 width=time_increments,
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_an'],
                 width=time_increments,
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_max'],
                 width=time_increments,
                 color='r', ec='r')
 
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
         ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
@@ -5451,7 +5467,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
 
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
@@ -5465,13 +5481,13 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Stroke500mPace (sec/500m)'])
+        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Stroke500mPace (sec/500m)'])
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         if np.isnan(end_time):
             end_time = 3600.
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, .9])
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
@@ -5486,8 +5502,8 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Cadence (stokes/min)'])
 #       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
@@ -5500,34 +5516,34 @@ class rowingdata:
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'pw_ut2'],
+        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_ut2'],
                 width=time_increments,
                 color='gray', ec='gray')
-        ax4.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'pw_ut1'],
+        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_ut1'],
                 width=time_increments,
                 color='y', ec='y')
-        ax4.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'pw_at'],
+        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_at'],
                 width=time_increments,
                 color='g', ec='g')
-        ax4.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'pw_tr'],
+        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_tr'],
                 width=time_increments,
                 color='blue', ec='blue')
-        ax4.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'pw_an'],
+        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_an'],
                 width=time_increments,
                 color='violet', ec='violet')
-        ax4.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'pw_max'],
+        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_max'],
                 width=time_increments,
                 color='r', ec='r')
 
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'limpw_ut2'], color='k')
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'limpw_ut1'], color='k')
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'limpw_at'], color='k')
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'limpw_tr'], color='k')
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'limpw_an'], color='k')
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_ut2'], color='k')
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_ut1'], color='k')
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_at'], color='k')
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_tr'], color='k')
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_an'], color='k')
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
 
-        yrange = y_axis_range(df.ix[:, ' Power (watts)'],
+        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
                               ultimate=[0, 555], miny=0)
         ax4.axis([0, end_time, yrange[0], yrange[1]])
 
@@ -5570,12 +5586,12 @@ class rowingdata:
         # calculate erg power
 
         try:
-            nowindpace = df.ix[:, 'nowindpace']
+            nowindpace = df.loc[:, 'nowindpace']
         except KeyError:
             nowindpace = df[' Stroke500mPace (sec/500m)']
             df['nowindpace'] = nowindpace
         try:
-            equivergpower = df.ix[:, 'equivergpower']
+            equivergpower = df.loc[:, 'equivergpower']
         except KeyError:
             equivergpower = 0 * df[' Stroke500mPace (sec/500m)'] + 50.
             df['equivergpower'] = equivergpower
@@ -5586,7 +5602,7 @@ class rowingdata:
         ergpace[ergpace == np.inf] = 240.
 
         # time increments for bar chart
-        time_increments = df.ix[:, ' ElapsedTime (sec)'].diff()
+        time_increments = df.loc[:, ' ElapsedTime (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
@@ -5596,31 +5612,31 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut2'],
                 width=time_increments,
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut1'],
                 width=time_increments,
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_at'],
                 width=time_increments,
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_tr'],
                 width=time_increments,
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_an'],
                 width=time_increments,
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_max'],
                 width=time_increments,
                 color='r', ec='r')
 
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
         ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
@@ -5628,7 +5644,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
 
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
@@ -5642,22 +5658,22 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Stroke500mPace (sec/500m)'])
+        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Stroke500mPace (sec/500m)'])
 
-        ax2.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, 'nowindpace'])
+        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, 'nowindpace'])
 
-        # ax2.plot(df.ix[:,'TimeStamp (sec)'],
+        # ax2.plot(df.loc[:,'TimeStamp (sec)'],
         #        ergpace)
 
         ax2.legend(['Pace', 'Wind corrected pace'],
                    prop={'size': 10}, loc=0)
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
 
-        s = np.concatenate((df.ix[:, ' Stroke500mPace (sec/500m)'].values,
-                            df.ix[:, 'nowindpace'].values))
+        s = np.concatenate((df.loc[:, ' Stroke500mPace (sec/500m)'].values,
+                            df.loc[:, 'nowindpace'].values))
 
         yrange = y_axis_range(s, ultimate=[90, 240], quantiles=[0.0, 0.9])
 
@@ -5674,8 +5690,8 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Cadence (stokes/min)'])
 #       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
@@ -5688,10 +5704,10 @@ class rowingdata:
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, ' Power (watts)'])
-        # ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'equivergpower'])
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, ' Power (watts)'])
+        # ax4.plot(df.loc[:,'TimeStamp (sec)'],df.loc[:,'equivergpower'])
         ax4.legend(['Power'], prop={'size': 10})
-        yrange = y_axis_range(df.ix[:, ' Power (watts)'],
+        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
                               ultimate=[0, 555], miny=0)
         ax4.axis([0, end_time, yrange[0], yrange[1]])
 
@@ -5732,7 +5748,7 @@ class rowingdata:
         # relergpace=500./ergvelo
 
         # time increments for bar chart
-        time_increments = df.ix[:, ' ElapsedTime (sec)'].diff()
+        time_increments = df.loc[:, ' ElapsedTime (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
@@ -5742,31 +5758,31 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut2'],
                 width=time_increments,
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut1'],
                 width=time_increments,
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_at'],
                 width=time_increments,
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_tr'],
                 width=time_increments,
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_an'],
                 width=time_increments,
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_max'],
                 width=time_increments,
                 color='r', ec='r')
 
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
         ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
@@ -5774,7 +5790,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
 
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
@@ -5788,28 +5804,28 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Stroke500mPace (sec/500m)'])
+        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Stroke500mPace (sec/500m)'])
 
         try:
-            ax2.plot(df.ix[:, 'TimeStamp (sec)'],
-                     df.ix[:, 'nowindpace'])
+            ax2.plot(df.loc[:, 'TimeStamp (sec)'],
+                     df.loc[:, 'nowindpace'])
         except KeyError:
             pass
 
-        #       ax2.plot(df.ix[:,'TimeStamp (sec)'],
+        #       ax2.plot(df.loc[:,'TimeStamp (sec)'],
         #        ergpace)
 
         ax2.legend(['Pace', 'Wind corrected pace'],
                    prop={'size': 10}, loc=0)
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
 
         try:
-            s = np.concatenate((df.ix[:, ' Stroke500mPace (sec/500m)'].values,
-                                df.ix[:, 'nowindpace'].values))
+            s = np.concatenate((df.loc[:, ' Stroke500mPace (sec/500m)'].values,
+                                df.loc[:, 'nowindpace'].values))
         except KeyError:
-            s = df.ix[:, ' Stroke500mPace (sec/500m)'].values
+            s = df.loc[:, ' Stroke500mPace (sec/500m)'].values
 
         yrange = y_axis_range(s, ultimate=[90, 240], quantiles=[0.0, 0.9])
 
@@ -5826,8 +5842,8 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Cadence (stokes/min)'])
 #       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
@@ -5840,10 +5856,10 @@ class rowingdata:
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, ' Power (watts)'])
-        # ax4.plot(df.ix[:,'TimeStamp (sec)'],df.ix[:,'equivergpower'])
+        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, ' Power (watts)'])
+        # ax4.plot(df.loc[:,'TimeStamp (sec)'],df.loc[:,'equivergpower'])
         ax4.legend(['Power'], prop={'size': 10})
-        yrange = y_axis_range(df.ix[:, ' Power (watts)'],
+        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
                               ultimate=[0, 555], miny=0)
         ax4.axis([0, end_time, yrange[0], yrange[1]])
         ax4.set_xticks(list(range(0, end_time, 300)))
@@ -5863,28 +5879,28 @@ class rowingdata:
 
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
-        ax5.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Stroke500mPace (sec/500m)'])
+        ax5.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Stroke500mPace (sec/500m)'])
 
         try:
-            ax5.plot(df.ix[:, 'TimeStamp (sec)'],
-                     df.ix[:, 'nowindpace'])
+            ax5.plot(df.loc[:, 'TimeStamp (sec)'],
+                     df.loc[:, 'nowindpace'])
         except KeyError:
             pass
 
-        # ax5.plot(df.ix[:,'TimeStamp (sec)'],
+        # ax5.plot(df.loc[:,'TimeStamp (sec)'],
         #        ergpace)
 
         ax5.legend(['Pace', 'Wind corrected pace'],
                    prop={'size': 10}, loc=0)
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
 
         try:
-            s = np.concatenate((df.ix[:, ' Stroke500mPace (sec/500m)'].values,
-                                df.ix[:, 'nowindpace'].values))
+            s = np.concatenate((df.loc[:, ' Stroke500mPace (sec/500m)'].values,
+                                df.loc[:, 'nowindpace'].values))
         except KeyError:
-            s = df.ix[:, ' Stroke500mPace (sec/500m)'].values
+            s = df.loc[:, ' Stroke500mPace (sec/500m)'].values
 
         yrange = y_axis_range(s, ultimate=[90, 240], quantiles=[0.0, 0.9])
 
@@ -5901,9 +5917,9 @@ class rowingdata:
 
         # next we plot the drive length
         ax6 = fig2.add_subplot(4, 1, 2)
-        ax6.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' DriveLength (meters)'])
-        yrange = y_axis_range(df.ix[:, ' DriveLength (meters)'],
+        ax6.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' DriveLength (meters)'])
+        yrange = y_axis_range(df.loc[:, ' DriveLength (meters)'],
                               ultimate=[1.0, 15])
         ax6.axis([0, end_time, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(0, end_time, 300)))
@@ -5915,12 +5931,12 @@ class rowingdata:
 
         # next we plot the drive time and recovery time
         ax7 = fig2.add_subplot(4, 1, 3)
-        ax7.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' DriveTime (ms)'] / 1000.)
-        ax7.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' StrokeRecoveryTime (ms)'] / 1000.)
-        s = np.concatenate((df.ix[:, ' DriveTime (ms)'].values / 1000.,
-                            df.ix[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
+        ax7.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' DriveTime (ms)'] / 1000.)
+        ax7.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' StrokeRecoveryTime (ms)'] / 1000.)
+        s = np.concatenate((df.loc[:, ' DriveTime (ms)'].values / 1000.,
+                            df.loc[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
         yrange = y_axis_range(s, ultimate=[0.5, 4])
 
         ax7.axis([0, end_time, yrange[0], yrange[1]])
@@ -5933,12 +5949,12 @@ class rowingdata:
 
         # Peak and average force
         ax8 = fig2.add_subplot(4, 1, 4)
-        ax8.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' AverageDriveForce (lbs)'] * lbstoN)
-        ax8.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' PeakDriveForce (lbs)'] * lbstoN)
-        s = np.concatenate((df.ix[:, ' AverageDriveForce (lbs)'].values * lbstoN,
-                            df.ix[:, ' PeakDriveForce (lbs)'].values * lbstoN))
+        ax8.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' AverageDriveForce (lbs)'] * lbstoN)
+        ax8.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' PeakDriveForce (lbs)'] * lbstoN)
+        s = np.concatenate((df.loc[:, ' AverageDriveForce (lbs)'].values * lbstoN,
+                            df.loc[:, ' PeakDriveForce (lbs)'].values * lbstoN))
         yrange = y_axis_range(s, ultimate=[0, 1000])
 
         ax8.axis([0, end_time, yrange[0], yrange[1]])
@@ -5977,24 +5993,24 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(1, 1, 1)
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'],
-                df.ix[:, 'hr_ut2'], color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'],
-                df.ix[:, 'hr_ut1'], color='y', ec='y')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'],
-                df.ix[:, 'hr_at'], color='g', ec='g')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'],
-                df.ix[:, 'hr_tr'], color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'],
-                df.ix[:, 'hr_an'], color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'],
-                df.ix[:, 'hr_max'], color='r', ec='r')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_max'], color='k')
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'],
+                df.loc[:, 'hr_ut2'], color='gray', ec='gray')
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'],
+                df.loc[:, 'hr_ut1'], color='y', ec='y')
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'],
+                df.loc[:, 'hr_at'], color='g', ec='g')
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'],
+                df.loc[:, 'hr_tr'], color='blue', ec='blue')
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'],
+                df.loc[:, 'hr_an'], color='violet', ec='violet')
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'],
+                df.loc[:, 'hr_max'], color='r', ec='r')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
         ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
@@ -6002,7 +6018,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
         ax1.set_ylabel('BPM')
@@ -6032,7 +6048,7 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
 
         # distance increments for bar chart
-        dist_increments = -df.ix[:, 'cum_dist'].diff()
+        dist_increments = -df.loc[:, 'cum_dist'].diff()
         dist_increments[0] = dist_increments[1]
 #       dist_increments=abs(dist_increments)+dist_increments
 
@@ -6041,31 +6057,31 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(3, 1, 1)
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut2'],
                 width=dist_increments, align='edge',
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut1'],
                 width=dist_increments, align='edge',
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_at'],
                 width=dist_increments, align='edge',
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_tr'],
                 width=dist_increments, align='edge',
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_an'],
                 width=dist_increments, align='edge',
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'cum_dist'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_max'],
                 width=dist_increments, align='edge',
                 color='r', ec='r')
 
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'cum_dist'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
 
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
@@ -6074,7 +6090,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_dist = int(df.ix[df.shape[0] - 1, 'cum_dist'])
+        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
 
         ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
@@ -6086,8 +6102,8 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(3, 1, 2)
-        ax2.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax2.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0.0, 0.9])
 
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
@@ -6101,7 +6117,7 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(3, 1, 3)
-        ax3.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
         ax3.set_xlabel('Distance (m)')
@@ -6117,8 +6133,8 @@ class rowingdata:
 
         # Top plot is pace
         ax5 = fig2.add_subplot(2, 1, 1)
-        ax5.plot(df.ix[:, 'cum_dist'], df.ix[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax5.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0.0, 0.9])
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
@@ -6132,8 +6148,8 @@ class rowingdata:
 
         # next we plot the stroke distance
         ax6 = fig2.add_subplot(2, 1, 2)
-        ax6.plot(df.ix[:, 'cum_dist'], df.ix[:, ' StrokeDistance (meters)'])
-        yrange = y_axis_range(df.ix[:, ' StrokeDistance (meters)'],
+        ax6.plot(df.loc[:, 'cum_dist'], df.loc[:, ' StrokeDistance (meters)'])
+        yrange = y_axis_range(df.loc[:, ' StrokeDistance (meters)'],
                               ultimate=[5, 15])
         ax6.axis([0, end_dist, yrange[0], yrange[1]])
         ax6.set_xlabel('Distance (m)')
@@ -6165,7 +6181,7 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
 
         # time increments for bar chart
-        time_increments = df.ix[:, ' ElapsedTime (sec)'].diff()
+        time_increments = df.loc[:, ' ElapsedTime (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
@@ -6174,30 +6190,30 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(3, 1, 1)
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut2'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut2'],
                 width=time_increments,
                 color='gray', ec='gray')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_ut1'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut1'],
                 width=time_increments,
                 color='y', ec='y')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_at'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_at'],
                 width=time_increments,
                 color='g', ec='g')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_tr'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_tr'],
                 width=time_increments,
                 color='blue', ec='blue')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_an'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_an'],
                 width=time_increments,
                 color='violet', ec='violet')
-        ax1.bar(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'hr_max'],
+        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_max'],
                 width=time_increments,
                 color='r', ec='r')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut2'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_ut1'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_at'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_tr'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_an'], color='k')
-        ax1.plot(df.ix[:, 'TimeStamp (sec)'], df.ix[:, 'lim_max'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
+        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
         ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
         ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
         ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
@@ -6205,7 +6221,7 @@ class rowingdata:
         ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
         ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
 
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
         ax1.set_ylabel('BPM')
@@ -6218,10 +6234,10 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(3, 1, 2)
-        ax2.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Stroke500mPace (sec/500m)'])
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Stroke500mPace (sec/500m)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0.0, 0.9])
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
@@ -6236,11 +6252,11 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(3, 1, 3)
-        ax3.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Cadence (stokes/min)'])
+        ax3.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Cadence (stokes/min)'])
 #       rate_ewma=pd.ewma(df,span=20)
-#       ax3.plot(rate_ewma.ix[:,'TimeStamp (sec)'],
-#                rate_ewma.ix[:,' Cadence (stokes/min)'])
+#       ax3.plot(rate_ewma.loc[:,'TimeStamp (sec)'],
+#                rate_ewma.loc[:,' Cadence (stokes/min)'])
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
         ax3.set_xlabel('Time (sec)')
@@ -6261,11 +6277,11 @@ class rowingdata:
 
         # Top plot is pace
         ax5 = fig2.add_subplot(2, 1, 1)
-        ax5.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.ix[:, ' Stroke500mPace (sec/500m)'],
+        ax5.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' Stroke500mPace (sec/500m)'])
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0.0, 0.9])
-        end_time = int(df.ix[df.shape[0] - 1, 'TimeStamp (sec)'])
+        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         ax5.axis([0, end_time, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(0, end_time, 300)))
         ax5.set_ylabel('(sec/500)')
@@ -6279,9 +6295,9 @@ class rowingdata:
 
         # next we plot the drive length
         ax6 = fig2.add_subplot(2, 1, 2)
-        ax6.plot(df.ix[:, 'TimeStamp (sec)'],
-                 df.ix[:, ' StrokeDistance (meters)'])
-        yrange = y_axis_range(df.ix[:, ' StrokeDistance (meters)'],
+        ax6.plot(df.loc[:, 'TimeStamp (sec)'],
+                 df.loc[:, ' StrokeDistance (meters)'])
+        yrange = y_axis_range(df.loc[:, ' StrokeDistance (meters)'],
                               ultimate=[5, 15])
 
         ax6.axis([0, end_time, yrange[0], yrange[1]])
@@ -6323,21 +6339,21 @@ class rowingdata:
         df.sort_values(by='TimeStamp (sec)', ascending=1)
         number_of_rows = self.number_of_rows
 
-        time_increments = df.ix[:, 'TimeStamp (sec)'].diff()
+        time_increments = df.loc[:, 'TimeStamp (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
         time_in_zone = np.zeros(6)
-        for i in range(number_of_rows):
-            if df.ix[self.index[i], ' HRCur (bpm)'] <= self.rwr.ut2:
+        for i in df.index:
+            if df.loc[i, ' HRCur (bpm)'] <= self.rwr.ut2:
                 time_in_zone[0] += time_increments[self.index[i]]
-            elif df.ix[self.index[i], ' HRCur (bpm)'] <= self.rwr.ut1:
+            elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.ut1:
                 time_in_zone[1] += time_increments[self.index[i]]
-            elif df.ix[self.index[i], ' HRCur (bpm)'] <= self.rwr.at:
+            elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.at:
                 time_in_zone[2] += time_increments[self.index[i]]
-            elif df.ix[self.index[i], ' HRCur (bpm)'] <= self.rwr.tr:
+            elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.tr:
                 time_in_zone[3] += time_increments[self.index[i]]
-            elif df.ix[self.index[i], ' HRCur (bpm)'] <= self.rwr.an:
+            elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.an:
                 time_in_zone[4] += time_increments[self.index[i]]
             else:
                 time_in_zone[5] += time_increments[self.index[i]]
@@ -6400,7 +6416,7 @@ class rowingdata:
         df.sort_values(by='TimeStamp (sec)', ascending=1)
         number_of_rows = self.number_of_rows
 
-        time_increments = df.ix[:, 'TimeStamp (sec)'].diff()
+        time_increments = df.loc[:, 'TimeStamp (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
@@ -6408,16 +6424,16 @@ class rowingdata:
             np.array(self.rwr.powerperc) / 100.
 
         time_in_zone = np.zeros(6)
-        for i in range(number_of_rows):
-            if df.ix[i, ' Power (watts)'] <= ut2:
+        for i in df.index:
+            if df.loc[i, ' Power (watts)'] <= ut2:
                 time_in_zone[0] += time_increments[i]
-            elif df.ix[i, ' Power (watts)'] <= ut1:
+            elif df.loc[i, ' Power (watts)'] <= ut1:
                 time_in_zone[1] += time_increments[i]
-            elif df.ix[i, ' Power (watts)'] <= at:
+            elif df.loc[i, ' Power (watts)'] <= at:
                 time_in_zone[2] += time_increments[i]
-            elif df.ix[i, ' Power (watts)'] <= tr:
+            elif df.loc[i, ' Power (watts)'] <= tr:
                 time_in_zone[3] += time_increments[i]
-            elif df.ix[i, ' Power (watts)'] <= an:
+            elif df.loc[i, ' Power (watts)'] <= an:
                 time_in_zone[4] += time_increments[i]
             else:
                 time_in_zone[5] += time_increments[i]
@@ -6482,7 +6498,7 @@ class rowingdata:
         df.sort_values(by='TimeStamp (sec)', ascending=1)
         number_of_rows = self.number_of_rows
 
-        time_increments = df.ix[:, 'TimeStamp (sec)'].diff()
+        time_increments = df.loc[:, 'TimeStamp (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
@@ -6490,16 +6506,16 @@ class rowingdata:
             np.array(self.rwr.powerperc) / 100.
 
         time_in_zone = np.zeros(6)
-        for i in range(number_of_rows):
-            if df.ix[i, ' Power (watts)'] <= ut2:
+        for i in df.index:
+            if df.loc[i, ' Power (watts)'] <= ut2:
                 time_in_zone[0] += time_increments[i]
-            elif df.ix[i, ' Power (watts)'] <= ut1:
+            elif df.loc[i, ' Power (watts)'] <= ut1:
                 time_in_zone[1] += time_increments[i]
-            elif df.ix[i, ' Power (watts)'] <= at:
+            elif df.loc[i, ' Power (watts)'] <= at:
                 time_in_zone[2] += time_increments[i]
-            elif df.ix[i, ' Power (watts)'] <= tr:
+            elif df.loc[i, ' Power (watts)'] <= tr:
                 time_in_zone[3] += time_increments[i]
-            elif df.ix[i, ' Power (watts)'] <= an:
+            elif df.loc[i, ' Power (watts)'] <= an:
                 time_in_zone[4] += time_increments[i]
             else:
                 time_in_zone[5] += time_increments[i]
@@ -6561,21 +6577,21 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
         number_of_rows = self.number_of_rows
 
-        time_increments = df.ix[:, 'TimeStamp (sec)'].diff()
+        time_increments = df.loc[:, 'TimeStamp (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
         time_in_zone = np.zeros(6)
-        for i in range(number_of_rows):
-            if df.ix[i, ' HRCur (bpm)'] <= self.rwr.ut2:
+        for i in df.index:
+            if df.loc[i, ' HRCur (bpm)'] <= self.rwr.ut2:
                 time_in_zone[0] += time_increments[i]
-            elif df.ix[i, ' HRCur (bpm)'] <= self.rwr.ut1:
+            elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.ut1:
                 time_in_zone[1] += time_increments[i]
-            elif df.ix[i, ' HRCur (bpm)'] <= self.rwr.at:
+            elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.at:
                 time_in_zone[2] += time_increments[i]
-            elif df.ix[i, ' HRCur (bpm)'] <= self.rwr.tr:
+            elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.tr:
                 time_in_zone[3] += time_increments[i]
-            elif df.ix[i, ' HRCur (bpm)'] <= self.rwr.an:
+            elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.an:
                 time_in_zone[4] += time_increments[i]
             else:
                 time_in_zone[5] += time_increments[i]
