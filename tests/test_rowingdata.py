@@ -10,6 +10,30 @@ import unittest
 from pytz import utc
 import six
 
+class TestCumValues:
+    df = pd.read_csv('testdata/cumvalues.csv')
+
+    testcombis = [
+        ('a','A'),
+        ('b','B'),
+        ('c','C'),
+        ('d','D'),
+        ('e','E'),
+        ('f','F'),
+        ('g','G'),
+        ('h','H'),
+        ]
+
+    delta = 0.0001
+    
+    for combi in testcombis:
+        expectedresult = df.loc[:,combi[1]]
+        result = rowingdata.csvparsers.make_cumvalues(df.loc[:,combi[0]])[0]
+        for i in range(len(result)):
+            assert_equals(
+                np.abs(result.iloc[i]-expectedresult.iloc[i]
+                )<delta,True)
+
 class TestBasicRowingData:
     row=rowingdata.rowingdata(csvfile='testdata/testdata.csv')
 
@@ -141,6 +165,7 @@ class TestTCXExport:
         csvfile='testdata/Speedcoach2example.csv'
         assert_equals(rowingdata.get_file_type(csvfile),'speedcoach2')
         r=rowingdata.SpeedCoach2Parser(csvfile=csvfile)
+        summarystring = r.summary()
         row=rowingdata.rowingdata(df=r.df)
         assert_equals(row.number_of_rows,97)
         tcxfile = 'testdata/testtcx.tcx'

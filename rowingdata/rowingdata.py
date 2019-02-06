@@ -1746,8 +1746,11 @@ class rowingdata:
             strokenumbers = pd.Series(
                 np.cumsum(dt*sled_df[' Cadence (stokes/min)']/60.)
                 )
-            strokenumbers.fillna(inplace=True, method='ffill')
-            strokenumbers.fillna(inplace=True, method='bfill')
+            if strokenumbers.isnull().all():
+                strokenumbers.loc[:] = 0
+            else:
+                strokenumbers.fillna(inplace=True, method='ffill')
+                strokenumbers.fillna(inplace=True, method='bfill')
 
             sled_df[' Stroke Number'] = strokenumbers.astype('int')
         except KeyError:

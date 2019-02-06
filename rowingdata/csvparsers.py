@@ -641,22 +641,15 @@ def make_cumvalues(xvalues):
         lapidx.loc[0] = 0
     if nrsteps > 0:
         dxpos[mask] = xvalues[mask]
-        try:
-            newvalues = np.cumsum(dxpos) + xvalues.ix[0, 0]
-            newvalues.ix[0, 0] = xvalues.ix[0, 0]
-        except IndexingError:
-            try:
-                newvalues = np.cumsum(dxpos) + xvalues.iloc[0, 0]
-                newvalues.iloc[0, 0] = xvalues.iloc[0, 0]
-            except:
-                newvalues = np.cumsum(dxpos)
-
+        newvalues = np.cumsum(dxpos) + xvalues.iloc[0]
+        newvalues.iloc[0] = xvalues.iloc[0]
     else:
         newvalues = xvalues
 
     newvalues = newvalues.replace([-np.inf, np.inf], np.nan)
 
     newvalues.fillna(method='ffill', inplace=True)
+    newvalues.fillna(method='bfill', inplace=True)
     lapidx.fillna(method='bfill', inplace=True)
 
     return [newvalues, lapidx]
@@ -2035,10 +2028,10 @@ class RowProParser(CSVParser):
             therowindex = self.df[dt < 0].index
             nr = 0
             for i in footerwork.index:
-                ttime = footerwork.ix[i, 'Time']
-                distance = footerwork.ix[i, 'Distance']
-                self.df.ix[therowindex[nr], 'Time'] = ttime
-                self.df.ix[therowindex[nr], 'Distance'] = distance
+                ttime = footerwork.loc[i, 'Time']
+                distance = footerwork.loc[i, 'Distance']
+                self.df.loc[therowindex[nr], 'Time'] = ttime
+                self.df.loc[therowindex[nr], 'Distance'] = distance
                 nr += 1
 
         if len(footerwork) == len(therowindex) + 1:
@@ -2047,21 +2040,21 @@ class RowProParser(CSVParser):
             therowindex = self.df[dt < 0].index
             nr = 0
             for i in footerwork.index:
-                ttime = footerwork.ix[i, 'Time']
-                distance = footerwork.ix[i, 'Distance']
-                self.df.ix[therowindex[nr], 'Time'] = ttime
-                self.df.ix[therowindex[nr], 'Distance'] = distance
+                ttime = footerwork.loc[i, 'Time']
+                distance = footerwork.loc[i, 'Distance']
+                self.df.loc[therowindex[nr], 'Time'] = ttime
+                self.df.loc[therowindex[nr], 'Distance'] = distance
                 nr += 1
         else:
             self.df.loc[maxindex, 'Time'] = endvalue
             for i in footerwork.index:
-                ttime = footerwork.ix[i, 'Time']
-                distance = footerwork.ix[i, 'Distance']
+                ttime = footerwork.loc[i, 'Time']
+                distance = footerwork.loc[i, 'Distance']
                 diff = self.df['Time'].apply(lambda z: abs(ttime - z))
                 diff.sort_values(inplace=True)
                 theindex = diff.index[0]
-                self.df.ix[theindex, 'Time'] = ttime
-                self.df.ix[theindex, 'Distance'] = distance
+                self.df.loc[theindex, 'Time'] = ttime
+                self.df.loc[theindex, 'Distance'] = distance
 
         dateline = get_file_line(11, csvfile)
         dated = dateline.split(',')[0]
@@ -2156,15 +2149,15 @@ class SpeedCoach2Parser(CSVParser):
 
             
         unitrow = get_file_line(skiprows + 2, csvfile)
-        velo_unit = 'ms'
-        dist_unit = 'm'
+        self.velo_unit = 'ms'
+        self.dist_unit = 'm'
         if 'KPH' in unitrow:
-            velo_unit = 'kph'
+            self.velo_unit = 'kph'
         if 'MPH' in unitrow:
-            velo_unit = 'mph'
+            self.velo_unit = 'mph'
 
         if 'Kilometer' in unitrow:
-            dist_unit = 'km'
+            self.dist_unit = 'km'
 
         kwargs['skiprows'] = skiprows
         super(SpeedCoach2Parser, self).__init__(*args, **kwargs)
@@ -2276,16 +2269,16 @@ class SpeedCoach2Parser(CSVParser):
                 except KeyError:
                     pass
 
-        if dist_unit == 'km':
+        if self.dist_unit == 'km':
             dist2 *= 1000
             self.df[self.columns[' Horizontal (meters)']] *= 1000.
 
         cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
         self.df[self.columns['cum_dist']] = cum_dist
         velo = self.df[self.columns['GPS Speed']]
-        if velo_unit == 'kph':
+        if self.velo_unit == 'kph':
             velo = velo / 3.6
-        if velo_unit == 'mph':
+        if self.velo_unit == 'mph':
             velo = velo * 0.44704
 
         pace = 500. / velo
@@ -2515,47 +2508,53 @@ class SpeedCoach2Parser(CSVParser):
         stri += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-Pwr-{sep}-SPM--{sep}AvgHR{sep}DPS-\n".format(
             sep=separator)
         aantal = len(self.summarydata)
-        for i in range(aantal):
-            sdist = self.summarydata.ix[self.summarydata.index[[i]],
+        for i in self.summarydata.index:
+            sdist = self.summarydata.loc[i,
                                         'Total Distance (GPS)']
-            split = self.summarydata.ix[self.summarydata.index[[i]],
+
+            if self.dist_unit == 'km':
+                sdist = float(sdist)*1000.
+            
+            split = self.summarydata.loc[i,
                                         'Total Elapsed Time']
-            space = self.summarydata.ix[self.summarydata.index[[i]],
+            space = self.summarydata.loc[i,
                                         'Avg Split (GPS)']
             try:
-                pwr = self.summarydata.ix[self.summarydata.index[[i]],
+                pwr = self.summarydata.loc[i,
                                           'Avg Power']
             except KeyError:
                 pwr = 0 * space
 
-            spm = self.summarydata.ix[self.summarydata.index[[i]],
+            spm = self.summarydata.loc[i,
                                       'Avg Stroke Rate']
             try:
-                avghr = self.summarydata.ix[self.summarydata.index[[i]],
+                avghr = self.summarydata.loc[i,
                                             'Avg Heart Rate']
             except KeyError:
                 avghr = 0 * space
 
-            nrstrokes = self.summarydata.ix[self.summarydata.index[[i]],
+            nrstrokes = self.summarydata.loc[i,
                                             'Total Strokes']
             dps = float(sdist) / float(nrstrokes)
-            splitstring = split.values[0]
+            splitstring = split
+
+            
             newsplitstring = flexistrftime(flexistrptime(splitstring))
-            pacestring = space.values[0]
+            pacestring = space
             newpacestring = flexistrftime(flexistrptime(pacestring))
 
             stri += "{i:0>2}{sep}{sdist:0>5}{sep}{split}{sep}{space}{sep} {pwr:0>3} {sep}".format(
                 i=i + 1,
-                sdist=int(float(sdist.values[0])),
+                sdist=int(float(sdist)),
                 split=newsplitstring,
                 space=newpacestring,
-                pwr=pwr.values[0],
+                pwr=pwr,
                 sep=separator,
             )
             stri += " {spm} {sep} {avghr:0>3} {sep}{dps:0>4.1f}\n".format(
                 sep=separator,
-                avghr=avghr.values[0],
-                spm=spm.values[0],
+                avghr=avghr,
+                spm=spm,
                 dps=dps,
             )
 
