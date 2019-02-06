@@ -132,13 +132,16 @@ def checkfile(f2, verbose=False):
     distmax = row.df['cum_dist'].max()
     timemax = row.df['TimeStamp (sec)'].max() - row.df['TimeStamp (sec)'].min()
     nrintervals = len(row.df[' lapIdx'].unique())
-
+    mintime = row.df['TimeStamp (sec)'].min()
+    maxtime = row.df['TimeStamp (sec)'].max()
     if verbose:
         print(("nr lines", row.number_of_rows))
         print(("data ", row.rowdatetime))
         print(("dist ", distmax))
         print(("Time ", timemax))
         print(("Nr intervals ", nrintervals))
+        print(("Min time ",mintime))
+        print(("Max time ",maxtime))
 
     res = row.intervalstats_values()
     int1time = res[0][0]

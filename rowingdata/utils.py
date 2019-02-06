@@ -20,8 +20,8 @@ def ewmovingaverage(interval,window_size):
     idf_ewma1=intervaldf.ewm(span=window_size)
     idf_ewma2=intervaldf[::-1].ewm(span=window_size)
 
-    i_ewma1=idf_ewma1.mean().ix[:,'v']
-    i_ewma2=idf_ewma2.mean().ix[:,'v']
+    i_ewma1=idf_ewma1.mean().loc[:,'v']
+    i_ewma2=idf_ewma2.mean().loc[:,'v']
 
     interval2=np.vstack((i_ewma1,i_ewma2[::-1]))
     interval2=np.mean( interval2, axis=0) # average

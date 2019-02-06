@@ -392,7 +392,7 @@ class FITParser(object):
             x = self.df[c]
             if len(x.shape)>1:
                 newdf = pd.DataFrame({
-                    c: x.ix[:,0].values
+                    c: x.iloc[:,0].values
                     })
                 self.df.drop(labels=c,axis=1,inplace=True)
                 self.df[c] = newdf[c]
