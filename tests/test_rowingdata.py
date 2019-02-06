@@ -26,13 +26,14 @@ class TestCumValues:
 
     delta = 0.0001
     
-    for combi in testcombis:
-        expectedresult = df.loc[:,combi[1]]
-        result = rowingdata.csvparsers.make_cumvalues(df.loc[:,combi[0]])[0]
-        for i in range(len(result)):
-            assert_equals(
-                np.abs(result.iloc[i]-expectedresult.iloc[i]
-                )<delta,True)
+    for e,r in testcombis:
+        if e in df.index and r in df.index:
+            expectedresult = df.loc[:,r]
+            result = rowingdata.csvparsers.make_cumvalues(df.loc[:,e])[0]
+            for i in range(len(result)):
+                assert_equals(
+                    np.abs(result.iloc[i]-expectedresult.iloc[i]
+                    )<delta,True)
 
 class TestBasicRowingData:
     row=rowingdata.rowingdata(csvfile='testdata/testdata.csv')
