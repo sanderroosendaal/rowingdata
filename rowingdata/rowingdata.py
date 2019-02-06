@@ -3191,6 +3191,9 @@ class rowingdata:
         if self.empty:
             return None
 
+        if (weknowphysics != 1):
+            return None
+
         nr_of_rows = self.number_of_rows
         rows_mod = skiprows + 1
         df = self.df
@@ -3204,6 +3207,7 @@ class rowingdata:
         # in future this must come from rowingdata.rower and rowingdata.rigging
         r = self.rwr.rc
         r.mc = mc
+
 
         # modify pace/spm/wind with rolling averages
         ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
@@ -3339,6 +3343,8 @@ class rowingdata:
             self.df[' Power (watts)'] = self.df['power (model)']
             self.df[' AverageDriveForce (lbs)'] = self.df['averageforce (model)']
             self.df[' DriveLength (meters)'] = self.df['drivelength (model)']
+
+        return 1
 
     def otw_setpower_verbose(self, skiprows=0, rg=getrigging(), mc=70.0,
                              powermeasured=False):

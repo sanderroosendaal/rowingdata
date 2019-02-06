@@ -134,9 +134,10 @@ class TestPhysics:
         velo = 4.0
         r = rowingdata.getrower()
         rg = rowingdata.getrigging()
-        row = rowingdata.SpeedCoach2Parser('testdata/speedcoach2example.csv')
+        row = rowingdata.SpeedCoach2Parser('testdata/speedcoach2test2.csv')
         row = rowingdata.rowingdata(df=row.df)
-        row.otw_setpower_silent(skiprows=20)
+        result = row.otw_setpower_silent(skiprows=20)
+        assert_equals(result,1)
         
 class TestCorrectedRowingData:
     row=rowingdata.rowingdata(csvfile='testdata/correctedpainsled.csv')

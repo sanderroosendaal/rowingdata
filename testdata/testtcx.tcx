@@ -1280,11 +1280,7 @@
           </Trackpoint>
         </Track>
       </Lap>
-<<<<<<< HEAD
-      <Notes>&lt;Element 'Notes' at 0x7fd7456f4e58&gt;</Notes>
-=======
-      <Notes>&lt;Element 'Notes' at 0xe31aa20&gt;</Notes>
->>>>>>> 0ee9a9d41ccfba8686f412ae1be1c86b7fdb06eb
+      <Notes>&lt;Element 'Notes' at 0x7fe434f033b8&gt;</Notes>
     </Activity>
   </Activities>
   <Creator>
