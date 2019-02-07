@@ -135,7 +135,7 @@ class TestPhysics:
         velo = 4.0
         r = rowingdata.getrower()
         rg = rowingdata.getrigging()
-        row = rowingdata.SpeedCoach2Parser('testdata/speedcoach2test2.csv')
+        row = rowingdata.SpeedCoach2Parser('testdata/SpeedCoach2v2.12.csv')
         row = rowingdata.rowingdata(df=row.df)
         result = row.otw_setpower_silent(skiprows=20)
         assert_equals(result,1)
