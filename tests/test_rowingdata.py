@@ -5,10 +5,35 @@ import rowingdata
 import datetime
 import numpy as np
 import pandas as pd
-from nose_parameterized import parameterized
+from parameterized import parameterized
 import unittest
 from pytz import utc
 import six
+
+class TestCumValues:
+    df = pd.read_csv('testdata/cumvalues.csv')
+
+    testcombis = [
+        ('a','A'),
+        ('b','B'),
+        ('c','C'),
+        ('d','D'),
+        ('e','E'),
+        ('f','F'),
+        ('g','G'),
+        ('h','H'),
+        ]
+
+    delta = 0.0001
+    
+    for e,r in testcombis:
+        if e in df.index and r in df.index:
+            expectedresult = df.loc[:,r]
+            result = rowingdata.csvparsers.make_cumvalues(df.loc[:,e])[0]
+            for i in range(len(result)):
+                assert_equals(
+                    np.abs(result.iloc[i]-expectedresult.iloc[i]
+                    )<delta,True)
 
 class TestBasicRowingData:
     row=rowingdata.rowingdata(csvfile='testdata/testdata.csv')
@@ -102,6 +127,18 @@ class TestStringParser:
         assert_equals(t5,r5)
         assert_equals(t6,r6)
         assert_equals(t7,r7)
+
+class TestPhysics:
+    row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+
+    def test_getpower(self):
+        velo = 4.0
+        r = rowingdata.getrower()
+        rg = rowingdata.getrigging()
+        row = rowingdata.SpeedCoach2Parser('testdata/SpeedCoach2v2.12.csv')
+        row = rowingdata.rowingdata(df=row.df)
+        result = row.otw_setpower_silent(skiprows=20)
+        assert_equals(result,1)
         
 class TestCorrectedRowingData:
     row=rowingdata.rowingdata(csvfile='testdata/correctedpainsled.csv')
@@ -130,6 +167,7 @@ class TestTCXExport:
         csvfile='testdata/Speedcoach2example.csv'
         assert_equals(rowingdata.get_file_type(csvfile),'speedcoach2')
         r=rowingdata.SpeedCoach2Parser(csvfile=csvfile)
+        summarystring = r.summary()
         row=rowingdata.rowingdata(df=r.df)
         assert_equals(row.number_of_rows,97)
         tcxfile = 'testdata/testtcx.tcx'
