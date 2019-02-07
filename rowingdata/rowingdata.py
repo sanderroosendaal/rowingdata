@@ -3041,8 +3041,12 @@ class rowingdata:
         r.mc = mc
 
         # modify pace/spm/wind with rolling averages
-        ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
-        spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
+        try:
+            ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
+            spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
+        except AttributeError:
+            ps = df[' Stroke500mPace (sec/500m)'].mean()
+            spms = df[' Cadence (stokes/min)'].mean()
 
         if storetable is not None:
             try:
