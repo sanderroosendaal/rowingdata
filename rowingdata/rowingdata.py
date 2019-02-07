@@ -3045,8 +3045,8 @@ class rowingdata:
             ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
             spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
         except AttributeError:
-            ps = df[' Stroke500mPace (sec/500m)'].mean()
-            spms = df[' Cadence (stokes/min)'].mean()
+            ps = df[' Stroke500mPace (sec/500m)']
+            spms = df[' Cadence (stokes/min)']
 
         if storetable is not None:
             try:
@@ -3218,8 +3218,8 @@ class rowingdata:
             ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
             spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
         except AttributeError:
-            ps = df[' Stroke500mPace (sec/500m)'].mean()
-            spms = df[' Cadence (stokes/min)'].mean()
+            ps = df[' Stroke500mPace (sec/500m)']
+            spms = df[' Cadence (stokes/min)']
             
         if storetable is not None:
             try:
