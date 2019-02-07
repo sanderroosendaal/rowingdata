@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 
 from collections import Counter
 
@@ -3041,8 +3041,12 @@ class rowingdata:
         r.mc = mc
 
         # modify pace/spm/wind with rolling averages
-        ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
-        spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
+        try:
+            ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
+            spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
+        except AttributeError:
+            ps = df[' Stroke500mPace (sec/500m)']
+            spms = df[' Cadence (stokes/min)']
 
         if storetable is not None:
             try:
@@ -3210,9 +3214,13 @@ class rowingdata:
 
 
         # modify pace/spm/wind with rolling averages
-        ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
-        spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
-
+        try:
+            ps = df[' Stroke500mPace (sec/500m)'].rolling(skiprows+1).mean()
+            spms = df[' Cadence (stokes/min)'].rolling(skiprows+1).mean()
+        except AttributeError:
+            ps = df[' Stroke500mPace (sec/500m)']
+            spms = df[' Cadence (stokes/min)']
+            
         if storetable is not None:
             try:
                 if storetable[-3:] != 'npz':
