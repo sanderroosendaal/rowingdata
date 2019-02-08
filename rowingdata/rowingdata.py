@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.0.2"
+__version__ = "2.0.3"
 
 from collections import Counter
 
@@ -2829,7 +2829,7 @@ class rowingdata:
         bearing = np.zeros(nr_of_rows)
 
         # replacing ix with loc below
-        for i in range(len(df.index)):
+        for i in range(len(df.index)-1):
             index = df.index[i]
             try:
                 long1 = df.loc[index, ' longitude']
@@ -2850,6 +2850,8 @@ class rowingdata:
         df['bearing'] = bearing2
 
         self.df = df
+
+        return 1
 
     def add_stream(self, vstream, units='m'):
         # foot/second
