@@ -21,9 +21,7 @@ def ewmovingaverage(interval,window_size):
         idf_ewma1=intervaldf.ewm(span=window_size)
         idf_ewma2=intervaldf[::-1].ewm(span=window_size)
     except AttributeError:
-        idf_ewma1 = intervaldf
-        idf_ewma2 = intervaldf[::-1]
-        
+        return interval
 
     i_ewma1=idf_ewma1.mean().loc[:,'v']
     i_ewma2=idf_ewma2.mean().loc[:,'v']
