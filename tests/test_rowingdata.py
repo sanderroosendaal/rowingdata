@@ -139,6 +139,19 @@ class TestPhysics:
         row = rowingdata.rowingdata(df=row.df)
         result = row.otw_setpower_silent(skiprows=20)
         assert_equals(result,1)
+
+class TestBearing:
+    row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+
+    def test_bearing(self):
+        velo = 4.0
+        r = rowingdata.getrower()
+        rg = rowingdata.getrigging()
+        row = rowingdata.SpeedCoach2Parser('testdata/SpeedCoach2v2.12.csv')
+        row = rowingdata.rowingdata(df=row.df)
+        result = row.add_bearing()
+        assert_equals(result,1)
+
         
 class TestCorrectedRowingData:
     row=rowingdata.rowingdata(csvfile='testdata/correctedpainsled.csv')
