@@ -11,6 +11,16 @@ from lxml.etree import XMLSyntaxError
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 from six.moves import range
 
+import sys
+if sys.version_info[0]<=2:
+    pythonversion = 2
+    textwritemode = 'w'
+else:
+    pythonversion = 3
+    textwritemode = 'wt'
+    from io import open
+
+
 namespace='http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
 empty_gpx = """
@@ -113,8 +123,11 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
     
     try:
         xsd_file=six.moves.urllib.request.urlopen("http://www.topografix.com/GPX/1/1/gpx.xsd")
-        output=open('gpx.xsd','w') 
-        output.write(xsd_file.read().replace('\n',''))
+        output=open('gpx.xsd','w')
+        if pythonversion <= 2:
+            output.write(xsd_file.read().replace('\n',''))
+        else:
+            output.write(xsd_file.read().decode('utf-8').replace('\n',''))
         output.close()
         xsd_filename="gpx.xsd"
 
