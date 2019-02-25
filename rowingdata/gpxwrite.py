@@ -132,15 +132,19 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
         xsd_filename="gpx.xsd"
 
         # Run some tests
-        tree=objectify.parse(gpxFile)
         try:
-            schema=etree.XMLSchema(file=xsd_filename)
-            parser=objectify.makeparser(schema=schema)
-            objectify.fromstring(some_xml_string, parser)
-            # print("YEAH!, your xml file has validated")
-        except XMLSyntaxError:
+            tree=objectify.parse(gpxFile)
+            try:
+                schema=etree.XMLSchema(file=xsd_filename)
+                parser=objectify.makeparser(schema=schema)
+                objectify.fromstring(some_xml_string, parser)
+                # print("YEAH!, your xml file has validated")
+            except XMLSyntaxError:
         
-            print("Oh NO!, your xml file does not validate")
+                print("Oh NO!, your xml file does not validate")
+                pass
+        except:
+            print("Oh No!, your xml file does not validate")
             pass
         
     except six.moves.urllib.error.URLError:
