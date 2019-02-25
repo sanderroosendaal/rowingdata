@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.0.4"
+__version__ = "2.0.5"
 
 from collections import Counter
 
@@ -1742,7 +1742,7 @@ class rowingdata:
             dt = sled_df['TimeStamp (sec)'].diff()
             try:
                 dt.iloc[0] = dt.iloc[1] # replaced ix with iloc
-            except IndexError:
+            except:
                 dt.loc[df.index[0]] = dt.loc[df.index[0]]
                 
             dt.fillna(inplace=True, method='ffill')
