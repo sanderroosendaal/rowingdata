@@ -288,7 +288,7 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata",
                 print("Oh NO!, your xml file does not validate")
                 pass
         except:
-            print("Oh NO!, your xmsl file does not validate")
+            print("Oh NO!, your xml file does not validate")
             pass
         
     except six.moves.urllib.error.URLError:

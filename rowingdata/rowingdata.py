@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.0.3"
+__version__ = "2.0.6"
 
 from collections import Counter
 
@@ -1740,7 +1740,11 @@ class rowingdata:
 
         try:
             dt = sled_df['TimeStamp (sec)'].diff()
-            dt.iloc[0] = dt.iloc[1] # replaced ix with iloc
+            try:
+                dt.iloc[0] = dt.iloc[1] # replaced ix with iloc
+            except:
+                dt.loc[df.index[0]] = dt.loc[df.index[0]]
+                
             dt.fillna(inplace=True, method='ffill')
             dt.fillna(inplace=True, method='bfill')
             strokenumbers = pd.Series(
