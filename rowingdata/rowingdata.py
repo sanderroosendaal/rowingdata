@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.0.7"
+__version__ = "2.0.8"
 
 from collections import Counter
 
@@ -1898,7 +1898,7 @@ class rowingdata:
         return additionalmetrics
 
 
-    def check_consistency(self, threshold=20, velovariation=1.e-3):
+    def check_consistency(self, threshold=20, velovariation=1.e-4):
         data = self.df
 
         result = {}
