@@ -297,6 +297,21 @@ class TestRowProParser:
         checks = row.check_consistency()
         assert_equals(checks['velo_time_distance'],True)
         assert_equals(checks['velo_valid'],True)
+
+
+
+        
+class TestAddPowerZones:
+    row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+
+    def test_bearing(self):
+        r = rowingdata.getrower()
+        rg = rowingdata.getrigging()
+        row = rowingdata.SpeedCoach2Parser('testdata/SpeedCoach2v2.12.csv')
+        row = rowingdata.rowingdata(df=row.df)
+        result = rowingdata.addpowerzones(row.df, 225, [23,53,76,87,91])
+
+
         
 class TestRowProParserIntervals:
     def testrowprointervals(self):

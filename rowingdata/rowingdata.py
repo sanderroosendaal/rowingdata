@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.0.6"
+__version__ = "2.0.7"
 
 from collections import Counter
 
@@ -1403,29 +1403,32 @@ def addpowerzones(df, ftp, powerperc):
 
     # create the columns containing the data for the colored bar chart
     # attempt to do this in a way that doesn't generate dubious copy warnings
-    mask = (df[' Power (watts)'] <= ut2) & (
-        df[' Stroke500mPace (sec/500m)'] < 360)
-    df.loc[mask, 'pw_ut2'] = df.loc[mask, ' Power (watts)']
+    try:
+        mask = (df[' Power (watts)'] <= ut2) & (
+            df[' Stroke500mPace (sec/500m)'] < 360)
+        df.loc[mask, 'pw_ut2'] = df.loc[mask, ' Power (watts)']
 
-    mask = (df[' Power (watts)'] <= ut1) & (df[' Power (watts)']
-                                            > ut2) & (df[' Stroke500mPace (sec/500m)'] < 360)
-    df.loc[mask, 'pw_ut1'] = df.loc[mask, ' Power (watts)']
+        mask = (df[' Power (watts)'] <= ut1) & (df[' Power (watts)']
+                                                > ut2) & (df[' Stroke500mPace (sec/500m)'] < 360)
+        df.loc[mask, 'pw_ut1'] = df.loc[mask, ' Power (watts)']
+        
+        mask = (df[' Power (watts)'] <= at) & (df[' Power (watts)']
+                                               > ut1) & (df[' Stroke500mPace (sec/500m)'] < 360)
+        df.loc[mask, 'pw_at'] = df.loc[mask, ' Power (watts)']
+        
+        mask = (df[' Power (watts)'] <= tr) & (df[' Power (watts)']
+                                               > at) & (df[' Stroke500mPace (sec/500m)'] < 360)
+        df.loc[mask, 'pw_tr'] = df.loc[mask, ' Power (watts)']
 
-    mask = (df[' Power (watts)'] <= at) & (df[' Power (watts)']
-                                           > ut1) & (df[' Stroke500mPace (sec/500m)'] < 360)
-    df.loc[mask, 'pw_at'] = df.loc[mask, ' Power (watts)']
-
-    mask = (df[' Power (watts)'] <= tr) & (df[' Power (watts)']
-                                           > at) & (df[' Stroke500mPace (sec/500m)'] < 360)
-    df.loc[mask, 'pw_tr'] = df.loc[mask, ' Power (watts)']
-
-    mask = (df[' Power (watts)'] <= an) & (df[' Power (watts)']
-                                           > tr) & (df[' Stroke500mPace (sec/500m)'] < 360)
-    df.loc[mask, 'pw_an'] = df.loc[mask, ' Power (watts)']
-
-    mask = (df[' Power (watts)'] > an) & (
-        df[' Stroke500mPace (sec/500m)'] < 360)
-    df.loc[mask, 'pw_max'] = df.loc[mask, ' Power (watts)']
+        mask = (df[' Power (watts)'] <= an) & (df[' Power (watts)']
+                                               > tr) & (df[' Stroke500mPace (sec/500m)'] < 360)
+        df.loc[mask, 'pw_an'] = df.loc[mask, ' Power (watts)']
+        
+        mask = (df[' Power (watts)'] > an) & (
+            df[' Stroke500mPace (sec/500m)'] < 360)
+        df.loc[mask, 'pw_max'] = df.loc[mask, ' Power (watts)']
+    except TypeError:
+        pass
 
     df = df.fillna(method='ffill')
 
