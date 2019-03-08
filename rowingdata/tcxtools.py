@@ -271,6 +271,9 @@ def tcxtodf2(path):
             'lapid':lapid,
             }
         )
+
+    df['Speed'] = df['DistanceMeters'].diff()/df['timestamp'].diff()
+    df.loc[0,'Speed'] = 0
                     
     return df
     
