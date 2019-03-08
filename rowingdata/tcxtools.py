@@ -21,7 +21,6 @@ ns2 = 'http://www.garmin.com/xmlschemas/ActivityExtension/v2'
 
 
 def strip_control_characters(input):
-
     if input:
 
         # unicode invalid characters
