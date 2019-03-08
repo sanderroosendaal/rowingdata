@@ -13,6 +13,11 @@ import numpy as np
 import string
 from six import unichr
 
+from lxml import etree
+from docopt import docopt
+
+ns1 = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
+ns2 = 'http://www.garmin.com/xmlschemas/ActivityExtension/v2'
 
 
 def strip_control_characters(input):
@@ -158,4 +163,115 @@ def tcxtodf(path):
 
     return df
 
+def process_trackpoint(trackpoint):
+    trackp = {}
+    for child in trackpoint:
+        for elem in child.iter():
+            if elem.tag == '{%s}Time'%ns1:
+                trackp['time'] = elem.text
+            if elem.tag == '{%s}DistanceMeters'%ns1:
+                trackp['distance'] = float(elem.text)
+            if elem.tag == '{%s}Cadence'%ns1:
+                trackp['cadence'] = float(elem.text)
+            if elem.tag == '{%s}HeartRateBpm'%ns1:
+                for hrchild in elem:
+                    if hrchild.tag == '{%s}Value'%ns1:
+                        trackp['hr'] = int(hrchild.text)
+            if elem.tag == '{%s}Extensions'%ns1:
+                for extchild in elem:
+                    if extchild.tag == '{%s}TPX'%ns2:
+                        for pchild in extchild:
+                            if pchild.tag == '{%s}Watts'%ns2:
+                                trackp['power'] = int(pchild.text)
+            if elem.tag == '{%s}Position'%ns1:
+                for poschild in elem:
+                    if poschild.tag == '{%s}LatitudeDegrees'%ns1:
+                        trackp['latitude'] = float(poschild.text)                        
+                    if poschild.tag == '{%s}LongitudeDegrees'%ns1:
+                        trackp['longitude'] = float(poschild.text)
+                        
+                
+    return trackp
+                
+
+def tcxtodf2(path):
+    tree = etree.parse(path)
+    root = tree.getroot()
+
+    tracks = []
+    lapnr = 0
+
+    for element in root.iter():
+        if element.tag == '{%s}Lap'%ns1:
+            lapnr += 1
+        if element.tag == '{%s}Track'%ns1:
+            tracks.append((lapnr,element))
+
+    t = []
+    d = []
+    hr = []
+    power = []
+    lat = []
+    cadence = []
+    lon = []
+    lapid = []
+    
+    for lapnr,element in tracks:
+        for child in element:
+            if child.tag == '{%s}Trackpoint'%ns1:
+                trackp = process_trackpoint(child)
+                try:
+                    time = parser.parse(trackp['time'])
+                    timestamp = arrow.get(time).timestamp+arrow.get(time).microsecond/1.e6
+                    t.append(timestamp)
+                except KeyError:
+                    t.append(np.nan)
+
+                try:
+                    d.append(trackp['distance'])
+                except KeyError:
+                    d.append(np.nan)
+
+                try:
+                    cadence.append(trackp['cadence'])
+                except KeyError:
+                    cadence.append(np.nan)
+
+                try:
+                    hr.append(trackp['hr'])
+                except KeyError:
+                    hr.append(0)
+
+                try:
+                    power.append(trackp['power'])
+                except KeyError:
+                    power.append(0)
+
+                try:
+                    lat.append(trackp['latitude'])
+                except KeyError:
+                    lat.append(np.nan)
+
+                try:
+                    lon.append(trackp['longitude'])
+                except KeyError:
+                    lon.append(np.nan)
+
+                lapid.append(lapnr)
+
+                
+    df = pd.DataFrame(
+        {
+            'timestamp':t,
+            'HeartRateBpm':hr,
+            'DistanceMeters':d,
+            'Cadence':cadence,
+            'Watts':power,
+            'LatitudeDegrees':lat,
+            'LongitudeDegrees':lon,
+            'lapid':lapid,
+            }
+        )
+                    
+    return df
     
