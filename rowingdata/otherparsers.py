@@ -499,10 +499,19 @@ class TCXParserTester(object):
 
         return the_array
 
-
+    
 class TCXParser(object):
-    def __init__(self, tcx_file):
-        self.df = tcxtools.tcxtodf(tcx_file)
+    def __init__(self, tcx_file, *args, **kwargs):
+        if 'alternative' in kwargs:
+            alternative = kwargs['alternative']
+        else:
+            alternative = False
+
+        if alternative:
+            self.df = tcxtools.tcxtodf2(tcx_file)
+        else:
+            self.df = tcxtools.tcxtodf(tcx_file)
+            
         try:
             lat = self.df['latitude'].apply(tofloat).values
             longitude = self.df['longitude'].apply(tofloat).values
