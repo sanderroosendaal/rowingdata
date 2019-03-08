@@ -1280,7 +1280,11 @@
           </Trackpoint>
         </Track>
       </Lap>
+<<<<<<< HEAD
       <Notes>&lt;Element 'Notes' at 0x000001B9423402C8&gt;</Notes>
+=======
+      <Notes>&lt;Element 'Notes' at 0x000001E51C1334F8&gt;</Notes>
+>>>>>>> feature/tcx
     </Activity>
   </Activities>
   <Creator>

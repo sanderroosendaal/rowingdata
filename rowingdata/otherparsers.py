@@ -508,9 +508,9 @@ class TCXParser(object):
             alternative = False
 
         if alternative:
-            self.df = tcxtools.tcxtodf2(tcx_file)
-        else:
             self.df = tcxtools.tcxtodf(tcx_file)
+        else:
+            self.df = tcxtools.tcxtodf2(tcx_file)
             
         try:
             lat = self.df['latitude'].apply(tofloat).values

@@ -21,7 +21,6 @@ ns2 = 'http://www.garmin.com/xmlschemas/ActivityExtension/v2'
 
 
 def strip_control_characters(input):
-
     if input:
 
         # unicode invalid characters
@@ -272,6 +271,9 @@ def tcxtodf2(path):
             'lapid':lapid,
             }
         )
+
+    df['Speed'] = df['DistanceMeters'].diff()/df['timestamp'].diff()
+    df.loc[0,'Speed'] = 0
                     
     return df
     
