@@ -28,7 +28,7 @@ from pandas import Series, DataFrame
 from dateutil import parser
 
 from timezonefinder import TimezoneFinder
-from lxml import objectify
+from lxml import objectify,etree
 from fitparse import FitFile
 
 try:
@@ -266,21 +266,19 @@ def get_file_type(f):
                     return 'unknown'
                 
             return 'fit'
-
+        if extension == 'tcx':
+            try:
+                tree = etree.parse(f)
+                root = tree.getroot()
+                return 'tcx'
+            except:
+                return 'unknown'
+        
         with gzip.open(f, readmode) as fop:
             try:
                 if extension == 'csv':
                     s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
                     return csvtests(s)
-                elif extension == 'tcx':
-                    try:
-                        input = fop.read()
-                        input = strip_control_characters(input)
-                        tree = objectify.parse(StringIO(input))
-                        rt = tree.getroot()
-                        return 'tcx'
-                    except:
-                        return 'unknown'
 
             except IOError:
                 return 'notgzip'
@@ -299,22 +297,13 @@ def get_file_type(f):
         return csvtests(s)
 
     if extension == 'tcx':
-        with open(f,'r') as fop:
-            try:
-                input = fop.read()
-                input = strip_control_characters(input)
-                tree = objectify.parse(StringIO(input))
-                rt = tree.getroot()
-                return 'tcx'
-            except:
-                return 'unknown'
-
-
-
-        # if 'HeartRateBpm' in etree.tostring(rt):
-        #    return 'tcx'
-        # else:
-        #    return 'tcxnohr'
+        try:
+            tree = etree.parse(f)
+            root = tree.getroot()
+            return 'tcx'
+        except:
+            return 'unknown'
+        
 
     if extension == 'fit':
         try:
