@@ -266,8 +266,8 @@ def tcxtodf2(path):
             'DistanceMeters':d,
             'Cadence':cadence,
             'Watts':power,
-            'LatitudeDegrees':lat,
-            'LongitudeDegrees':lon,
+            'latitude':lat,
+            'longitude':lon,
             'lapid':lapid,
             }
         )
