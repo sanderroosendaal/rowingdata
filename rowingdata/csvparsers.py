@@ -618,6 +618,7 @@ def make_cumvalues(xvalues):
 
     newvalues = 0.0 * xvalues
     dx = xvalues.diff()
+    print(dx)
     dxpos = dx
     mask = -xvalues.diff() > 0.9 * xvalues
     nrsteps = len(dx.loc[mask])
@@ -636,6 +637,7 @@ def make_cumvalues(xvalues):
         newvalues = xvalues
 
     newvalues = newvalues.replace([-np.inf, np.inf], np.nan)
+
 
     newvalues.fillna(method='ffill', inplace=True)
     newvalues.fillna(method='bfill', inplace=True)
