@@ -156,13 +156,6 @@ def nanstozero(nr):
         return nr
 
 
-def spm_toarray(l):
-    o = np.zeros(len(l))
-    for i in range(len(l)):
-        o[i] = l[i]
-
-    return o
-
 def post_progress(secret,progressurl,progress):
     post_data = {
         "secret":secret,
@@ -175,30 +168,6 @@ def post_progress(secret,progressurl,progress):
         return 408
     return s.status_code
 
-def make_cumvalues_rowingdata(df):
-    """ Takes entire dataframe, calculates cumulative distance
-    and cumulative work distance
-    """
-
-    workoutstateswork = [1, 4, 5, 8, 9, 6, 7]
-    workoutstatesrest = [3]
-    workoutstatetransition = [0, 2, 10, 11, 12, 13]
-
-    xvalues = df[' Horizontal (meters)']
-    mask = df[' WorkoutState'].isin(workoutstatesrest)
-    xvalues.loc[mask] = 0.0 * xvalues.loc[mask]
-
-    mask = df[' WorkoutState'].isin(workoutstatetransition)
-    xvalues.loc[mask] = 0.0 * xvalues.loc[mask]
-
-    res = make_cumvalues(xvalues)
-    cumworkmeters = res[0]
-
-    res = make_cumvalues(df[' Horizontal (meters)'])
-    cummeters = res[0]
-    lapidx = res[1]
-
-    return [cummeters, lapidx, cumworkmeters]
 
 
 def tailwind(bearing, vwind, winddir, vstream=0):
@@ -312,22 +281,7 @@ def getrower(fileName="defaultrower.txt", mc=70.0):
     return r
 
 
-def getrowtype():
-    rowtypes = dict([
-        ('Indoor Rower', ['1']),
-        ('Indoor Rower with Slides', ['2']),
-        ('Dynamic Indoor Rower', ['3']),
-        ('SkiErg', ['4']),
-        ('Paddle Adapter', ['5']),
-        ('On-water', ['6']),
-        ('On-snow', ['7'])
-    ])
 
-    return rowtypes
-
-def running_mean(x):
-    cumsum = np.cumsum(x)
-    return cumsum / (1. + np.arange(len(x)))
 
 def histodata(rows):
     # calculates Power/Stroke Histo data from a series of rowingdata class rows
@@ -473,88 +427,6 @@ def cumcpdata(rows,debug=False):
     return df
 
 
-def cumcpdata_old(rows):
-    # calculates CP data from a series of rowingdata class rows
-    maxt = 0
-    for row in rows:
-        tt = row.df[' ElapsedTime (sec)'].copy()
-        tt = tt-tt[0]
-        thismaxt = tt.max()
-
-        if thismaxt > maxt:
-            maxt = thismaxt
-
-    maxlog10 = np.log10(maxt)
-
-    logarr = np.arange(100) * maxlog10 / 100.
-
-    logarr = 10.**(logarr)
-
-    delta = []
-    dist = []
-    cpvalue = []
-    velovalue = []
-    spms = []
-
-    for row in rows:
-        cumdist = row.df['cum_dist']
-        elapsedtime = row.df[' ElapsedTime (sec)']
-        ww = row.df[' Power (watts)']
-
-        powerpresent = (ww.std > 0)
-
-        for i in range(len(cumdist) - 2):
-            resdist = cumdist.iloc[i + 1:] - cumdist.iloc[i] # replaced ix with iloc
-            restime = elapsedtime.iloc[i + 1:] - elapsedtime[i] # replace ix with iloc
-            timedeltas = np.nan_to_num(restime.diff())
-
-            if not powerpresent:
-                velo = resdist / restime
-                pace = 500. / velo
-                power = 2.8 * velo**3
-            else:
-                power = 0*resdist + ww[i+1:].mean()
-                velo = (power/2.8)**(1./3.)
-
-            power.name = 'Power'
-            restime.name = 'restime'
-            resdist.name = 'resdist'
-            velo.name = 'Velo'
-
-            cpvalues = griddata(restime.values, power.values,
-                                logarr, method='linear', fill_value=0)
-            distvalues = griddata(restime.values, resdist.values,
-                                  logarr, method='linear',
-                                  fill_value=resdist.max())
-
-
-            for cpv in cpvalues:
-                cpvalue.append(cpv)
-            for d in logarr:
-                delta.append(d)
-            for d in distvalues:
-                dist.append(d)
-
-
-    delta = pd.Series(delta, name='Delta')
-    cpvalue = pd.Series(cpvalue, name='CP')
-    dist = pd.Series(dist, name='Distance')
-
-    df = pd.DataFrame(
-        {
-            'Delta': delta,
-            'CP': cpvalue,
-            'Distance': dist,
-        }
-    )
-
-
-    df = df.sort_values(['Delta', 'CP', 'Distance'], ascending=[1, 0, 1])
-    df = df.drop_duplicates(subset='Delta', keep='first')
-
-    #df = df[df['Distance']>100]
-
-    return df
 
 
 def interval_string(nr, totaldist, totaltime, avgpace, avgspm,
