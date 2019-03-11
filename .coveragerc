@@ -1,0 +1,15 @@
+[run]
+include =
+        ./*
+omit =
+        *tests*
+	*migrations*
+	*cvkbrno*
+	*/py2/*
+        */venv/*
+        *__init__*
+[report]
+exclude_lines = 
+        pragma: no cover
+        if __name__ == .__main__.:
+
