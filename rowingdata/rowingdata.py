@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.1.2"
+__version__ = "2.1.3"
 
 from collections import Counter
 
@@ -1746,7 +1746,7 @@ class rowingdata:
             try:
                 dt.iloc[0] = dt.iloc[1] # replaced ix with iloc
             except:
-                dt.loc[df.index[0]] = dt.loc[df.index[0]]
+                dt.loc[dt.index[0]] = dt.loc[dt.index[0]]
                 
             dt.fillna(inplace=True, method='ffill')
             dt.fillna(inplace=True, method='bfill')
