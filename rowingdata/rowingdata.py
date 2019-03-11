@@ -3652,7 +3652,8 @@ class rowingdata:
 
         fig1 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate / Power"
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         # replaced ix with loc below
@@ -3829,7 +3830,8 @@ class rowingdata:
 
         fig1 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate / Power"
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, Power
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -4041,7 +4043,8 @@ class rowingdata:
 
         fig1 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate "
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -4324,7 +4327,8 @@ class rowingdata:
         end_dist = int(df.loc[df.index[-1], 'cum_dist'])
         fig2 = plt.figure(figsize=(12, 10))
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
@@ -4403,7 +4407,8 @@ class rowingdata:
         end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         fig2 = plt.figure(figsize=(12, 10))
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
@@ -4732,7 +4737,8 @@ class rowingdata:
         fig1 = plt.figure(figsize=(12, 10))
 
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -4878,7 +4884,8 @@ class rowingdata:
         fig1 = plt.figure(figsize=(12, 10))
 
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -5024,7 +5031,8 @@ class rowingdata:
         fig1 = plt.figure(figsize=(12, 10))
 
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -5170,7 +5178,8 @@ class rowingdata:
         fig1 = plt.figure(figsize=(12, 10))
 
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -5329,7 +5338,8 @@ class rowingdata:
         fig1 = plt.figure(figsize=(12, 10))
 
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
