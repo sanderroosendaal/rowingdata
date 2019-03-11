@@ -1732,7 +1732,7 @@ class rowingdata:
 
         # recalc cum_dist
         # this needs improvement. If Elapsed Distance is measured
-        # inconsistently across the two dataframes, it least to errors.
+        # inconsistently across the two dataframes, it leads to errors.
         self_df['cum_dist'] = make_cumvalues(
             self_df[' Horizontal (meters)'])[0]
         # self_df.to_csv('C:/Downloads/debug.csv')
@@ -3652,7 +3652,8 @@ class rowingdata:
 
         fig1 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate / Power"
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         # replaced ix with loc below
@@ -3694,6 +3695,8 @@ class rowingdata:
 
         ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax1.set_xticks(list(range(100, end_dist, 100)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 200, 10)))
         ax1.set_title(fig_title)
@@ -3707,6 +3710,8 @@ class rowingdata:
                               ultimate=[85, 160], quantiles=[0, .9])
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax2.set_xticks(list(range(100, end_dist, 100)))
         ax2.set_ylabel('(sec/500)')
 
         grid(True)
@@ -3719,6 +3724,8 @@ class rowingdata:
         ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax3.set_xticks(list(range(100, end_dist, 100)))
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
 
@@ -3731,6 +3738,8 @@ class rowingdata:
                               ultimate=[50, 550])
         ax4.axis([0, end_dist, yrange[0], yrange[1]])
         ax4.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax4.set_xticks(list(range(100, end_dist, 100)))
         ax4.set_xlabel('Dist (km)')
         ax4.set_ylabel('Watts')
 #       ax4.set_yticks(range(150,450,50))
@@ -3751,6 +3760,8 @@ class rowingdata:
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax5.set_xticks(list(range(100, end_dist, 100)))
         ax5.set_ylabel('(sec/500)')
 #       ax5.set_yticks(range(175,95,-10))
         grid(True)
@@ -3766,6 +3777,8 @@ class rowingdata:
                               ultimate=[1, 15])
         ax6.axis([0, end_dist, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax6.set_xticks(list(range(100, end_dist, 100)))
         ax6.set_ylabel('Drive Len(m)')
 
         grid(True)
@@ -3781,6 +3794,8 @@ class rowingdata:
 
         ax7.axis([0, end_dist, yrange[0], yrange[1]])
         ax7.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax7.set_xticks(list(range(100, end_dist, 100)))
         ax7.set_ylabel('Drv / Rcv Time (s)')
 #       ax7.set_yticks(np.arange(0.2,3.0,0.2))
         grid(True)
@@ -3797,6 +3812,8 @@ class rowingdata:
 
         ax8.axis([0, end_dist, yrange[0], yrange[1]])
         ax8.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax8.set_xticks(list(range(100, end_dist, 100)))
         ax8.set_xlabel('Dist (m)')
         ax8.set_ylabel('Force (N)')
 #       ax8.set_yticks(range(25,300,25))
@@ -3829,7 +3846,8 @@ class rowingdata:
 
         fig1 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate / Power"
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, Power
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -3871,6 +3889,8 @@ class rowingdata:
 
         ax1.axis([0, end_dist, 50, 1.5 * an])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax1.set_xticks(list(range(100, end_dist, 100)))
         ax1.set_ylabel('Power (Watts)')
 #       ax1.set_yticks(range(110,200,10))
         ax1.set_title(fig_title)
@@ -3884,6 +3904,8 @@ class rowingdata:
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax2.set_xticks(list(range(100, end_dist, 100)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(145,95,-5))
         grid(True)
@@ -3896,6 +3918,8 @@ class rowingdata:
         ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax3.set_xticks(list(range(100, end_dist, 100)))
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
 
@@ -3940,6 +3964,8 @@ class rowingdata:
 
         ax4.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax4.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax4.set_xticks(list(range(100, end_dist, 100)))
         ax4.set_ylabel('BPM')
         ax4.set_yticks(list(range(110, 200, 10)))
 
@@ -3960,6 +3986,8 @@ class rowingdata:
                               ultimate=[85, 160], quantiles=[0, .9])
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax5.set_xticks(list(range(100, end_dist, 100)))
         ax5.set_ylabel('(sec/500)')
 #       ax5.set_yticks(range(175,95,-10))
         grid(True)
@@ -3975,6 +4003,8 @@ class rowingdata:
                               ultimate=[1, 15])
         ax6.axis([0, end_dist, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax6.set_xticks(list(range(100, end_dist, 100)))
         ax6.set_ylabel('Drive Len(m)')
 #       ax6.set_yticks(np.arange(1.,2.,0.05))
         grid(True)
@@ -3990,6 +4020,8 @@ class rowingdata:
 
         ax7.axis([0, end_dist, yrange[0], yrange[1]])
         ax7.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax7.set_xticks(list(range(100, end_dist, 100)))
         ax7.set_ylabel('Drv / Rcv Time (s)')
 #       ax7.set_yticks(np.arange(0.2,3.0,0.2))
         grid(True)
@@ -4006,6 +4038,8 @@ class rowingdata:
 
         ax8.axis([0, end_dist, yrange[0], yrange[1]])
         ax8.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax8.set_xticks(list(range(100, end_dist, 100)))
         ax8.set_xlabel('Dist (m)')
         ax8.set_ylabel('Force (N)')
 #       ax8.set_yticks(range(25,300,25))
@@ -4041,7 +4075,8 @@ class rowingdata:
 
         fig1 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate "
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -4081,6 +4116,8 @@ class rowingdata:
 
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax1.set_xticks(list(range(60, end_time, 60)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 200, 10)))
         ax1.set_title(fig_title)
@@ -4099,6 +4136,8 @@ class rowingdata:
                               ultimate=[85, 160], quantiles=[0.0, 0.9])
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax2.set_xticks(list(range(60, end_time, 60)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(145,90,-5))
         # ax2.set_title('Pace')
@@ -4115,6 +4154,8 @@ class rowingdata:
 #       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax3.set_xticks(list(range(60, end_time, 60)))
         ax3.set_xlabel('Time (sec)')
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
@@ -4129,6 +4170,8 @@ class rowingdata:
                               ultimate=[0, 555], miny=0)
         ax4.axis([0, end_time, yrange[0], yrange[1]])
         ax4.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax4.set_xticks(list(range(60, end_time, 60)))
         ax4.set_xlabel('Time (h:m)')
         ax4.set_ylabel('Watts')
 #       ax4.set_yticks(range(150,450,50))
@@ -4153,6 +4196,8 @@ class rowingdata:
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax5.axis([0, end_time, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax5.set_xticks(list(range(60, end_time, 60)))
         ax5.set_ylabel('(sec/500)')
 #       ax5.set_yticks(range(145,90,-5))
         grid(True)
@@ -4170,6 +4215,8 @@ class rowingdata:
                               ultimate=[1.0, 15])
         ax6.axis([0, end_time, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax6.set_xticks(list(range(60, end_time, 60)))
         ax6.set_xlabel('Time (sec)')
         ax6.set_ylabel('Drive Len(m)')
 #       ax6.set_yticks(np.arange(1.35,1.6,0.05))
@@ -4188,6 +4235,8 @@ class rowingdata:
 
         ax7.axis([0, end_time, yrange[0], yrange[1]])
         ax7.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax7.set_xticks(list(range(60, end_time, 60)))
         ax7.set_xlabel('Time (sec)')
         ax7.set_ylabel('Drv / Rcv Time (s)')
 #       ax7.set_yticks(np.arange(0.2,3.0,0.2))
@@ -4206,6 +4255,8 @@ class rowingdata:
 
         ax8.axis([0, end_time, yrange[0], yrange[1]])
         ax8.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax8.set_xticks(list(range(60, end_time, 60)))
         ax8.set_xlabel('Time (h:m)')
         ax8.set_ylabel('Force (N)')
 #       ax8.set_yticks(range(25,300,25))
@@ -4277,6 +4328,8 @@ class rowingdata:
 
         ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax1.set_xticks(list(range(100, end_dist, 100)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 200, 10)))
         ax1.set_title(fig_title)
@@ -4291,6 +4344,8 @@ class rowingdata:
 
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax2.set_xticks(list(range(100, end_dist, 100)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(175,95,-10))
         grid(True)
@@ -4303,6 +4358,8 @@ class rowingdata:
         ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax3.set_xticks(list(range(100, end_dist, 100)))
         ax3.set_xlabel('Distance (m)')
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
@@ -4324,7 +4381,8 @@ class rowingdata:
         end_dist = int(df.loc[df.index[-1], 'cum_dist'])
         fig2 = plt.figure(figsize=(12, 10))
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
@@ -4333,6 +4391,8 @@ class rowingdata:
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax5.set_xticks(list(range(100, end_dist, 100)))
         ax5.set_ylabel('(sec/500)')
 #       ax5.set_yticks(range(175,95,-10))
         grid(True)
@@ -4348,6 +4408,8 @@ class rowingdata:
                               ultimate=[1, 15])
         ax6.axis([0, end_dist, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax6.set_xticks(list(range(100, end_dist, 100)))
         ax6.set_ylabel('Drive Len(m)')
 #       ax6.set_yticks(np.arange(1.,2.,0.05))
         grid(True)
@@ -4363,6 +4425,8 @@ class rowingdata:
 
         ax7.axis([0, end_dist, yrange[0], yrange[1]])
         ax7.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax7.set_xticks(list(range(100, end_dist, 100)))
         ax7.set_ylabel('Drv / Rcv Time (s)')
 #       ax7.set_yticks(np.arange(0.2,3.0,0.2))
         grid(True)
@@ -4379,6 +4443,8 @@ class rowingdata:
 
         ax8.axis([0, end_dist, yrange[0], yrange[1]])
         ax8.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax8.set_xticks(list(range(100, end_dist, 100)))
         ax8.set_xlabel('Dist (m)')
         ax8.set_ylabel('Force (N)')
 #       ax8.set_yticks(range(25,300,25))
@@ -4403,7 +4469,8 @@ class rowingdata:
         end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         fig2 = plt.figure(figsize=(12, 10))
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
@@ -4414,6 +4481,8 @@ class rowingdata:
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax5.axis([0, end_time, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(0, end_time, 300)))
+        if end_dist < 1000:
+            ax5.set_xticks(list(range(100, end_dist, 100)))
         ax5.set_ylabel('(sec/500)')
 #       ax5.set_yticks(range(145,90,-5))
         grid(True)
@@ -4433,6 +4502,8 @@ class rowingdata:
                               ultimate=[1.0, 15])
         ax6.axis([0, end_time, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(0, end_time, 300)))
+        if end_dist < 1000:
+            ax6.set_xticks(list(range(100, end_dist, 100)))
         ax6.set_xlabel('Time (sec)')
         ax6.set_ylabel('Drive Len(m)')
 #       ax6.set_yticks(np.arange(1.35,1.6,0.05))
@@ -4451,6 +4522,8 @@ class rowingdata:
 
         ax7.axis([0, end_time, yrange[0], yrange[1]])
         ax7.set_xticks(list(range(0, end_time, 300)))
+        if end_dist < 1000:
+            ax7.set_xticks(list(range(100, end_dist, 100)))
         ax7.set_xlabel('Time (sec)')
         ax7.set_ylabel('Drv / Rcv Time (s)')
 #       ax7.set_yticks(np.arange(0.2,3.0,0.2))
@@ -4469,6 +4542,8 @@ class rowingdata:
 
         ax8.axis([0, end_time, yrange[0], yrange[1]])
         ax8.set_xticks(list(range(0, end_time, 300)))
+        if end_dist < 1000:
+            ax7.set_xticks(list(range(100, end_dist, 100)))
         ax8.set_xlabel('Time (h:m)')
         ax8.set_ylabel('Force (N)')
 #       ax8.set_yticks(range(25,300,25))
@@ -4536,6 +4611,8 @@ class rowingdata:
         end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
+        if end_dist < 1000:
+            ax1.set_xticks(list(range(100, end_dist, 100)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 190, 10)))
         ax1.set_title(fig_title)
@@ -4553,6 +4630,8 @@ class rowingdata:
                               ultimate=[85, 240], quantiles=[0, .9])
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax2.set_xticks(list(range(60, end_time, 60)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(175,90,-5))
         # ax2.set_title('Pace')
@@ -4571,6 +4650,8 @@ class rowingdata:
 #                rate_ewma.loc[:,' Cadence (stokes/min)'])
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax3.set_xticks(list(range(60, end_time, 60)))
         ax3.set_xlabel('Time (sec)')
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
@@ -4611,6 +4692,8 @@ class rowingdata:
         plt.axis([0, end_time, yrange[1], yrange[0]])
 
         ax1.set_xticks(list(range(1000, end_time, 1000)))
+        if end_time < 300:
+            ax1.set_xticks(list(range(60, end_time, 60)))
         ax1.set_yticks(list(range(185, 90, -10)))
         ax1.set_title(title)
         plt.grid(True)
@@ -4691,6 +4774,8 @@ class rowingdata:
         plt.axis([0, end_time, yrange[1], yrange[0]])
 
         ax1.set_xticks(list(range(1000, end_time, 1000)))
+        if end_time < 300:
+            ax1.set_xticks(list(range(60, end_time, 60)))
         ax1.set_yticks(list(range(185, 90, -10)))
         ax1.set_title(title)
         grid(True)
@@ -4732,7 +4817,8 @@ class rowingdata:
         fig1 = plt.figure(figsize=(12, 10))
 
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -4773,6 +4859,8 @@ class rowingdata:
 
         ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax1.set_xticks(list(range(100, end_dist, 100)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 200, 10)))
         ax1.set_title(fig_title)
@@ -4786,6 +4874,8 @@ class rowingdata:
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax2.set_xticks(list(range(100, end_dist, 100)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(145,95,-5))
         grid(True)
@@ -4798,6 +4888,8 @@ class rowingdata:
         ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax3.set_xticks(list(range(100, end_dist, 100)))
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
 
@@ -4851,6 +4943,8 @@ class rowingdata:
             ax4.text(5, an + 1.5, self.rwr.powerzones[5], size=8)
 
         ax4.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax4.set_xticks(list(range(100, end_dist, 100)))
         ax4.set_xlabel('Dist (m)')
         ax4.set_ylabel('Power (Watts)')
 #       ax4.set_yticks(range(110,200,10))
@@ -4878,7 +4972,8 @@ class rowingdata:
         fig1 = plt.figure(figsize=(12, 10))
 
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -4919,6 +5014,8 @@ class rowingdata:
 
         ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax1.set_xticks(list(range(100, end_dist, 100)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 200, 10)))
         ax1.set_title(fig_title)
@@ -4932,6 +5029,8 @@ class rowingdata:
                               ultimate=[85, 240], quantiles=[0, 0.9])
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax2.set_xticks(list(range(100, end_dist, 100)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(145,95,-5))
         grid(True)
@@ -4944,6 +5043,8 @@ class rowingdata:
         ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax3.set_xticks(list(range(100, end_dist, 100)))
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
 
@@ -4997,6 +5098,8 @@ class rowingdata:
             ax4.text(5, an + 1.5, self.rwr.powerzones[5], size=8)
 
         ax4.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax4.set_xticks(list(range(100, end_dist, 100)))
         ax4.set_xlabel('Dist (m)')
         ax4.set_ylabel('Power (Watts)')
 #       ax4.set_yticks(range(110,200,10))
@@ -5024,7 +5127,8 @@ class rowingdata:
         fig1 = plt.figure(figsize=(12, 10))
 
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -5065,6 +5169,8 @@ class rowingdata:
 
         ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax1.set_xticks(list(range(100, end_dist, 100)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 200, 10)))
         ax1.set_title(fig_title)
@@ -5078,6 +5184,8 @@ class rowingdata:
                               ultimate=[85, 240], quantiles=[0, .9])
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax2.set_xticks(list(range(100, end_dist, 100)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(145,95,-5))
         grid(True)
@@ -5090,6 +5198,8 @@ class rowingdata:
         ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax3.set_xticks(list(range(100, end_dist, 100)))
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
 
@@ -5143,6 +5253,8 @@ class rowingdata:
             ax4.text(5, an + 1.5, self.rwr.powerzones[5], size=8)
 
         ax4.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax4.set_xticks(list(range(100, end_dist, 100)))
         ax4.set_xlabel('Dist (m)')
         ax4.set_ylabel('Power (Watts)')
 #       ax4.set_yticks(range(110,200,10))
@@ -5170,7 +5282,8 @@ class rowingdata:
         fig1 = plt.figure(figsize=(12, 10))
 
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -5210,6 +5323,8 @@ class rowingdata:
 
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax1.set_xticks(list(range(60, end_time, 60)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 200, 10)))
         ax1.set_title(fig_title)
@@ -5228,6 +5343,8 @@ class rowingdata:
                               ultimate=[85, 160], quantiles=[0, .9])
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax2.set_xticks(list(range(60, end_time, 60)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(145,90,-5))
         # ax2.set_title('Pace')
@@ -5244,6 +5361,8 @@ class rowingdata:
 #       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax3.set_xticks(list(range(60, end_time, 60)))
         ax3.set_xlabel('Time (sec)')
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
@@ -5299,6 +5418,8 @@ class rowingdata:
             ax4.text(5, an + 1.5, self.rwr.powerzones[5], size=8)
 
         ax4.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax4.set_xticks(list(range(60, end_time, 60)))
         ax4.set_xlabel('Time (h:m)')
         ax4.set_ylabel('Watts')
 #       ax4.set_yticks(range(150,450,50))
@@ -5329,7 +5450,8 @@ class rowingdata:
         fig1 = plt.figure(figsize=(12, 10))
 
         fig_title = title
-        fig_title += " Drag %d" % self.dragfactor
+        if self.dragfactor:
+            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -5369,6 +5491,8 @@ class rowingdata:
 
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax1.set_xticks(list(range(60, end_time, 60)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 200, 10)))
         ax1.set_title(fig_title)
@@ -5389,6 +5513,8 @@ class rowingdata:
                               ultimate=[85, 240], quantiles=[0, .9])
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax2.set_xticks(list(range(60, end_time, 60)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(145,90,-5))
         # ax2.set_title('Pace')
@@ -5405,6 +5531,8 @@ class rowingdata:
 #       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax3.set_xticks(list(range(60, end_time, 60)))
         ax3.set_xlabel('Time (sec)')
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
@@ -5460,6 +5588,8 @@ class rowingdata:
             ax4.text(5, an + 1.5, self.rwr.powerzones[5], size=8)
 
         ax4.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax4.set_xticks(list(range(60, end_time, 60)))
         ax4.set_xlabel('Time (h:m)')
         ax4.set_ylabel('Watts')
 #       ax4.set_yticks(range(150,450,50))
@@ -5546,6 +5676,8 @@ class rowingdata:
 
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax1.set_xticks(list(range(60, end_time, 60)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 200, 10)))
         ax1.set_title(fig_title)
@@ -5577,6 +5709,8 @@ class rowingdata:
 
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax2.set_xticks(list(range(60, end_time, 60)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(145,90,-5))
         # ax2.set_title('Pace')
@@ -5593,6 +5727,8 @@ class rowingdata:
 #       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax3.set_xticks(list(range(60, end_time, 60)))
         ax3.set_xlabel('Time (sec)')
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
@@ -5610,6 +5746,8 @@ class rowingdata:
         ax4.axis([0, end_time, yrange[0], yrange[1]])
 
         ax4.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax4.set_xticks(list(range(60, end_time, 60)))
         ax4.set_xlabel('Time (h:m)')
         ax4.set_ylabel('Watts')
 #       ax4.set_yticks(range(150,450,50))
@@ -5692,6 +5830,8 @@ class rowingdata:
 
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax4.set_xticks(list(range(60, end_time, 60)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 200, 10)))
         ax1.set_title(fig_title)
@@ -5729,6 +5869,8 @@ class rowingdata:
 
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax2.set_xticks(list(range(60, end_time, 60)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(145,90,-5))
         # ax2.set_title('Pace')
@@ -5745,6 +5887,8 @@ class rowingdata:
 #       rate_ewma=pd.ewma
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax3.set_xticks(list(range(60, end_time, 60)))
         ax3.set_xlabel('Time (sec)')
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
@@ -5761,6 +5905,8 @@ class rowingdata:
                               ultimate=[0, 555], miny=0)
         ax4.axis([0, end_time, yrange[0], yrange[1]])
         ax4.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax4.set_xticks(list(range(60, end_time, 60)))
         ax4.set_xlabel('Time (h:m)')
         ax4.set_ylabel('Watts')
 #       ax4.set_yticks(range(150,450,50))
@@ -5804,6 +5950,8 @@ class rowingdata:
 
         ax5.axis([0, end_time, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax5.set_xticks(list(range(60, end_time, 60)))
         ax5.set_ylabel('(sec/500)')
 #       ax5.set_yticks(range(145,90,-5))
         grid(True)
@@ -5821,6 +5969,8 @@ class rowingdata:
                               ultimate=[1.0, 15])
         ax6.axis([0, end_time, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax6.set_xticks(list(range(60, end_time, 60)))
         ax6.set_xlabel('Time (sec)')
         ax6.set_ylabel('Drive Len(m)')
 #       ax6.set_yticks(np.arange(1.35,1.6,0.05))
@@ -5839,6 +5989,8 @@ class rowingdata:
 
         ax7.axis([0, end_time, yrange[0], yrange[1]])
         ax7.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax7.set_xticks(list(range(60, end_time, 60)))
         ax7.set_xlabel('Time (sec)')
         ax7.set_ylabel('Drv / Rcv Time (s)')
 #       ax7.set_yticks(np.arange(0.2,3.0,0.2))
@@ -5857,6 +6009,8 @@ class rowingdata:
 
         ax8.axis([0, end_time, yrange[0], yrange[1]])
         ax8.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax8.set_xticks(list(range(60, end_time, 60)))
         ax8.set_xlabel('Time (h:m)')
         ax8.set_ylabel('Force (N)')
 #       ax8.set_yticks(range(25,300,25))
@@ -5919,6 +6073,8 @@ class rowingdata:
         end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax1.set_xticks(list(range(60, end_time, 60)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 190, 10)))
         ax1.set_title(fig_title)
@@ -5992,6 +6148,8 @@ class rowingdata:
 
         ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax1.set_xticks(list(range(100, end_dist, 100)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 200, 10)))
         ax1.set_title(fig_title)
@@ -6006,6 +6164,8 @@ class rowingdata:
 
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax2.set_xticks(list(range(100, end_dist, 100)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(175,95,-10))
         grid(True)
@@ -6018,6 +6178,8 @@ class rowingdata:
         ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
         ax3.axis([0, end_dist, 14, 40])
         ax3.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax3.set_xticks(list(range(100, end_dist, 100)))
         ax3.set_xlabel('Distance (m)')
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
@@ -6036,6 +6198,8 @@ class rowingdata:
                               ultimate=[85, 240], quantiles=[0.0, 0.9])
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax5.set_xticks(list(range(100, end_dist, 100)))
         ax5.set_ylabel('(sec/500)')
 #       ax5.set_yticks(range(175,95,-10))
         grid(True)
@@ -6052,6 +6216,8 @@ class rowingdata:
         ax6.axis([0, end_dist, yrange[0], yrange[1]])
         ax6.set_xlabel('Distance (m)')
         ax6.set_xticks(list(range(1000, end_dist, 1000)))
+        if end_dist < 1000:
+            ax6.set_xticks(list(range(100, end_dist, 100)))
         ax6.set_ylabel('Stroke Distance (m)')
 #       ax6.set_yticks(np.arange(5.5,11.5,0.5))
         grid(True)
@@ -6122,6 +6288,8 @@ class rowingdata:
         end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax1.set_xticks(list(range(60, end_time, 60)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 190, 10)))
         ax1.set_title(fig_title)
@@ -6139,6 +6307,8 @@ class rowingdata:
                               ultimate=[85, 240], quantiles=[0.0, 0.9])
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax2.set_xticks(list(range(60, end_time, 60)))
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(175,90,-5))
         # ax2.set_title('Pace')
@@ -6157,6 +6327,8 @@ class rowingdata:
 #                rate_ewma.loc[:,' Cadence (stokes/min)'])
         ax3.axis([0, end_time, 14, 40])
         ax3.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax3.set_xticks(list(range(60, end_time, 60)))
         ax3.set_xlabel('Time (sec)')
         ax3.set_ylabel('SPM')
         ax3.set_yticks(list(range(16, 40, 2)))
@@ -6182,6 +6354,8 @@ class rowingdata:
         end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         ax5.axis([0, end_time, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax5.set_xticks(list(range(60, end_time, 60)))
         ax5.set_ylabel('(sec/500)')
 #       ax5.set_yticks(range(175,90,-5))
         grid(True)
@@ -6200,6 +6374,8 @@ class rowingdata:
 
         ax6.axis([0, end_time, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(0, end_time, 300)))
+        if end_time < 300:
+            ax6.set_xticks(list(range(60, end_time, 60)))
         ax6.set_xlabel('Time (sec)')
         ax6.set_ylabel('Stroke Distance (m)')
 #       ax6.set_yticks(np.arange(5.5,11.5,0.5))
