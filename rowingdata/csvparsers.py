@@ -637,6 +637,7 @@ def make_cumvalues(xvalues):
 
     newvalues = newvalues.replace([-np.inf, np.inf], np.nan)
 
+
     newvalues.fillna(method='ffill', inplace=True)
     newvalues.fillna(method='bfill', inplace=True)
     lapidx.fillna(method='bfill', inplace=True)
@@ -842,7 +843,7 @@ class HumonParser(CSVParser):
 
         # get date from header
         dateline = get_file_line(2,csvfile)
-        row_datetime = parser.parse(dateline, fuzzy=True)
+        row_datetime = parser.parse(dateline, fuzzy=True,yearfirst=True,dayfirst=False)
 
         timestamp = arrow.get(row_datetime).timestamp
 
@@ -1046,9 +1047,9 @@ class BoatCoachOTWParser(CSVParser):
 
         try:
             row_datetime = self.df[self.columns['TimeStamp (sec)']]
-            row_date = parser.parse(row_datetime[0], fuzzy=True)
+            row_date = parser.parse(row_datetime[0], fuzzy=True,yearfirst=True,dayfirst=False)
             row_datetime = row_datetime.apply(
-                lambda x: parser.parse(x, fuzzy=True))
+                lambda x: parser.parse(x, fuzzy=True,yearfirst=True,dayfirst=False))
             unixtimes = row_datetime.apply(lambda x: arrow.get(
                 x).timestamp + arrow.get(x).microsecond / 1.e6)
         except KeyError:
@@ -1261,15 +1262,15 @@ class BoatCoachParser(CSVParser):
                 with gzip.open(csvfile,readmode) as fop:
                     line = fop.readline()
                     dated = re.split('Date:', line)[1][1:-1]
-            row_date = parser.parse(dated, fuzzy=True)
+            row_date = parser.parse(dated, fuzzy=True,yearfirst=True,dayfirst=False)
         except IOError:
             pass
 
 
         try:
             datetime = self.df[self.columns['TimeStamp (sec)']]
-            row_date = parser.parse(datetime[0], fuzzy=True)
-            row_datetime = datetime.apply(lambda x: parser.parse(x, fuzzy=True))
+            row_date = parser.parse(datetime[0], fuzzy=True,yearfirst=True,dayfirst=False)
+            row_datetime = datetime.apply(lambda x: parser.parse(x, fuzzy=True,yearfirst=True,dayfirst=False))
             unixtimes = row_datetime.apply(
                 lambda x: arrow.get(x).timestamp + arrow.get(x).microsecond / 1.e6
             )
@@ -1433,7 +1434,7 @@ class KinoMapParser(CSVParser):
 
         row_datetime = self.df[self.columns['TimeStamp (sec)']]
         row_datetime = row_datetime.apply(
-            lambda x: parser.parse(x, fuzzy=True))
+            lambda x: parser.parse(x, fuzzy=True,yearfirst=True,dayfirst=False))
         #unixtimes=datetime.apply(lambda x: time.mktime(x.utctimetuple()))
         unixtimes = row_datetime.apply(lambda x: arrow.get(
             x).timestamp + arrow.get(x).microsecond / 1.e6)
@@ -1532,12 +1533,12 @@ class BoatCoachAdvancedParser(CSVParser):
                 line = fop.readline()
                 dated = re.split('Date:', line)[1][1:-1]
 
-        row_date = parser.parse(dated, fuzzy=True)
+        row_date = parser.parse(dated, fuzzy=True,yearfirst=True,dayfirst=False)
 
         try:
             row_datetime = self.df[self.columns['TimeStamp (sec)']]
-            row_date = parser.parse(datetime[0], fuzzy=True)
-            rowdatetime = row_datetime.apply(lambda x: parser.parse(x, fuzzy=True))
+            row_date = parser.parse(datetime[0], fuzzy=True,yearfirst=True,dayfirst=False)
+            rowdatetime = row_datetime.apply(lambda x: parser.parse(x, fuzzy=True,yearfirst=True,dayfirst=False))
             unixtimes = row_datetime.apply(lambda x: arrow.get(
                 x).timestamp + arrow.get(x).microsecond / 1.e6)
         except KeyError:
@@ -2047,9 +2048,9 @@ class RowProParser(CSVParser):
         dated = dateline.split(',')[0]
         dated2 = dateline.split(';')[0]
         try:
-            self.row_date = parser.parse(dated, fuzzy=True)
+            self.row_date = parser.parse(dated, fuzzy=True,yearfirst=True,dayfirst=False)
         except ValueError:
-            self.row_date = parser.parse(dated2, fuzzy=True)
+            self.row_date = parser.parse(dated2, fuzzy=True,yearfirst=True,dayfirst=False)
 
         self.cols = [
             'Time',
@@ -2276,11 +2277,11 @@ class SpeedCoach2Parser(CSVParser):
         try:
             dateline = get_file_line(4, csvfile)
             dated = dateline.split(',')[1]
-            self.row_date = parser.parse(dated, fuzzy=True)
+            self.row_date = parser.parse(dated, fuzzy=True, dayfirst=False)
         except ValueError:
             dateline = get_file_line(3, csvfile)
             dated = dateline.split(',')[1]
-            self.row_date = parser.parse(dated, fuzzy=True)
+            self.row_date = parser.parse(dated, fuzzy=True,dayfirst=False)
 
         if self.row_date.tzinfo is None or self.row_date.tzinfo.utcoffset(self.row_date) is None:
             try:

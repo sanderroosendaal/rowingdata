@@ -276,4 +276,3 @@ def tcxtodf2(path):
     df.loc[0,'Speed'] = 0
                     
     return df
-    
