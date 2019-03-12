@@ -70,6 +70,9 @@ class TestBasicRowingData:
         assert_equals(st,[5,3,5,3,5,3,5,3])
         sum=int(10*np.array(ts).sum())/10.
         assert_equals(sum,537.0)
+
+        str = self.row.intervalstats()
+        assert_equals(len(str),281)
                       
 class TestStringParser:
     def teststringparser(self):
@@ -152,6 +155,14 @@ class TestBearing:
         result = row.add_bearing()
         assert_equals(result,1)
 
+class TestCumCP:
+    def test_cumcp(self):
+        row1 = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+        row2 = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+        df = rowingdata.cumcpdata([row1,row2])
+        isempty = df.empty
+
+        assert_equals(isempty,False)
         
 class TestCorrectedRowingData:
     row=rowingdata.rowingdata(csvfile='testdata/correctedpainsled.csv')
