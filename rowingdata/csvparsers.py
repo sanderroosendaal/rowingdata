@@ -618,7 +618,6 @@ def make_cumvalues(xvalues):
 
     newvalues = 0.0 * xvalues
     dx = xvalues.diff()
-    print(dx)
     dxpos = dx
     mask = -xvalues.diff() > 0.9 * xvalues
     nrsteps = len(dx.loc[mask])
