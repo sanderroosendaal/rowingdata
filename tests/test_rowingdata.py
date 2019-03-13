@@ -231,7 +231,7 @@ class TestCharts:
         fig = row.get_piechart('aap')
 
     def test_plot_otw(self):
-        row = rowingdata.SpeedCoach2Parser(csvfile='testdata/SpeedCoach2example.csv')
+        row = rowingdata.SpeedCoach2Parser(csvfile='testdata/Speedcoach2example.csv')
         row = rowingdata.rowingdata(df=row.df)
         row.plotmeters_otw()
 
