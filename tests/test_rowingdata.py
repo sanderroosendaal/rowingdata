@@ -140,7 +140,7 @@ class TestPhysics:
         rg = rowingdata.getrigging()
         row = rowingdata.SpeedCoach2Parser('testdata/SpeedCoach2v2.12.csv')
         row = rowingdata.rowingdata(df=row.df)
-        result = row.otw_setpower_silent(skiprows=20)
+        result = row.otw_setpower_silent(skiprows=100)
         assert_equals(result,1)
 
 class TestBearing:
