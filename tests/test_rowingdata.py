@@ -10,6 +10,8 @@ import unittest
 from pytz import utc
 import six
 
+from unittest import mock
+
 class TestCumValues:
     df = pd.read_csv('testdata/cumvalues.csv')
 
@@ -70,6 +72,9 @@ class TestBasicRowingData:
         assert_equals(st,[5,3,5,3,5,3,5,3])
         sum=int(10*np.array(ts).sum())/10.
         assert_equals(sum,537.0)
+
+        str = self.row.intervalstats()
+        assert_equals(len(str),281)
                       
 class TestStringParser:
     def teststringparser(self):
@@ -137,7 +142,7 @@ class TestPhysics:
         rg = rowingdata.getrigging()
         row = rowingdata.SpeedCoach2Parser('testdata/SpeedCoach2v2.12.csv')
         row = rowingdata.rowingdata(df=row.df)
-        result = row.otw_setpower_silent(skiprows=20)
+        result = row.otw_setpower_silent(skiprows=40)
         assert_equals(result,1)
 
 class TestBearing:
@@ -152,6 +157,96 @@ class TestBearing:
         result = row.add_bearing()
         assert_equals(result,1)
 
+class TestCumCP:
+    def test_cumcp(self):
+        row1 = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+        row2 = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+        df = rowingdata.cumcpdata([row1,row2])
+        isempty = df.empty
+
+        assert_equals(isempty,False)
+        
+    def test_histo(self):
+        row1 = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+        row2 = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+        power = rowingdata.histodata([row1,row2])
+        isempty = len(power)==0
+
+        assert_equals(isempty,False)
+
+class TestOperations:
+    def test_add_overlap(self):
+        row1 = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+        row2 = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+
+        row = row1+row2
+
+        len1 = len(row)
+        len2 = len(row1)
+
+        assert_equals(len1,len2)
+
+    def test_getvalues(self):
+        row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+        spm = row.getvalues(' Cadence (stokes/min)')
+
+        assert_equals(len(row),len(spm))
+
+    def test_repair(self):
+        row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+        len1 = len(row)
+
+        row.repair()
+
+        len2 = len(row)
+
+        assert_equals(len1,len2)
+
+    def test_spmfromtimestamp(self):
+        row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+        row.spm_fromtimestamps()
+        
+class TestSummaries:
+    def test_summary(self):
+        row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+        summary = row.summary()
+        emptysummary = len(summary) == 0
+
+        assert_equals(emptysummary,False)
+
+class TestCharts:
+    @mock.patch("matplotlib.pyplot.figure")
+    def test_plot_erg(self,mock_fig):
+        row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
+        row.plotmeters_erg()
+        row.plotmeters_powerzones_erg()
+        row.plottime_erg()
+        fig = row.get_metersplot_erg2('aap')
+        fig = row.get_timeplot_erg2('aap')
+        fig = row.get_pacehrplot('aap')
+        fig = row.get_paceplot('aap')
+        fig = row.get_metersplot_erg('aap')
+        fig = row.get_timeplot_erg('aap')
+        row.plottime_hr()
+        row.piechart()
+        row.power_piechart()
+        fig = row.get_power_piechart('aap')
+        fig = row.get_piechart('aap')
+
+    @mock.patch("matplotlib.pyplot.figure")
+    def test_plot_otw(self, mock_fig):
+        row = rowingdata.SpeedCoach2Parser(csvfile='testdata/Speedcoach2example.csv')
+        row = rowingdata.rowingdata(df=row.df)
+        row.plotmeters_otw()
+
+        row.plottime_otw()
+        row.plottime_otwpower()
+        fig = row.get_timeplot_otw('aap')
+        fig = row.get_metersplot_otw('aap')
+        fig = row.get_time_otwpower('aap')
+        fig = row.get_metersplot_otwpower('aap')
+        fig = row.get_timeplot_otwempower('aap')
+        fig = row.get_metersplot_otwempower('aap')
         
 class TestCorrectedRowingData:
     row=rowingdata.rowingdata(csvfile='testdata/correctedpainsled.csv')

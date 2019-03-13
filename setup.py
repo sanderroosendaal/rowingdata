@@ -16,6 +16,12 @@ setup(name='rowingdata',
           re.M
       ).group(1),
 
+      classifiers = [
+          "Programming Language :: Python :: 3",
+          ],
+
+      #      python_requires='>=3.4',
+
       description='The rowingdata library to create colorful plots from CrewNerd, Painsled and other rowing data tools',
 
       long_description=readme(),
