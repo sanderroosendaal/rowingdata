@@ -10,6 +10,8 @@ import unittest
 from pytz import utc
 import six
 
+from unittest import mock
+
 class TestCumValues:
     df = pd.read_csv('testdata/cumvalues.csv')
 
@@ -213,7 +215,8 @@ class TestSummaries:
         assert_equals(emptysummary,False)
 
 class TestCharts:
-    def test_plot_erg(self):
+    @mock.patch("matplotlib.pyplot.figure")
+    def test_plot_erg(self,mock_fig):
         row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
         row.plotmeters_erg()
         row.plotmeters_powerzones_erg()
@@ -230,7 +233,8 @@ class TestCharts:
         fig = row.get_power_piechart('aap')
         fig = row.get_piechart('aap')
 
-    def test_plot_otw(self):
+    @mock.patch("matplotlib.pyplot.figure")
+    def test_plot_otw(self, mock_fig):
         row = rowingdata.SpeedCoach2Parser(csvfile='testdata/Speedcoach2example.csv')
         row = rowingdata.rowingdata(df=row.df)
         row.plotmeters_otw()
