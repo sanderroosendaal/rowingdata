@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.1.5"
+__version__ = "2.1.6"
 
 from collections import Counter
 
@@ -34,6 +34,11 @@ import pickle
 
 import time
 import warnings
+import sys
+if sys.version_info < (3,):
+    warnings.warn("""You are using master of 'rowingdata' with Python 2.
+    Rowingdata will soon be Python 3 only."""
+                  UserWarning)
 
 from sys import platform as _platform
 
