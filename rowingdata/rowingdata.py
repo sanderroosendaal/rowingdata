@@ -1752,6 +1752,9 @@ class rowingdata:
 
         return self.df[keystring].values
 
+    def __len__(self):
+        return len(self.df)
+    
     def get_additional_metrics(self):
         cols = self.df.columns.values
         dif = np.setdiff1d(cols,self.defaultnames)
@@ -4481,8 +4484,8 @@ class rowingdata:
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax5.axis([0, end_time, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(0, end_time, 300)))
-        if end_dist < 1000:
-            ax5.set_xticks(list(range(100, end_dist, 100)))
+        if end_time < 30:
+            ax5.set_xticks(list(range(60, end_time, 60)))
         ax5.set_ylabel('(sec/500)')
 #       ax5.set_yticks(range(145,90,-5))
         grid(True)
@@ -4502,8 +4505,8 @@ class rowingdata:
                               ultimate=[1.0, 15])
         ax6.axis([0, end_time, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(0, end_time, 300)))
-        if end_dist < 1000:
-            ax6.set_xticks(list(range(100, end_dist, 100)))
+        if end_time < 300:
+            ax6.set_xticks(list(range(60, end_time, 60)))
         ax6.set_xlabel('Time (sec)')
         ax6.set_ylabel('Drive Len(m)')
 #       ax6.set_yticks(np.arange(1.35,1.6,0.05))
@@ -4522,8 +4525,8 @@ class rowingdata:
 
         ax7.axis([0, end_time, yrange[0], yrange[1]])
         ax7.set_xticks(list(range(0, end_time, 300)))
-        if end_dist < 1000:
-            ax7.set_xticks(list(range(100, end_dist, 100)))
+        if end_time < 300:
+            ax7.set_xticks(list(range(60, end_time, 60)))
         ax7.set_xlabel('Time (sec)')
         ax7.set_ylabel('Drv / Rcv Time (s)')
 #       ax7.set_yticks(np.arange(0.2,3.0,0.2))
@@ -4542,8 +4545,8 @@ class rowingdata:
 
         ax8.axis([0, end_time, yrange[0], yrange[1]])
         ax8.set_xticks(list(range(0, end_time, 300)))
-        if end_dist < 1000:
-            ax7.set_xticks(list(range(100, end_dist, 100)))
+        if end_time < 300:
+            ax7.set_xticks(list(range(60, end_dist, 60)))
         ax8.set_xlabel('Time (h:m)')
         ax8.set_ylabel('Force (N)')
 #       ax8.set_yticks(range(25,300,25))
@@ -4611,8 +4614,8 @@ class rowingdata:
         end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
-        if end_dist < 1000:
-            ax1.set_xticks(list(range(100, end_dist, 100)))
+        if end_time < 300:
+            ax1.set_xticks(list(range(60, end_time, 60)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 190, 10)))
         ax1.set_title(fig_title)
@@ -5831,7 +5834,7 @@ class rowingdata:
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
         ax1.set_xticks(list(range(0, end_time, 300)))
         if end_time < 300:
-            ax4.set_xticks(list(range(60, end_time, 60)))
+            ax1.set_xticks(list(range(60, end_time, 60)))
         ax1.set_ylabel('BPM')
         ax1.set_yticks(list(range(110, 200, 10)))
         ax1.set_title(fig_title)
@@ -6026,7 +6029,6 @@ class rowingdata:
 
         self.piechart()
 
-        print("done")
 
     def plottime_hr(self):
         """ Creates a HR vs time plot
@@ -6225,7 +6227,6 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
 
         plt.show()
-        print("done")
 
     def plottime_otw(self):
         """ Creates two images containing interesting plots
@@ -6392,7 +6393,6 @@ class rowingdata:
 
         self.piechart()
 
-        print("done")
 
     def piechart(self):
         """ Figure 3 - Heart Rate Time in band.
@@ -6548,7 +6548,7 @@ class rowingdata:
                 counterclock=False,
                 startangle=90.0)
 
-        ax_9.set_title(fig_title)
+        ax9.set_title(fig_title)
 
         plt.show()
         return 1
