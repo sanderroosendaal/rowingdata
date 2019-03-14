@@ -216,7 +216,8 @@ class TestSummaries:
 
 class TestCharts:
     @mock.patch("matplotlib.pyplot.figure")
-    def test_plot_erg(self,mock_fig):
+    @mock.patch("matplotlib.figure.Figure")
+    def test_plot_erg(self,mock_fig, mock_Fig):
         row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
         row.plotmeters_erg()
         row.plotmeters_powerzones_erg()
@@ -234,7 +235,8 @@ class TestCharts:
         fig = row.get_piechart('aap')
 
     @mock.patch("matplotlib.pyplot.figure")
-    def test_plot_otw(self, mock_fig):
+    @mock.patch("matplotlib.figure.Figure")
+    def test_plot_otw(self, mock_fig, mock_Fig):
         row = rowingdata.SpeedCoach2Parser(csvfile='testdata/Speedcoach2example.csv')
         row = rowingdata.rowingdata(df=row.df)
         row.plotmeters_otw()
