@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.1.8"
+__version__ = "2.1.9"
 
 from collections import Counter
 
@@ -1746,6 +1746,10 @@ class rowingdata:
         return rowingdata(df=self_df, rower=self.rwr,
                           rowtype=self.rowtype,
                           absolutetimestamps=self.absolutetimestamps)
+
+    def change_drag(self, dragfactor):
+        self.df[' DragFactor'] = dragfactor
+        self.dragfactor = dragfactor
 
     def getvalues(self, keystring):
         """ Just a tool to get a column of the row data as a numpy array
