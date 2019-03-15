@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.1.9"
+__version__ = "2.2.0"
 
 from collections import Counter
 
@@ -3763,6 +3763,7 @@ class rowingdata:
         ax4.xaxis.set_major_formatter(majorKmFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         fig2 = figure.Figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
@@ -3836,6 +3837,7 @@ class rowingdata:
         ax8.xaxis.set_major_formatter(majorKmFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig2.subplots_adjust(hspace=0)
 
         plt.show()
         print("done")
@@ -3989,6 +3991,7 @@ class rowingdata:
         ax4.xaxis.set_major_formatter(majorKmFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         fig2 = figure.Figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
@@ -4062,6 +4065,7 @@ class rowingdata:
         ax8.xaxis.set_major_formatter(majorKmFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig2.subplots_adjust(hspace=0)
 
         plt.show()
 
@@ -4196,6 +4200,7 @@ class rowingdata:
         ax4.xaxis.set_major_formatter(majorTimeFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         fig2 = figure.Figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
@@ -4281,6 +4286,7 @@ class rowingdata:
         ax8.xaxis.set_major_formatter(majorTimeFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig2.subplots_adjust(hspace=0)
 
         plt.show()
 
@@ -4381,6 +4387,7 @@ class rowingdata:
         grid(True)
 
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         return fig1
 
@@ -4469,6 +4476,7 @@ class rowingdata:
         ax8.xaxis.set_major_formatter(majorKmFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig2.subplots_adjust(hspace=0)
 
         return fig2
 
@@ -4568,6 +4576,7 @@ class rowingdata:
         ax8.xaxis.set_major_formatter(majorTimeFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig2.subplots_adjust(hspace=0)
 
         return fig2
 
@@ -4678,6 +4687,7 @@ class rowingdata:
         ax3.set_xlabel('Time (h:m)')
         ax3.xaxis.set_major_formatter(majorTimeFormatter)
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         return fig1
 
@@ -4731,6 +4741,7 @@ class rowingdata:
             tl.set_color('r')
 
         plt.subplots_adjust(hspace=0)
+        #fig.subplots_adjust(hspace=0)
 
         return fig
 
@@ -4966,6 +4977,7 @@ class rowingdata:
         grid(True)
 
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         return(fig1)
 
@@ -5121,6 +5133,7 @@ class rowingdata:
         grid(True)
 
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         return(fig1)
 
@@ -5276,6 +5289,7 @@ class rowingdata:
         grid(True)
 
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         return(fig1)
 
@@ -5444,6 +5458,7 @@ class rowingdata:
         ax4.xaxis.set_major_formatter(majorTimeFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         return(fig1)
 
@@ -5614,6 +5629,7 @@ class rowingdata:
         ax4.xaxis.set_major_formatter(majorTimeFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         return(fig1)
 
@@ -5772,6 +5788,7 @@ class rowingdata:
         ax4.xaxis.set_major_formatter(majorTimeFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         return fig1
 
@@ -5931,6 +5948,7 @@ class rowingdata:
         ax4.xaxis.set_major_formatter(majorTimeFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         fig2 = figure.Figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
@@ -6035,6 +6053,7 @@ class rowingdata:
         ax8.xaxis.set_major_formatter(majorTimeFormatter)
 
         plt.subplots_adjust(hspace=0)
+        fig2.subplots_adjust(hspace=0)
 
         plt.show()
 
@@ -6200,6 +6219,7 @@ class rowingdata:
         grid(True)
 
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         fig2 = figure.Figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
@@ -6236,6 +6256,7 @@ class rowingdata:
         grid(True)
 
         plt.subplots_adjust(hspace=0)
+        fig2.subplots_adjust(hspace=0)
 
         plt.show()
 
@@ -6353,6 +6374,7 @@ class rowingdata:
         ax3.set_xlabel('Time (h:m)')
         ax3.xaxis.set_major_formatter(majorTimeFormatter)
         plt.subplots_adjust(hspace=0)
+        fig1.subplots_adjust(hspace=0)
 
         fig2 = figure.Figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
@@ -6399,6 +6421,7 @@ class rowingdata:
         ax6.set_xlabel('Time (h:m)')
         ax6.xaxis.set_major_formatter(majorTimeFormatter)
         plt.subplots_adjust(hspace=0)
+        fig2.subplots_adjust(hspace=0)
 
         plt.show()
 
