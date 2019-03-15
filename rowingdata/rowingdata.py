@@ -1747,6 +1747,10 @@ class rowingdata:
                           rowtype=self.rowtype,
                           absolutetimestamps=self.absolutetimestamps)
 
+    def change_drag(self, dragfactor):
+        self.df[' DragFactor'] = dragfactor
+        self.dragfactor = dragfactor
+
     def getvalues(self, keystring):
         """ Just a tool to get a column of the row data as a numpy array
 
