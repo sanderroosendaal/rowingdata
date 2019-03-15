@@ -146,7 +146,6 @@ if tkavail == 0:
 
 
 
-
 def main():
     str = "Executing rowingdata version %s. " % __version__
     if weknowphysics:
@@ -176,7 +175,200 @@ def post_progress(secret,progressurl,progress):
     return s.status_code
 
 
+def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
 
+    if not title:
+        fig_title = "Input File:  " + r.readfilename + " --- HR / Pace / Rate / Power"
+        if r.dragfactor:
+            fig_title += " Drag %d" % r.dragfactor
+    else:
+        fig_title=title
+
+    if 'distance' in mode:
+        xcolumn = 'cum_dist'
+        
+        dist_increments = -df.loc[:, xcolumn].diff() # replaced ix with loc
+        dist_increments[0] = dist_increments[1]
+        dist_max = 1000
+        dist_tick = 100
+    else:
+        xcolumn = 'TimeStamp (sec)'
+        dist_increments = -df.loc[:, xcolumn].diff()
+        dist_increments[0] = dist_increments[1]
+        dist_increments = 0.5*(abs(dist_increments)+(dist_increments))
+        dist_max = 300
+        dist_tick = 30
+        
+    end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
+
+    ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_ut2'],
+            width=dist_increments,
+            color='gray', ec='gray')
+    ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_ut1'],
+            width=dist_increments,
+            color='y', ec='y')
+    ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_at'],
+            width=dist_increments,
+            color='g', ec='g')
+    ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_tr'],
+            width=dist_increments,
+            color='blue', ec='blue')
+    ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_an'],
+            width=dist_increments,
+            color='violet', ec='violet')
+    ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_max'],
+            width=dist_increments,
+            color='r', ec='r')
+
+    ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_ut2'], color='k')
+    ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_ut1'], color='k')
+    ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_at'], color='k')
+    ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_tr'], color='k')
+    ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_an'], color='k')
+    ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_max'], color='k')
+    
+    ax1.text(5, r.rwr.ut2 + 1.5, "UT2", size=8)
+    ax1.text(5, r.rwr.ut1 + 1.5, "UT1", size=8)
+    ax1.text(5, r.rwr.at + 1.5, "AT", size=8)
+    ax1.text(5, r.rwr.tr + 1.5, "TR", size=8)
+    ax1.text(5, r.rwr.an + 1.5, "AN", size=8)
+    ax1.text(5, r.rwr.max + 1.5, "MAX", size=8)
+        
+
+    ax1.axis([0, end_dist, 100, 1.1 * r.rwr.max])
+    ax1.set_xticks(list(range(dist_max, end_dist, dist_max)))
+    if end_dist < dist_max:
+        ax1.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
+    ax1.set_ylabel('BPM')
+    ax1.set_yticks(list(range(110, 200, 10)))
+    ax1.set_title(fig_title)
+    grid(True)
+
+def make_pace_plot(ax2,r,df,mode=['distance','ote']):
+    if 'distance' in mode:
+        xcolumn = 'cum_dist'
+        dist_max = 1000
+        dist_tick = 100
+    else:
+        xcolumn = 'TimeStamp (sec)'
+        dist_max = 300
+        dist_tick = 30
+        
+    end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
+
+    ax2.plot(df.loc[:, xcolumn], df.loc[:, ' Stroke500mPace (sec/500m)'])
+    if 'ote' in mode:
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
+                              ultimate=[85, 160], quantiles=[0, 0.9])
+    else:
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
+                              ultimate=[85, 240], quantiles=[0, 0.9])
+        
+    ax2.axis([0, end_dist, yrange[1], yrange[0]])
+    ax2.set_xticks(list(range(dist_max, end_dist, dist_max)))
+    if end_dist < dist_max:
+        ax2.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
+    ax2.set_ylabel('(sec/500)')
+    #       ax2.set_yticks(range(145,95,-5))
+    grid(True)
+    majorTickFormatter = FuncFormatter(format_pace_tick)
+    majorLocator = (5)
+    ax2.yaxis.set_major_formatter(majorTickFormatter)
+
+def make_spm_plot(ax3,r,df,mode=['distance']):
+    if 'distance' in mode:
+        xcolumn = 'cum_dist'
+        dist_max = 1000
+        dist_tick = 100
+    else:
+        xcolumn = 'TimeStamp (sec)'
+        dist_max = 300
+        dist_tick = 100
+        
+    end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
+    ax3.plot(df.loc[:, xcolumn], df.loc[:, ' Cadence (stokes/min)'])
+    ax3.axis([0, end_dist, 14, 40])
+    ax3.set_xticks(list(range(dist_max, end_dist, dist_max)))
+    if end_dist < 1000:
+        ax3.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
+    ax3.set_ylabel('SPM')
+    ax3.set_yticks(list(range(16, 40, 2)))
+
+    grid(True)
+
+def make_power_plot(ax4,r,df,mode=['distance']):
+    if 'distance' in mode:
+        xcolumn = 'cum_dist'
+        
+        dist_increments = -df.loc[:, xcolumn].diff() # replaced ix with loc
+        dist_increments[0] = dist_increments[1]
+        dist_max = 1000
+        dist_tick = 100
+    else:
+        xcolumn = 'TimeStamp (sec)'
+        dist_increments = -df.loc[:, xcolumn].diff()
+        dist_increments[0] = dist_increments[1]
+        dist_increments = 0.5*(abs(dist_increments)+(dist_increments))
+        dist_max = 300
+        dist_tick = 30
+        
+
+
+    end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
+    ax4.bar(df.loc[:, xcolumn], df.loc[:, 'pw_ut2'],
+            width=dist_increments,
+            color='gray', ec='gray')
+    ax4.bar(df.loc[:, xcolumn], df.loc[:, 'pw_ut1'],
+            width=dist_increments,
+            color='y', ec='y')
+    ax4.bar(df.loc[:, xcolumn], df.loc[:, 'pw_at'],
+            width=dist_increments,
+            color='g', ec='g')
+    ax4.bar(df.loc[:, xcolumn], df.loc[:, 'pw_tr'],
+            width=dist_increments,
+            color='blue', ec='blue')
+    ax4.bar(df.loc[:, xcolumn], df.loc[:, 'pw_an'],
+            width=dist_increments,
+            color='violet', ec='violet')
+    ax4.bar(df.loc[:, xcolumn], df.loc[:, 'pw_max'],
+            width=dist_increments,
+            color='r', ec='r')
+
+    ax4.plot(df.loc[:, xcolumn], df.loc[:, 'limpw_ut2'], color='k')
+    ax4.plot(df.loc[:, xcolumn], df.loc[:, 'limpw_ut1'], color='k')
+    ax4.plot(df.loc[:, xcolumn], df.loc[:, 'limpw_at'], color='k')
+    ax4.plot(df.loc[:, xcolumn], df.loc[:, 'limpw_tr'], color='k')
+    ax4.plot(df.loc[:, xcolumn], df.loc[:, 'limpw_an'], color='k')
+
+    end_dist = int(df.loc[df.index[-1], xcolumn])
+
+    yrange = y_axis_range(df.loc[:, ' Power (watts)'],
+                          ultimate=[0, 555], miny=0)
+    ax4.axis([0, end_dist, yrange[0], yrange[1]])
+
+    ut2, ut1, at, tr, an = r.rwr.ftp * \
+                    np.array(r.rwr.powerperc) / 100.
+
+    if ut2 + 1.5 < yrange[1] and ut2 + 1.5 > yrange[0]:
+        ax4.text(5, ut2 + 1.5, r.rwr.powerzones[1], size=8)
+    if ut1 + 1.5 < yrange[1] and ut1 + 1.5 > yrange[0]:
+        ax4.text(5, ut1 + 1.5, r.rwr.powerzones[2], size=8)
+    if at + 1.5 < yrange[1] and at + 1.5 > yrange[0]:
+        ax4.text(5, at + 1.5, r.rwr.powerzones[3], size=8)
+    if tr + 1.5 < yrange[1] and tr + 1.5 > yrange[0]:
+        ax4.text(5, tr + 1.5, r.rwr.powerzones[4], size=8)
+    if an + 1.5 < yrange[1] and an + 1.5 > yrange[0]:
+        ax4.text(5, an + 1.5, r.rwr.powerzones[5], size=8)
+
+    ax4.set_xticks(list(range(dist_max, end_dist, dist_max)))
+    if end_dist < 1000:
+        ax4.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
+    ax4.set_xlabel('Dist (m)')
+    ax4.set_ylabel('Power (Watts)')
+    #       ax4.set_yticks(range(110,200,10))
+
+    grid(True)
+    
 def tailwind(bearing, vwind, winddir, vstream=0):
     """ Calculates head-on head/tailwind in direction of rowing
 
@@ -3661,59 +3853,16 @@ class rowingdata:
         df = self.df
 
         # distance increments for bar chart
+        end_dist = int(df.loc[:, 'cum_dist'].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
         dist_increments = -df.loc[:, 'cum_dist'].diff() # replaced ix with loc
         dist_increments[0] = dist_increments[1]
 
         fig1 = figure.Figure(figsize=(12, 10))
-        fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate / Power"
-        if self.dragfactor:
-            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         # replaced ix with loc below
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut2'],
-                width=dist_increments,
-                color='gray', ec='gray')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut1'],
-                width=dist_increments,
-                color='y', ec='y')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_at'],
-                width=dist_increments,
-                color='g', ec='g')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_tr'],
-                width=dist_increments,
-                color='blue', ec='blue')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_an'],
-                width=dist_increments,
-                color='violet', ec='violet')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_max'],
-                width=dist_increments,
-                color='r', ec='r')
-
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut2'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut1'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_at'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_tr'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
-
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
-
-        end_dist = int(df.loc[:, 'cum_dist'].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
-
-        ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
-        ax1.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax1.set_xticks(list(range(100, end_dist, 100)))
-        ax1.set_ylabel('BPM')
-        ax1.set_yticks(list(range(110, 200, 10)))
-        ax1.set_title(fig_title)
+        make_hr_bars(ax1,self,df)
 
         grid(True)
 
@@ -4086,126 +4235,29 @@ class rowingdata:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
 
-        # time increments for bar chart
-        time_increments = df.loc[:, ' ElapsedTime (sec)'].diff()
-        time_increments[self.index[0]] = time_increments[self.index[1]]
-        time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
         fig1 = figure.Figure(figsize=(12, 10))
-        fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate "
-        if self.dragfactor:
-            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut2'],
-                width=time_increments,
-                color='gray', ec='gray')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut1'],
-                width=time_increments,
-                color='y', ec='y')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_at'],
-                width=time_increments,
-                color='g', ec='g')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_tr'],
-                width=time_increments,
-                color='blue', ec='blue')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_an'],
-                width=time_increments,
-                color='violet', ec='violet')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_max'],
-                width=time_increments,
-                color='r', ec='r')
-
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
-
-        end_time = int(df.loc[:, 'TimeStamp (sec)'].iloc[df.shape[0] - 1])
-
-        ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
-        ax1.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax1.set_xticks(list(range(60, end_time, 60)))
-        ax1.set_ylabel('BPM')
-        ax1.set_yticks(list(range(110, 200, 10)))
-        ax1.set_title(fig_title)
-        timeTickFormatter = NullFormatter()
-        ax1.xaxis.set_major_formatter(timeTickFormatter)
-
-        grid(True)
+        make_hr_bars(ax1,self,df,mode=['time'])
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
-                 df.loc[:, ' Stroke500mPace (sec/500m)'])
-
-        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
-                              ultimate=[85, 160], quantiles=[0.0, 0.9])
-        ax2.axis([0, end_time, yrange[1], yrange[0]])
-        ax2.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax2.set_xticks(list(range(60, end_time, 60)))
-        ax2.set_ylabel('(sec/500)')
-#       ax2.set_yticks(range(145,90,-5))
-        # ax2.set_title('Pace')
-        grid(True)
-        majorFormatter = FuncFormatter(format_pace_tick)
-        majorLocator = (5)
-        ax2.xaxis.set_major_formatter(timeTickFormatter)
-        ax2.yaxis.set_major_formatter(majorFormatter)
+        make_pace_plot(ax2,self,df,mode=['time','ote'])
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.loc[:, 'TimeStamp (sec)'],
-                 df.loc[:, ' Cadence (stokes/min)'])
-#       rate_ewma=pd.ewma
-        ax3.axis([0, end_time, 14, 40])
-        ax3.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax3.set_xticks(list(range(60, end_time, 60)))
-        ax3.set_xlabel('Time (sec)')
-        ax3.set_ylabel('SPM')
-        ax3.set_yticks(list(range(16, 40, 2)))
-        # ax3.set_title('Rate')
-        ax3.xaxis.set_major_formatter(timeTickFormatter)
-        grid(True)
+        make_spm_plot(ax3,self,df,mode=['time'])
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, ' Power (watts)'])
-        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
-                              ultimate=[0, 555], miny=0)
-        ax4.axis([0, end_time, yrange[0], yrange[1]])
-        ax4.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax4.set_xticks(list(range(60, end_time, 60)))
-        ax4.set_xlabel('Time (h:m)')
-        ax4.set_ylabel('Watts')
-#       ax4.set_yticks(range(150,450,50))
-        # ax4.set_title('Power')
-        grid(True)
-        majorTimeFormatter = FuncFormatter(format_time_tick)
-        majorLocator = (15 * 60)
-        ax4.xaxis.set_major_formatter(majorTimeFormatter)
-
-        plt.subplots_adjust(hspace=0)
-        fig1.subplots_adjust(hspace=0)
-
-        fig2 = figure.Figure(figsize=(12, 10))
-        fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
+        make_power_plot(ax4,self,df,mode=['time'])
 
         # Top plot is pace
+        fig2 = figure.Figure(figsize=(12,10))
+        fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
+        timeTickFormatter = NullFormatter()
         ax5 = fig2.add_subplot(4, 1, 1)
         ax5.plot(df.loc[:, 'TimeStamp (sec)'],
                  df.loc[:, ' Stroke500mPace (sec/500m)'])
@@ -4297,94 +4349,19 @@ class rowingdata:
             return None
 
         df = self.df
-        df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
-            df['TimeStamp (sec)'].values[0]
-
-        # distance increments for bar chart
-        dist_increments = -df.loc[:, 'cum_dist'].diff()
-        dist_increments[0] = dist_increments[1]
-#       dist_increments=abs(dist_increments)+dist_increments
-
-        #       fig1=figure.Figure(figsize=(12,10))
         fig1 = figure.Figure(figsize=(12, 10))
-        fig_title = title
 
         # First panel, hr
         ax1 = fig1.add_subplot(3, 1, 1)
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut2'],
-                width=dist_increments, align='edge',
-                color='gray', ec='gray')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut1'],
-                width=dist_increments, align='edge',
-                color='y', ec='y')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_at'],
-                width=dist_increments, align='edge',
-                color='g', ec='g')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_tr'],
-                width=dist_increments, align='edge',
-                color='blue', ec='blue')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_an'],
-                width=dist_increments, align='edge',
-                color='violet', ec='violet')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_max'],
-                width=dist_increments, align='edge',
-                color='r', ec='r')
-
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut2'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut1'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_at'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_tr'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
-
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
-
-        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
-
-        ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
-        ax1.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax1.set_xticks(list(range(100, end_dist, 100)))
-        ax1.set_ylabel('BPM')
-        ax1.set_yticks(list(range(110, 200, 10)))
-        ax1.set_title(fig_title)
-
-        grid(True)
+        make_hr_bars(ax1,self,df)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(3, 1, 2)
-        ax2.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
-                              ultimate=[85, 240], quantiles=[0, .9])
-
-        ax2.axis([0, end_dist, yrange[1], yrange[0]])
-        ax2.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax2.set_xticks(list(range(100, end_dist, 100)))
-        ax2.set_ylabel('(sec/500)')
-#       ax2.set_yticks(range(175,95,-10))
-        grid(True)
-        majorTickFormatter = FuncFormatter(format_pace_tick)
-        majorLocator = (5)
-        ax2.yaxis.set_major_formatter(majorTickFormatter)
+        make_pace_plot(ax2,self,df,mode=['distance','water'])
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(3, 1, 3)
-        ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
-        ax3.axis([0, end_dist, 14, 40])
-        ax3.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax3.set_xticks(list(range(100, end_dist, 100)))
-        ax3.set_xlabel('Distance (m)')
-        ax3.set_ylabel('SPM')
-        ax3.set_yticks(list(range(16, 40, 2)))
-
-        grid(True)
+        make_spm_plot(ax3,self,df)
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
@@ -4589,10 +4566,6 @@ class rowingdata:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
 
-        # time increments for bar chart
-        time_increments = df.loc[:, ' ElapsedTime (sec)'].diff()
-        time_increments[self.index[0]] = time_increments[self.index[1]]
-        time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
         fig1 = figure.Figure(figsize=(12, 10))
 
@@ -4600,92 +4573,16 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(3, 1, 1)
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut2'],
-                width=time_increments,
-                color='gray', ec='gray')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut1'],
-                width=time_increments,
-                color='y', ec='y')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_at'],
-                width=time_increments,
-                color='g', ec='g')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_tr'],
-                width=time_increments,
-                color='blue', ec='blue')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_an'],
-                width=time_increments,
-                color='violet', ec='violet')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_max'],
-                width=time_increments,
-                color='r', ec='r')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
-
-        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
-        ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
-        ax1.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax1.set_xticks(list(range(60, end_time, 60)))
-        ax1.set_ylabel('BPM')
-        ax1.set_yticks(list(range(110, 190, 10)))
-        ax1.set_title(fig_title)
-        timeTickFormatter = NullFormatter()
-        ax1.xaxis.set_major_formatter(timeTickFormatter)
-
-        grid(True)
+        make_hr_bars(ax1,self,df,mode=['time','otw'],title=fig_title)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(3, 1, 2)
-        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
-                 df.loc[:, ' Stroke500mPace (sec/500m)'])
-        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
-                              ultimate=[85, 240], quantiles=[0, .9])
-        ax2.axis([0, end_time, yrange[1], yrange[0]])
-        ax2.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax2.set_xticks(list(range(60, end_time, 60)))
-        ax2.set_ylabel('(sec/500)')
-#       ax2.set_yticks(range(175,90,-5))
-        # ax2.set_title('Pace')
-        grid(True)
-        majorFormatter = FuncFormatter(format_pace_tick)
-        majorLocator = (5)
-        ax2.xaxis.set_major_formatter(timeTickFormatter)
-        ax2.yaxis.set_major_formatter(majorFormatter)
+        make_pace_plot(ax2,self,df,mode=['time','otw'])
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(3, 1, 3)
-        ax3.plot(df.loc[:, 'TimeStamp (sec)'],
-                 df.loc[:, ' Cadence (stokes/min)'])
-#       rate_ewma=pd.ewma(df,span=20)
-#       ax3.plot(rate_ewma.loc[:,'TimeStamp (sec)'],
-#                rate_ewma.loc[:,' Cadence (stokes/min)'])
-        ax3.axis([0, end_time, 14, 40])
-        ax3.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax3.set_xticks(list(range(60, end_time, 60)))
-        ax3.set_xlabel('Time (sec)')
-        ax3.set_ylabel('SPM')
-        ax3.set_yticks(list(range(16, 40, 2)))
-        # ax3.set_title('Rate')
-        ax3.xaxis.set_major_formatter(timeTickFormatter)
-        grid(True)
+        make_spm_plot(ax3,self,df,mode=['time','otw'])
 
-        majorTimeFormatter = FuncFormatter(format_time_tick)
-        majorLocator = (15 * 60)
-        ax3.set_xlabel('Time (h:m)')
-        ax3.xaxis.set_major_formatter(majorTimeFormatter)
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
 
@@ -4830,151 +4727,25 @@ class rowingdata:
             return None
 
         df = self.df
-        if self.absolutetimestamps:
-            df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
-                df['TimeStamp (sec)'].values[0]
-
-        # distance increments for bar chart
-        dist_increments = df.loc[:, 'cum_dist'].diff()
-        dist_increments[0] = dist_increments[1]
-        dist_increments = 0.5 * (dist_increments + abs(dist_increments))
 
         fig1 = figure.Figure(figsize=(12, 10))
 
-        fig_title = title
-        if self.dragfactor:
-            fig_title += " Drag %d" % self.dragfactor
-
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut2'],
-                width=dist_increments,
-                color='gray', ec='gray')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut1'],
-                width=dist_increments,
-                color='y', ec='y')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_at'],
-                width=dist_increments,
-                color='g', ec='g')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_tr'],
-                width=dist_increments,
-                color='blue', ec='blue')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_an'],
-                width=dist_increments,
-                color='violet', ec='violet')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_max'],
-                width=dist_increments,
-                color='r', ec='r')
-
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut2'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut1'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_at'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_tr'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
-
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
-
-        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
-
-        ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
-        ax1.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax1.set_xticks(list(range(100, end_dist, 100)))
-        ax1.set_ylabel('BPM')
-        ax1.set_yticks(list(range(110, 200, 10)))
-        ax1.set_title(fig_title)
-
+        make_hr_bars(ax1,self,df)
+        
         grid(True)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
-                              ultimate=[85, 160], quantiles=[0, 0.9])
-        ax2.axis([0, end_dist, yrange[1], yrange[0]])
-        ax2.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax2.set_xticks(list(range(100, end_dist, 100)))
-        ax2.set_ylabel('(sec/500)')
-#       ax2.set_yticks(range(145,95,-5))
-        grid(True)
-        majorTickFormatter = FuncFormatter(format_pace_tick)
-        majorLocator = (5)
-        ax2.yaxis.set_major_formatter(majorTickFormatter)
+        make_pace_plot(ax2,self,df)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
-        ax3.axis([0, end_dist, 14, 40])
-        ax3.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax3.set_xticks(list(range(100, end_dist, 100)))
-        ax3.set_ylabel('SPM')
-        ax3.set_yticks(list(range(16, 40, 2)))
-
-        grid(True)
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut2'],
-                width=dist_increments,
-                color='gray', ec='gray')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut1'],
-                width=dist_increments,
-                color='y', ec='y')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_at'],
-                width=dist_increments,
-                color='g', ec='g')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_tr'],
-                width=dist_increments,
-                color='blue', ec='blue')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_an'],
-                width=dist_increments,
-                color='violet', ec='violet')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_max'],
-                width=dist_increments,
-                color='r', ec='r')
-
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut2'], color='k')
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut1'], color='k')
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_at'], color='k')
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_tr'], color='k')
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_an'], color='k')
-
-        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
-
-        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
-                              ultimate=[0, 555], miny=0)
-        ax4.axis([0, end_dist, yrange[0], yrange[1]])
-
-        ut2, ut1, at, tr, an = self.rwr.ftp * \
-            np.array(self.rwr.powerperc) / 100.
-
-        if ut2 + 1.5 < yrange[1] and ut2 + 1.5 > yrange[0]:
-            ax4.text(5, ut2 + 1.5, self.rwr.powerzones[1], size=8)
-        if ut1 + 1.5 < yrange[1] and ut1 + 1.5 > yrange[0]:
-            ax4.text(5, ut1 + 1.5, self.rwr.powerzones[2], size=8)
-        if at + 1.5 < yrange[1] and at + 1.5 > yrange[0]:
-            ax4.text(5, at + 1.5, self.rwr.powerzones[3], size=8)
-        if tr + 1.5 < yrange[1] and tr + 1.5 > yrange[0]:
-            ax4.text(5, tr + 1.5, self.rwr.powerzones[4], size=8)
-        if an + 1.5 < yrange[1] and an + 1.5 > yrange[0]:
-            ax4.text(5, an + 1.5, self.rwr.powerzones[5], size=8)
-
-        ax4.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax4.set_xticks(list(range(100, end_dist, 100)))
-        ax4.set_xlabel('Dist (m)')
-        ax4.set_ylabel('Power (Watts)')
-#       ax4.set_yticks(range(110,200,10))
-
-        grid(True)
+        make_power_plot(ax4,self,df)
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
@@ -4990,147 +4761,25 @@ class rowingdata:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
 
-        # distance increments for bar chart
-        dist_increments = df.loc[:, 'cum_dist'].diff()
-        dist_increments[0] = dist_increments[1]
-        dist_increments = 0.5 * (dist_increments + abs(dist_increments))
 
         fig1 = figure.Figure(figsize=(12, 10))
 
-        fig_title = title
-        if self.dragfactor:
-            fig_title += " Drag %d" % self.dragfactor
-
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut2'],
-                width=dist_increments,
-                color='gray', ec='gray')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut1'],
-                width=dist_increments,
-                color='y', ec='y')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_at'],
-                width=dist_increments,
-                color='g', ec='g')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_tr'],
-                width=dist_increments,
-                color='blue', ec='blue')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_an'],
-                width=dist_increments,
-                color='violet', ec='violet')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_max'],
-                width=dist_increments,
-                color='r', ec='r')
+        make_hr_bars(ax1,self,df)
 
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut2'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut1'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_at'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_tr'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
-
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
-
-        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
-
-        ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
-        ax1.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax1.set_xticks(list(range(100, end_dist, 100)))
-        ax1.set_ylabel('BPM')
-        ax1.set_yticks(list(range(110, 200, 10)))
-        ax1.set_title(fig_title)
-
-        grid(True)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
-                              ultimate=[85, 240], quantiles=[0, 0.9])
-        ax2.axis([0, end_dist, yrange[1], yrange[0]])
-        ax2.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax2.set_xticks(list(range(100, end_dist, 100)))
-        ax2.set_ylabel('(sec/500)')
-#       ax2.set_yticks(range(145,95,-5))
-        grid(True)
-        majorTickFormatter = FuncFormatter(format_pace_tick)
-        majorLocator = (5)
-        ax2.yaxis.set_major_formatter(majorTickFormatter)
+        make_pace_plot(ax2,self,df,mode=['distance','otw'])
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
-        ax3.axis([0, end_dist, 14, 40])
-        ax3.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax3.set_xticks(list(range(100, end_dist, 100)))
-        ax3.set_ylabel('SPM')
-        ax3.set_yticks(list(range(16, 40, 2)))
-
-        grid(True)
-
+        make_spm_plot(ax3,self,df)
+ 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut2'],
-                width=dist_increments,
-                color='gray', ec='gray')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut1'],
-                width=dist_increments,
-                color='y', ec='y')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_at'],
-                width=dist_increments,
-                color='g', ec='g')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_tr'],
-                width=dist_increments,
-                color='blue', ec='blue')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_an'],
-                width=dist_increments,
-                color='violet', ec='violet')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_max'],
-                width=dist_increments,
-                color='r', ec='r')
-
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut2'], color='k')
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut1'], color='k')
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_at'], color='k')
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_tr'], color='k')
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_an'], color='k')
-
-        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
-
-        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
-                              ultimate=[0, 555], miny=0)
-        ax4.axis([0, end_dist, yrange[0], yrange[1]])
-
-        ut2, ut1, at, tr, an = self.rwr.ftp * \
-            np.array(self.rwr.powerperc) / 100.
-
-        if ut2 + 1.5 < yrange[1] and ut2 + 1.5 > yrange[0]:
-            ax4.text(5, ut2 + 1.5, self.rwr.powerzones[1], size=8)
-        if ut1 + 1.5 < yrange[1] and ut1 + 1.5 > yrange[0]:
-            ax4.text(5, ut1 + 1.5, self.rwr.powerzones[2], size=8)
-        if at + 1.5 < yrange[1] and at + 1.5 > yrange[0]:
-            ax4.text(5, at + 1.5, self.rwr.powerzones[3], size=8)
-        if tr + 1.5 < yrange[1] and tr + 1.5 > yrange[0]:
-            ax4.text(5, tr + 1.5, self.rwr.powerzones[4], size=8)
-        if an + 1.5 < yrange[1] and an + 1.5 > yrange[0]:
-            ax4.text(5, an + 1.5, self.rwr.powerzones[5], size=8)
-
-        ax4.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax4.set_xticks(list(range(100, end_dist, 100)))
-        ax4.set_xlabel('Dist (m)')
-        ax4.set_ylabel('Power (Watts)')
-#       ax4.set_yticks(range(110,200,10))
-
-        grid(True)
+        make_power_plot(ax4,self,df)
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
@@ -5146,147 +4795,25 @@ class rowingdata:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
 
-        # distance increments for bar chart
-        dist_increments = df.loc[:, 'cum_dist'].diff()
-        dist_increments[0] = dist_increments[1]
-        dist_increments = 0.5 * (dist_increments + abs(dist_increments))
 
         fig1 = figure.Figure(figsize=(12, 10))
 
-        fig_title = title
-        if self.dragfactor:
-            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut2'],
-                width=dist_increments,
-                color='gray', ec='gray')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_ut1'],
-                width=dist_increments,
-                color='y', ec='y')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_at'],
-                width=dist_increments,
-                color='g', ec='g')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_tr'],
-                width=dist_increments,
-                color='blue', ec='blue')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_an'],
-                width=dist_increments,
-                color='violet', ec='violet')
-        ax1.bar(df.loc[:, 'cum_dist'], df.loc[:, 'hr_max'],
-                width=dist_increments,
-                color='r', ec='r')
-
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut2'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_ut1'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_at'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_tr'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
-        ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
-
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
-
-        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
-
-        ax1.axis([0, end_dist, 100, 1.1 * self.rwr.max])
-        ax1.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax1.set_xticks(list(range(100, end_dist, 100)))
-        ax1.set_ylabel('BPM')
-        ax1.set_yticks(list(range(110, 200, 10)))
-        ax1.set_title(fig_title)
-
-        grid(True)
+        make_hr_bars(ax1,self,df)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
-                              ultimate=[85, 240], quantiles=[0, .9])
-        ax2.axis([0, end_dist, yrange[1], yrange[0]])
-        ax2.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax2.set_xticks(list(range(100, end_dist, 100)))
-        ax2.set_ylabel('(sec/500)')
-#       ax2.set_yticks(range(145,95,-5))
-        grid(True)
-        majorTickFormatter = FuncFormatter(format_pace_tick)
-        majorLocator = (5)
-        ax2.yaxis.set_major_formatter(majorTickFormatter)
+        make_pace_plot(ax2,self,df,mode=['distance','otw'])
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Cadence (stokes/min)'])
-        ax3.axis([0, end_dist, 14, 40])
-        ax3.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax3.set_xticks(list(range(100, end_dist, 100)))
-        ax3.set_ylabel('SPM')
-        ax3.set_yticks(list(range(16, 40, 2)))
-
-        grid(True)
+        make_spm_plot(ax3,self,df,mode=['distance','otw'])
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut2'],
-                width=dist_increments,
-                color='gray', ec='gray')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_ut1'],
-                width=dist_increments,
-                color='y', ec='y')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_at'],
-                width=dist_increments,
-                color='g', ec='g')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_tr'],
-                width=dist_increments,
-                color='blue', ec='blue')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_an'],
-                width=dist_increments,
-                color='violet', ec='violet')
-        ax4.bar(df.loc[:, 'cum_dist'], df.loc[:, 'pw_max'],
-                width=dist_increments,
-                color='r', ec='r')
-
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut2'], color='k')
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_ut1'], color='k')
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_at'], color='k')
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_tr'], color='k')
-        ax4.plot(df.loc[:, 'cum_dist'], df.loc[:, 'limpw_an'], color='k')
-
-        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
-
-        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
-                              ultimate=[0, 555], miny=0)
-        ax4.axis([0, end_dist, yrange[0], yrange[1]])
-
-        ut2, ut1, at, tr, an = self.rwr.ftp * \
-            np.array(self.rwr.powerperc) / 100.
-
-        if ut2 + 1.5 < yrange[1] and ut2 + 1.5 > yrange[0]:
-            ax4.text(5, ut2 + 1.5, self.rwr.powerzones[1], size=8)
-        if ut1 + 1.5 < yrange[1] and ut1 + 1.5 > yrange[0]:
-            ax4.text(5, ut1 + 1.5, self.rwr.powerzones[2], size=8)
-        if at + 1.5 < yrange[1] and at + 1.5 > yrange[0]:
-            ax4.text(5, at + 1.5, self.rwr.powerzones[3], size=8)
-        if tr + 1.5 < yrange[1] and tr + 1.5 > yrange[0]:
-            ax4.text(5, tr + 1.5, self.rwr.powerzones[4], size=8)
-        if an + 1.5 < yrange[1] and an + 1.5 > yrange[0]:
-            ax4.text(5, an + 1.5, self.rwr.powerzones[5], size=8)
-
-        ax4.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax4.set_xticks(list(range(100, end_dist, 100)))
-        ax4.set_xlabel('Dist (m)')
-        ax4.set_ylabel('Power (Watts)')
-#       ax4.set_yticks(range(110,200,10))
-
-        grid(True)
+        make_power_plot(ax3,self,df,mode=['distance','otw'])                      
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
@@ -5302,160 +4829,24 @@ class rowingdata:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
 
-        # time increments for bar chart
-        time_increments = df.loc[:, ' ElapsedTime (sec)'].diff()
-        time_increments[self.index[0]] = time_increments[self.index[1]]
-        time_increments = 0.5 * (abs(time_increments) + (time_increments))
-
         fig1 = figure.Figure(figsize=(12, 10))
 
-        fig_title = title
-        if self.dragfactor:
-            fig_title += " Drag %d" % self.dragfactor
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut2'],
-                width=time_increments,
-                color='gray', ec='gray')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut1'],
-                width=time_increments,
-                color='y', ec='y')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_at'],
-                width=time_increments,
-                color='g', ec='g')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_tr'],
-                width=time_increments,
-                color='blue', ec='blue')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_an'],
-                width=time_increments,
-                color='violet', ec='violet')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_max'],
-                width=time_increments,
-                color='r', ec='r')
-
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
-
-        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
-
-        ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
-        ax1.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax1.set_xticks(list(range(60, end_time, 60)))
-        ax1.set_ylabel('BPM')
-        ax1.set_yticks(list(range(110, 200, 10)))
-        ax1.set_title(fig_title)
-        timeTickFormatter = NullFormatter()
-        ax1.xaxis.set_major_formatter(timeTickFormatter)
-
-        grid(True)
+        make_hr_bars(ax1,self,df,mode=['time'])
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
-                 df.loc[:, ' Stroke500mPace (sec/500m)'])
-
-        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
-                              ultimate=[85, 160], quantiles=[0, .9])
-        ax2.axis([0, end_time, yrange[1], yrange[0]])
-        ax2.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax2.set_xticks(list(range(60, end_time, 60)))
-        ax2.set_ylabel('(sec/500)')
-#       ax2.set_yticks(range(145,90,-5))
-        # ax2.set_title('Pace')
-        grid(True)
-        majorFormatter = FuncFormatter(format_pace_tick)
-        majorLocator = (5)
-        ax2.xaxis.set_major_formatter(timeTickFormatter)
-        ax2.yaxis.set_major_formatter(majorFormatter)
+        make_pace_plot(ax2,self,df,mode=['time','ote'])
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.loc[:, 'TimeStamp (sec)'],
-                 df.loc[:, ' Cadence (stokes/min)'])
-#       rate_ewma=pd.ewma
-        ax3.axis([0, end_time, 14, 40])
-        ax3.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax3.set_xticks(list(range(60, end_time, 60)))
-        ax3.set_xlabel('Time (sec)')
-        ax3.set_ylabel('SPM')
-        ax3.set_yticks(list(range(16, 40, 2)))
-        # ax3.set_title('Rate')
-        ax3.xaxis.set_major_formatter(timeTickFormatter)
-        grid(True)
+        make_spm_plot(ax3,self,df,mode=['time'])
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_ut2'],
-                width=time_increments,
-                color='gray', ec='gray')
-        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_ut1'],
-                width=time_increments,
-                color='y', ec='y')
-        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_at'],
-                width=time_increments,
-                color='g', ec='g')
-        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_tr'],
-                width=time_increments,
-                color='blue', ec='blue')
-        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_an'],
-                width=time_increments,
-                color='violet', ec='violet')
-        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_max'],
-                width=time_increments,
-                color='r', ec='r')
-
-        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_ut2'], color='k')
-        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_ut1'], color='k')
-        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_at'], color='k')
-        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_tr'], color='k')
-        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_an'], color='k')
-
-        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
-
-        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
-                              ultimate=[0, 555], miny=0)
-        ax4.axis([0, end_time, yrange[0], yrange[1]])
-
-        ut2, ut1, at, tr, an = self.rwr.ftp * \
-            np.array(self.rwr.powerperc) / 100.
-
-        if ut2 + 1.5 < yrange[1] and ut2 + 1.5 > yrange[0]:
-            ax4.text(5, ut2 + 1.5, self.rwr.powerzones[1], size=8)
-        if ut1 + 1.5 < yrange[1] and ut1 + 1.5 > yrange[0]:
-            ax4.text(5, ut1 + 1.5, self.rwr.powerzones[2], size=8)
-        if at + 1.5 < yrange[1] and at + 1.5 > yrange[0]:
-            ax4.text(5, at + 1.5, self.rwr.powerzones[3], size=8)
-        if tr + 1.5 < yrange[1] and tr + 1.5 > yrange[0]:
-            ax4.text(5, tr + 1.5, self.rwr.powerzones[4], size=8)
-        if an + 1.5 < yrange[1] and an + 1.5 > yrange[0]:
-            ax4.text(5, an + 1.5, self.rwr.powerzones[5], size=8)
-
-        ax4.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax4.set_xticks(list(range(60, end_time, 60)))
-        ax4.set_xlabel('Time (h:m)')
-        ax4.set_ylabel('Watts')
-#       ax4.set_yticks(range(150,450,50))
-        # ax4.set_title('Power')
-        grid(True)
-        majorTimeFormatter = FuncFormatter(format_time_tick)
-        majorLocator = (15 * 60)
-        ax4.xaxis.set_major_formatter(majorTimeFormatter)
+        make_power_plot(ax4,self,df,mode=['time'])
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
@@ -5471,162 +4862,23 @@ class rowingdata:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
 
-        # time increments for bar chart
-        time_increments = df.loc[:, ' ElapsedTime (sec)'].diff()
-        time_increments[self.index[0]] = time_increments[self.index[1]]
-        time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
         fig1 = figure.Figure(figsize=(12, 10))
 
-        fig_title = title
-        if self.dragfactor:
-            fig_title += " Drag %d" % self.dragfactor
-
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut2'],
-                width=time_increments,
-                color='gray', ec='gray')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut1'],
-                width=time_increments,
-                color='y', ec='y')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_at'],
-                width=time_increments,
-                color='g', ec='g')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_tr'],
-                width=time_increments,
-                color='blue', ec='blue')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_an'],
-                width=time_increments,
-                color='violet', ec='violet')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_max'],
-                width=time_increments,
-                color='r', ec='r')
-
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
-
-        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
-
-        ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
-        ax1.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax1.set_xticks(list(range(60, end_time, 60)))
-        ax1.set_ylabel('BPM')
-        ax1.set_yticks(list(range(110, 200, 10)))
-        ax1.set_title(fig_title)
-        timeTickFormatter = NullFormatter()
-        ax1.xaxis.set_major_formatter(timeTickFormatter)
-
-        grid(True)
+        make_hr_bars(ax1,self,df,mode=['time','otw'])
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
-                 df.loc[:, ' Stroke500mPace (sec/500m)'])
+        make_pace_plot(ax2,self,df,mode=['time','otw'])
 
-        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
-        if np.isnan(end_time):
-            end_time = 3600.
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
-                              ultimate=[85, 240], quantiles=[0, .9])
-        ax2.axis([0, end_time, yrange[1], yrange[0]])
-        ax2.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax2.set_xticks(list(range(60, end_time, 60)))
-        ax2.set_ylabel('(sec/500)')
-#       ax2.set_yticks(range(145,90,-5))
-        # ax2.set_title('Pace')
-        grid(True)
-        majorFormatter = FuncFormatter(format_pace_tick)
-        majorLocator = (5)
-        ax2.xaxis.set_major_formatter(timeTickFormatter)
-        ax2.yaxis.set_major_formatter(majorFormatter)
-
-        # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.loc[:, 'TimeStamp (sec)'],
-                 df.loc[:, ' Cadence (stokes/min)'])
-#       rate_ewma=pd.ewma
-        ax3.axis([0, end_time, 14, 40])
-        ax3.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax3.set_xticks(list(range(60, end_time, 60)))
-        ax3.set_xlabel('Time (sec)')
-        ax3.set_ylabel('SPM')
-        ax3.set_yticks(list(range(16, 40, 2)))
-        # ax3.set_title('Rate')
-        ax3.xaxis.set_major_formatter(timeTickFormatter)
-        grid(True)
+        make_spm_plot(ax3,self,df,mode=['time','otw'])
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_ut2'],
-                width=time_increments,
-                color='gray', ec='gray')
-        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_ut1'],
-                width=time_increments,
-                color='y', ec='y')
-        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_at'],
-                width=time_increments,
-                color='g', ec='g')
-        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_tr'],
-                width=time_increments,
-                color='blue', ec='blue')
-        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_an'],
-                width=time_increments,
-                color='violet', ec='violet')
-        ax4.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'pw_max'],
-                width=time_increments,
-                color='r', ec='r')
-
-        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_ut2'], color='k')
-        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_ut1'], color='k')
-        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_at'], color='k')
-        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_tr'], color='k')
-        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'limpw_an'], color='k')
-
-        end_dist = int(df.loc[df.index[-1], 'cum_dist'])
-
-        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
-                              ultimate=[0, 555], miny=0)
-        ax4.axis([0, end_time, yrange[0], yrange[1]])
-
-        ut2, ut1, at, tr, an = self.rwr.ftp * \
-            np.array(self.rwr.powerperc) / 100.
-
-        if ut2 + 1.5 < yrange[1] and ut2 + 1.5 > yrange[0]:
-            ax4.text(5, ut2 + 1.5, self.rwr.powerzones[1], size=8)
-        if ut1 + 1.5 < yrange[1] and ut1 + 1.5 > yrange[0]:
-            ax4.text(5, ut1 + 1.5, self.rwr.powerzones[2], size=8)
-        if at + 1.5 < yrange[1] and at + 1.5 > yrange[0]:
-            ax4.text(5, at + 1.5, self.rwr.powerzones[3], size=8)
-        if tr + 1.5 < yrange[1] and tr + 1.5 > yrange[0]:
-            ax4.text(5, tr + 1.5, self.rwr.powerzones[4], size=8)
-        if an + 1.5 < yrange[1] and an + 1.5 > yrange[0]:
-            ax4.text(5, an + 1.5, self.rwr.powerzones[5], size=8)
-
-        ax4.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax4.set_xticks(list(range(60, end_time, 60)))
-        ax4.set_xlabel('Time (h:m)')
-        ax4.set_ylabel('Watts')
-#       ax4.set_yticks(range(150,450,50))
-        # ax4.set_title('Power')
-        grid(True)
-        majorTimeFormatter = FuncFormatter(format_time_tick)
-        majorLocator = (15 * 60)
-        ax4.xaxis.set_major_formatter(majorTimeFormatter)
+        make_power_plot(ax4,self,df,mode=['time','otw'])
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
@@ -5659,10 +4911,6 @@ class rowingdata:
         ergpace = 500. / ergvelo
         ergpace[ergpace == np.inf] = 240.
 
-        # time increments for bar chart
-        time_increments = df.loc[:, ' ElapsedTime (sec)'].diff()
-        time_increments[self.index[0]] = time_increments[self.index[1]]
-        time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
         fig1 = figure.Figure(figsize=(12, 10))
 
@@ -5670,122 +4918,19 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut2'],
-                width=time_increments,
-                color='gray', ec='gray')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_ut1'],
-                width=time_increments,
-                color='y', ec='y')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_at'],
-                width=time_increments,
-                color='g', ec='g')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_tr'],
-                width=time_increments,
-                color='blue', ec='blue')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_an'],
-                width=time_increments,
-                color='violet', ec='violet')
-        ax1.bar(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'hr_max'],
-                width=time_increments,
-                color='r', ec='r')
-
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut2'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_ut1'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_at'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
-        ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
-
-        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
-
-        ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
-        ax1.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax1.set_xticks(list(range(60, end_time, 60)))
-        ax1.set_ylabel('BPM')
-        ax1.set_yticks(list(range(110, 200, 10)))
-        ax1.set_title(fig_title)
-        timeTickFormatter = NullFormatter()
-        ax1.xaxis.set_major_formatter(timeTickFormatter)
-
-        grid(True)
+        make_hr_bars(ax1,self,df,mode=['time','otw'],title=fig_title)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
-                 df.loc[:, ' Stroke500mPace (sec/500m)'])
-
-        ax2.plot(df.loc[:, 'TimeStamp (sec)'],
-                 df.loc[:, 'nowindpace'])
-
-        # ax2.plot(df.loc[:,'TimeStamp (sec)'],
-        #        ergpace)
-
-        ax2.legend(['Pace', 'Wind corrected pace'],
-                   prop={'size': 10}, loc=0)
-
-        end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
-
-        s = np.concatenate((df.loc[:, ' Stroke500mPace (sec/500m)'].values,
-                            df.loc[:, 'nowindpace'].values))
-
-        yrange = y_axis_range(s, ultimate=[90, 240], quantiles=[0.0, 0.9])
-
-        ax2.axis([0, end_time, yrange[1], yrange[0]])
-        ax2.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax2.set_xticks(list(range(60, end_time, 60)))
-        ax2.set_ylabel('(sec/500)')
-#       ax2.set_yticks(range(145,90,-5))
-        # ax2.set_title('Pace')
-        grid(True)
-        majorFormatter = FuncFormatter(format_pace_tick)
-        majorLocator = (5)
-        ax2.xaxis.set_major_formatter(timeTickFormatter)
-        ax2.yaxis.set_major_formatter(majorFormatter)
+        make_pace_plot(ax2,self,df,mode=['time','otw'])
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        ax3.plot(df.loc[:, 'TimeStamp (sec)'],
-                 df.loc[:, ' Cadence (stokes/min)'])
-#       rate_ewma=pd.ewma
-        ax3.axis([0, end_time, 14, 40])
-        ax3.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax3.set_xticks(list(range(60, end_time, 60)))
-        ax3.set_xlabel('Time (sec)')
-        ax3.set_ylabel('SPM')
-        ax3.set_yticks(list(range(16, 40, 2)))
-        # ax3.set_title('Rate')
-        ax3.xaxis.set_major_formatter(timeTickFormatter)
-        grid(True)
+        make_spm_plot(ax3,self,df,mode=['time','otw'])
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, ' Power (watts)'])
-        # ax4.plot(df.loc[:,'TimeStamp (sec)'],df.loc[:,'equivergpower'])
-        ax4.legend(['Power'], prop={'size': 10})
-        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
-                              ultimate=[0, 555], miny=0)
-        ax4.axis([0, end_time, yrange[0], yrange[1]])
-
-        ax4.set_xticks(list(range(0, end_time, 300)))
-        if end_time < 300:
-            ax4.set_xticks(list(range(60, end_time, 60)))
-        ax4.set_xlabel('Time (h:m)')
-        ax4.set_ylabel('Watts')
-#       ax4.set_yticks(range(150,450,50))
-        # ax4.set_title('Power')
-        grid(True)
-        majorTimeFormatter = FuncFormatter(format_time_tick)
-        majorLocator = (15 * 60)
-        ax4.xaxis.set_major_formatter(majorTimeFormatter)
+        make_power_plot(ax4,self,df,mode=['time','otw'])
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
