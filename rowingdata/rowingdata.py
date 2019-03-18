@@ -11,7 +11,7 @@ from collections import Counter
 
 from matplotlib import figure
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('TkCairo')
 import matplotlib.pyplot as plt
 
 from matplotlib.pyplot import grid
@@ -3768,7 +3768,7 @@ class rowingdata:
         cumdist = self.df['cum_dist']
         elapsedtime = self.df[' ElapsedTime (sec)']
 
-        fig = figure.Figure(figsize=(12, 10))
+        fig = plt.figure(figsize=(12, 10))
         ax = fig.add_subplot(1, 1, 1)
         ax.set_xlabel('Duration')
         ax.set_ylabel('Power')
@@ -3830,7 +3830,7 @@ class rowingdata:
         pe = df['equivergpower']
         pw = df[' Power (watts)']
 
-        fig = figure.Figure(figsize=(12, 10))
+        fig = plt.figure(figsize=(12, 10))
         ax = fig.add_subplot(1, 1, 1)
         ax.scatter(pe, pw)
         ax.set_xlabel('Erg Power (W)')
@@ -3857,7 +3857,7 @@ class rowingdata:
         dist_increments = -df.loc[:, 'cum_dist'].diff() # replaced ix with loc
         dist_increments[0] = dist_increments[1]
 
-        fig1 = figure.Figure(figsize=(12, 10))
+        fig1 = plt.figure(figsize=(12, 10))
 
         # First panel, hr
         # replaced ix with loc below
@@ -3914,7 +3914,7 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
 
-        fig2 = figure.Figure(figsize=(12, 10))
+        fig2 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
 
         # Top plot is pace
@@ -4009,7 +4009,7 @@ class rowingdata:
         dist_increments = -df.loc[:, 'cum_dist'].diff()
         dist_increments[0] = dist_increments[1]
 
-        fig1 = figure.Figure(figsize=(12, 10))
+        fig1 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate / Power"
         if self.dragfactor:
             fig_title += " Drag %d" % self.dragfactor
@@ -4142,7 +4142,7 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
 
-        fig2 = figure.Figure(figsize=(12, 10))
+        fig2 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
 
         # Top plot is pace
@@ -4236,7 +4236,7 @@ class rowingdata:
                 df['TimeStamp (sec)'].values[0]
 
 
-        fig1 = figure.Figure(figsize=(12, 10))
+        fig1 = plt.figure(figsize=(12, 10))
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
@@ -4255,7 +4255,7 @@ class rowingdata:
         make_power_plot(ax4,self,df,mode=['time'])
 
         # Top plot is pace
-        fig2 = figure.Figure(figsize=(12,10))
+        fig2 = plt.figure(figsize=(12,10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
         timeTickFormatter = NullFormatter()
         ax5 = fig2.add_subplot(4, 1, 1)
@@ -4964,7 +4964,7 @@ class rowingdata:
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
-        fig1 = figure.Figure(figsize=(12, 10))
+        fig1 = plt.figure(figsize=(12, 10))
 
         fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate "
 
@@ -5095,7 +5095,7 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
 
-        fig2 = figure.Figure(figsize=(12, 10))
+        fig2 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
 
         # Top plot is pace
@@ -5217,7 +5217,7 @@ class rowingdata:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
 
-        fig1 = figure.Figure(figsize=(12, 10))
+        fig1 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- HR "
 
         # First panel, hr
@@ -5283,7 +5283,7 @@ class rowingdata:
         dist_increments[0] = dist_increments[1]
 #       dist_increments=abs(dist_increments)+dist_increments
 
-        fig1 = figure.Figure(figsize=(12, 10))
+        fig1 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate / Power"
 
         # First panel, hr
@@ -5366,7 +5366,7 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
 
-        fig2 = figure.Figure(figsize=(12, 10))
+        fig2 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
 
         # Top plot is pace
@@ -5427,7 +5427,7 @@ class rowingdata:
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
-        fig1 = figure.Figure(figsize=(12, 10))
+        fig1 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- HR / Pace / Rate "
 
         # First panel, hr
@@ -5521,7 +5521,7 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
 
-        fig2 = figure.Figure(figsize=(12, 10))
+        fig2 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
 
         # Top plot is pace
@@ -5633,7 +5633,7 @@ class rowingdata:
                 wedge_labels[i] = ''
 
         # print(wedge_labels)
-        fig2 = figure.Figure(figsize=(5, 5))
+        fig2 = plt.figure(figsize=(5, 5))
         fig_title = "Input File:  " + self.readfilename + " --- HR Time in Zone"
         ax9 = fig2.add_subplot(1, 1, 1)
         ax9.pie(time_in_zone,
@@ -5716,7 +5716,7 @@ class rowingdata:
                 wedge_labels[i] = ''
 
         # print(wedge_labels)
-        fig2 = figure.Figure(figsize=(5, 5))
+        fig2 = plt.figure(figsize=(5, 5))
         fig_title = "Input File:  " + self.readfilename + " --- Power Time in Zone"
         ax9 = fig2.add_subplot(1, 1, 1)
         ax9.pie(time_in_zone,
