@@ -398,11 +398,19 @@ def make_force_plot(ax8,self,df,mode=['distance']):
     #       ax8.set_yticks(range(25,300,25))
     # ax4.set_title('Power')
     grid(True)
-    majorTimeFormatter = FuncFormatter(format_time_tick)
-    majorLocator = (15 * 60)
+
     if 'time' in mode:
-        timeTickFormatter = NullFormatter()
+        print('time')
+        timeTickFormatter = FuncFormatter(format_time_tick)
+        majorLocator = (15 * 60)
+        if end_dist < dist_max:
+            majorLocator = (1 * 60)
         ax8.xaxis.set_major_formatter(timeTickFormatter)
+    else:
+        majorKmFormatter = FuncFormatter(format_dist_tick)
+        majorLocator = (1000)
+        ax8.xaxis.set_major_formatter(majorKmFormatter)        
+
 
 
 def make_power_plot(ax4,r,df,mode=['distance']):
@@ -469,9 +477,9 @@ def make_power_plot(ax4,r,df,mode=['distance']):
     if an + 1.5 < yrange[1] and an + 1.5 > yrange[0]:
         ax4.text(5, an + 1.5, r.rwr.powerzones[5], size=8)
 
-    ax4.set_xticks(list(range(dist_max, end_dist, dist_max)))
+    ax4.set_xticks(list(range(0, end_dist, dist_max)))
     if end_dist < dist_max:
-        ax4.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
+        ax4.set_xticks(list(range(0, end_dist, dist_tick)))
     if 'distance' in mode:
         ax4.set_xlabel('Dist (m)')
     else:
@@ -481,8 +489,15 @@ def make_power_plot(ax4,r,df,mode=['distance']):
         #       ax4.set_yticks(range(110,200,10))
 
     if 'time' in mode:
-        timeTickFormatter = NullFormatter()
+        timeTickFormatter = FuncFormatter(format_time_tick)
+        majorLocator = (15 * 60)
+        if end_dist < dist_max:
+            majorLocator = (1 * 60)
         ax4.xaxis.set_major_formatter(timeTickFormatter)
+    else:
+        majorKmFormatter = FuncFormatter(format_dist_tick)
+        majorLocator = (1000)
+        ax4.xaxis.set_major_formatter(majorKmFormatter)        
         
     grid(True)
     
@@ -3994,78 +4009,21 @@ class rowingdata:
         fig2 = plt.figure(figsize=(12, 10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
 
-        end_dist = int(df.loc[:, 'cum_dist'].iloc[df.shape[0] - 1])
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
-        ax5.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
-                              ultimate=[85, 160], quantiles=[0, 0.9])
-        ax5.axis([0, end_dist, yrange[1], yrange[0]])
-
-
-        
-        ax5.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax5.set_xticks(list(range(100, end_dist, 100)))
-        ax5.set_ylabel('(sec/500)')
-#       ax5.set_yticks(range(175,95,-10))
-        grid(True)
-        ax5.set_title(fig_title)
-        majorFormatter = FuncFormatter(format_pace_tick)
-        majorLocator = (5)
-        ax5.yaxis.set_major_formatter(majorFormatter)
+        make_pace_plot(ax5,self,df,mode=['distance'])
 
         # next we plot the drive length
         ax6 = fig2.add_subplot(4, 1, 2)
-        ax6.plot(df.loc[:, 'cum_dist'], df.loc[:, ' DriveLength (meters)'])
-        yrange = y_axis_range(df.loc[:, ' DriveLength (meters)'],
-                              ultimate=[1, 15])
-        ax6.axis([0, end_dist, yrange[0], yrange[1]])
-        ax6.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax6.set_xticks(list(range(100, end_dist, 100)))
-        ax6.set_ylabel('Drive Len(m)')
-
-        grid(True)
+        make_drivelength_plot(ax6,self,df,mode=['distance'])
 
         # next we plot the drive time and recovery time
         ax7 = fig2.add_subplot(4, 1, 3)
-        ax7.plot(df.loc[:, 'cum_dist'], df.loc[:, ' DriveTime (ms)'] / 1000.)
-        ax7.plot(df.loc[:, 'cum_dist'],
-                 df.loc[:, ' StrokeRecoveryTime (ms)'] / 1000.)
-        s = np.concatenate((df.loc[:, ' DriveTime (ms)'].values / 1000.,
-                            df.loc[:, ' StrokeRecoveryTime (ms)'].values / 1000.))
-        yrange = y_axis_range(s, ultimate=[0.5, 4])
-
-        ax7.axis([0, end_dist, yrange[0], yrange[1]])
-        ax7.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax7.set_xticks(list(range(100, end_dist, 100)))
-        ax7.set_ylabel('Drv / Rcv Time (s)')
-#       ax7.set_yticks(np.arange(0.2,3.0,0.2))
-        grid(True)
+        make_drivetime_plot(ax7,self,df,mode=['distance'])
 
         # Peak and average force
         ax8 = fig2.add_subplot(4, 1, 4)
-        ax8.plot(df.loc[:, 'cum_dist'],
-                 df.loc[:, ' AverageDriveForce (lbs)'] * lbstoN)
-        ax8.plot(df.loc[:, 'cum_dist'],
-                 df.loc[:, ' PeakDriveForce (lbs)'] * lbstoN)
-        s = np.concatenate((df.loc[:, ' AverageDriveForce (lbs)'].values * lbstoN,
-                            df.loc[:, ' PeakDriveForce (lbs)'].values * lbstoN))
-        yrange = y_axis_range(s, ultimate=[0, 1000])
-
-        ax8.axis([0, end_dist, yrange[0], yrange[1]])
-        ax8.set_xticks(list(range(1000, end_dist, 1000)))
-        if end_dist < 1000:
-            ax8.set_xticks(list(range(100, end_dist, 100)))
-        ax8.set_xlabel('Dist (m)')
-        ax8.set_ylabel('Force (N)')
-#       ax8.set_yticks(range(25,300,25))
-        grid(True)
-        majorLocator = (1000)
-        majorKmFormatter = FuncFormatter(format_dist_tick)
-        ax8.xaxis.set_major_formatter(majorKmFormatter)
+        make_force_plot(ax8,self,df,mode=['distance'])
 
         plt.subplots_adjust(hspace=0)
         fig2.subplots_adjust(hspace=0)
@@ -4334,15 +4292,17 @@ class rowingdata:
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
         make_power_plot(ax4,self,df,mode=['time'])
+        fig1.subplots_adjust(hspace=0)
+
+ 
 
         # Top plot is pace
         fig2 = plt.figure(figsize=(12,10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
 
         
-        
         ax5 = fig2.add_subplot(4, 1, 1)
-        make_pace_plot(ax4,self,df,mode=['time'])
+        make_pace_plot(ax5,self,df,mode=['time'])
 
         # next we plot the drive length
         ax6 = fig2.add_subplot(4, 1, 2)
