@@ -220,7 +220,6 @@ class TestCharts:
     def test_plot_erg(self,mock_fig, mock_Fig):
         row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
         row.plotmeters_erg()
-        row.plotmeters_powerzones_erg()
         row.plottime_erg()
         fig = row.get_metersplot_erg2('aap')
         fig = row.get_timeplot_erg2('aap')
