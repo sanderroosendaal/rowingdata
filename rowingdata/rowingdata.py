@@ -5,13 +5,17 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.2.1"
+__version__ = "2.2.2"
 
 from collections import Counter
 
 from matplotlib import figure
 import matplotlib
-matplotlib.use('TkCairo')
+try:
+    matplotlib.use('TkCairo')
+except ValueError:
+    matplotlib.use('Agg')
+    
 import matplotlib.pyplot as plt
 
 from matplotlib.pyplot import grid
