@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.2.2"
+__version__ = "2.2.3"
 
 from collections import Counter
 
@@ -4382,6 +4382,7 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
+        make_spm_plot(ax3,self,df,mode=['distance'])
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
