@@ -179,6 +179,93 @@ def post_progress(secret,progressurl,progress):
     return s.status_code
 
 
+# toekomstmuziek - nog niet gebruikt
+def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
+    if 'distance' in mode:
+        xcolumn = 'cum_dist'
+        dist_max = 1000
+        dist_tick = 100
+    else:
+        xcolumn = 'TimeStamp (sec)'
+        dist_max = 300
+        dist_tick = 30
+        
+    end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
+
+    ax.plot(df.loc[:,xcolumn], df.loc[:,param])
+
+    if bars:
+        if barnames is None:
+            barnames = ['hr_ut2','hr_ut1','hr_at','hr_tr','hr_an','hr_max']
+        if barlimits is None:
+            barlimits = ['lim_ut2','lim_ut1','lim_at','lim_tr','lim_an','lim_max']
+        if barverbosenames is None:
+            barverbosenames = ['UT2','UT1','AT','TR','AN','MAX']
+
+    colors = ['gray','y','g','blue','violet','r']
+            
+    for i in range(len(bars)):
+        ax.bar(df.loc[:,xcolumn],df.loc[:,barnames[i]],
+               width=dist_increments,
+               color=colors[i],ec=colors[i])
+        ax.plot(df.loc[:, xcolumn], df.loc[:, barlimits[i]], color='k')
+        ax.text(5,df[barlimits[i]].mean()+1.5,barverbosenames[i],size=8)
+    
+    if 'ote' in mode and param == ' Stroke500mPace (sec/500m)':
+        yrange = y_axis_range(df.loc[:, param],
+                              ultimate=[85, 160], quantiles=[0, 0.9])
+        ax.set_ylabel('(sec/500)')
+        grid(True)
+        majorTickformatter = FuncFormatter(format_pace_tick)
+        majorLocator = (5)
+    elif param == ' Stroke500mPace (sec/500m)':
+        yrange = y_axis_range(df.loc[:, param],
+                              ultimate=[85, 240], quantiles=[0, 0.9])
+        majorTickformatter = FuncFormatter(format_pace_tick)
+        majorLocator = (5)
+        ax.set_ylabel('(sec/500)')
+    elif param == ' Cadence (stokes/min)':
+        ax.set_ylabel('SPM')
+        ax.set_yticks(list(range(16,40,2)))
+    elif param == ' DriveLength (meters)':
+        yrange = y_axis_range(df.loc[:,param],
+                              ultimate=[1.0,15])
+        ax.set_ylabel('Drive Length (m)')
+    elif param == ' Power (watts)':
+        yrange = y_axis_range(df.loc[:, param],
+                              ultimate=[0,555],miny=0)
+        ax.set_ylabel('Power (Watts)')
+
+    
+    grid(True)
+
+    
+    xTickFormatter = NullFormatter()
+    if 'last' in mode:
+        if 'time' in mode:
+            xTickFormatter = FuncFormatter(format_time_tick)
+            majorLocator = (15 * 60)
+            if end_dist < dist_max:
+                majorLocator = (1 * 60)
+        else:
+            xTickFormatter = FuncFormatter(format_dist_tick)
+            majorLocator = (1000)
+
+    
+    ax.yaxis.set_major_formatter(majorTickFormatter)
+    if 'time' in mode:
+        ax.set_xlabel('Time (sec)')
+    else:
+        ax.set_axlabel('Distance (m)')
+
+    if end_dist < dist_max:
+        ax.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
+
+    ax.xaxis.set_major_formatter(xTickFormatter)
+
+
+    
+
 def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
 
     if not title:
@@ -252,6 +339,8 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
 
     grid(True)
 
+
+    
 def make_pace_plot(ax2,r,df,mode=['distance','ote']):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
