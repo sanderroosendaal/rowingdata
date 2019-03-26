@@ -246,14 +246,18 @@ def csvtests(s):
     return 'unknown'
 
 def get_file_type(f):
-    extension = f[-3:].lower()
-    if extension == 'xls':
+    extension = os.path.splitext(f)[1]
+    if extension == '.xls':
         return 'xls'
-    if extension == 'kml':
+    if extension == '.kml':
         return 'kml'
+    if extension == '.txt':
+        print(extension,f[0:3].lower(),os.path.basename(f))
+        if os.path.basename(f)[0:3].lower() == 'att':
+            return 'att'
     if extension == '.gz':
         extension = f[-6:-3].lower()
-        if extension == 'fit':
+        if extension == '.fit':
             newfile = 'temp.fit'
             with gzip.open(f,'rb') as fop:
                 with open(newfile,'wb') as f_out:
@@ -266,7 +270,7 @@ def get_file_type(f):
                     return 'unknown'
                 
             return 'fit'
-        if extension == 'tcx':
+        if extension == '.tcx':
             try:
                 tree = etree.parse(f)
                 root = tree.getroot()
@@ -276,13 +280,13 @@ def get_file_type(f):
         
         with gzip.open(f, readmode) as fop:
             try:
-                if extension == 'csv':
+                if extension == '.csv':
                     s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
                     return csvtests(s)
 
             except IOError:
                 return 'notgzip'
-    if extension == 'csv':
+    if extension == '.csv':
         linecount,isbinary = get_file_linecount(f)
         if linecount <= 2:
             return 'nostrokes'
@@ -296,7 +300,7 @@ def get_file_type(f):
                 
         return csvtests(s)
 
-    if extension == 'tcx':
+    if extension == '.tcx':
         try:
             tree = etree.parse(f)
             root = tree.getroot()
@@ -305,7 +309,7 @@ def get_file_type(f):
             return 'unknown'
         
 
-    if extension == 'fit':
+    if extension == '.fit':
         try:
             FitFile(f, check_crc=False).parse()
         except:
@@ -313,7 +317,7 @@ def get_file_type(f):
 
         return 'fit'
 
-    if extension == 'zip':
+    if extension == '.zip':
         try:
             z = zipfile.ZipFile(f)
             f2 = z.extract(z.namelist()[0])
@@ -326,7 +330,8 @@ def get_file_type(f):
     return 'unknown'
 
 def get_file_linecount(f):
-    extension = f[-3:].lower()
+    #    extension = f[-3:].lower()
+    extension = os.path.splitext(f)[1]
     isbinary = False
     if extension == '.gz':
         with gzip.open(f,'rb') as fop:
@@ -351,7 +356,8 @@ def get_file_linecount(f):
 
 def get_file_line(linenr, f, isbinary=False):
     line = ''
-    extension = f[-3:].lower()
+    extension = os.path.splitext(f)[1]
+    # extension = f[-3:].lower()
     if extension == '.gz':
         with gzip.open(f, readmode) as fop:
             s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
@@ -364,7 +370,8 @@ def get_file_line(linenr, f, isbinary=False):
 
 def get_separator(linenr, f):
     line = ''
-    extension = f[-3:].lower()
+    extension = os.path.splitext(f)[1]
+    # extension = f[-3:].lower()
     if extension == '.gz':
         with gzip.open(f, readmode) as fop:
             for i in range(linenr):
@@ -468,7 +475,8 @@ def skip_variable_footer(f):
     counter = 0
     counter2 = 0
 
-    extension = f[-3:].lower()
+    extension = os.path.splitext(f)[1]
+    # extension = f[-3:].lower()
     if extension == '.gz':
         fop = gzip.open(f,readmode)
     else:
@@ -490,7 +498,8 @@ def get_rowpro_footer(f, converters={}):
     counter2 = 0
 
 
-    extension = f[-3:].lower()
+    extension = os.path.splitext(f)[1]
+    # extension = f[-3:].lower()
     if extension == '.gz':
         fop = gzip.open(f,readmode)
     else:
@@ -516,7 +525,8 @@ def skip_variable_header(f):
     counter2 = 0
     sessionc = -2
     summaryc = -2
-    extension = f[-3:].lower()
+    extension = os.path.splitext(f)[1]
+    # extension = f[-3:].lower()
     firmware = ''
     if extension == '.gz':
         with gzip.open(f,readmode) as fop:
@@ -554,7 +564,8 @@ def skip_variable_header(f):
 
 def ritmo_variable_header(f):
     counter = 0
-    extension = f[-3:].lower()
+    extension = os.path.splitext(f)[1]
+    # extension = f[-3:].lower()
     if extension == '.gz':
         fop = gzip.open(f,readmode)
     else:
@@ -571,7 +582,8 @@ def ritmo_variable_header(f):
 
 def bc_variable_header(f):
     counter = 0
-    extension = f[-3:].lower()
+    extension = os.path.splitext(f)[1]
+    # extension = f[-3:].lower()
     if extension == '.gz':
         fop = gzip.open(f,readmode)
     else:
