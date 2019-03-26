@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.2.4"
+__version__ = "2.2.5"
 
 from collections import Counter
 
@@ -360,8 +360,12 @@ def make_pace_plot(ax2,r,df,mode=['distance','ote']):
     else:
         yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, 0.9])
+
+    try:
+        ax2.axis([0, end_dist, yrange[1], yrange[0]])
+    except ValueError:
+        ax2.axis([0, end_dist, 85, 240])
         
-    ax2.axis([0, end_dist, yrange[1], yrange[0]])
     ax2.set_xticks(list(range(dist_max, end_dist, dist_max)))
     if end_dist < dist_max:
         ax2.set_xticks(list(range(dist_tick, end_dist, dist_tick)))

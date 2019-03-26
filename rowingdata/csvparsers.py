@@ -246,17 +246,16 @@ def csvtests(s):
     return 'unknown'
 
 def get_file_type(f):
-    extension = os.path.splitext(f)[1]
+    filename,extension = os.path.splitext(f)
     if extension == '.xls':
         return 'xls'
     if extension == '.kml':
         return 'kml'
     if extension == '.txt':
-        print(extension,f[0:3].lower(),os.path.basename(f))
         if os.path.basename(f)[0:3].lower() == 'att':
             return 'att'
     if extension == '.gz':
-        extension = f[-6:-3].lower()
+        filename,extension = os.path.splitext(filename)
         if extension == '.fit':
             newfile = 'temp.fit'
             with gzip.open(f,'rb') as fop:
