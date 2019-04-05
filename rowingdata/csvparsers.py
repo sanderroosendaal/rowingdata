@@ -247,6 +247,7 @@ def csvtests(s):
 
 def get_file_type(f):
     filename,extension = os.path.splitext(f)
+    extension = extension.lower()
     if extension == '.xls':
         return 'xls'
     if extension == '.kml':
@@ -330,7 +331,7 @@ def get_file_type(f):
 
 def get_file_linecount(f):
     #    extension = f[-3:].lower()
-    extension = os.path.splitext(f)[1]
+    extension = os.path.splitext(f)[1].lower()
     isbinary = False
     if extension == '.gz':
         with gzip.open(f,'rb') as fop:
@@ -355,7 +356,7 @@ def get_file_linecount(f):
 
 def get_file_line(linenr, f, isbinary=False):
     line = ''
-    extension = os.path.splitext(f)[1]
+    extension = os.path.splitext(f)[1].lower()
     # extension = f[-3:].lower()
     if extension == '.gz':
         with gzip.open(f, readmode) as fop:
@@ -369,7 +370,7 @@ def get_file_line(linenr, f, isbinary=False):
 
 def get_separator(linenr, f):
     line = ''
-    extension = os.path.splitext(f)[1]
+    extension = os.path.splitext(f)[1].lower()
     # extension = f[-3:].lower()
     if extension == '.gz':
         with gzip.open(f, readmode) as fop:
@@ -474,7 +475,7 @@ def skip_variable_footer(f):
     counter = 0
     counter2 = 0
 
-    extension = os.path.splitext(f)[1]
+    extension = os.path.splitext(f)[1].lower()
     # extension = f[-3:].lower()
     if extension == '.gz':
         fop = gzip.open(f,readmode)
@@ -497,7 +498,7 @@ def get_rowpro_footer(f, converters={}):
     counter2 = 0
 
 
-    extension = os.path.splitext(f)[1]
+    extension = os.path.splitext(f)[1].lower()
     # extension = f[-3:].lower()
     if extension == '.gz':
         fop = gzip.open(f,readmode)
@@ -524,7 +525,7 @@ def skip_variable_header(f):
     counter2 = 0
     sessionc = -2
     summaryc = -2
-    extension = os.path.splitext(f)[1]
+    extension = os.path.splitext(f)[1].lower()
     # extension = f[-3:].lower()
     firmware = ''
     if extension == '.gz':
@@ -563,7 +564,7 @@ def skip_variable_header(f):
 
 def ritmo_variable_header(f):
     counter = 0
-    extension = os.path.splitext(f)[1]
+    extension = os.path.splitext(f)[1].lower()
     # extension = f[-3:].lower()
     if extension == '.gz':
         fop = gzip.open(f,readmode)
@@ -581,7 +582,7 @@ def ritmo_variable_header(f):
 
 def bc_variable_header(f):
     counter = 0
-    extension = os.path.splitext(f)[1]
+    extension = os.path.splitext(f)[1].lower()
     # extension = f[-3:].lower()
     if extension == '.gz':
         fop = gzip.open(f,readmode)
