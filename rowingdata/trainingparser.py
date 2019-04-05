@@ -22,22 +22,20 @@ from pyparsing import (
     )
 
 def Syntax():
-#    op = Word("+",max=1)
     op = "+"
     restop = "/"
     times = "x"
     minsep = ":"
-#    restop = Word("/",max=1)
-#    times = Word("x",max=1)
-#    minsep = Word(":",max=1)
+
 
     lpar  = Literal( '(' ).suppress()
     rpar  = Literal( ')' ).suppress()
     num = Word(nums)
-    timeordist = Group(num+":"+num) | num
+    num2 = Word(nums,exact=2)
+    timeordist = Group(num2+":"+num2) | num
     ntimes = num+"x"
     unit = Word(alphas)
-    interval = Group(timeordist+unit)  # 5min
+    interval = Group(timeordist+unit) | timeordist  # 5min
     
     multipleinterval = Group(ntimes+interval)  # 3x5min
     set = multipleinterval | interval  # 5min or 3x5min
