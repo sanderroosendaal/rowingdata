@@ -393,12 +393,15 @@ def make_spm_plot(ax3,r,df,mode=['distance']):
     ax3.plot(df.loc[:, xcolumn], df.loc[:, ' Cadence (stokes/min)'])
     ax3.axis([0, end_dist, 14, 40])
     ax3.set_xticks(list(range(dist_max, end_dist, dist_max)))
-    if end_dist < 1000:
+    if end_dist < dist_max:
         ax3.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
     ax3.set_ylabel('SPM')
     ax3.set_yticks(list(range(16, 40, 2)))
     if 'time' in mode:
-        timeTickFormatter = NullFormatter()
+        if 'last' in mode:
+            timeTickFormattor = FuncFormatter(format_time_tick)
+        else:
+            timeTickFormatter = NullFormatter()
         ax3.xaxis.set_major_formatter(timeTickFormatter)
 
     grid(True)
