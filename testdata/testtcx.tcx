@@ -1281,10 +1281,14 @@
         </Track>
       </Lap>
 <<<<<<< HEAD
+<<<<<<< HEAD
       <Notes>&lt;Element 'Notes' at 0x7f52173f64a8&gt;</Notes>
 =======
       <Notes>&lt;Element 'Notes' at 0x000001F521B50A48&gt;</Notes>
 >>>>>>> f8ba95ef78210b4d274a75845d2200f460d8b573
+=======
+      <Notes>&lt;Element 'Notes' at 0x00000216D6F26868&gt;</Notes>
+>>>>>>> release/v9.72
     </Activity>
   </Activities>
   <Creator>
