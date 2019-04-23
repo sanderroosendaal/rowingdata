@@ -936,7 +936,21 @@ class RitmoTimeParser(CSVParser):
             startdatetime = parser.parse(firstline,fuzzy=True)
         except ValueError:
             startdatetime = datetime.datetime.utcnow()
-            
+
+        if startdatetime.tzinfo is None:
+            try:
+                latavg = self.df[self.columns[' latitude']].mean()
+                lonavg = self.df[self.columns[' longitude']].mean()
+                tf = TimezoneFinder()
+                timezone_str = tf.timezone_at(lng=lonavg, lat=latavg)
+                if timezone_str is None:
+                    timezone_str = tf.closest_timezone_at(lng=lonavg,lat=latavg)
+                    
+                startdatetime = pytz.timezone(timezone_str).localize(startdatetime)
+            except KeyError:
+                startdatetime = pytz.timezone('UTC').localize(startdatetime)
+                timezonestr = 'UTC'
+
         elapsed = self.df[self.columns[' ElapsedTime (sec)']]
         tts = startdatetime + elapsed.apply(lambda x: datetime.timedelta(seconds=x))
         #unixtimes=tts.apply(lambda x: time.mktime(x.utctimetuple()))
