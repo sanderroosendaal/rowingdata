@@ -516,6 +516,8 @@ class TestSequence(unittest.TestCase):
         f2='testdata/'+filename
         res=rowingdata.checkdatafiles.checkfile(f2)
         filetype = rowingdata.get_file_type(f2)
+        if filetype == 'ritmotime':
+            print(res)
         if filetype  not in ['unknown','c2log']:
             assert_not_equal(res,0)
         if res != 0:
