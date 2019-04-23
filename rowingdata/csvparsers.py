@@ -927,9 +927,18 @@ class RitmoTimeParser(CSVParser):
         pace = 500. / velo
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
 
-        now = datetime.datetime.utcnow()
+        # add rest from state column
+        self.df[' WorkoutState'] = self.df['State'].apply(lambda x: 3 if x.lower()=='rest' else 4)
+
+        # try date from first line
+        firstline = get_file_line(1, csvfile)
+        try:
+            startdatetime = parser.parse(firstline,fuzzy=True)
+        except ValueError:
+            startdatetime = datetime.datetime.utcnow()
+            
         elapsed = self.df[self.columns[' ElapsedTime (sec)']]
-        tts = now + elapsed.apply(lambda x: datetime.timedelta(seconds=x))
+        tts = startdatetime + elapsed.apply(lambda x: datetime.timedelta(seconds=x))
         #unixtimes=tts.apply(lambda x: time.mktime(x.utctimetuple()))
         unixtimes = tts.apply(lambda x: arrow.get(
             x).timestamp + arrow.get(x).microsecond / 1.e6)
