@@ -952,10 +952,12 @@ class RitmoTimeParser(CSVParser):
                 timezonestr = 'UTC'
 
         elapsed = self.df[self.columns[' ElapsedTime (sec)']]
-        tts = startdatetime + elapsed.apply(lambda x: datetime.timedelta(seconds=x))
+        starttimeunix = arrow.get(startdatetime).timestamp
+        #tts = startdatetime + elapsed.apply(lambda x: datetime.timedelta(seconds=x))
         #unixtimes=tts.apply(lambda x: time.mktime(x.utctimetuple()))
-        unixtimes = tts.apply(lambda x: arrow.get(
-            x).timestamp + arrow.get(x).microsecond / 1.e6)
+        #unixtimes = tts.apply(lambda x: arrow.get(
+        #    x).timestamp + arrow.get(x).microsecond / 1.e6)
+        unixtimes = starttimeunix+elapsed
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
 
         self.to_standard()
