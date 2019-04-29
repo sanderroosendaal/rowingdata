@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.3.1"
+__version__ = "2.3.2"
 
 from collections import Counter
 
@@ -4666,7 +4666,7 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['time','otw'])
+        make_pace_plot(ax2,self,df,mode=['time','otw','wind'])
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
