@@ -354,6 +354,13 @@ def make_pace_plot(ax2,r,df,mode=['distance','ote']):
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
 
     ax2.plot(df.loc[:, xcolumn], df.loc[:, ' Stroke500mPace (sec/500m)'])
+    if 'wind' in mode:
+        try:
+            ax2.plot(df.loc[:, xcolumn],df.loc[:, 'nowindpace'])
+            ax2.legend(['Pace', 'Wind corrected pace'],
+                       prop={'size':10}, loc=0)
+        except KeyError:
+            pass
     if 'ote' in mode:
         yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 160], quantiles=[0, 0.9])
