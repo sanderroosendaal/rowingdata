@@ -177,6 +177,9 @@ def csvtests(s):
     if 'Avg Watts' in firstline:
         return 'c2log'
 
+    if 'Avg Speed (IMP)' in firstline:
+        return 'speedcoach2'
+    
     if 'SpeedCoach GPS Pro' in fourthline:
         return 'speedcoach2'
 
@@ -536,9 +539,11 @@ def skip_variable_header(f):
             s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
 
 
+    summaryfound = False
     for line in s:
         if line.startswith('Session Summary'):
             sessionc = counter
+            summaryfound = True
         if line.startswith('Interval Summaries'):
             summaryc = counter
         if 'firmware' in line.lower() and 'oar' in line.lower():
@@ -2318,7 +2323,10 @@ class SpeedCoach2Parser(CSVParser):
         except ValueError:
             dateline = get_file_line(3, csvfile)
             dated = dateline.split(',')[1]
-            self.row_date = parser.parse(dated, fuzzy=True,dayfirst=False)
+            try:
+                self.row_date = parser.parse(dated, fuzzy=True,dayfirst=False)
+            except ValueError:
+                self.row_date = datetime.datetime.now()
 
         if self.row_date.tzinfo is None or self.row_date.tzinfo.utcoffset(self.row_date) is None:
             try:
