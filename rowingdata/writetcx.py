@@ -101,7 +101,11 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
         maxhr = 1
     if maxhr == 0:
         maxhr=1
-    avgspm=int(df[' Cadence (stokes/min)'].mean())
+
+    try:
+        avgspm=int(df[' Cadence (stokes/min)'].mean())
+    except ValueError:
+        avgspm = 10
 
     seconds=df['TimeStamp (sec)'].values
     distancemeters=df['cum_dist'].values

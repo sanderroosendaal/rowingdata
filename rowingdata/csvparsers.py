@@ -2568,7 +2568,11 @@ class SpeedCoach2Parser(CSVParser):
 
             nrstrokes = self.summarydata.loc[i,
                                             'Total Strokes']
-            dps = float(sdist) / float(nrstrokes)
+            try:
+                dps = float(sdist) / float(nrstrokes)
+            except ZeroDivisionError:
+                dps = 0.0
+                
             splitstring = split
 
             
