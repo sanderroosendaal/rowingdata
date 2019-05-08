@@ -168,7 +168,7 @@ class FitSummaryData(object):
         lapdict = []
         lapcounter = 0
         for record in self.records:
-            if record.name == 'record':
+            if record.name ==  'record':
                 values = record.get_values()
                 values['lapid'] = lapcounter
                 recorddicts.append(values)
@@ -213,11 +213,15 @@ class FitSummaryData(object):
             lapmin = int(inttime/60)
             lapsec = int(int(10*(inttime-lapmin*60.))/10.)
             try:
-                intvelo = group['speed'].mean()
+                intvelo = group['enhanced_speed'].mean()
                 intpace = 500./intvelo
             except KeyError:
-                intvelo = 0
-                intpace = 0
+                try:
+                    intvelo = group['speed'].mean()
+                    intpace = 500./intvelo
+                except KeyError:
+                    intvelo = 0
+                    intpace = 0
             pacemin = int(intpace/60)
             pacesec = int(10*(intpace-pacemin*60.))/10.
             pacestring = str(pacemin)+":"+str(pacesec)
