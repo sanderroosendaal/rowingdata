@@ -2570,7 +2570,7 @@ class SpeedCoach2Parser(CSVParser):
                                             'Total Strokes']
             try:
                 dps = float(sdist) / float(nrstrokes)
-            except ZeroDivision Error:
+            except ZeroDivisionError:
                 dps = 0.0
                 
             splitstring = split
