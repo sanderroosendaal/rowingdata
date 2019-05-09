@@ -2253,19 +2253,22 @@ class SpeedCoach2Parser(CSVParser):
             try:
                 impspeed = self.df['Speed (IMP)']
                 self.columns['GPS Speed'] = 'Speed (IMP)'
+                self.columns[' Horizontal (meters)'] = 'Distance (IMP)'
             except KeyError:
                 impspeed = self.df['Imp Speed']
                 self.columns['GPS Speed'] = 'Imp Speed'
+                self.columns[' Horizontal (meters)'] = 'Imp Distance'
             if impspeed.std() != 0 and impspeed.mean() != 0:
                 self.df[self.columns['GPS Speed']] = impspeed
             else:
                 self.columns['GPS Speed'] = 'GPS Speed'
+                self.columns[' Horizontal (meters)'] = 'GPS Distance'
         except KeyError:
             pass
         #
 
         try:
-            dist2 = self.df['GPS Distance']
+            dist2 = self.df[self.columns[' Horizontal (meters)']]
         except KeyError:
             try:
                 dist2 = self.df['Distance (GPS)']
@@ -2300,7 +2303,7 @@ class SpeedCoach2Parser(CSVParser):
                     pass
 
         if self.dist_unit == 'km':
-            dist2 *= 1000
+            #dist2 *= 1000
             self.df[self.columns[' Horizontal (meters)']] *= 1000.
 
         cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
