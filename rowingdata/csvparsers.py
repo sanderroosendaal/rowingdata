@@ -347,7 +347,10 @@ def get_file_linecount(f):
                 
     else:
         with open(f, 'r') as fop:
-            count = sum(1 for line in fop if line.rstrip('\n'))
+            try:
+                count = sum(1 for line in fop if line.rstrip('\n'))
+            except:
+                return 0,False
         if count <= 2:
             # test for \r
             with open(f,readmodebin) as fop:
