@@ -2192,6 +2192,11 @@ class SpeedCoach2Parser(CSVParser):
         if 'Kilometer' in unitrow:
             self.dist_unit = 'km'
 
+        if 'Newtons' in unitrow:
+            self.force_unit = 'N'
+        else:
+            self.force_unit = 'lbs'
+
         kwargs['skiprows'] = skiprows
         super(SpeedCoach2Parser, self).__init__(*args, **kwargs)
         self.df = self.df.drop(self.df.index[[0]])
@@ -2278,11 +2283,6 @@ class SpeedCoach2Parser(CSVParser):
                 self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
                 if 'GPS' in self.columns['GPS Speed']:
                     self.columns['GPS Speed'] = 'Speed (GPS)'
-                try:
-                    self.df[self.columns[' PeakDriveForce (lbs)']] /= lbstoN
-                    self.df[self.columns[' AverageDriveForce (lbs)']] /= lbstoN
-                except KeyError:
-                    pass
             except KeyError:
                 try:
                     dist2 = self.df['Imp Distance']
@@ -2299,11 +2299,12 @@ class SpeedCoach2Parser(CSVParser):
                     self.columns['Work'] = 'Power'
                     self.columns['GPS Speed'] = 'Speed (IMP)'
                     
-                try:
-                    self.df[self.columns[' PeakDriveForce (lbs)']] /= lbstoN
-                    self.df[self.columns[' AverageDriveForce (lbs)']] /= lbstoN
-                except KeyError:
-                    pass
+        try:
+            if self.force_unit == 'N':
+                self.df[self.columns[' PeakDriveForce (lbs)']] /= lbstoN
+                self.df[self.columns[' AverageDriveForce (lbs)']] /= lbstoN
+        except KeyError:
+            pass
 
         if self.dist_unit == 'km':
             #dist2 *= 1000
