@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.3.8"
+__version__ = "2.3.9"
 
 from collections import Counter
 
@@ -5498,6 +5498,7 @@ class rowingdata:
         time_increments = df.loc[:, 'TimeStamp (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
+        time_increments[time_increments>10] = 10.
 
         ut2, ut1, at, tr, an = self.rwr.ftp * \
             np.array(self.rwr.powerperc) / 100.
@@ -5578,6 +5579,8 @@ class rowingdata:
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
+        time_increments[time_increments>10] = 10.
+                        
         time_in_zone = np.zeros(6)
         for i in df.index:
             if df.loc[i, ' HRCur (bpm)'] <= self.rwr.ut2:
