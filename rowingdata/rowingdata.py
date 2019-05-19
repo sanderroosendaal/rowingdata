@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.3.8"
+__version__ = "2.3.9"
 
 from collections import Counter
 
@@ -979,9 +979,9 @@ def summarystring(totaldist, totaltime, avgpace, avgspm, avghr, maxhr,
         totaltime = 0
 
     stri1 = "Workout Summary - " + readFile + "\n"
-    stri1 += "--{sep}Total{sep}-Total-{sep}--Avg--{sep}-Avg-{sep}Avg-{sep}-Avg-{sep}-Max-{sep}-Avg\n".format(
+    stri1 += "--{sep}Total{sep}-Total----{sep}--Avg--{sep}-Avg-{sep}Avg-{sep}-Avg-{sep}-Max-{sep}-Avg\n".format(
         sep=separator)
-    stri1 += "--{sep}Dist-{sep}-Time--{sep}-Pace--{sep}-Pwr-{sep}SPM-{sep}-HR--{sep}-HR--{sep}-DPS\n".format(
+    stri1 += "--{sep}Dist-{sep}-Time-----{sep}-Pace--{sep}-Pwr-{sep}SPM-{sep}-HR--{sep}-HR--{sep}-DPS\n".format(
         sep=separator)
 
     pacestring = format_pace(avgpace)
@@ -1001,7 +1001,7 @@ def summarystring(totaldist, totaltime, avgpace, avgspm, avghr, maxhr,
         avgpower=avgpower,
     )
 
-    stri1 += "{sep}{avgsr:2.1f}{sep}{avghr:3.1f}{sep}".format(
+    stri1 += "{sep}{avgsr:2.1f}{sep}{avghr:0>5.1f}{sep}".format(
         avgsr=avgspm,
         sep=separator,
         avghr=avghr
@@ -3906,7 +3906,7 @@ class rowingdata:
             restdistance = nanstozero(restdistance)
             previousdist = td['cum_dist'].max()
 
-            restduration = nanstozero(tdrest[' ElapsedTime (sec)'].max())
+            restduration = nanstozero(tdrest[' ElapsedTime (sec)'].max()-tdwork['TimeStamp (sec)'].max())
 
             if intervaldistance != 0:
                 intervalpace = 500. * intervalduration / intervaldistance
@@ -3979,6 +3979,8 @@ class rowingdata:
                            separator=separator,
                            symbol='W')
 
+
+        
         stri += workstring(restdtot, restttot, avgrestpace, restspmavg,
                            resthravg, resthrmax, restdpsavg, restpoweravg,
                            separator=separator,
@@ -5498,6 +5500,7 @@ class rowingdata:
         time_increments = df.loc[:, 'TimeStamp (sec)'].diff()
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
+        time_increments[time_increments>10] = 10.
 
         ut2, ut1, at, tr, an = self.rwr.ftp * \
             np.array(self.rwr.powerperc) / 100.
@@ -5578,6 +5581,8 @@ class rowingdata:
         time_increments[self.index[0]] = time_increments[self.index[1]]
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
+        time_increments[time_increments>10] = 10.
+                        
         time_in_zone = np.zeros(6)
         for i in df.index:
             if df.loc[i, ' HRCur (bpm)'] <= self.rwr.ut2:

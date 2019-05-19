@@ -10,6 +10,7 @@ import pytz
 import pickle
 import pandas as pd
 import datetime
+import arrow
 from math import sin,cos,atan2,sqrt
 from pandas import Series,DataFrame
 
@@ -100,13 +101,21 @@ def format_pace(x,pos=None):
 def format_time(x,pos=None):
 
 
-    min=int(x/60.)
-    sec=int(x-min*60)
+    min, sec = divmod(x, 60)
+    if min>60:
+        hour, min = divmod(min, 60)
+        str1 = '{hour:0>2}:{min:0>2}:{sec:0>4.1f}'.format(
+            hour=int(hour),
+            min=int(min),
+            sec=sec)
+    else:
+        str1 = '00:{min:0>2}:{sec:0>4.1f}'.format(
+            min=int(min),
+            sec=sec)
 
-    str1="{min:0>2}:{sec:0>4.1f}".format(
-        min=min,
-        sec=sec,
-        )
+
+    
+
 
     return str1
 
