@@ -615,7 +615,11 @@ def make_cumvalues_array(xvalues):
 
     """
 
-    newvalues = 0.0 * xvalues
+    try:
+        newvalues = 0.0 * xvalues
+    except TypeError:
+        return [xvalues,0]
+        
     dx = np.diff(xvalues)
     dxpos = dx
     nrsteps = len(dxpos[dxpos < 0])
