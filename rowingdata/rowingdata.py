@@ -292,6 +292,7 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
         
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
 
+
     ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_ut2'],
             width=dist_increments,
             color='gray', ec='gray')
@@ -406,7 +407,7 @@ def make_spm_plot(ax3,r,df,mode=['distance']):
     ax3.set_yticks(list(range(16, 40, 2)))
     if 'time' in mode:
         if 'last' in mode:
-            timeTickFormattor = FuncFormatter(format_time_tick)
+            timeTickFormatter = FuncFormatter(format_time_tick)
         else:
             timeTickFormatter = NullFormatter()
         ax3.xaxis.set_major_formatter(timeTickFormatter)
@@ -4216,7 +4217,7 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(3, 1, 1)
-        make_hr_bars(ax1,self,df)
+        make_hr_bars(ax1,self,df,mode=['distance','water'])
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(3, 1, 2)
@@ -4224,7 +4225,7 @@ class rowingdata:
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(3, 1, 3)
-        make_spm_plot(ax3,self,df)
+        make_spm_plot(ax3,self,df,mode=['distance','water'])
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
@@ -4318,15 +4319,15 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(3, 1, 1)
-        make_hr_bars(ax1,self,df,mode=['time','otw'],title=fig_title)
+        make_hr_bars(ax1,self,df,mode=['time','water'],title=fig_title)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(3, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['time','otw'])
+        make_pace_plot(ax2,self,df,mode=['time','water'])
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(3, 1, 3)
-        make_spm_plot(ax3,self,df,mode=['time','otw'])
+        make_spm_plot(ax3,self,df,mode=['time','water','last'])
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
