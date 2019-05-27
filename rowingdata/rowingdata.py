@@ -3908,6 +3908,8 @@ class rowingdata:
             previousdist = td['cum_dist'].max()
 
             restduration = nanstozero(tdrest[' ElapsedTime (sec)'].max()-tdwork['TimeStamp (sec)'].max())
+            if restduration<=0:
+                restduration = nanstozero(tdrest[' ElapsedTime (sec)'].max())
 
             if intervaldistance != 0:
                 intervalpace = 500. * intervalduration / intervaldistance
@@ -3981,7 +3983,6 @@ class rowingdata:
                            symbol='W')
 
 
-        
         stri += workstring(restdtot, restttot, avgrestpace, restspmavg,
                            resthravg, resthrmax, restdpsavg, restpoweravg,
                            separator=separator,
