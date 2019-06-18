@@ -428,8 +428,15 @@ class FITParser(object):
                 dist2[i+1] = dist2[i]+deltal
             self.df['distance'] = dist2
 
+        try:
+            velo = self.df['enhanced_speed']
+        except KeyError:
+            velo = self.df['speed']
+
+        if velo.mean() >= 1000:
+            velo = velo/1000.
             
-        velo = self.df['speed']
+
         timestamps = self.df['timestamp'].apply(totimestamp)
         pace = 500./velo
         elapsed_time = timestamps-timestamps.values[0]

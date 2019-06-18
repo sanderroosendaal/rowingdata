@@ -26,8 +26,8 @@ before_install:
 - chmod +x miniconda.sh
 - "./miniconda.sh -b"
 - export PATH=/home/travis/miniconda2/bin:$PATH
-- sudo rm -rf /dev/shm
-- sudo ln -s /run/shm /dev/shm
+#- sudo rm -rf /dev/shm
+#- sudo ln -s /run/shm /dev/shm
 install:
 #- git clone -b master https://github.com/dtcooper/python-fitparse.git
 - pip install twine
