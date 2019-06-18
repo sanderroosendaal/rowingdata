@@ -2330,12 +2330,14 @@ class SpeedCoach2Parser(CSVParser):
         try:
             dateline = get_file_line(4, csvfile)
             dated = dateline.split(',')[1]
-            self.row_date = parser.parse(dated, fuzzy=True, dayfirst=False)
+            # self.row_date = parser.parse(dated, fuzzy=True, dayfirst=False)
+            self.row_date = parser.parse(dated,fuzzy=False,dayfirst=False)
         except ValueError:
             dateline = get_file_line(3, csvfile)
             dated = dateline.split(',')[1]
             try:
-                self.row_date = parser.parse(dated, fuzzy=True,dayfirst=False)
+                #                self.row_date = parser.parse(dated, fuzzy=True,dayfirst=False)
+                self.row_date = parser.parse(dated, fuzzy=False,dayfirst=False)
             except ValueError:
                 self.row_date = datetime.datetime.now()
 
