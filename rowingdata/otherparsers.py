@@ -428,6 +428,7 @@ class FITParser(object):
                 dist2[i+1] = dist2[i]+deltal
             self.df['distance'] = dist2
 
+            
         velo = self.df['speed']
         timestamps = self.df['timestamp'].apply(totimestamp)
         pace = 500./velo
