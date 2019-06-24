@@ -278,17 +278,19 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
         
-        dist_increments = -df.loc[:, xcolumn].diff() # replaced ix with loc
+        dist_increments = df.loc[:, xcolumn].diff() # replaced ix with loc
         dist_increments[0] = dist_increments[1]
         dist_max = 1000
         dist_tick = 100
     else:
-        xcolumn = 'TimeStamp (sec)'
-        dist_increments = -df.loc[:, xcolumn].diff()
+        xcolumn = ' ElapsedTime (sec)'
+        dist_increments = df.loc[:, xcolumn].diff()
         dist_increments[0] = dist_increments[1]
         dist_increments = 0.5*(abs(dist_increments)+(dist_increments))
+
         dist_max = 300
         dist_tick = 30
+
         
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
 
@@ -525,13 +527,13 @@ def make_power_plot(ax4,r,df,mode=['distance']):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
         
-        dist_increments = -df.loc[:, xcolumn].diff() # replaced ix with loc
+        dist_increments = df.loc[:, xcolumn].diff() # replaced ix with loc
         dist_increments[0] = dist_increments[1]
         dist_max = 1000
         dist_tick = 100
     else:
         xcolumn = 'TimeStamp (sec)'
-        dist_increments = -df.loc[:, xcolumn].diff()
+        dist_increments = df.loc[:, xcolumn].diff()
         dist_increments[0] = dist_increments[1]
         dist_increments = 0.5*(abs(dist_increments)+(dist_increments))
         dist_max = 300
