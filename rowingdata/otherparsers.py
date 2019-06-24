@@ -436,6 +436,7 @@ class FITParser(object):
         if velo.mean() >= 1000:
             velo = velo/1000.
             
+
         timestamps = self.df['timestamp'].apply(totimestamp)
         pace = 500./velo
         elapsed_time = timestamps-timestamps.values[0]
