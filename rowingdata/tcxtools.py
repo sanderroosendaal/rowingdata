@@ -181,7 +181,10 @@ def process_trackpoint(trackpoint):
                     if extchild.tag == '{%s}TPX'%ns2:
                         for pchild in extchild:
                             if pchild.tag == '{%s}Watts'%ns2:
-                                trackp['power'] = int(pchild.text)
+                                try:
+                                    trackp['power'] = int(pchild.text)
+                                except TypeError:
+                                    trackp['power'] = 0
             if elem.tag == '{%s}Position'%ns1:
                 for poschild in elem:
                     if poschild.tag == '{%s}LatitudeDegrees'%ns1:
