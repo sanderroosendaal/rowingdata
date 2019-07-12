@@ -298,6 +298,12 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
     ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_ut2'],
             width=dist_increments,
             color='gray', ec='gray')
+
+    #ax1.fill_between(df.loc[:,xcolumn], df.loc[:, ' HRCur (bpm)'],
+    #                 df.loc[:, 'lim_ut2'],
+    #                 where = df.loc[:,' HRCur (bpm)'] > df.loc[:,'lim_ut2'],
+    #                 color='gray',facecolor='gray')
+    
     ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_ut1'],
             width=dist_increments,
             color='y', ec='y')
