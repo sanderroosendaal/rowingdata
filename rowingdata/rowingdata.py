@@ -1963,6 +1963,9 @@ class rowingdata:
 
         self.defaultnames = othernames+mandatorynames
 
+        if ' ElapsedTime (sec)' not in sled_df.columns and not sled_df.empty:
+            sled_df[' ElapsedTime (sec)'] = sled_df['TimeStamp (sec)']-sled_df.loc[0,'TimeStamp (sec)']
+
         for name in mandatorynames:
             if name not in sled_df.columns and not sled_df.empty:
                 if debug:
