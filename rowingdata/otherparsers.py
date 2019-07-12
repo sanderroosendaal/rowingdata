@@ -206,6 +206,7 @@ class FitSummaryData(object):
             inttime = self.lapdf[self.lapdf['lapid']==lapcount+1][
                 'total_elapsed_time'
             ]
+            inttime = float(inttime)
             try:
                 intpower = int(group['power'].mean())
             except KeyError:
@@ -222,6 +223,7 @@ class FitSummaryData(object):
                 except KeyError:
                     intvelo = 0
                     intpace = 0
+
             pacemin = int(intpace/60)
             pacesec = int(10*(intpace-pacemin*60.))/10.
             pacestring = str(pacemin)+":"+str(pacesec)
@@ -279,7 +281,11 @@ class FitSummaryData(object):
             self.summarytext += summarystring
 
         # add total summary
-        overallvelo = self.df['speed'].mean()
+        try:
+            overallvelo = self.df['enhanced_speed'].mean()
+        except KeyError:
+            overallvelo = self.df['speed'].mean()
+            
         timestamps = self.df['timestamp'].apply(totimestamp)
         totaltime = timestamps.max()-timestamps.min()
             
