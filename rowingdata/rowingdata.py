@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.4.7"
+__version__ = "2.4.8"
 
 from collections import Counter
 
@@ -295,24 +295,30 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
 
 
-    ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_ut2'],
-            width=dist_increments,
-            color='gray', ec='gray')
-    ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_ut1'],
-            width=dist_increments,
-            color='y', ec='y')
-    ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_at'],
-            width=dist_increments,
-            color='g', ec='g')
-    ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_tr'],
-            width=dist_increments,
-            color='blue', ec='blue')
-    ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_an'],
-            width=dist_increments,
-            color='violet', ec='violet')
-    ax1.bar(df.loc[:, xcolumn], df.loc[:, 'hr_max'],
-            width=dist_increments,
-            color='r', ec='r')
+    df.loc[:,'tempval'] = df.loc[:,' HRCur (bpm)']
+    df.loc[df.hr_ut2==0,'tempval']=0
+    ax1.fill_between(df.loc[:,xcolumn], df.tempval,color='gray')
+    
+    df.loc[:,'tempval'] = df.loc[:,' HRCur (bpm)']
+    df.loc[df.hr_ut1==0,'tempval']=0
+    ax1.fill_between(df.loc[:,xcolumn], df.tempval,color='y')
+    
+    df.loc[:,'tempval'] = df.loc[:,' HRCur (bpm)']
+    df.loc[df.hr_at==0,'tempval']=0
+    ax1.fill_between(df.loc[:,xcolumn], df.tempval,color='g')
+    
+    df.loc[:,'tempval'] = df.loc[:,' HRCur (bpm)']
+    df.loc[df.hr_tr==0,'tempval']=0
+    ax1.fill_between(df.loc[:,xcolumn], df.tempval,color='blue')
+    
+    df.loc[:,'tempval'] = df.loc[:,' HRCur (bpm)']
+    df.loc[df.hr_an==0,'tempval']=0
+    ax1.fill_between(df.loc[:,xcolumn], df.tempval,color='violet')
+    
+    df.loc[:,'tempval'] = df.loc[:,' HRCur (bpm)']
+    df.loc[df.hr_max==0,'tempval']=0
+    ax1.fill_between(df.loc[:,xcolumn], df.tempval,color='r')
+    
 
     ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_ut2'], color='k')
     ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_ut1'], color='k')
@@ -542,24 +548,31 @@ def make_power_plot(ax4,r,df,mode=['distance']):
 
 
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
-    ax4.bar(df.loc[:, xcolumn], df.loc[:, 'pw_ut2'],
-            width=dist_increments,
-            color='gray', ec='gray')
-    ax4.bar(df.loc[:, xcolumn], df.loc[:, 'pw_ut1'],
-            width=dist_increments,
-            color='y', ec='y')
-    ax4.bar(df.loc[:, xcolumn], df.loc[:, 'pw_at'],
-            width=dist_increments,
-            color='g', ec='g')
-    ax4.bar(df.loc[:, xcolumn], df.loc[:, 'pw_tr'],
-            width=dist_increments,
-            color='blue', ec='blue')
-    ax4.bar(df.loc[:, xcolumn], df.loc[:, 'pw_an'],
-            width=dist_increments,
-            color='violet', ec='violet')
-    ax4.bar(df.loc[:, xcolumn], df.loc[:, 'pw_max'],
-            width=dist_increments,
-            color='r', ec='r')
+
+    df.loc[:,'tempval'] = df.loc[:,' Power (watts)']
+    df.loc[df.pw_ut2==0,'tempval']=0
+    ax4.fill_between(df.loc[:,xcolumn], df.tempval,color='gray')
+    
+    df.loc[:,'tempval'] = df.loc[:,' Power (watts)']
+    df.loc[df.pw_ut1==0,'tempval']=0
+    ax4.fill_between(df.loc[:,xcolumn], df.tempval,color='y')
+    
+    df.loc[:,'tempval'] = df.loc[:,' Power (watts)']
+    df.loc[df.pw_at==0,'tempval']=0
+    ax4.fill_between(df.loc[:,xcolumn], df.tempval,color='g')
+    
+    df.loc[:,'tempval'] = df.loc[:,' Power (watts)']
+    df.loc[df.pw_tr==0,'tempval']=0
+    ax4.fill_between(df.loc[:,xcolumn], df.tempval,color='blue')
+    
+    df.loc[:,'tempval'] = df.loc[:,' Power (watts)']
+    df.loc[df.pw_an==0,'tempval']=0
+    ax4.fill_between(df.loc[:,xcolumn], df.tempval,color='violet')
+    
+    df.loc[:,'tempval'] = df.loc[:,' Power (watts)']
+    df.loc[df.pw_max==0,'tempval']=0
+    ax4.fill_between(df.loc[:,xcolumn], df.tempval,color='r')
+    
 
     ax4.plot(df.loc[:, xcolumn], df.loc[:, 'limpw_ut2'], color='k')
     ax4.plot(df.loc[:, xcolumn], df.loc[:, 'limpw_ut1'], color='k')
@@ -1722,22 +1735,22 @@ def addpowerzones(df, ftp, powerperc):
         df.loc[mask, 'pw_ut2'] = df.loc[mask, ' Power (watts)']
 
         mask = (df[' Power (watts)'] <= ut1) & (df[' Power (watts)']
-                                                > ut2) & (df[' Stroke500mPace (sec/500m)'] < 360)
+                                                >= ut2) & (df[' Stroke500mPace (sec/500m)'] < 360)
         df.loc[mask, 'pw_ut1'] = df.loc[mask, ' Power (watts)']
         
         mask = (df[' Power (watts)'] <= at) & (df[' Power (watts)']
-                                               > ut1) & (df[' Stroke500mPace (sec/500m)'] < 360)
+                                               >= ut1) & (df[' Stroke500mPace (sec/500m)'] < 360)
         df.loc[mask, 'pw_at'] = df.loc[mask, ' Power (watts)']
         
         mask = (df[' Power (watts)'] <= tr) & (df[' Power (watts)']
-                                               > at) & (df[' Stroke500mPace (sec/500m)'] < 360)
+                                               >= at) & (df[' Stroke500mPace (sec/500m)'] < 360)
         df.loc[mask, 'pw_tr'] = df.loc[mask, ' Power (watts)']
 
         mask = (df[' Power (watts)'] <= an) & (df[' Power (watts)']
-                                               > tr) & (df[' Stroke500mPace (sec/500m)'] < 360)
+                                               >= tr) & (df[' Stroke500mPace (sec/500m)'] < 360)
         df.loc[mask, 'pw_an'] = df.loc[mask, ' Power (watts)']
         
-        mask = (df[' Power (watts)'] > an) & (
+        mask = (df[' Power (watts)'] >= an) & (
             df[' Stroke500mPace (sec/500m)'] < 360)
         df.loc[mask, 'pw_max'] = df.loc[mask, ' Power (watts)']
     except TypeError:
@@ -1774,22 +1787,22 @@ def addzones(df, ut2, ut1, at, tr, an, mmax):
     df.loc[mask, 'hr_ut2'] = df.loc[mask, ' HRCur (bpm)']
 
     mask = (df[' HRCur (bpm)'] <= ut1) & (df[' HRCur (bpm)']
-                                          > ut2) & (df[' Stroke500mPace (sec/500m)'] < 360)
+                                          >= ut2) & (df[' Stroke500mPace (sec/500m)'] < 360)
     df.loc[mask, 'hr_ut1'] = df.loc[mask, ' HRCur (bpm)']
 
     mask = (df[' HRCur (bpm)'] <= at) & (df[' HRCur (bpm)']
-                                         > ut1) & (df[' Stroke500mPace (sec/500m)'] < 360)
+                                         >= ut1) & (df[' Stroke500mPace (sec/500m)'] < 360)
     df.loc[mask, 'hr_at'] = df.loc[mask, ' HRCur (bpm)']
 
     mask = (df[' HRCur (bpm)'] <= tr) & (df[' HRCur (bpm)']
-                                         > at) & (df[' Stroke500mPace (sec/500m)'] < 360)
+                                         >= at) & (df[' Stroke500mPace (sec/500m)'] < 360)
     df.loc[mask, 'hr_tr'] = df.loc[mask, ' HRCur (bpm)']
 
     mask = (df[' HRCur (bpm)'] <= an) & (df[' HRCur (bpm)']
-                                         > tr) & (df[' Stroke500mPace (sec/500m)'] < 360)
+                                         >= tr) & (df[' Stroke500mPace (sec/500m)'] < 360)
     df.loc[mask, 'hr_an'] = df.loc[mask, ' HRCur (bpm)']
 
-    mask = (df[' HRCur (bpm)'] > an) & (df[' Stroke500mPace (sec/500m)'] < 360)
+    mask = (df[' HRCur (bpm)'] >= an) & (df[' Stroke500mPace (sec/500m)'] < 360)
     df.loc[mask, 'hr_max'] = df.loc[mask, ' HRCur (bpm)']
 
     # fill cumulative distance column with cumulative distance
