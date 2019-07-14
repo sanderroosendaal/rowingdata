@@ -2051,10 +2051,12 @@ class rowingdata:
             self.dragfactor = sled_df[' DragFactor'].mean()
 
         # get the date of the row
-        try:
-            starttime = sled_df['TimeStamp (sec)'].values[0]
-        except KeyError as IndexError:
-            starttime = 0
+        starttime = 0
+        if not sled_df.empty:
+            try:
+                starttime = sled_df['TimeStamp (sec)'].values[0]
+            except KeyError as IndexError:
+                starttime = 0
 
         # create start time timezone aware time object
         try:
@@ -2070,30 +2072,31 @@ class rowingdata:
         number_of_columns = sled_df.shape[1]
         number_of_rows = sled_df.shape[0]
 
-        try:
-            dt = sled_df['TimeStamp (sec)'].diff()
+        if not sled_df.empty:
             try:
-                dt.iloc[0] = dt.iloc[1] # replaced ix with iloc
-            except:
-                dt.loc[dt.index[0]] = dt.loc[dt.index[0]]
+                dt = sled_df['TimeStamp (sec)'].diff()
+                try:
+                    dt.iloc[0] = dt.iloc[1] # replaced ix with iloc
+                except:
+                    dt.loc[dt.index[0]] = dt.loc[dt.index[0]]
                 
-            dt.fillna(inplace=True, method='ffill')
-            dt.fillna(inplace=True, method='bfill')
-            strokenumbers = pd.Series(
-                np.cumsum(dt*sled_df[' Cadence (stokes/min)']/60.)
+                dt.fillna(inplace=True, method='ffill')
+                dt.fillna(inplace=True, method='bfill')
+                strokenumbers = pd.Series(
+                    np.cumsum(dt*sled_df[' Cadence (stokes/min)']/60.)
                 )
-            if strokenumbers.isnull().all():
-                strokenumbers.loc[:] = 0
-            else:
-                strokenumbers.fillna(inplace=True, method='ffill')
-                strokenumbers.fillna(inplace=True, method='bfill')
+                if strokenumbers.isnull().all():
+                    strokenumbers.loc[:] = 0
+                else:
+                    strokenumbers.fillna(inplace=True, method='ffill')
+                    strokenumbers.fillna(inplace=True, method='bfill')
 
-            sled_df[' Stroke Number'] = strokenumbers.astype('int')
-        except KeyError:
-            if debug:
-                print("Could not calculate stroke number")
-            else:
-                pass
+                sled_df[' Stroke Number'] = strokenumbers.astype('int')
+            except KeyError:
+                if debug:
+                    print("Could not calculate stroke number")
+                else:
+                    pass
                 
 
         # these parameters are handy to have available in other routines
