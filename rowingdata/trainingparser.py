@@ -32,7 +32,7 @@ def Syntax():
     rpar  = Literal( ')' ).suppress()
     num = Word(nums)
     num2 = Word(nums,exact=2)
-    timeordist = Group(num2+":"+num2) | num
+    timeordist = Group(num+":"+num) | num
     ntimes = num+"x"
     unit = Word(alphas)
     interval = Group(timeordist+unit) | timeordist  # 5min
@@ -121,7 +121,7 @@ def parse(s):
     if len(r)==2:
         res =  getinterval(r)
     elif len(r)==1:
-        res =  getinterval(r)
+        res =  getinterval(r[0])
     else:
         res =  getinterval(r[0])+getinterval(r[2:])
 
