@@ -2367,10 +2367,12 @@ class SpeedCoach2Parser(CSVParser):
         lapidx = res[1]
 
         unixtimes = seconds3 + totimestamp(self.row_date)
-        self.df[self.columns[' lapIdx']] = lapidx
-        self.df[self.columns['TimeStamp (sec)']] = unixtimes
-        self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
-        self.df[self.columns[' ElapsedTime (sec)']] = unixtimes - unixtimes[0]
+        
+        if not self.df.empty:
+            self.df[self.columns[' lapIdx']] = lapidx
+            self.df[self.columns['TimeStamp (sec)']] = unixtimes
+            self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
+            self.df[self.columns[' ElapsedTime (sec)']] = unixtimes - unixtimes[0]
 
         self.to_standard()
 
