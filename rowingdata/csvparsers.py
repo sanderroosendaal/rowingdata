@@ -1435,10 +1435,13 @@ class BoatCoachParser(CSVParser):
             self.df.drop(self.df.index[-1], inplace=True)
 
         mask = (self.df['cumdist'] == maxdist)
-        self.df.loc[
-            mask,
-            self.columns[' lapIdx']
-        ] = self.df.loc[self.df.index[-3], self.columns[' lapIdx']]
+        try:
+            self.df.loc[
+                mask,
+                self.columns[' lapIdx']
+            ] = self.df.loc[self.df.index[-3], self.columns[' lapIdx']]
+        except IndexError:
+            pass
 
 
         self.to_standard()
