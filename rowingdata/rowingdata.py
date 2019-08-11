@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.5.2"
+__version__ = "2.5.3"
 
 from collections import Counter
 
@@ -2043,7 +2043,10 @@ class rowingdata:
 
         mandatorynames.remove(' lapIdx')
 
-        sled_df[mandatorynames] = sled_df[mandatorynames].apply(pd.to_numeric,errors='coerce',axis=1)
+        try:
+            sled_df[mandatorynames] = sled_df[mandatorynames].apply(pd.to_numeric,errors='coerce',axis=1)
+        except KeyError:
+            pass
 
         if len(sled_df):
             # Remove zeros from HR
