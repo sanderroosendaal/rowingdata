@@ -283,7 +283,7 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
         dist_max = 1000
         dist_tick = 100
     else:
-        xcolumn = ' ElapsedTime (sec)'
+        xcolumn = 'TimeStamp (sec)'
         dist_increments = df.loc[:, xcolumn].diff()
         dist_increments[0] = dist_increments[1]
         dist_increments = 0.5*(abs(dist_increments)+(dist_increments))
@@ -1045,6 +1045,8 @@ def y_axis_range(ydata, **kwargs):
 
     ds = pd.Series(ydata)
 
+    ds = pd.to_numeric(ds,errors='coerce')
+
     if 'quantiles' in kwargs:
         qmin = kwargs['quantiles'][0]
         qmax = kwargs['quantiles'][1]
@@ -1070,7 +1072,8 @@ def y_axis_range(ydata, **kwargs):
 
     # ydata must by a numpy array
 
-    ymax = np.ma.masked_invalid(ydata).max()
+    
+    ymax = np.ma.masked_invalid(ydata.astype(float)).max()
     ymax = ds.quantile(q=qmax)
 
     yrange = ymax - ymin
@@ -2037,6 +2040,10 @@ class rowingdata:
                         sled_df[name] = spm
                     except KeyError:
                         pass
+
+        mandatorynames.remove(' lapIdx')
+
+        sled_df[mandatorynames] = sled_df[mandatorynames].apply(pd.to_numeric,errors='coerce',axis=1)
 
         if len(sled_df):
             # Remove zeros from HR
