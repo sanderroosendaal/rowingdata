@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.5.3"
+__version__ = "2.5.4"
 
 from collections import Counter
 
@@ -516,7 +516,6 @@ def make_force_plot(ax8,self,df,mode=['distance']):
     grid(True)
 
     if 'time' in mode:
-        print('time')
         timeTickFormatter = FuncFormatter(format_time_tick)
         majorLocator = (15 * 60)
         if end_dist < dist_max:
@@ -1927,6 +1926,20 @@ class rowingdata:
                         f.close()
                     except:
                         sled_df = pd.DataFrame()
+            except UnicodeEncodeError:
+                try:
+                    f = open(readFile)
+                    sled_df = pd.read_csv(f)
+                    f.close()
+                except IOError:
+                    try:
+                        f = open(readFile + '.gz')
+                        sled_df = pd.read_csv(f)
+                        f.close()
+                    except:
+                        sled_df = pd.DataFrame()
+                    
+                    
 
         if readFile:
             try:
