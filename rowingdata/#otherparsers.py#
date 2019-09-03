@@ -23,6 +23,7 @@ import arrow
 import shutil
 from datetime import datetime
 from six.moves import range
+import json
 
 NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
@@ -483,7 +484,11 @@ class FITParser(object):
         else:
             return self.df.to_csv(writefile, index_label='index')
 
-
+class JSONParser(object):
+    def __init__(self, json_file):
+        with open(json_file,'r') as f:
+            data = json.l
+        
 class TCXParserTester(object):
     def __init__(self, tcx_file):
         tree = objectify.parse(tcx_file)
