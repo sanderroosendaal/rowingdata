@@ -102,7 +102,10 @@ def flexistrptime(inttime):
             try:
                 t = datetime.datetime.strptime(inttime, "%H:%M:%S")
             except ValueError:
-                t = datetime.datetime.strptime(inttime, "%M:%S.%f")
+                try:
+                    t = datetime.datetime.strptime(inttime, "%M:%S.%f")
+                except ValueError:
+                    t = datetime.datetime.utcnow()
 
     return t
 
