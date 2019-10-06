@@ -15,7 +15,7 @@ try:
     matplotlib.use('TkCairo')
 except ValueError:
     matplotlib.use('Agg')
-    
+
 import matplotlib.pyplot as plt
 
 from matplotlib.pyplot import grid
@@ -105,7 +105,7 @@ try:
         timestrtosecs2, totimestamp, empower_bug_correction,
         get_empower_firmware
     )
-    
+
     from .otherparsers import TCXParser as TCXParserNoHR
     from .otherparsers import (
         FITParser, FitSummaryData, fitsummarydata,TCXParser,
@@ -132,7 +132,7 @@ except (ValueError,ImportError):
         timestrtosecs2, totimestamp, empower_bug_correction,
         get_empower_firmware
     )
-    
+
     from rowingdata.otherparsers import TCXParser as TCXParserNoHR
     from rowingdata.otherparsers import (
         FITParser, FitSummaryData, fitsummarydata,TCXParser,
@@ -189,7 +189,7 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
         xcolumn = 'TimeStamp (sec)'
         dist_max = 300
         dist_tick = 30
-        
+
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
 
     ax.plot(df.loc[:,xcolumn], df.loc[:,param])
@@ -203,14 +203,14 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
             barverbosenames = ['UT2','UT1','AT','TR','AN','MAX']
 
     colors = ['gray','y','g','blue','violet','r']
-            
+
     for i in range(len(bars)):
         ax.bar(df.loc[:,xcolumn],df.loc[:,barnames[i]],
                width=dist_increments,
                color=colors[i],ec=colors[i])
         ax.plot(df.loc[:, xcolumn], df.loc[:, barlimits[i]], color='k')
         ax.text(5,df[barlimits[i]].mean()+1.5,barverbosenames[i],size=8)
-    
+
     if 'ote' in mode and param == ' Stroke500mPace (sec/500m)':
         yrange = y_axis_range(df.loc[:, param],
                               ultimate=[85, 160], quantiles=[0, 0.9])
@@ -236,10 +236,10 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
                               ultimate=[0,555],miny=0)
         ax.set_ylabel('Power (Watts)')
 
-    
+
     grid(True)
 
-    
+
     xTickFormatter = NullFormatter()
     if 'last' in mode:
         if 'time' in mode:
@@ -251,7 +251,7 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
             xTickFormatter = FuncFormatter(format_dist_tick)
             majorLocator = (1000)
 
-    
+
     ax.yaxis.set_major_formatter(majorTickFormatter)
     if 'time' in mode:
         ax.set_xlabel('Time (sec)')
@@ -264,7 +264,7 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
     ax.xaxis.set_major_formatter(xTickFormatter)
 
 
-    
+
 
 def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
 
@@ -277,7 +277,7 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
 
     if 'distance' in mode:
         xcolumn = 'cum_dist'
-        
+
         dist_increments = df.loc[:, xcolumn].diff() # replaced ix with loc
         dist_increments[0] = dist_increments[1]
         dist_max = 1000
@@ -291,34 +291,34 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
         dist_max = 300
         dist_tick = 30
 
-        
+
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
 
 
     df.loc[:,'tempval'] = df.loc[:,' HRCur (bpm)']
     df.loc[df.hr_ut2==0,'tempval']=0
     ax1.fill_between(df.loc[:,xcolumn], df.tempval,color='gray')
-    
+
     df.loc[:,'tempval'] = df.loc[:,' HRCur (bpm)']
     df.loc[df.hr_ut1==0,'tempval']=0
     ax1.fill_between(df.loc[:,xcolumn], df.tempval,color='y')
-    
+
     df.loc[:,'tempval'] = df.loc[:,' HRCur (bpm)']
     df.loc[df.hr_at==0,'tempval']=0
     ax1.fill_between(df.loc[:,xcolumn], df.tempval,color='g')
-    
+
     df.loc[:,'tempval'] = df.loc[:,' HRCur (bpm)']
     df.loc[df.hr_tr==0,'tempval']=0
     ax1.fill_between(df.loc[:,xcolumn], df.tempval,color='blue')
-    
+
     df.loc[:,'tempval'] = df.loc[:,' HRCur (bpm)']
     df.loc[df.hr_an==0,'tempval']=0
     ax1.fill_between(df.loc[:,xcolumn], df.tempval,color='violet')
-    
+
     df.loc[:,'tempval'] = df.loc[:,' HRCur (bpm)']
     df.loc[df.hr_max==0,'tempval']=0
     ax1.fill_between(df.loc[:,xcolumn], df.tempval,color='r')
-    
+
 
     ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_ut2'], color='k')
     ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_ut1'], color='k')
@@ -326,14 +326,14 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
     ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_tr'], color='k')
     ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_an'], color='k')
     ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_max'], color='k')
-    
+
     ax1.text(5, r.rwr.ut2 + 1.5, "UT2", size=8)
     ax1.text(5, r.rwr.ut1 + 1.5, "UT1", size=8)
     ax1.text(5, r.rwr.at + 1.5, "AT", size=8)
     ax1.text(5, r.rwr.tr + 1.5, "TR", size=8)
     ax1.text(5, r.rwr.an + 1.5, "AN", size=8)
     ax1.text(5, r.rwr.max + 1.5, "MAX", size=8)
-        
+
 
     ax1.axis([0, end_dist, 100, 1.1 * r.rwr.max])
     ax1.set_xticks(list(range(dist_max, end_dist, dist_max)))
@@ -349,7 +349,7 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
     grid(True)
 
 
-    
+
 def make_pace_plot(ax2,r,df,mode=['distance','ote']):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
@@ -359,7 +359,7 @@ def make_pace_plot(ax2,r,df,mode=['distance','ote']):
         xcolumn = 'TimeStamp (sec)'
         dist_max = 300
         dist_tick = 30
-        
+
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
 
     ax2.plot(df.loc[:, xcolumn], df.loc[:, ' Stroke500mPace (sec/500m)'])
@@ -381,7 +381,7 @@ def make_pace_plot(ax2,r,df,mode=['distance','ote']):
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
     except ValueError:
         ax2.axis([0, end_dist, 85, 240])
-        
+
     ax2.set_xticks(list(range(dist_max, end_dist, dist_max)))
     if end_dist < dist_max:
         ax2.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
@@ -404,7 +404,7 @@ def make_spm_plot(ax3,r,df,mode=['distance']):
         xcolumn = 'TimeStamp (sec)'
         dist_max = 300
         dist_tick = 100
-        
+
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
     ax3.plot(df.loc[:, xcolumn], df.loc[:, ' Cadence (stokes/min)'])
     ax3.axis([0, end_dist, 14, 40])
@@ -431,7 +431,7 @@ def make_drivelength_plot(ax6,r,df,mode=['distance']):
         xcolumn = 'TimeStamp (sec)'
         dist_max = 300
         dist_tick = 100
-        
+
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
     ax6.plot(df.loc[:, xcolumn],
              df.loc[:, ' DriveLength (meters)'])
@@ -458,7 +458,7 @@ def make_drivetime_plot(ax7,self,df,mode=['distance']):
         xcolumn = 'TimeStamp (sec)'
         dist_max = 300
         dist_tick = 100
-        
+
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
     ax7.plot(df.loc[:, xcolumn],
              df.loc[:, ' DriveTime (ms)'] / 1000.)
@@ -480,7 +480,7 @@ def make_drivetime_plot(ax7,self,df,mode=['distance']):
         timeTickFormatter = NullFormatter()
         ax7.xaxis.set_major_formatter(timeTickFormatter)
     grid(True)
-    
+
 def make_force_plot(ax8,self,df,mode=['distance']):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
@@ -490,7 +490,7 @@ def make_force_plot(ax8,self,df,mode=['distance']):
         xcolumn = 'TimeStamp (sec)'
         dist_max = 300
         dist_tick = 100
-        
+
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
     ax8.plot(df.loc[:, xcolumn],
              df.loc[:, ' AverageDriveForce (lbs)'] * lbstoN)
@@ -524,14 +524,14 @@ def make_force_plot(ax8,self,df,mode=['distance']):
     else:
         majorKmFormatter = FuncFormatter(format_dist_tick)
         majorLocator = (1000)
-        ax8.xaxis.set_major_formatter(majorKmFormatter)        
+        ax8.xaxis.set_major_formatter(majorKmFormatter)
 
 
 
 def make_power_plot(ax4,r,df,mode=['distance']):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
-        
+
         dist_increments = df.loc[:, xcolumn].diff() # replaced ix with loc
         dist_increments[0] = dist_increments[1]
         dist_max = 1000
@@ -543,7 +543,7 @@ def make_power_plot(ax4,r,df,mode=['distance']):
         dist_increments = 0.5*(abs(dist_increments)+(dist_increments))
         dist_max = 300
         dist_tick = 30
-        
+
 
 
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
@@ -551,27 +551,27 @@ def make_power_plot(ax4,r,df,mode=['distance']):
     df.loc[:,'tempval'] = df.loc[:,' Power (watts)']
     df.loc[df.pw_ut2==0,'tempval']=0
     ax4.fill_between(df.loc[:,xcolumn], df.tempval,color='gray')
-    
+
     df.loc[:,'tempval'] = df.loc[:,' Power (watts)']
     df.loc[df.pw_ut1==0,'tempval']=0
     ax4.fill_between(df.loc[:,xcolumn], df.tempval,color='y')
-    
+
     df.loc[:,'tempval'] = df.loc[:,' Power (watts)']
     df.loc[df.pw_at==0,'tempval']=0
     ax4.fill_between(df.loc[:,xcolumn], df.tempval,color='g')
-    
+
     df.loc[:,'tempval'] = df.loc[:,' Power (watts)']
     df.loc[df.pw_tr==0,'tempval']=0
     ax4.fill_between(df.loc[:,xcolumn], df.tempval,color='blue')
-    
+
     df.loc[:,'tempval'] = df.loc[:,' Power (watts)']
     df.loc[df.pw_an==0,'tempval']=0
     ax4.fill_between(df.loc[:,xcolumn], df.tempval,color='violet')
-    
+
     df.loc[:,'tempval'] = df.loc[:,' Power (watts)']
     df.loc[df.pw_max==0,'tempval']=0
     ax4.fill_between(df.loc[:,xcolumn], df.tempval,color='r')
-    
+
 
     ax4.plot(df.loc[:, xcolumn], df.loc[:, 'limpw_ut2'], color='k')
     ax4.plot(df.loc[:, xcolumn], df.loc[:, 'limpw_ut1'], color='k')
@@ -607,7 +607,7 @@ def make_power_plot(ax4,r,df,mode=['distance']):
     else:
         ax4.set_xlabel('Time (h:m)')
     ax4.set_ylabel('Power (Watts)')
-        
+
         #       ax4.set_yticks(range(110,200,10))
 
     if 'time' in mode:
@@ -619,10 +619,10 @@ def make_power_plot(ax4,r,df,mode=['distance']):
     else:
         majorKmFormatter = FuncFormatter(format_dist_tick)
         majorLocator = (1000)
-        ax4.xaxis.set_major_formatter(majorKmFormatter)        
-        
+        ax4.xaxis.set_major_formatter(majorKmFormatter)
+
     grid(True)
-    
+
 def tailwind(bearing, vwind, winddir, vstream=0):
     """ Calculates head-on head/tailwind in direction of rowing
 
@@ -1071,7 +1071,7 @@ def y_axis_range(ydata, **kwargs):
 
     # ydata must by a numpy array
 
-    
+
     ymax = np.ma.masked_invalid(ydata.astype(float)).max()
     ymax = ds.quantile(q=qmax)
 
@@ -1739,11 +1739,11 @@ def addpowerzones(df, ftp, powerperc):
         mask = (df[' Power (watts)'] <= ut1) & (df[' Power (watts)']
                                                 >= ut2) & (df[' Stroke500mPace (sec/500m)'] < 360)
         df.loc[mask, 'pw_ut1'] = df.loc[mask, ' Power (watts)']
-        
+
         mask = (df[' Power (watts)'] <= at) & (df[' Power (watts)']
                                                >= ut1) & (df[' Stroke500mPace (sec/500m)'] < 360)
         df.loc[mask, 'pw_at'] = df.loc[mask, ' Power (watts)']
-        
+
         mask = (df[' Power (watts)'] <= tr) & (df[' Power (watts)']
                                                >= at) & (df[' Stroke500mPace (sec/500m)'] < 360)
         df.loc[mask, 'pw_tr'] = df.loc[mask, ' Power (watts)']
@@ -1751,7 +1751,7 @@ def addpowerzones(df, ftp, powerperc):
         mask = (df[' Power (watts)'] <= an) & (df[' Power (watts)']
                                                >= tr) & (df[' Stroke500mPace (sec/500m)'] < 360)
         df.loc[mask, 'pw_an'] = df.loc[mask, ' Power (watts)']
-        
+
         mask = (df[' Power (watts)'] >= an) & (
             df[' Stroke500mPace (sec/500m)'] < 360)
         df.loc[mask, 'pw_max'] = df.loc[mask, ' Power (watts)']
@@ -1938,8 +1938,8 @@ class rowingdata:
                         f.close()
                     except:
                         sled_df = pd.DataFrame()
-                    
-                    
+
+
 
         if readFile:
             try:
@@ -1987,6 +1987,7 @@ class rowingdata:
             ' PeakDriveForce (N)',
             ' lapIdx',
             ' ElapsedTime (sec)',
+            ' Calories (kCal)',
             ' WorkoutState',
         ]
 
@@ -2007,6 +2008,8 @@ class rowingdata:
                     sled_df[name] = elapsedtime
                 if name == ' WorkoutState':
                     sled_df[name] = 4
+                if name == ' Calories (kCal)':
+                    sled_df[name] = 1
                 if name == ' Stroke500mPace (sec/500m)':
                     dd = sled_df[' Horizontal (meters)'].diff()
                     dt = sled_df[' ElapsedTime (sec)'].diff()
@@ -2102,7 +2105,7 @@ class rowingdata:
                     dt.iloc[0] = dt.iloc[1] # replaced ix with iloc
                 except:
                     dt.loc[dt.index[0]] = dt.loc[dt.index[0]]
-                
+
                 dt.fillna(inplace=True, method='ffill')
                 dt.fillna(inplace=True, method='bfill')
                 strokenumbers = pd.Series(
@@ -2120,7 +2123,7 @@ class rowingdata:
                     print("Could not calculate stroke number")
                 else:
                     pass
-                
+
 
         # these parameters are handy to have available in other routines
         self.number_of_rows = number_of_rows
@@ -2241,7 +2244,7 @@ class rowingdata:
 
     def __len__(self):
         return len(self.df)
-    
+
     def get_additional_metrics(self):
         cols = self.df.columns.values
         dif = np.setdiff1d(cols,self.defaultnames)
@@ -2399,13 +2402,13 @@ class rowingdata:
 
         self.df[c+'_minpos'] = minpos
         self.df[c+'_maxpos'] = maxpos
-    
+
     def add_instroke_diff(self,c):
         df = self.get_instroke_data(c)
         dfnorm = df.copy()
         dfnorm = (dfnorm.transpose()/dfnorm.transpose().max()).transpose()
-        
-            
+
+
         aantalcol = len(dfnorm.columns)
         diff = dfnorm.diff(axis=0)**2
 
@@ -2420,8 +2423,8 @@ class rowingdata:
             diff_c = savgol_filter(diff_c,windowsize,1)
 
         self.df[c+'_diff'] = diff_c
-            
-    
+
+
     def add_instroke_metrics(self,c):
         df = self.get_instroke_data(c)
         dfnorm = df.copy().abs()
@@ -2441,7 +2444,7 @@ class rowingdata:
         self.df[c+'_q2'] = second
         self.df[c+'_q3'] = third
         self.df[c+'_q4'] = fourth
-    
+
     def set_instroke_metrics(self):
         cols = self.get_instroke_columns()
         for c in cols:
@@ -3021,12 +3024,12 @@ class rowingdata:
         df.replace([np.inf, -np.inf], np.nan, inplace=True)
 
         df[' AverageBoatSpeed (m/s)'] = df[' AverageBoatSpeed (m/s)'].replace(np.nan,0)
-        
+
         df = df.fillna(method='bfill',axis=0)
         self.df = df
-        
+
         values = self.get_smoothed(metricname,smoothwindow)
-                
+
         if mode == 'larger':
             largerthantype = 5
             smallerthantype = 3
@@ -3071,7 +3074,7 @@ class rowingdata:
         tenstrokes = int(25/f)
         if debug:
             print('Ten Strokes = ',tenstrokes,' data points')
-        
+
         for key, value in valuecounts.items():
             if value < tenstrokes:
                 if debug:
@@ -3083,11 +3086,11 @@ class rowingdata:
         self.df = df
 
         df[' lapIdx'] = 0
-            
+
         steps = df[' WorkoutState'].diff()
 
         indices = df.index[steps!=0].tolist()
-                              
+
 
         if debug:
             print('indices ',indices)
@@ -3095,19 +3098,19 @@ class rowingdata:
 
         intervalnr = 0
 
-        
+
         if unit == 'meters':
             elapsemetric = 'cum_dist'
         else:
             elapsemetric = 'TimeStamp (sec)'
 
-            
+
         previouselapsed = df.loc[indices[0],elapsemetric] # replaced ix with loc
 
         units = []
         typ = []
         vals = []
-            
+
         for i in indices[1:]:
             try:
                 startindex = df.index[i-1]
@@ -3117,7 +3120,7 @@ class rowingdata:
 
             if debug:
                 print(df.loc[startindex,'cum_dist']) # replaced ix with loc
-                
+
             startelapsed = df.loc[startindex,elapsemetric] # replaced ix with loc
 
             units.append(unit)
@@ -3144,7 +3147,7 @@ class rowingdata:
 
         if debug:
             print(df.loc[startindex,'cum_dist']) # replaced ix with loc
-                
+
         units.append(unit)
         vals.append(startelapsed-previouselapsed)
 
@@ -3160,24 +3163,24 @@ class rowingdata:
 
         if debug:
             print(startindex,startelapsed-previouselapsed,unit,tt)
-            
+
         if debug:
             print('--------------------------------')
 
         self.df = df
         self.updateintervaldata(vals,units,typ,debug=debug)
-                
+
 
         if debug:
             print(vals)
             print(units)
             print(typ)
-        
+
         if mode == 'split':
             self.df[' WorkoutState'] = 5
-                    
 
-        
+
+
     def updateinterval_string(self, s, debug=False):
         res = trainingparser.parse(s)
         res = trainingparser.cleanzeros(res)
@@ -3310,7 +3313,7 @@ class rowingdata:
             thevalues = 500. / pace
         else:
             thevalues = self.df[metricname].values
-            
+
         f = self.df['TimeStamp (sec)'].diff().mean()
         if f!= 0 and not np.isnan(f):
             windowsize = 2 * (int(windowseconds/(f))) + 1
@@ -3330,7 +3333,7 @@ class rowingdata:
             newvalues = 500./newvalues
 
         return newvalues
-            
+
     def update_wind(self, vwind1, vwind2, winddirection1,
                     winddirection2, dist1, dist2, units='m'):
 
@@ -3591,7 +3594,7 @@ class rowingdata:
         except AttributeError:
             ps = df[' Stroke500mPace (sec/500m)']
             spms = df[' Cadence (stokes/min)']
-            
+
         if storetable is not None:
             try:
                 if storetable[-3:] != 'npz':
@@ -4223,24 +4226,24 @@ class rowingdata:
         make_power_plot(ax4,self,df,mode=['time'])
         fig1.subplots_adjust(hspace=0)
 
- 
+
 
         # Top plot is pace
         fig2 = plt.figure(figsize=(12,10))
         fig_title = "Input File:  " + self.readfilename + " --- Stroke Metrics"
 
-        
+
         ax5 = fig2.add_subplot(4, 1, 1)
         make_pace_plot(ax5,self,df,mode=['time'])
 
         # next we plot the drive length
         ax6 = fig2.add_subplot(4, 1, 2)
         make_drivelength_plot(ax6,self,df,mode=['time'])
- 
+
         # next we plot the drive time and recovery time
         ax7 = fig2.add_subplot(4, 1, 3)
         make_drivetime_plot(ax7,self,df,mode=['time'])
-        
+
 
         # Peak and average force
         ax8 = fig2.add_subplot(4, 1, 4)
@@ -4524,7 +4527,7 @@ class rowingdata:
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
         make_hr_bars(ax1,self,df)
-        
+
         grid(True)
 
         # Second Panel, Pace
@@ -4568,7 +4571,7 @@ class rowingdata:
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
         make_spm_plot(ax3,self,df)
- 
+
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
         make_power_plot(ax4,self,df)
@@ -4605,7 +4608,7 @@ class rowingdata:
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        make_power_plot(ax3,self,df,mode=['distance','otw'])                      
+        make_power_plot(ax3,self,df,mode=['distance','otw'])
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
@@ -5628,7 +5631,7 @@ class rowingdata:
         time_increments = 0.5 * (abs(time_increments) + (time_increments))
 
         time_increments[time_increments>10] = 10.
-                        
+
         time_in_zone = np.zeros(6)
         for i in df.index:
             if df.loc[i, ' HRCur (bpm)'] <= self.rwr.ut2:
@@ -5678,7 +5681,7 @@ class rowingdata:
                 startangle=90.0)
 
         ax9.set_title(fig_title)
-        
+
         return fig2
 
 
