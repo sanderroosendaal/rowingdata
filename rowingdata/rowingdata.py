@@ -1180,14 +1180,14 @@ class summarydata:
         tottimehr = 0
         tottimespm = 0
 
-        for i in range(nr_rows):
-            inttime = self.workdata['Time'].iloc[i]
-            thr = self.workdata['Avg HR'].iloc[i]
-            td = self.workdata['Distance (m)'].iloc[i]
-            tpace = self.workdata['Avg Pace (/500m)'].iloc[i]
-            tspm = self.workdata['Avg SR'].iloc[i]
-            tmaxhr = self.workdata['Max HR'].iloc[i]
-            tstrokes = self.workdata['Strokes'].iloc[i]
+        for index,row in self.workdata.iterrows():
+            inttime = row['Time']
+            thr = row['Avg HR']
+            td = row['Distance (m)']
+            tpace = row['Avg Pace (/500m)']
+            tspm = row['Avg SR']
+            tmaxhr = row['Max HR']
+            tstrokes = row['Strokes']
 
             tdps = td / (1.0 * tstrokes)
 
@@ -3922,19 +3922,13 @@ class rowingdata:
             tdwork = td[~td[' WorkoutState'].isin(workoutstatesrest)]
             tdrest = td[td[' WorkoutState'].isin(workoutstatesrest)]
 
-            #avghr = nanstozero(tdwork[' HRCur (bpm)'].mean())
             avghr = nanstozero(wavg(tdwork,' HRCur (bpm)','deltat'))
             maxhr = nanstozero(tdwork[' HRCur (bpm)'].max())
-            #avgspm = nanstozero(tdwork[' Cadence (stokes/min)'].mean())
             avgspm = nanstozero(wavg(tdwork,' Cadence (stokes/min)','deltat'))
-            #avgpower = nanstozero(tdwork[' Power (watts)'].mean())
             avgpower = nanstozero(wavg(tdwork,' Power (watts)','deltat'))
 
-            #avghrrest = nanstozero(tdrest[' HRCur (bpm)'].mean())
             avghrrest = nanstozero(wavg(tdrest,' HRCur (bpm)','deltat'))
             maxhrrest = nanstozero(tdrest[' HRCur (bpm)'].max())
-            #avgspmrest = nanstozero(tdrest[' Cadence (stokes/min)'].mean())
-            #avgrestpower = nanstozero(tdrest[' Power (watts)'].mean())
             avgspmrest = nanstozero(wavg(tdrest,' Cadence (stokes/min)','deltat'))
             avgrestpower = nanstozero(wavg(tdrest,' Power (watts)','deltat'))
 
