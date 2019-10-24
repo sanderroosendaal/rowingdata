@@ -2375,7 +2375,6 @@ class rowingdata:
                 a = d[1]
                 cols.append(c)
             except:
-                print('aap')
                 pass
 
         return cols
