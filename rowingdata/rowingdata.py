@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.5.5"
+__version__ = "2.5.6"
 
 from collections import Counter
 
@@ -2589,16 +2589,15 @@ class rowingdata:
         previoustime = df['TimeStamp (sec)'].min()
 
         for idx in intervalnrs:
-            td = df[df[' lapIdx'] == idx]
+            # td = df[df[' lapIdx'] == idx]
+            mask = df[' lapIdx'] == idx
+            td = df[mask]
 
             # assuming no stroke type info
             tdwork = td
 
-            #avghr = tdwork[' HRCur (bpm)'].mean()
             avghr = wavg(tdwork,' HRCur (bpm)','deltat')
             maxhr = tdwork[' HRCur (bpm)'].max()
-            #avgspm = tdwork[' Cadence (stokes/min)'].mean()
-            #avgpower = tdwork[' Power (watts)'].mean()
             avgspm = wavg(tdwork,' Cadence (stokes/min)','deltat')
             avgpower = wavg(tdwork,' Power (watts)','deltat')
 
@@ -2657,11 +2656,14 @@ class rowingdata:
             df[' WorkoutState'] = 4
 
         for idx in intervalnrs:
-            td = df[df[' lapIdx'] == idx]
+            mask = df[' lapIdx'] == idx
+            td = df[mask]
 
             # get stroke info
-            tdwork = td[~td[' WorkoutState'].isin(workoutstatesrest)]
-            tdrest = td[td[' WorkoutState'].isin(workoutstatesrest)]
+            mask = ~td[' WorkoutState'].isin(workoutstatesrest)
+            tdwork = td[mask]
+            mask = td[' WorkoutState'].isin(workoutstatesrest)
+            tdrest = td[mask]
 
             try:
                 # replaced ix with loc
