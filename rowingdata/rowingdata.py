@@ -2075,6 +2075,13 @@ class rowingdata:
                                                 inplace=True)
 
             self.dragfactor = sled_df[' DragFactor'].mean()
+            # do stroke count
+            dt = sled_df['TimeStamp (sec)'].diff()
+            dstroke = dt*sled_df[' Cadence (stokes/min)']/60.
+            self.stroke_count = int(dstroke.sum())
+        else:
+            self.dragfactor = 0
+            self.stroke_count = 0
 
         # get the date of the row
         starttime = 0
