@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.5.5"
+__version__ = "2.5.6"
 
 from collections import Counter
 
@@ -1180,14 +1180,14 @@ class summarydata:
         tottimehr = 0
         tottimespm = 0
 
-        for i in range(nr_rows):
-            inttime = self.workdata['Time'].iloc[i]
-            thr = self.workdata['Avg HR'].iloc[i]
-            td = self.workdata['Distance (m)'].iloc[i]
-            tpace = self.workdata['Avg Pace (/500m)'].iloc[i]
-            tspm = self.workdata['Avg SR'].iloc[i]
-            tmaxhr = self.workdata['Max HR'].iloc[i]
-            tstrokes = self.workdata['Strokes'].iloc[i]
+        for index,row in self.workdata.iterrows():
+            inttime = row['Time']
+            thr = row['Avg HR']
+            td = row['Distance (m)']
+            tpace = row['Avg Pace (/500m)']
+            tspm = row['Avg SR']
+            tmaxhr = row['Max HR']
+            tstrokes = row['Strokes']
 
             tdps = td / (1.0 * tstrokes)
 
@@ -2075,6 +2075,13 @@ class rowingdata:
                                                 inplace=True)
 
             self.dragfactor = sled_df[' DragFactor'].mean()
+            # do stroke count
+            dt = sled_df['TimeStamp (sec)'].diff()
+            dstroke = dt*sled_df[' Cadence (stokes/min)']/60.
+            self.stroke_count = int(dstroke.sum())
+        else:
+            self.dragfactor = 0
+            self.stroke_count = 0
 
         # get the date of the row
         starttime = 0
@@ -2582,16 +2589,15 @@ class rowingdata:
         previoustime = df['TimeStamp (sec)'].min()
 
         for idx in intervalnrs:
-            td = df[df[' lapIdx'] == idx]
+            # td = df[df[' lapIdx'] == idx]
+            mask = df[' lapIdx'] == idx
+            td = df[mask]
 
             # assuming no stroke type info
             tdwork = td
 
-            #avghr = tdwork[' HRCur (bpm)'].mean()
             avghr = wavg(tdwork,' HRCur (bpm)','deltat')
             maxhr = tdwork[' HRCur (bpm)'].max()
-            #avgspm = tdwork[' Cadence (stokes/min)'].mean()
-            #avgpower = tdwork[' Power (watts)'].mean()
             avgspm = wavg(tdwork,' Cadence (stokes/min)','deltat')
             avgpower = wavg(tdwork,' Power (watts)','deltat')
 
@@ -2650,11 +2656,14 @@ class rowingdata:
             df[' WorkoutState'] = 4
 
         for idx in intervalnrs:
-            td = df[df[' lapIdx'] == idx]
+            mask = df[' lapIdx'] == idx
+            td = df[mask]
 
             # get stroke info
-            tdwork = td[~td[' WorkoutState'].isin(workoutstatesrest)]
-            tdrest = td[td[' WorkoutState'].isin(workoutstatesrest)]
+            mask = ~td[' WorkoutState'].isin(workoutstatesrest)
+            tdwork = td[mask]
+            mask = td[' WorkoutState'].isin(workoutstatesrest)
+            tdrest = td[mask]
 
             try:
                 # replaced ix with loc
@@ -3922,19 +3931,13 @@ class rowingdata:
             tdwork = td[~td[' WorkoutState'].isin(workoutstatesrest)]
             tdrest = td[td[' WorkoutState'].isin(workoutstatesrest)]
 
-            #avghr = nanstozero(tdwork[' HRCur (bpm)'].mean())
             avghr = nanstozero(wavg(tdwork,' HRCur (bpm)','deltat'))
             maxhr = nanstozero(tdwork[' HRCur (bpm)'].max())
-            #avgspm = nanstozero(tdwork[' Cadence (stokes/min)'].mean())
             avgspm = nanstozero(wavg(tdwork,' Cadence (stokes/min)','deltat'))
-            #avgpower = nanstozero(tdwork[' Power (watts)'].mean())
             avgpower = nanstozero(wavg(tdwork,' Power (watts)','deltat'))
 
-            #avghrrest = nanstozero(tdrest[' HRCur (bpm)'].mean())
             avghrrest = nanstozero(wavg(tdrest,' HRCur (bpm)','deltat'))
             maxhrrest = nanstozero(tdrest[' HRCur (bpm)'].max())
-            #avgspmrest = nanstozero(tdrest[' Cadence (stokes/min)'].mean())
-            #avgrestpower = nanstozero(tdrest[' Power (watts)'].mean())
             avgspmrest = nanstozero(wavg(tdrest,' Cadence (stokes/min)','deltat'))
             avgrestpower = nanstozero(wavg(tdrest,' Power (watts)','deltat'))
 

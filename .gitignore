@@ -10,6 +10,9 @@
 /py2/
 /htmlcov/
 
+# test data
+/testdata/testtcx.tcx
+
 # Python egg metadata, regenerated from source files by setuptools.
 /*.egg-info
 
