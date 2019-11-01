@@ -27,7 +27,7 @@ class TestCumValues:
         ]
 
     delta = 0.0001
-    
+
     for e,r in testcombis:
         if e in df.index and r in df.index:
             expectedresult = df.loc[:,r]
@@ -42,7 +42,7 @@ class TestBasicRowingData:
 
     def test_filetype(self):
         assert_equals(rowingdata.get_file_type('testdata/testdata.csv'),'csv')
-    
+
     def test_basic_rowingdata(self):
         assert_equals(self.row.rowtype,'Indoor Rower')
         assert_equals(self.row.dragfactor,104.42931937172774)
@@ -75,7 +75,7 @@ class TestBasicRowingData:
 
         str = self.row.intervalstats()
         assert_equals(len(str),281)
-                      
+
 class TestStringParser:
     def teststringparser(self):
         s1='8x500m/2min'
@@ -165,7 +165,7 @@ class TestCumCP:
         isempty = df.empty
 
         assert_equals(isempty,False)
-        
+
     def test_histo(self):
         row1 = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
         row2 = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
@@ -205,7 +205,7 @@ class TestOperations:
     def test_spmfromtimestamp(self):
         row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
         row.spm_fromtimestamps()
-        
+
 class TestSummaries:
     def test_summary(self):
         row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
@@ -248,13 +248,13 @@ class TestCharts:
         fig = row.get_metersplot_otwpower('aap')
         fig = row.get_timeplot_otwempower('aap')
         fig = row.get_metersplot_otwempower('aap')
-        
+
 class TestCorrectedRowingData:
     row=rowingdata.rowingdata(csvfile='testdata/correctedpainsled.csv')
 
     def test_filetype(self):
         assert_equals(rowingdata.get_file_type('testdata/testdata.csv'),'csv')
-    
+
     def test_basic_rowingdata(self):
         assert_equals(self.row.rowtype,'Indoor Rower')
         assert_equals(self.row.dragfactor,95.8808988764045)
@@ -285,7 +285,7 @@ class TestTCXExport:
         r2 = rowingdata.TCXParser(tcxfile)
         row=rowingdata.rowingdata(df=r.df)
         assert_equals(row.number_of_rows,97)
-        
+
 class TestErgData:
     def testergdata(self):
         csvfile='testdata/ergdata_example.csv'
@@ -332,7 +332,25 @@ class TestBoatCoachParser:
         checks = row.check_consistency()
         assert_equals(checks['velo_time_distance'],True)
         #        assert_equals(checks['velo_valid'],True)
-        
+
+class TestForceUnits:
+    def testspeedcoach(self):
+        csvfile='testdata/EmpowerSpeedCoachForce.csv'
+        r = rowingdata.SpeedCoach2Parser(csvfile=csvfile)
+        row = rowingdata.rowingdata(df=r.df)
+        averageforce_lbs = int(row.df[' AverageDriveForce (lbs)'].mean())
+        averageforce_N = int(row.df[' AverageDriveForce (N)'].mean())
+        assert_equals(averageforce_N,263)
+        assert_equals(averageforce_lbs,59)
+
+    def testpainsled(self):
+        csvfile='testdata/PainsledForce.csv'
+        row = rowingdata.rowingdata(csvfile=csvfile)
+        averageforce_lbs = int(row.df[' AverageDriveForce (lbs)'].mean())
+        averageforce_N = int(row.df[' AverageDriveForce (N)'].mean())
+        assert_equals(averageforce_N,398)
+        assert_equals(averageforce_lbs,89)
+
 class TestspeedcoachParser:
     def testspeedcoach(self):
         csvfile='testdata/speedcoachexample.csv'
@@ -347,7 +365,7 @@ class TestspeedcoachParser:
         checks = row.check_consistency()
         assert_equals(checks['velo_time_distance'],True)
         #        assert_equals(checks['velo_valid'],True)
-        
+
 class TestErgStickParser:
     def testergstick(self):
         csvfile='testdata/ergstick.csv'
@@ -362,7 +380,7 @@ class TestErgStickParser:
         checks = row.check_consistency()
         assert_equals(checks['velo_time_distance'],True)
         #        assert_equals(checks['velo_valid'],True)
-        
+
 class TestMysteryParser:
     def testmystery(self):
         csvfile='testdata/mystery.csv'
@@ -377,7 +395,7 @@ class TestMysteryParser:
         checks = row.check_consistency()
         assert_equals(checks['velo_time_distance'],True)
         #        assert_equals(checks['velo_valid'],True)
-        
+
 class TestRowProParser:
     def testrowpro(self):
         csvfile='testdata/RP_testdata.csv'
@@ -396,7 +414,7 @@ class TestRowProParser:
 
 
 
-        
+
 class TestAddPowerZones:
     row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
 
@@ -408,7 +426,7 @@ class TestAddPowerZones:
         result = rowingdata.addpowerzones(row.df, 225, [23,53,76,87,91])
 
 
-        
+
 class TestRowProParserIntervals:
     def testrowprointervals(self):
         csvfile='testdata/RP_interval.csv'
@@ -424,7 +442,7 @@ class TestRowProParserIntervals:
         checks = row.check_consistency()
         assert_equals(checks['velo_time_distance'],True)
         #        assert_equals(checks['velo_valid'],True)
-        
+
 class TestSpeedCoach2Parser:
     def testspeedcoach2(self):
         csvfile='testdata/Speedcoach2example.csv'
@@ -440,7 +458,7 @@ class TestSpeedCoach2Parser:
         checks = row.check_consistency()
         assert_equals(checks['velo_time_distance'],True)
         #        assert_equals(checks['velo_valid'],True)
-        
+
 class TestSpeedCoach2_v127Parser:
     def testspeedcoach2v127(self):
         csvfile='testdata/SpeedCoach2Linkv1.27.csv'
@@ -477,7 +495,7 @@ class TestCurveData:
         assert_equals(len(cs),2)
         assert_equals(cs[0],'boat accelerator curve')
 
-        
+
 class TestFITParser:
     def testfit(self):
         fitfile='testdata/3x250m.fit'
@@ -493,7 +511,7 @@ class TestFITParser:
         checks = row.check_consistency()
         assert_equals(checks['velo_time_distance'],False)
         #assert_equals(checks['velo_valid'],True)
-        
+
     def testfitsummary(self):
         fitfile='testdata/3x250m.fit'
         r = rowingdata.FitSummaryData(fitfile)
@@ -511,7 +529,7 @@ class TestSequence(unittest.TestCase):
             )
 
     @parameterized.expand(lijst)
-    
+
     def test_check(self, name, filename, expected):
         f2='testdata/'+filename
         res=rowingdata.checkdatafiles.checkfile(f2)
@@ -525,6 +543,3 @@ class TestSequence(unittest.TestCase):
                         assert_equals(value,expected[key])
                 elif key == 'summary':
                     assert_not_equal(value,'')
-
-
-                      
