@@ -44,7 +44,7 @@ except (ValueError,ImportError):
 
     from rowingdata.tcxtools import strip_control_characters
 
-    
+
 import six
 from six.moves import range
 from six.moves import zip
@@ -60,7 +60,7 @@ else:
     pythonversion = 3
     from io import open
 
-    
+
 # we're going to plot SI units - convert pound force to Newton
 lbstoN = 4.44822
 
@@ -152,6 +152,11 @@ def csvtests(s):
     except IndexError:
         seventhline = ''
 
+    try:
+        ninthline = s[8]
+    except IndexError:
+        ninthline = ''
+
 
     if 'RitmoTime' in firstline:
         return 'ritmotime'
@@ -182,7 +187,10 @@ def csvtests(s):
 
     if 'Avg Speed (IMP)' in firstline:
         return 'speedcoach2'
-    
+
+    if 'LiNK' in ninthline:
+        return 'speedcoach2'
+
     if 'SpeedCoach GPS Pro' in fourthline:
         return 'speedcoach2'
 
@@ -274,7 +282,7 @@ def get_file_type(f):
                     return 'fit'
                 except:
                     return 'unknown'
-                
+
             return 'fit'
         if extension == '.tcx':
             try:
@@ -283,7 +291,7 @@ def get_file_type(f):
                 return 'tcx'
             except:
                 return 'unknown'
-        
+
         with gzip.open(f, readmode) as fop:
             try:
                 if extension == '.csv':
@@ -303,7 +311,7 @@ def get_file_type(f):
         else:
             with open(f, readmode) as fop:
                 s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
-                
+
         return csvtests(s)
 
     if extension == '.tcx':
@@ -313,7 +321,7 @@ def get_file_type(f):
             return 'tcx'
         except:
             return 'unknown'
-        
+
 
     if extension == '.fit':
         try:
@@ -347,7 +355,7 @@ def get_file_linecount(f):
             with gzip.open(f,readmodebin) as fop:
                 s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
                 count = len(s)
-                
+
     else:
         with open(f, 'r') as fop:
             try:
@@ -407,7 +415,7 @@ def empower_bug_correction(oarlength,inboard,a,b):
 
 def getoarlength(line):
     l = float(line.split(',')[-1])
-        
+
     return l
 
 def getinboard(line):
@@ -453,7 +461,7 @@ def get_empower_rigging(f):
                         inboard = getinboard(line)
                     except ValueError:
                         return None,None
-                
+
 
 
     return oarlength / 100., inboard / 100.
@@ -470,14 +478,14 @@ def get_empower_firmware(f):
             for line in fop:
                 if 'firmware' in line.lower() and 'oar' in line.lower():
                     firmware = getfirmware(line)
-            
+
 
 
     try:
         firmware = np.float(firmware)
     except ValueError:
         firmware = None
-        
+
     return firmware
 
 def skip_variable_footer(f):
@@ -558,7 +566,7 @@ def skip_variable_header(f):
             counter2 = counter
         else:
             counter += 1
-            
+
 
 
     # test for blank line
@@ -622,7 +630,7 @@ def make_cumvalues_array(xvalues):
         newvalues = 0.0 * xvalues
     except TypeError:
         return [xvalues,0]
-        
+
     dx = np.diff(xvalues)
     dxpos = dx
     nrsteps = len(dxpos[dxpos < 0])
@@ -825,7 +833,7 @@ class CSVParser(object):
         else:
             return data.to_csv(writeFile, index_label='index')
 
-# Parsing CSV files from Humon        
+# Parsing CSV files from Humon
 class HumonParser(CSVParser):
     def __init__(self, *args, **kwargs):
         if args:
@@ -879,7 +887,7 @@ class HumonParser(CSVParser):
         self.df[self.columns['TimeStamp (sec)']] = time
 
         self.to_standard()
-        
+
 class RitmoTimeParser(CSVParser):
     def __init__(self, *args, **kwargs):
         if args:
@@ -904,7 +912,7 @@ class RitmoTimeParser(CSVParser):
                 'Distance (m)',
                 'Speed (m/s)',
                 'Latitude (deg)',
-                'Longitude (deg)',                
+                'Longitude (deg)',
             ]
             converters = make_converter(convertlistbase,self.df)
 
@@ -960,7 +968,7 @@ class RitmoTimeParser(CSVParser):
                 timezone_str = tf.timezone_at(lng=lonavg, lat=latavg)
                 if timezone_str is None:
                     timezone_str = tf.closest_timezone_at(lng=lonavg,lat=latavg)
-                    
+
                 startdatetime = pytz.timezone(timezone_str).localize(startdatetime)
             except KeyError:
                 startdatetime = pytz.timezone('UTC').localize(startdatetime)
@@ -976,7 +984,7 @@ class RitmoTimeParser(CSVParser):
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
 
         self.to_standard()
-            
+
 class QuiskeParser(CSVParser):
     def __init__(self, *args, **kwargs):
         kwargs['skiprows'] = 1
@@ -1054,7 +1062,7 @@ class BoatCoachOTWParser(CSVParser):
             pace1 = self.df['Last 10 Stroke Speed(/km)']
             self.df['Last 10 Stroke Speed(/500m)'] = pace1.values
 
-            
+
         # crude EU format detector
         try:
             ll = self.df['Longitude']*10.0
@@ -1121,15 +1129,15 @@ class BoatCoachOTWParser(CSVParser):
             multiplicator = 0.5
         except:
             multiplicator = 1
-    
+
 
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']].apply(
                 timestrtosecs2
             )
 
         pace *= multiplicator
-            
-            
+
+
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
 
 
@@ -1369,24 +1377,24 @@ class BoatCoachParser(CSVParser):
         # Recalculate power
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']]
 
-        
+
         pace = np.clip(pace, 0, 1e4)
         pace = pace.replace(0, 300)
 
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
         velocity = 500. / (1.0 * pace)
         power = 2.8 * velocity**3
-        
+
         dif = abs(power - self.df[self.columns[' Power (watts)']])
 
         moving = self.df[self.columns[' Horizontal (meters)']].diff()
 
-        
-        
+
+
         power[dif < 5] = self.df[self.columns[' Power (watts)']][dif < 5]
 
         power[dif > 1000] = self.df[self.columns[' Power (watts)']][dif > 1000]
-        
+
         power[moving <= 0] = 0
 
         self.df[self.columns[' Power (watts)']] = power
@@ -2140,11 +2148,11 @@ class RowProParser(CSVParser):
         lapidx = res[1]
         seconds3 = seconds2.interpolate()
         seconds3[0] = seconds[0]
-        unixtimes = seconds3 + arrow.get(self.row_date).timestamp 
+        unixtimes = seconds3 + arrow.get(self.row_date).timestamp
 
 #        seconds3 = pd.to_timedelta(seconds3, unit='s')
 
-        
+
 #        try:
 #            tts = self.row_date + seconds3
 #            unixtimes = tts.apply(lambda x: arrow.get(
@@ -2190,7 +2198,7 @@ class SpeedCoach2Parser(CSVParser):
                     corr_factor = empower_bug_correction(oarlength,inboard,a,b)
 
 
-            
+
         unitrow = get_file_line(skiprows + 2, csvfile)
         self.velo_unit = 'ms'
         self.dist_unit = 'm'
@@ -2308,7 +2316,7 @@ class SpeedCoach2Parser(CSVParser):
                     self.columns[' Power (watts)'] = 'Work'
                     self.columns['Work'] = 'Power'
                     self.columns['GPS Speed'] = 'Speed (IMP)'
-                    
+
         try:
             if self.force_unit == 'N':
                 self.df[self.columns[' PeakDriveForce (lbs)']] /= lbstoN
@@ -2373,7 +2381,7 @@ class SpeedCoach2Parser(CSVParser):
         lapidx = res[1]
 
         unixtimes = seconds3 + totimestamp(self.row_date)
-        
+
         if not self.df.empty:
             self.df[self.columns[' lapIdx']] = lapidx
             self.df[self.columns['TimeStamp (sec)']] = unixtimes
@@ -2436,7 +2444,7 @@ class SpeedCoach2Parser(CSVParser):
             except (ValueError,KeyError):
                 dist = 0.0
 
-            
+
         timestring = self.sessiondata['Total Elapsed Time'].values[0]
         timestring = flexistrftime(flexistrptime(timestring))
 
@@ -2444,7 +2452,7 @@ class SpeedCoach2Parser(CSVParser):
             pacestring = self.sessiondata['Avg Split (GPS)'].values[0]
         except KeyError:
             pacestring = self.sessiondata['Avg Split'].values[0]
-            
+
         pacestring = flexistrftime(flexistrptime(pacestring))
         try:
             pwr = self.sessiondata['Avg Power'].astype(float).mean()
@@ -2461,7 +2469,7 @@ class SpeedCoach2Parser(CSVParser):
             avghr = self.sessiondata['Avg Heart Rate'].astype(float).mean()
         except (ValueError,KeyError):
             avghr = 0
-            
+
         try:
             avgdps = self.sessiondata['Distance/Stroke (GPS)'].astype(float).mean()
         except KeyError:
@@ -2478,7 +2486,7 @@ class SpeedCoach2Parser(CSVParser):
         )
 
         stri1 += timestring + separator + pacestring
-        
+
         stri1 += "{sep}{avgpower:0>5.1f}".format(
             sep=separator,
             avgpower=pwr,
@@ -2497,12 +2505,12 @@ class SpeedCoach2Parser(CSVParser):
         )
 
         return stri1
-            
-            
+
+
     def summary(self, separator='|'):
         if self.sessionsummary() is not None:
             return self.sessionsummary()
-        
+
         stri1 = "Workout Summary - " + self.csvfile + "\n"
         stri1 += "--{sep}Total{sep}-Total-{sep}--Avg--{sep}-Avg-{sep}Avg-{sep}-Avg-{sep}-Max-{sep}-Avg\n".format(
             sep=separator)
@@ -2537,7 +2545,7 @@ class SpeedCoach2Parser(CSVParser):
         )
 
         stri1 += timestring + separator + pacestring
-        
+
         stri1 += "{sep}{avgpower:0>5.1f}".format(
             sep=separator,
             avgpower=pwr,
@@ -2568,7 +2576,7 @@ class SpeedCoach2Parser(CSVParser):
 
             if self.dist_unit == 'km':
                 sdist = float(sdist)*1000.
-            
+
             split = self.summarydata.loc[i,
                                         'Total Elapsed Time']
             space = self.summarydata.loc[i,
@@ -2593,10 +2601,10 @@ class SpeedCoach2Parser(CSVParser):
                 dps = float(sdist) / float(nrstrokes)
             except ZeroDivisionError:
                 dps = 0.0
-                
+
             splitstring = split
 
-            
+
             newsplitstring = flexistrftime(flexistrptime(splitstring))
             pacestring = space
             newpacestring = flexistrftime(flexistrptime(pacestring))
