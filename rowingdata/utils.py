@@ -42,10 +42,10 @@ def geo_distance(lat1,lon1,lat2,lon2):
     This is a slight underestimate but is close enough for our purposes,
     We're never moving more than 10 meters between trackpoints
 
-    Bearing calculation fails if one of the points is a pole. 
-    
+    Bearing calculation fails if one of the points is a pole.
+
     """
-    
+
     # radius of earth in km
     R=6373.0
 
@@ -68,6 +68,7 @@ def geo_distance(lat1,lon1,lat2,lon2):
     tc1=atan2(sin(lon2-lon1)*cos(lat2),
                 cos(lat1)*sin(lat2)-sin(lat1)*cos(lat2)*cos(lon2-lon1))
 
+
     tc1=tc1 % (2*pi)
 
     bearing=math.degrees(tc1)
@@ -87,7 +88,7 @@ def totimestamp(dt, epoch=datetime.datetime(1970,1,1,0,0,0,0,pytz.UTC)):
 def format_pace(x,pos=None):
     if np.isinf(x) or np.isnan(x):
         x=0
-        
+
     min=int(x/60)
     sec=(x-min*60.)
 
@@ -114,7 +115,7 @@ def format_time(x,pos=None):
             sec=sec)
 
 
-    
+
 
 
     return str1
