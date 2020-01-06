@@ -2,7 +2,7 @@ filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrinterval
 spdcoach2noheader.csv,speedcoach2,255,0,0,0,0,0,0,2372,737,1,737,2372,UTC
 ritmointervals.csv,ritmotime,1045,2019,4,6,14,22,46,11417,5452,9,1099,1929,UTC
 humon,humon,2935,2019,1,21,7,47,40,769,2934,1,2934,769,UTC
-rp3intervals.csv,rowperfect3,855,0,0,0,0,0,0,8829,2758,5,598,2947,UTC
+rp3intervals.csv,rowperfect3,855,0,0,0,0,0,0,8829,2758,5,596,2938,UTC
 aritmo.csv,ritmotime,581,2018,6,15,15,34,12,7538,3374,1,3374,7538,UTC
 invalidchar.tcx,tcx,0,2018,3,5,17,50,46,5019,1887,7,322,763,UTC
 bc3.csv,boatcoach,2130,2017,12,10,13,52,50,8726,2461,16,24,86,UTC
@@ -64,8 +64,8 @@ speedcoachexample.csv,speedcoach,476,0,0,0,0,0,0,9520,3176,1,3176,9520,UTC
 testdata.csv,csv,191,2016,5,20,13,41,26,2000,537,4,139,510,UTC
 tim.csv,csv,605,2016,6,3,16,55,18,6063,1942,5,0,7,UTC
 testlapidx.csv,csv,191,2016,5,20,13,41,27,2000,537,3,140,510,UTC
-rowperfect.csv.gz,rowperfect3,1263,0,0,0,0,0,0,18152,5698,3,2698,11440,UTC
-rowperfect.csv,rowperfect3,1263,0,0,0,0,0,0,18152,5698,3,2697,11440,UTC
+rowperfect.csv.gz,rowperfect3,1263,0,0,0,0,0,0,18152,5698,3,2697,11435,UTC
+rowperfect.csv,rowperfect3,1263,0,0,0,0,0,0,18152,5698,3,2697,11435,UTC
 rowpro5.csv,rp,35,2017,1,1,21,50,6,469,120,1,120,469,UTC
 NKEmporfromgreg.csv,speedcoach2,582,2016,9,21,6,32,1,5000,1229,5,238,1000,UTC
 SpeedCoach2v2.12.csv,speedcoach2,115,2017,1,19,7,38,6,991,184,1,184,991,UTC
