@@ -1,4 +1,4 @@
-arrow==0.13.1
+arrow==0.15.4
 cairocffi==1.0.2
 certifi==2019.3.9
 cffi==1.12.2
@@ -21,6 +21,7 @@ packaging==19.0
 pandas==0.24.1
 parameterized==0.7.0
 pip-upgrader==1.4.6
+pyarrow==0.15.1
 pycairo==1.18.0
 pycparser==2.19
 pyparsing==2.3.1

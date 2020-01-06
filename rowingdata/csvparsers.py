@@ -620,7 +620,7 @@ def bc_variable_header(f):
 
     return 0
 
-def make_cumvalues_array(xvalues):
+def make_cumvalues_array(xvalues,doequal=False):
     """ Takes a Pandas dataframe with one column as input value.
     Tries to create a cumulative series.
 
@@ -635,6 +635,13 @@ def make_cumvalues_array(xvalues):
     dxpos = dx
     nrsteps = len(dxpos[dxpos < 0])
     lapidx = np.append(0, np.cumsum((-dx + abs(dx)) / (-2 * dx)))
+    if doequal:
+        lapidx[0] = 0
+        cntr = 0
+        for i in range(len(dx)-1):
+            if dx[i+1] <= 0:
+                cntr += 1
+            lapidx[i+1] = cntr
     if nrsteps > 0:
         indexes = np.where(dxpos < 0)
         for index in indexes:
@@ -1937,6 +1944,7 @@ class RowPerfectParser(CSVParser):
 
         seconds = self.df[self.columns['TimeStamp (sec)']]
         newseconds,lapidx = make_cumvalues_array(seconds)
+        newstrokenr,lapidx = make_cumvalues_array(self.df['stroke_number'],doequal=True)
         seconds2 = pd.Series(newseconds)+newseconds[0]
         res = make_cumvalues(seconds)
         #seconds2 = res[0] + seconds[0]
