@@ -1944,10 +1944,7 @@ class RowPerfectParser(CSVParser):
 
         seconds = self.df[self.columns['TimeStamp (sec)']]
         newseconds,lapidx = make_cumvalues_array(seconds)
-        print(lapidx)
         newstrokenr,lapidx = make_cumvalues_array(self.df['stroke_number'],doequal=True)
-        print(' ')
-        print(lapidx)
         seconds2 = pd.Series(newseconds)+newseconds[0]
         res = make_cumvalues(seconds)
         #seconds2 = res[0] + seconds[0]
