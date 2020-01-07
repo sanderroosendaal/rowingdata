@@ -2282,24 +2282,37 @@ class SpeedCoach2Parser(CSVParser):
         except KeyError:
             pass
 
+        # set GPS speed apart for swapping
+        try:
+            self.df['GPSSpeed'] = self.df['GPS Speed']
+            self.df['GPSDistance'] = self.df['GPS Distance']
+        except KeyError:
+            self.df['GPSSpeed'] = self.df['Speed (GPS)']
+            self.df['GPSDistance'] = self.df['Distance (GPS)']
+
         # take Impeller split / speed if available and not zero
         try:
+            impspeed = self.df['Speed (IMP)']
+            self.columns['GPS Speed'] = 'Speed (IMP)'
+            self.columns[' Horizontal (meters)'] = 'Distance (IMP)'
+            self.df['ImpellerSpeed'] = impspeed
+            self.df['ImpellerDistance'] = self.df['Distance (IMP)']
+        except KeyError:
             try:
-                impspeed = self.df['Speed (IMP)']
-                self.columns['GPS Speed'] = 'Speed (IMP)'
-                self.columns[' Horizontal (meters)'] = 'Distance (IMP)'
-            except KeyError:
                 impspeed = self.df['Imp Speed']
                 self.columns['GPS Speed'] = 'Imp Speed'
                 self.columns[' Horizontal (meters)'] = 'Imp Distance'
-            if impspeed.std() != 0 and impspeed.mean() != 0:
-                self.df[self.columns['GPS Speed']] = impspeed
                 self.df['ImpellerSpeed'] = impspeed
-            else:
-                self.columns['GPS Speed'] = 'GPS Speed'
-                self.columns[' Horizontal (meters)'] = 'GPS Distance'
-        except KeyError:
-            pass
+                self.df['ImpellerDistance'] = self.df['Imp Distance']
+            except KeyError:
+                impspeed = 0*self.df[self.columns['GPS Speed']]
+
+        if impspeed.std() != 0 and impspeed.mean() != 0:
+            self.df[self.columns['GPS Speed']] = impspeed
+        else:
+            self.columns['GPS Speed'] = 'GPS Speed'
+            self.columns[' Horizontal (meters)'] = 'GPS Distance'
+
         #
 
         try:
