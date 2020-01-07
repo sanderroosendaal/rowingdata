@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from nose.tools import assert_equals, assert_not_equal
+from nose.tools import assert_equals, assert_not_equal, assert_false
 from nose import with_setup
 import rowingdata
 import datetime
@@ -144,6 +144,14 @@ class TestPhysics:
         row = rowingdata.rowingdata(df=row.df)
         result = row.otw_setpower_silent(skiprows=40)
         assert_equals(result,1)
+
+class TestImpeller:
+    def test_impeller(self):
+        row = rowingdata.SpeedCoach2Parser('testdata/SpdCoach2_imp_inconsistent.csv')
+        impellerdata, consistent, fraction = row.impellerconsistent(threshold = 0.3)
+
+        assert_equals(fraction,0.911849710982659)
+        assert_false(consistent)
 
 class TestBearing:
     row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')

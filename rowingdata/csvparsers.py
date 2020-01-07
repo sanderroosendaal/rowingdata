@@ -2294,6 +2294,7 @@ class SpeedCoach2Parser(CSVParser):
                 self.columns[' Horizontal (meters)'] = 'Imp Distance'
             if impspeed.std() != 0 and impspeed.mean() != 0:
                 self.df[self.columns['GPS Speed']] = impspeed
+                self.df['ImpellerSpeed'] = impspeed
             else:
                 self.columns['GPS Speed'] = 'GPS Speed'
                 self.columns[' Horizontal (meters)'] = 'GPS Distance'
@@ -2428,6 +2429,25 @@ class SpeedCoach2Parser(CSVParser):
                 self.sessiondata = pd.DataFrame()
         else:
             self.sessiondata = pd.DataFrame()
+
+    def impellerconsistent(self, threshold = 0.3):
+        impellerconsistent = True
+        try:
+            impspeed = self.df['ImpellerSpeed']
+        except KeyError:
+            return False, True, 0
+
+        nrvalues = len(impspeed)
+
+        impspeed.fillna(inplace=True,value=0)
+        nrvalid = impspeed.astype(bool).sum()
+
+        ratio = float(nrvalues-nrvalid)/float(nrvalues)
+
+        if ratio > threshold:
+            impellerconsistent = False
+
+        return True, impellerconsistent, ratio
 
     def allstats(self, separator='|'):
         stri = self.summary(separator=separator) + \
