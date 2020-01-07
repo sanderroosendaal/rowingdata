@@ -2287,8 +2287,11 @@ class SpeedCoach2Parser(CSVParser):
             self.df['GPSSpeed'] = self.df['GPS Speed']
             self.df['GPSDistance'] = self.df['GPS Distance']
         except KeyError:
-            self.df['GPSSpeed'] = self.df['Speed (GPS)']
-            self.df['GPSDistance'] = self.df['Distance (GPS)']
+            try:
+                self.df['GPSSpeed'] = self.df['Speed (GPS)']
+                self.df['GPSDistance'] = self.df['Distance (GPS)']
+            except KeyError:
+                pass
 
         # take Impeller split / speed if available and not zero
         try:
