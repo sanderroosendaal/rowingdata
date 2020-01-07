@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.5.8"
+__version__ = "2.5.9"
 
 from collections import Counter
 
@@ -2373,6 +2373,38 @@ class rowingdata:
                                compression='gzip')
         else:
             return data.to_csv(writeFile, index_label='index')
+
+    def use_impellerdata(self):
+        df = self.df
+        try:
+            df[' AverageBoatSpeed (m/s)'] = df['ImpellerSpeed']
+            df[' Horizontal (meters)'] = df['ImpellerDistance']
+            dd = df[' Horizontal (meters)'].diff()
+            dt = df[' ElapsedTime (sec)'].diff()
+            velo = dd / dt
+            df[' Stroke500mPace (sec/500m)'] = 500. / velo
+        except KeyError:
+            return False
+
+        self.df = df
+
+        return True
+
+    def use_gpsdata(self):
+        df = self.df
+        try:
+            df[' AverageBoatSpeed (m/s)'] = df['GPSSpeed']
+            df[' Horizontal (meters)'] = df['GPSDistance']
+            dd = df[' Horizontal (meters)'].diff()
+            dt = df[' ElapsedTime (sec)'].diff()
+            velo = dd / dt
+            df[' Stroke500mPace (sec/500m)'] = 500. / velo
+        except KeyError:
+            return False
+
+        self.df = df
+
+        return True
 
     def get_instroke_columns(self):
         cols = []
