@@ -50,7 +50,7 @@ class TestBasicRowingData:
         assert_equals(self.row.rowdatetime,datetime.datetime(2016,5,20,13,41,26,962390,utc))
         totaldist=self.row.df['cum_dist'].max()
         totaltime=self.row.df['TimeStamp (sec)'].max()-self.row.df['TimeStamp (sec)'].min()
-        totaltime=totaltime+self.row.df.ix[0,' ElapsedTime (sec)']
+        totaltime=totaltime+self.row.df.loc[0,' ElapsedTime (sec)']
         assert_equals(totaltime, 540.04236011505122)
         assert_equals(totaldist, 2000)
         checks = self.row.check_consistency()
@@ -270,7 +270,7 @@ class TestCorrectedRowingData:
         assert_equals(self.row.rowdatetime,datetime.datetime(2017,5,30,19,4,16,383211,utc))
         totaldist=self.row.df['cum_dist'].max()
         totaltime=self.row.df['TimeStamp (sec)'].max()-self.row.df['TimeStamp (sec)'].min()
-        totaltime=totaltime+self.row.df.ix[0,' ElapsedTime (sec)']
+        totaltime=totaltime+self.row.df.loc[0,' ElapsedTime (sec)']
         assert_equals(totaltime, 1309.9480600738525)
         assert_equals(totaldist, 5000)
         assert_equals(
@@ -530,8 +530,8 @@ class TestSequence(unittest.TestCase):
     list=pd.read_csv('testdata/testdatasummary.csv')
     lijst=[]
     for i in list.index:
-        filename=list.ix[i,'filename']
-        expected=list.ix[i,1:]
+        filename=list.loc[i,'filename']
+        expected=list.iloc[i,1:]
         lijst.append(
             (filename,filename,expected)
             )

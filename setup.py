@@ -38,25 +38,27 @@ setup(name='rowingdata',
       #packages=find_packages(),
 
       keywords='rowing ergometer concept2',
-      
+
       install_requires=[
-          'numpy',
-          'scipy',
-          'matplotlib',
-          'pandas',
-          'fitparse',
-#          'fitparse',
-          'arrow',
-#	  'mechanize',
+	  'numpy',
+	  'scipy',
+	  'matplotlib',
+	  'pandas',
+	  'fitparse',
+	  #          'fitparse',
+	  'arrow',
+	  #	  'mechanize',
 	  'python-dateutil',
 	  'docopt',
 	  'tqdm',
 	  'rowingphysics>=0.2.3',
 	  'iso8601',
-          'lxml',
-          'xmltodict',
-          'nose_parameterized',
-          'timezonefinder',
+	  'lxml',
+	  'xmltodict',
+	  'nose_parameterized',
+	  'timezonefinder',
+	  'pycairo',
+	  'tk','requests'
       ],
 
       zip_safe=False,
@@ -87,7 +89,7 @@ setup(name='rowingdata',
               '8+.txt'
           ]
       },
-      
+
       entry_points={
           "console_scripts": [
               'rowingdata=rowingdata.rowingdata:main',
@@ -120,9 +122,9 @@ setup(name='rowingdata',
               'rowproplottime=rowingdata.rowproplottime:main'
           ]
       },
-      
+
       scripts=[
           'bin/painsledplot2.py',
       ]
-      
+
 )

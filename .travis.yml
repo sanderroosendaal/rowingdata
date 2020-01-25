@@ -1,51 +1,15 @@
+sudo: false
 language: python
+email: false
 env:
-  global:
-    secure: kGtMHEQPUyWhDAZYI6HfBZ78zbN9yBRpLObgBymjtokICUpBPjE6/o8qrZ31iLki2uBQn/DLrA5vBDrYLQ5hMaiP5e0bBherlpoTkiyd0se0py9YSG0d7umqd0SVZ+NXEEeQBSDvvZBHrn5jj1gfrbE4r4bY3HpFv+glzN+P45wsmFj+YlqTQE9jPk00b+RkE+2rhDdZDqWMd9Ql4QDKks3yFy1aE89+oENSppbe9n15uJT83E9cNICn6Y03tUJHelSNKx9EAQEeqPDREsS1RbZhWDeKwgRwu+7szShnp6/3riwuzsmLPZV4HOvAC87Fhkse3SQ1Q5B6N/j18XWosW5ER/5PP1yGr3WxWksnATbwtgmO4uHpzgjaVrnH3eT0D517fiBU6UOmYzQtSsFVf42wRK7G6WVJWlCPt0qg1KzTZ5QGHaLGo0d3m1YEyct/kJEKa54wYCCxBADhor06MwlE6WF8GXxhzWaXwLf9abW9RDun1klgFCWDIAMPtVBAxXyGA936s9X5dFMYBITm/fEeamhAAC9l9ZC99Zuh9TT13j7EW1I8/ZMVOIBhtvoHgOkR54Er55P2ZDVVdlqjCt/dgmZ93fsAAQwtFPhyvsmwA8HejCdAAJnc0xihYB97UKKJcLg4v4Q9T+mBZoezhWfogtpGvSpntQ/JPDhikxs=
-addons:
-  apt:
-    packages:
-    - zsh
-    - csh
-    - tcsh
-    - posh
-    - ksh
-  update: true
-git:
-  depth: 100
-cache: pip
-before_cache:
-- rm -f $HOME/.cache/pip/log/debug.log
-python:
-- 3.4
-notifications:
-  email: false
+  - PYTHON=3.6 PANDAS=MASTER
 before_install:
-- export TZ=Europe/Prague
-- wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
-- chmod +x miniconda.sh
-- "./miniconda.sh -b"
-- export PATH=/home/travis/miniconda2/bin:$PATH
-#- sudo rm -rf /dev/shm
-#- sudo ln -s /run/shm /dev/shm
+  - echo "before_install"
 install:
-#- git clone -b master https://github.com/dtcooper/python-fitparse.git
-#- pip install twine
-#- cd python-fitparse
-#- git checkout 5d8bb3a1a2f6a36d9bf645af3e6bf93cc62b9908
-#- python setup.py install
-#- cd ..
-- conda install --yes python=$TRAVIS_PYTHON_VERSION atlas numpy scipy matplotlib nose pandas statsmodels setuptools
-- conda install --yes libgfortran==1
-- pip install arrow docopt tqdm rowingphysics
-- pip install iso8601 lxml==4.3.2 xmltodict nose_parameterized timezonefinder
-- pip install fitparse
-- pip install wheel
-- python setup.py install
+  - python setup.py install
 script:
 - nosetests tests/testparser.py
 - nosetests tests/test_rowingdata.py
-sudo: required
 after_success:
 - coveralls --config_file .coveragerc
 before_deploy:
@@ -62,5 +26,5 @@ deploy:
   distributions: sdist
   on:
     branch: master
-    python: 3.4
+    python: 3.6
     repo: sanderroosendaal/rowingdata
