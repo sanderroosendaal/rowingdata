@@ -57,7 +57,8 @@ setup(name='rowingdata',
 	  'xmltodict',
 	  'nose_parameterized',
 	  'timezonefinder',
-	  'pycairo'
+	  'pycairo',
+	  'tk'
       ],
 
       zip_safe=False,
