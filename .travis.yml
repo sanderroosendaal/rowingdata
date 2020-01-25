@@ -5,25 +5,6 @@ env:
 before_install:
   - echo "before_install"
 install:
-  - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda config --add channels pandas
-  - conda update -q conda
-  - conda info -a
-  - conda create -n test-environment python=$PYTHON
-  - source activate test-environment
-  - if [[ "$PANDAS" == "MASTER" ]]; then
-      conda install numpy pytz python-dateutil matplotlib;
-      PRE_WHEELS="https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com";
-      pip install --pre --upgrade --timeout=60 -f $PRE_WHEELS pandas;
-    else
-      conda install nomkl pandas=$PANDAS;
-    fi
-  - pip install pytest flake8
-  - conda list
   - python setup.py install
 script:
 - nosetests tests/testparser.py
