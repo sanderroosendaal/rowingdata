@@ -17,7 +17,7 @@ if sys.version_info[0]<=2:
     pythonversion = 2
 else:
     pythonversion = 3
-    
+
 import gzip
 import arrow
 import shutil
@@ -49,7 +49,7 @@ class ExcelTemplate(object):
         unixnow = arrow.get(now).timestamp
         time = 0
         totdistance = 0
-        
+
         for nr,row in self.xls_df.iterrows():
             duration = row['Interval Time']
             #duration = datetime.strptime(durationstring,"%M:%S.%f")
@@ -62,15 +62,15 @@ class ExcelTemplate(object):
                 if spm == np.nan:
                     spm = 10.
                 deltat = 60./spm
-                aantal = int(seconds/deltat)+1
+                aantal = max(2,int(seconds/deltat)+1)
                 time_list = time+np.arange(aantal)*deltat
                 distance = row['Interval Distance']
                 deltad = distance/float(aantal-1)
                 d_list = np.arange(aantal)*deltad
-                
+
                 velo = distance/float(seconds)
                 pace = 500./velo
-                
+
                 data = pd.DataFrame({
                     'time':time_list,
                     'distance':d_list,
@@ -83,7 +83,7 @@ class ExcelTemplate(object):
                 })
 
 
-                
+
                 self.df = self.df.append(data)
                 time += seconds
                 totdistance = distance
@@ -116,7 +116,7 @@ class ExcelTemplate(object):
                     else:
                         velo = 0
                         pace = 0
-                    
+
                     data = pd.DataFrame({
                         'time':time_list,
                         'distance':d_list,
@@ -147,7 +147,7 @@ class ExcelTemplate(object):
         writeFile = args[0]
 
         data = self.df
-        
+
         if isgzip:
             return data.to_csv(writeFile + '.gz', index_label='index',
                                compression='gzip')
@@ -181,7 +181,7 @@ class FitSummaryData(object):
 
         self.df = pd.DataFrame(recorddicts)
         self.lapdf = pd.DataFrame(lapdict)
-                
+
         self.summarytext = 'Work Details\n'
 
 
@@ -236,7 +236,7 @@ class FitSummaryData(object):
                 intdps = intdist/float(strokecount)
             except ZeroDivisionError:
                 intdps = 0.0
-                
+
             summarystring = "{nr:0>2}{sep}{intdist:0>5d}{sep}".format(
                 nr=lapcount+1,
                 sep=separator,
@@ -263,7 +263,7 @@ class FitSummaryData(object):
                 intpower=intpower,
                 sep=separator
             )
-                
+
             summarystring += " {inthr:0>3d} {sep}".format(
                 inthr=inthr,
                 sep=separator
@@ -286,10 +286,10 @@ class FitSummaryData(object):
             overallvelo = self.df['enhanced_speed'].mean()
         except KeyError:
             overallvelo = self.df['speed'].mean()
-            
+
         timestamps = self.df['timestamp'].apply(totimestamp)
         totaltime = timestamps.max()-timestamps.min()
-            
+
         overallpace = 500./overallvelo
 
         minutes = int(overallpace/60)
@@ -318,7 +318,7 @@ class FitSummaryData(object):
             avgdps = totaldistance/strokecount
         except ZeroDivisionError:
             avgdps = 0
-            
+
 
         summarystring = "Workout Summary\n"
         summarystring += "--{sep}{totaldistance:0>5}{sep}".format(
@@ -371,10 +371,10 @@ class FITParser(object):
         self.fitfile = FitFile(self.readfile, check_crc=False)
 
         self.records = self.fitfile.messages
-                
+
         recorddicts = []
         lapcounter = 0
-        
+
         for record in self.records:
             if record.name == 'record':
                 values = record.get_values()
@@ -383,7 +383,7 @@ class FITParser(object):
             if record.name == 'lap':
                 lapcounter += 1
 
-        
+
 
         self.df = pd.DataFrame(recorddicts)
 
@@ -395,7 +395,7 @@ class FITParser(object):
             self.df.columns = [x.decode('ascii') for x in self.df.columns]
 
         self.df.rename(columns = str.lower,inplace=True)
-            
+
 
         # check column dimensions
 
@@ -409,7 +409,7 @@ class FITParser(object):
                 self.df[c] = newdf[c]
 
         try:
-            latitude = self.df['position_lat']*(180./2**31)            
+            latitude = self.df['position_lat']*(180./2**31)
             longitude = self.df['position_long']*(180./2**31)
         except KeyError:
             # no coordinates
@@ -424,7 +424,7 @@ class FITParser(object):
         self.df['position_lat'] = latitude
         self.df['position_long'] = longitude
 
-        
+
         if pd.isnull(distance).all():
             dist2 = np.zeros(len(distance))
             for i in range(len(distance)-1):
@@ -448,7 +448,7 @@ class FITParser(object):
 
         if velo.mean() >= 1000:
             velo = velo/1000.
-            
+
 
         timestamps = self.df['timestamp'].apply(totimestamp)
         pace = 500./velo
@@ -457,7 +457,7 @@ class FITParser(object):
         self.df['TimeStamp (sec)'] = timestamps
         self.df[' Stroke500mPace (sec/500m)'] = pace
         self.df[' ElapsedTime (sec)'] = elapsed_time
-        
+
         newcolnames = {
             'power': ' Power (watts)',
             'heart_rate': ' HRCur (bpm)',
@@ -513,7 +513,7 @@ class JSONParser(object):
             return self.df.to_csv(writefile+'.gz', index_label='index',compression='gzip')
         else:
             return self.df.to_csv(writefile, index_label='index')
-        
+
 class TCXParserTester(object):
     def __init__(self, tcx_file):
         tree = objectify.parse(tcx_file)
@@ -553,7 +553,7 @@ class TCXParserTester(object):
 
         return the_array
 
-    
+
 class TCXParser(object):
     def __init__(self, tcx_file, *args, **kwargs):
         if 'alternative' in kwargs:
@@ -565,7 +565,7 @@ class TCXParser(object):
             self.df = tcxtools.tcxtodf(tcx_file)
         else:
             self.df = tcxtools.tcxtodf2(tcx_file)
-            
+
         try:
             lat = self.df['latitude'].apply(tofloat).values
             longitude = self.df['longitude'].apply(tofloat).values
@@ -574,7 +574,7 @@ class TCXParser(object):
             self.df['longitude'] = 0
             lat = self.df['latitude'].apply(tofloat).values
             longitude = self.df['longitude'].apply(tofloat).values
-            
+
 
         unixtimes = self.df['timestamp'].values
         try:
@@ -588,7 +588,7 @@ class TCXParser(object):
                     spm = 0.0*self.df['Speed'].apply(tofloat).values
                 except KeyError:
                     spm = 0.0*unixtimes
-                    
+
 
         try:
             velo = self.df['Speed'].apply(tofloat)
@@ -611,7 +611,7 @@ class TCXParser(object):
                     strokelength[i] = deltal*60/spm[i]
                 else:
                     strokelength[i] = 0.
-        
+
         try:
             power = self.df['Watts']
         except KeyError:
@@ -649,7 +649,7 @@ class TCXParser(object):
                     self.df[c] = self.df[c].astype(float)
                 except KeyError:
                     pass
-                    
+
 
     def write_csv(self, writefile='example.csv', window_size=5, gzip=False):
         data = self.df
@@ -664,7 +664,7 @@ class TCXParser(object):
                 data = data.drop(c, axis=1)
             if c == 'Extensions':
                 data = data.drop(c, axis=1)
-                        
+
         if gzip:
             return data.to_csv(writefile+'.gz', index_label='index',
                                compression='gzip')
