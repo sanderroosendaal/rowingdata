@@ -17,7 +17,7 @@ cache: pip
 before_cache:
 - rm -f $HOME/.cache/pip/log/debug.log
 python:
-- 3.4
+- 3.5
 notifications:
   email: false
 before_install:
@@ -62,5 +62,5 @@ deploy:
   distributions: sdist
   on:
     branch: master
-    python: 3.4
+    python: 3.5
     repo: sanderroosendaal/rowingdata
