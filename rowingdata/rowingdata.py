@@ -13,7 +13,7 @@ from matplotlib import figure
 import matplotlib
 try:
     matplotlib.use('TkCairo')
-except ValueError:
+except ValueError,ImportError:
     matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
