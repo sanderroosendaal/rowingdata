@@ -23,6 +23,7 @@ install:
       conda install nomkl pandas=$PANDAS;
     fi
   - pip install pytest flake8
+  - pip install matplotlib
   - conda list
   - python setup.py install
 script:
