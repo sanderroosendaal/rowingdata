@@ -48,6 +48,7 @@ sudo: required
 after_success:
 - coveralls --config_file .coveragerc
 before_deploy:
+- python -m pip || wget -qO- https://bootstrap.pypa.io/get-pip.py | python
 - python setup.py install
 - python setup.py sdist
 deploy:
