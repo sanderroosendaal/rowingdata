@@ -58,7 +58,7 @@ setup(name='rowingdata',
 	  'nose_parameterized',
 	  'timezonefinder',
 	  'pycairo',
-	  'tk'
+	  'tk','requests'
       ],
 
       zip_safe=False,
