@@ -530,8 +530,8 @@ class TestSequence(unittest.TestCase):
     list=pd.read_csv('testdata/testdatasummary.csv')
     lijst=[]
     for i in list.index:
-        filename=list.ix[i,'filename']
-        expected=list.ix[i,1:]
+        filename=list.loc[i,'filename']
+        expected=list.iloc[i,1:]
         lijst.append(
             (filename,filename,expected)
             )
