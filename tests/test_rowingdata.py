@@ -15,7 +15,7 @@ from unittest import mock
 
 class TestEmpty:
 
-    def test_write(self):
+    def test_write_tcx(self):
         row = rowingdata.rowingdata()
         filename = os.getcwd()+'/test_write.tcx'
 
@@ -30,6 +30,23 @@ class TestEmpty:
             except FileNotFoundError:
                 pass
         assert_equals(len(contents), 456)
+
+    def test_write_tcx(self):
+        row = rowingdata.rowingdata()
+        filename = os.getcwd()+'/test_write.gpx`'
+
+        try:
+            row.exporttogpx(filename)
+            contents = open(filename).read()
+        finally:
+            # NOTE: To retain the tempfile if the test fails, remove
+            # the try-finally clauses
+            try:
+                os.remove(filename)
+            except FileNotFoundError:
+                pass
+        assert_equals(len(contents), 822)
+
 
 class TestCumValues:
     df = pd.read_csv('testdata/cumvalues.csv')

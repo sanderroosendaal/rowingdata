@@ -2587,8 +2587,9 @@ class rowingdata:
                                notes=notes)
         else:
             emptygpx = gpxwrite.empty_gpx
-            with open(fileName,'wb') as f_out:
-                f_out.write(emptygpx)
+            bytes = emptygpx.encode(encoding='UTF-8')
+            with open(fileName,'wb+') as f_out:
+                f_out.write(bytes)
 
     def intervalstats(self, separator='|'):
         """ Used to create a nifty text summary, one row for each interval
