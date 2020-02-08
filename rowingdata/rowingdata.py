@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.6.5"
+__version__ = "2.6.6"
 
 from collections import Counter
 
@@ -2573,8 +2573,9 @@ class rowingdata:
             )
         else:
             emptytcx = writetcx.get_empty_tcx()
-            with open(fileName,'w') as f_out:
-                f_out.write(emptytcx)
+            bytes = emptytcx.encode(encoding='UTF-8')
+            with open(fileName,'wb+') as f_out:
+                f_out.write(bytes)
 
 
     def exporttogpx(self, fileName, notes="Exported by Rowingdata"):
