@@ -9,14 +9,15 @@ from parameterized import parameterized
 import unittest
 from pytz import utc
 import six
+import os
 
 from unittest import mock
 
 class TestEmpty:
-    row = rowingdata.rowingdata()
 
     def test_write(self):
-        filename = 'test_write.tcx'
+        row = rowingdata.rowingdata()
+        filename = os.getcwd()+'/test_write.tcx'
 
         try:
             row.exporttotcx(filename)
@@ -24,8 +25,11 @@ class TestEmpty:
         finally:
             # NOTE: To retain the tempfile if the test fails, remove
             # the try-finally clauses
-            os.remove(filename)
-        self.assertEqual(len(contents), 456)
+            try:
+                os.remove(filename)
+            except FileNotFoundError:
+                pass
+        assert_equals(len(contents), 456)
 
 class TestCumValues:
     df = pd.read_csv('testdata/cumvalues.csv')
