@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.6.4"
+__version__ = "2.6.5"
 
 from collections import Counter
 
@@ -2573,7 +2573,7 @@ class rowingdata:
             )
         else:
             emptytcx = writetcx.get_empty_tcx()
-            with open(fileName,'wb') as f_out:
+            with open(fileName,'w') as f_out:
                 f_out.write(emptytcx)
 
 
