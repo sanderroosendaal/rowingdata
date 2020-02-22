@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.7.1"
+__version__ = "2.7.2"
 
 from collections import Counter
 
@@ -3091,7 +3091,9 @@ class rowingdata:
         df.loc[mask, ' WorkoutState'] = smallerthantype
 
         # do rest for begin and end
-        mask = df[' ElapsedTime (sec)'] < activewindow[0] or df[' ElapsedTime (sec)'] > activewindow[1]
+        mask = (df[' ElapsedTime (sec)'] < activewindow[0] )
+        df.loc[mask, ' WorkoutState'] = 3
+        mask =  (df[' ElapsedTime (sec)'] > activewindow[1])
         df.loc[mask, ' WorkoutState'] = 3
 
         steps = df[' WorkoutState'].diff()
