@@ -3030,11 +3030,15 @@ class rowingdata:
 
     def updateinterval_metric(self, metricname, value, debug=False,
                               mode='split',unit='seconds',
-                              smoothwindow = 60.):
+                              smoothwindow = 60.,
+                              activewindow = []):
         if self.empty:
             return None
 
         df = self.df
+
+        if activewindow == []:
+            activewindow = [0,self.duration]
 
         try:
             origdist = df['orig_dist']
@@ -3085,6 +3089,10 @@ class rowingdata:
         df.loc[mask, ' WorkoutState'] = largerthantype
         mask = (values <= value)
         df.loc[mask, ' WorkoutState'] = smallerthantype
+
+        # do rest for begin and end
+        mask = df[' ElapsedTime (sec)'] < activewindow[0] or df[' ElapsedTime (sec)'] > activewindow[1]
+        df.loc[mask, ' WorkoutState'] = 3
 
         steps = df[' WorkoutState'].diff()
 
