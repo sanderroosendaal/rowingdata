@@ -1341,6 +1341,10 @@ class BoatCoachParser(CSVParser):
             unixtimes = row_datetime.apply(
                 lambda x: arrow.get(x).timestamp + arrow.get(x).microsecond / 1.e6
             )
+            timecolumn = self.df[self.columns[' ElapsedTime (sec)']]
+            elapsedtime = timecolumn.apply(timestrtosecs)
+            elapsedtime = make_cumvalues(elapsedtime)[0]
+            self.df[self.columns[' ElapsedTime (sec)']] = elapsedtime
         except KeyError:
             # calculations
             # row_date2=time.mktime(row_date.utctimetuple())
@@ -1352,9 +1356,9 @@ class BoatCoachParser(CSVParser):
 
 
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
-        self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
+        #self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
 
-        self.df[self.columns[' ElapsedTime (sec)']] = unixtimes - unixtimes[0]
+        #self.df[self.columns[' ElapsedTime (sec)']] = unixtimes - unixtimes[0]
 
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']].apply(
             timestrtosecs)
