@@ -89,7 +89,10 @@ def format_pace(x,pos=None):
     try:
         secstime = datetime.datetime.fromtimestamp(x+0.05)
     except OverflowError:
-        date = datetime.datetime(1970, 1, 1) + datetime.timedelta(x)
+        try:
+            date = datetime.datetime(1970, 1, 1) + datetime.timedelta(x)
+        except OverflowError:
+            return '00:00:00.0'
 
     stime =  '%s.%i' % (secstime.strftime("%M:%S"), secstime.microsecond/100000)
     return stime
@@ -99,7 +102,10 @@ def format_time(x,pos=None):
     try:
         secstime = datetime.datetime.fromtimestamp(x+0.05)
     except OverflowError:
-        date = datetime.datetime(1970, 1, 1) + datetime.timedelta(x)
+        try:
+            date = datetime.datetime(1970, 1, 1) + datetime.timedelta(x)
+        except OverflowError:
+            return '00:00:00.0'
 
     if x < 3600:
         secstime = secstime.replace(hour=0)
