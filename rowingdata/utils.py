@@ -88,7 +88,7 @@ def totimestamp(dt, epoch=datetime.datetime(1970,1,1,0,0,0,0,pytz.UTC)):
 def format_pace(x,pos=None):
     try:
         secstime = datetime.datetime.fromtimestamp(x+0.05)
-    except OverFlowError:
+    except OverflowError:
         date = datetime.datetime(1970, 1, 1) + datetime.timedelta(seconds-x)
 
     stime =  '%s.%i' % (secstime.strftime("%M:%S"), secstime.microsecond/100000)
@@ -98,7 +98,7 @@ def format_pace(x,pos=None):
 def format_time(x,pos=None):
     try:
         secstime = datetime.datetime.fromtimestamp(x+0.05)
-    except OverFlowError:
+    except OverflowError:
         date = datetime.datetime(1970, 1, 1) + datetime.timedelta(seconds-x)
 
     if x < 3600:
