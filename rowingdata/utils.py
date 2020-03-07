@@ -86,39 +86,20 @@ def totimestamp(dt, epoch=datetime.datetime(1970,1,1,0,0,0,0,pytz.UTC)):
 
 
 def format_pace(x,pos=None):
-    if np.isinf(x) or np.isnan(x):
-        x=0
+    secstime = datetime.datetime.fromtimestamp(x+0.05)
+    stime =  '%s.%i' % (secstime.strftime("%M:%S"), secstime.microsecond/100000)
+    return stime
 
-    min=int(x/60)
-    sec=(x-min*60.)
-
-    str1="{min:0>2}:{sec:0>4.1f}".format(
-        min=min,
-        sec=sec
-    )
-
-    return str1
 
 def format_time(x,pos=None):
 
+    secstime = datetime.datetime.fromtimestamp(x+0.05)
+    if x < 3600:
+        secstime = secstime.replace(hour=0)
 
-    min, sec = divmod(x, 60)
-    if min>60:
-        hour, min = divmod(min, 60)
-        str1 = '{hour:0>2}:{min:0>2}:{sec:0>4.1f}'.format(
-            hour=int(hour),
-            min=int(min),
-            sec=sec)
-    else:
-        str1 = '00:{min:0>2}:{sec:0>4.1f}'.format(
-            min=int(min),
-            sec=sec)
+    stime =  '%s.%i' % (secstime.strftime("%H:%M:%S"), secstime.microsecond/100000)
 
-
-
-
-
-    return str1
+    return stime
 
 def wavg(group, avg_name, weight_name):
     """ http://stackoverflow.com/questions/10951341/pandas-dataframe-aggregate-function-using-multiple-columns

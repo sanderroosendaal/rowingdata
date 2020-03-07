@@ -251,12 +251,32 @@ class TestOperations:
         row.spm_fromtimestamps()
 
 class TestSummaries:
+    maxDiff = None
     def test_summary(self):
         row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
         summary = row.summary()
         emptysummary = len(summary) == 0
 
         assert_equals(emptysummary,False)
+
+        want = """Workout Summary - testdata/summarytest.csv
+--|Total|-Total----|--Avg--|-Avg-|Avg-|-Avg-|-Max-|-Avg
+--|Dist-|-Time-----|-Pace--|-Pwr-|SPM-|-HR--|-HR--|-DPS
+--|12743|00:57:35.9|02:15.6|000.0|22.5|000.0|000.0|09.8
+W-|07410|00:29:55.0|02:01.1|000.0|25.8|000.0|000.0|09.6
+R-|05335|00:27:41.3|02:35.7|000.0|19.0|000.0|000.0|11.4
+Workout Details
+#-|SDist|-Split-|-SPace-|-Pwr-|SPM-|AvgHR|MaxHR|DPS-
+01|02579|10:18.8|02:00.0|000.0|26.7|000.0|0.0|09.4
+02|02431|09:46.4|02:00.6|000.0|25.7|000.0|0.0|09.7
+03|02400|09:49.8|02:02.9|000.0|25.0|000.0|0.0|09.8
+"""
+
+        r = rowingdata.rowingdata(csvfile='testdata/summarytest.csv')
+
+        got = r.allstats()
+        assert_equals.__self__.maxDiff = None
+        assert_equals(want,got)
 
 class TestCharts:
     @mock.patch("matplotlib.pyplot.figure")
