@@ -2352,6 +2352,14 @@ class SpeedCoach2Parser(CSVParser):
         if self.dist_unit == 'km':
             #dist2 *= 1000
             self.df[self.columns[' Horizontal (meters)']] *= 1000.
+            try:
+                self.df['GPSDistance'] *= 1000.
+            except KeyError:
+                pass
+            try:
+                self.df['ImpellerDistance'] *= 1000.
+            except KeyError:
+                pass
 
         cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
         self.df[self.columns['cum_dist']] = cum_dist
