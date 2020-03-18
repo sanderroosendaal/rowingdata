@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.7.9"
+__version__ = "2.8.0"
 
 from collections import Counter
 
@@ -2379,8 +2379,9 @@ class rowingdata:
         try:
             df[' AverageBoatSpeed (m/s)'] = df['ImpellerSpeed']
             df[' Horizontal (meters)'] = df['ImpellerDistance']
-            dd = df[' Horizontal (meters)'].diff()
-            dt = df[' ElapsedTime (sec)'].diff()
+            dp = pd.DataFrame({'x':df[' ElapsedTime (sec)'].values,'y':df[' Horizontal (meters)'].values})
+            dd = dp.dropna(axis=0,how='any')['y'].diff()
+            dt = dp.dropna(axis=0,how='any')['x'].diff()
             velo = dd / dt
             df[' Stroke500mPace (sec/500m)'] = 500. / velo
         except KeyError:
@@ -2395,8 +2396,9 @@ class rowingdata:
         try:
             df[' AverageBoatSpeed (m/s)'] = df['GPSSpeed']
             df[' Horizontal (meters)'] = df['GPSDistance']
-            dd = df[' Horizontal (meters)'].diff()
-            dt = df[' ElapsedTime (sec)'].diff()
+            dp = pd.DataFrame({'x':df[' ElapsedTime (sec)'].values,'y':df[' Horizontal (meters)'].values})
+            dd = dp.dropna(axis=0,how='any')['y'].diff()
+            dt = dp.dropna(axis=0,how='any')['x'].diff()
             velo = dd / dt
             df[' Stroke500mPace (sec/500m)'] = 500. / velo
         except KeyError:
