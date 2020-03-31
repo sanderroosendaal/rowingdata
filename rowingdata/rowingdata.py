@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.8.0"
+__version__ = "2.8.1"
 
 from collections import Counter
 
@@ -96,7 +96,7 @@ try:
         BoatCoachParser, CoxMateParser, CSVParser,
         ErgDataParser, ErgStickParser, KinoMapParser,
         MysteryParser, RowPerfectParser, RowProParser,
-        QuiskeParser,
+        QuiskeParser,ETHParser,
         SpeedCoach2Parser, get_empower_rigging, get_file_line,
         get_file_type, get_rowpro_footer, lbstoN,
         make_cumvalues, make_cumvalues_array,
@@ -119,7 +119,7 @@ try:
 except (ValueError,ImportError):
     from rowingdata.csvparsers import (
         BoatCoachAdvancedParser, BoatCoachOTWParser,
-        RitmoTimeParser, HumonParser,
+        RitmoTimeParser, HumonParser,ETHParser,
         BoatCoachParser, CoxMateParser, CSVParser,
         ErgDataParser, ErgStickParser, KinoMapParser,
         MysteryParser, RowPerfectParser, RowProParser,

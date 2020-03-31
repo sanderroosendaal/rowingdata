@@ -257,6 +257,9 @@ def csvtests(s):
     if 'Cover' in firstline:
         return 'coxmate'
 
+    if '500m Split (secs)' in firstline and 'Force Curve Data Points (Newtons)' in firstline:
+        return 'eth' # it's unknown but it was first submitted by a student from ETH Zurich
+
     return 'unknown'
 
 def get_file_type(f):
@@ -839,6 +842,54 @@ class CSVParser(object):
                                compression='gzip')
         else:
             return data.to_csv(writeFile, index_label='index')
+
+# Parsing ETH files
+class ETHParser(CSVParser):
+    def __init__(self, *args, **kwargs):
+        if args:
+            csvfile = args[0]
+        else:
+            csvfile = kwargs['csvfile']
+
+        super(ETHParser, self).__init__(*args, **kwargs)
+
+        self.cols = [
+            '',
+            'Distance (meters)',
+            'Stroke Rate (s/m)',
+            'Heart Rate (bpm)',
+            '500m Split (secs)',
+            'Power (Watts)',
+            'Drive Length (meters)',
+            '',
+            'Drive Time (secs)',
+            '',
+            '',
+            'Average Drive Force (Newtons)',
+            'Peak Force (Newtons)',
+            '',
+            'Time (secs)',
+            '',
+            '',
+        ]
+
+        self.cols = [b if a == '' else a
+                     for a,b in zip(self.cols, self.defaultcolumnnames)]
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
+
+        # calculations
+        self.df[self.columns[' DriveTime (ms)']] *= 1000.
+
+        startdatetime = datetime.datetime.utcnow()
+        elapsed = self.df[self.columns[' ElapsedTime (sec)']]
+        starttimeunix = arrow.get(startdatetime).timestamp
+
+        unixtimes = starttimeunix+elapsed
+        self.df[self.columns['TimeStamp (sec)']] = unixtimes
+        self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-starttimeunix
+
+        self.to_standard()
+
 
 # Parsing CSV files from Humon
 class HumonParser(CSVParser):

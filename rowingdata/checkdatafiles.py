@@ -48,7 +48,7 @@ def checkfile(f2, verbose=False):
         # handle RitmoTime
         if (fileformat == 'ritmotime'):
             row = rowingdata.RitmoTimeParser(f2)
-            
+
         # handle TCX no HR
         if (fileformat == 'tcxnohr'):
             row = rowingdata.TCXParserNoHR(f2)
@@ -99,6 +99,10 @@ def checkfile(f2, verbose=False):
         if (fileformat == 'kinomap'):
             row = rowingdata.KinoMapParser(f2)
 
+
+        if (fileformat == 'eth'):
+            row = rowingdata.ETHParser(f2)
+
         # handle FIT
         if (fileformat == 'fit'):
             row = rowingdata.FITParser(f2)
@@ -116,11 +120,13 @@ def checkfile(f2, verbose=False):
             notread = 0
 
 
+
+
         # handle workout log (no stroke data)
         if (fileformat == 'c2log'):
             return 0
 
-            
+
 
         if notread:
             row = rowingdata.rowingdata(df=row.df)
