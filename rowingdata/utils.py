@@ -84,7 +84,7 @@ def totimestamp(dt, epoch=datetime.datetime(1970,1,1,0,0,0,0,pytz.UTC)):
             td = dt - epoch
         except AttributeError:
             td = arrow.get(dt)
-            return tt.timestamp + tt.microsecond/10.**6
+            return td.timestamp + td.microsecond/10.**6
 
     # return td.total_seconds()
     return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6
