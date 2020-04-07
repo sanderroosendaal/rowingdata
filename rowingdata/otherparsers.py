@@ -450,7 +450,11 @@ class FITParser(object):
             velo = velo/1000.
 
 
-        timestamps = self.df['timestamp'].apply(totimestamp)
+        try:
+            timestamps = self.df['timestamp'].apply(totimestamp)
+        except AttributeError:
+            pass
+
         pace = 500./velo
         elapsed_time = timestamps-timestamps.values[0]
 
