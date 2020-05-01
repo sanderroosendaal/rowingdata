@@ -462,12 +462,21 @@ class FITParser(object):
         self.df[' Stroke500mPace (sec/500m)'] = pace
         self.df[' ElapsedTime (sec)'] = elapsed_time
 
+        hrname = 'heart_rate'
+        spmname = 'cadence'
+
+        if 'heart rate' in self.df.columns:
+            hrname = 'heart rate'
+
+        if 'stroke rate' in self.df.columns:
+            spmname = 'stroke rate'
+
         newcolnames = {
             'power': ' Power (watts)',
-            'heart_rate': ' HRCur (bpm)',
+            hrname: ' HRCur (bpm)',
             'position_long': ' longitude',
             'position_lat': ' latitude',
-            'cadence': ' Cadence (stokes/min)',
+            spmname: ' Cadence (stokes/min)',
             'lapid': ' lapIdx',
             'distance': ' Horizontal (meters)'
             }
