@@ -2656,7 +2656,7 @@ class rowingdata:
 
         return stri
 
-    def intervalstats_values(self):
+    def intervalstats_values(self,debug=False):
         """ Used to create a nifty text summary, one row for each interval
 
         Also copies the string to the clipboard (handy!)
@@ -2677,6 +2677,9 @@ class rowingdata:
         workoutstatetransition = [0, 2, 10, 11, 12, 13]
 
         intervalnrs = pd.unique(df[' lapIdx'])
+
+        if debug:
+            print('Interval numbers',intervalnrs)
 
         itime = []
         idist = []
@@ -2707,11 +2710,14 @@ class rowingdata:
             except IndexError:
                 workoutstate = 4
 
-            intervaldistance = tdwork['cum_dist'].max() - previousdist
+
+            intervaldistance = tdwork['cum_dist'].dropna().max() - previousdist
             if isnan(intervaldistance) or isinf(intervaldistance):
                 intervaldistance = 0
 
-            previousdist = td['cum_dist'].max()
+            if not isnan(td['cum_dist'].max()):
+                previousdist = td['cum_dist'].max()
+
 
             intervalduration = tdwork['TimeStamp (sec)'].max() - previoustime
             # previoustime=tdrest[' ElapsedTime (sec)'].max()
@@ -2729,6 +2735,7 @@ class rowingdata:
                 nanstozero(tdwork['TimeStamp (sec)'].max())
             if restduration < 0:
                 restduration = 0
+
 
             #    if intervaldistance != 0:
             itime += [int(10 * intervalduration) / 10.,
@@ -2776,11 +2783,19 @@ class rowingdata:
             return self.intervalstats()
 
         for index, idx in enumerate(intervalnrs):
-            td = df[df[' lapIdx'] == idx]
+            mask = df[' lapIdx'] == idx
+            td = df[mask]
 
             # get stroke info
-            tdwork = td[~td[' WorkoutState'].isin(workoutstatesrest)]
-            tdrest = td[td[' WorkoutState'].isin(workoutstatesrest)]
+            mask = ~td[' WorkoutState'].isin(workoutstatesrest)
+            tdwork = td[mask]
+            mask = td[' WorkoutState'].isin(workoutstatesrest)
+            tdrest = td[mask]
+
+            try:
+                workoutstate = tdwork.loc[tdwork.index[-1],' WorkoutState']
+            except IndexError:
+                workoutstate = 4
 
 
             #avghr = tdwork[' HRCur (bpm)'].mean()
@@ -2795,7 +2810,8 @@ class rowingdata:
             if isnan(intervaldistance) or isinf(intervaldistance):
                 intervaldistance = 0
 
-            previousdist = td['cum_dist'].max()
+            if not isnan(td['cum_dist'].max()):
+                previousdist = td['cum_dist'].max()
 
             intervalduration = tdwork['TimeStamp (sec)'].max() - previoustime
             # previoustime=tdrest[' ElapsedTime (sec)'].max()
