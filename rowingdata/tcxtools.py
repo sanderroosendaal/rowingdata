@@ -97,7 +97,7 @@ def getvalue(x,key):
         return x[key]
     except TypeError:
         return np.nan
-        
+
 def tcxtrack_getdata(track):
     trackpoints = tcxtrackgettrackpoint(track)
     df = pd.DataFrame(trackpoints)
@@ -148,7 +148,7 @@ def tcxtodf(path):
     activity = tcxgetactivities(data)
 
     laps = tcxactivitygetlaps(activity)
-    
+
     try:
         track = tcxlapgettrack(laps)
         df = tcxtrack_getdata(track)
@@ -169,9 +169,12 @@ def process_trackpoint(trackpoint):
             if elem.tag == '{%s}Time'%ns1:
                 trackp['time'] = elem.text
             if elem.tag == '{%s}DistanceMeters'%ns1:
-                trackp['distance'] = float(elem.text)
+                    trackp['distance'] = float(elem.text)
             if elem.tag == '{%s}Cadence'%ns1:
-                trackp['cadence'] = float(elem.text)
+                try:
+                    trackp['cadence'] = float(elem.text)
+                except TypeError:
+                    trackp['cadence'] = 0.
             if elem.tag == '{%s}HeartRateBpm'%ns1:
                 for hrchild in elem:
                     if hrchild.tag == '{%s}Value'%ns1:
@@ -188,13 +191,13 @@ def process_trackpoint(trackpoint):
             if elem.tag == '{%s}Position'%ns1:
                 for poschild in elem:
                     if poschild.tag == '{%s}LatitudeDegrees'%ns1:
-                        trackp['latitude'] = float(poschild.text)                        
+                        trackp['latitude'] = float(poschild.text)
                     if poschild.tag == '{%s}LongitudeDegrees'%ns1:
                         trackp['longitude'] = float(poschild.text)
-                        
-                
+
+
     return trackp
-                
+
 
 def tcxtodf2(path):
     tree = etree.parse(path)
@@ -217,7 +220,7 @@ def tcxtodf2(path):
     cadence = []
     lon = []
     lapid = []
-    
+
     for lapnr,element in tracks:
         for child in element:
             if child.tag == '{%s}Trackpoint'%ns1:
@@ -261,7 +264,7 @@ def tcxtodf2(path):
 
                 lapid.append(lapnr)
 
-                
+
     df = pd.DataFrame(
         {
             'timestamp':t,
@@ -277,5 +280,5 @@ def tcxtodf2(path):
 
     df['Speed'] = df['DistanceMeters'].diff()/df['timestamp'].diff()
     df.loc[0,'Speed'] = 0
-                    
+
     return df

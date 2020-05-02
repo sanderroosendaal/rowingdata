@@ -2670,7 +2670,7 @@ class SpeedCoach2Parser(CSVParser):
 
     def intervalstats(self, separator='|'):
         stri = "Workout Details\n"
-        stri += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-Pwr-{sep}-SPM--{sep}AvgHR{sep}DPS-\n".format(
+        stri += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-Pwr--{sep}-SPM--{sep}AvgHR{sep}DPS-\n".format(
             sep=separator)
         aantal = len(self.summarydata)
         for i in self.summarydata.index:
