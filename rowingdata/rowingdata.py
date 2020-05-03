@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.8.7"
+__version__ = "2.8.8"
 
 from collections import Counter
 
@@ -4359,6 +4359,7 @@ class rowingdata:
         if self.empty:
             return None
 
+        pacerange = kwargs.pop('pacerange',[])
         gridtrue = kwargs.pop('gridtrue',True)
         axis = kwargs.pop('axis','both')
 
@@ -4374,7 +4375,7 @@ class rowingdata:
 
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
-        make_pace_plot(ax5,self,df,mode=['distance'],gridtrue=gridtrue,axis=axis)
+        make_pace_plot(ax5,self,df,mode=['distance'],gridtrue=gridtrue,axis=axis,pacerange=pacerange)
 
         # next we plot the drive length
         ax6 = fig2.add_subplot(4, 1, 2)
@@ -4433,6 +4434,10 @@ class rowingdata:
         if self.empty:
             return None
 
+        pacerange = kwargs.pop('pacerange',[])
+        gridtrue = kwargs.pop('gridtrue',True)
+        axis = kwargs.pop('axis','both')
+
         df = self.df
         if self.absolutetimestamps:
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
@@ -4445,15 +4450,15 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(3, 1, 1)
-        make_hr_bars(ax1,self,df,mode=['time','water'],title=fig_title)
+        make_hr_bars(ax1,self,df,mode=['time','water'],title=fig_title,gridtrue=gridtrue,axis=axis)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(3, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['time','water'])
+        make_pace_plot(ax2,self,df,mode=['time','water'],gridtrue=gridtrue,axis=axis,pacerange=pacerange)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(3, 1, 3)
-        make_spm_plot(ax3,self,df,mode=['time','water','last'])
+        make_spm_plot(ax3,self,df,mode=['time','water','last'],gridtrue=gridtrue,axis=axis)
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
@@ -4602,6 +4607,7 @@ class rowingdata:
 
         axis = kwargs.pop('axis','both')
         gridtrue = kwargs.pop('gridtrue',True)
+        pacerange = kwargs.pop('pacerange',[])
 
         fig1 = figure.Figure(figsize=(12, 10))
 
@@ -4613,7 +4619,7 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df,axis=axis,gridtrue=gridtrue)
+        make_pace_plot(ax2,self,df,axis=axis,gridtrue=gridtrue,pacerange=pacerange)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
@@ -4634,6 +4640,7 @@ class rowingdata:
 
         axis = kwargs.pop('axis','both')
         gridtrue = kwargs.pop('gridtrue',True)
+        pacerange = kwargs.pop('pacerange',[])
 
         df = self.df
         if self.absolutetimestamps:
@@ -4650,7 +4657,8 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['distance','otw'],axis=axis,gridtrue=gridtrue)
+        make_pace_plot(ax2,self,df,mode=['distance','otw'],axis=axis,gridtrue=gridtrue,
+                       pacerange=pacerange)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
@@ -4671,6 +4679,7 @@ class rowingdata:
 
         axis = kwargs.pop('axis','both')
         gridtrue = kwargs.pop('gridtrue',True)
+        pacerange = kwargs.pop('pacerange',[])
 
         df = self.df
         if self.absolutetimestamps:
@@ -4687,7 +4696,8 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['distance','otw'],axis=axis,gridtrue=gridtrue)
+        make_pace_plot(ax2,self,df,mode=['distance','otw'],axis=axis,gridtrue=gridtrue,
+                       pacerange=pacerange)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
@@ -4708,6 +4718,7 @@ class rowingdata:
 
         axis = kwargs.pop('axis','both')
         gridtrue = kwargs.pop('gridtrue',False)
+        pacerange = kwargs.pop('pacerange',[])
 
 
         df = self.df
@@ -4724,7 +4735,8 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['time','ote'],axis=axis,gridtrue=gridtrue)
+        make_pace_plot(ax2,self,df,mode=['time','ote'],axis=axis,gridtrue=gridtrue,
+                       pacerange=pacerange)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
@@ -4745,6 +4757,7 @@ class rowingdata:
 
         axis = kwargs.pop('axis','both')
         gridtrue = kwargs.pop('gridtrue',True)
+        pacerange = kwargs.pop('pacerange',[])
 
         df = self.df
         if self.absolutetimestamps:
@@ -4760,7 +4773,8 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['time','otw'],axis=axis,gridtrue=gridtrue)
+        make_pace_plot(ax2,self,df,mode=['time','otw'],axis=axis,gridtrue=gridtrue,
+                       pacerange=pacerange)
 
         ax3 = fig1.add_subplot(4, 1, 3)
         make_spm_plot(ax3,self,df,mode=['time','otw'],axis=axis,gridtrue=gridtrue)
@@ -4780,6 +4794,7 @@ class rowingdata:
 
         axis = kwargs.pop('axis','both')
         gridtrue = kwargs.pop('gridtrue',True)
+        pacerange = kwargs.pop('pacerange',[])
 
         df = self.df
         if self.absolutetimestamps:
@@ -4814,7 +4829,8 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['time','otw','wind'],axis=axis,gridtrue=gridtrue)
+        make_pace_plot(ax2,self,df,mode=['time','otw','wind'],axis=axis,gridtrue=gridtrue,
+                       pacerange=pacerange)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
