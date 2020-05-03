@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.8.5"
+__version__ = "2.8.6"
 
 from collections import Counter
 
@@ -237,7 +237,7 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
         ax.set_ylabel('Power (Watts)')
 
 
-    grid(True)
+    ax.grid(True,which='major',axis='both')
 
 
     xTickFormatter = NullFormatter()
@@ -346,11 +346,11 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
         timeTickFormatter = NullFormatter()
         ax1.xaxis.set_major_formatter(timeTickFormatter)
 
-    grid(True)
+    ax1.grid(True,which='major',axis='both')
 
 
 
-def make_pace_plot(ax2,r,df,mode=['distance','ote']):
+def make_pace_plot(ax2,r,df,mode=['distance','ote'],pacerange=[]):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
         dist_max = 1000
@@ -377,6 +377,10 @@ def make_pace_plot(ax2,r,df,mode=['distance','ote']):
         yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, 0.9])
 
+    if len(pacerange) == 2:
+        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
+                              ultimate=pacerange,quantiles=[0,0.9])
+
     try:
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
     except ValueError:
@@ -387,10 +391,11 @@ def make_pace_plot(ax2,r,df,mode=['distance','ote']):
         ax2.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
     ax2.set_ylabel('(sec/500)')
     #       ax2.set_yticks(range(145,95,-5))
-    grid(True)
+    # grid(True)
     majorTickFormatter = FuncFormatter(format_pace_tick)
     majorLocator = (5)
     ax2.yaxis.set_major_formatter(majorTickFormatter)
+    ax2.grid(True,which='major',axis='both')
     if 'time' in mode:
         timeTickFormatter = NullFormatter()
         ax2.xaxis.set_major_formatter(timeTickFormatter)
@@ -420,7 +425,7 @@ def make_spm_plot(ax3,r,df,mode=['distance']):
             timeTickFormatter = NullFormatter()
         ax3.xaxis.set_major_formatter(timeTickFormatter)
 
-    grid(True)
+    ax3.grid(True,which='major',axis='both')
 
 def make_drivelength_plot(ax6,r,df,mode=['distance']):
     if 'distance' in mode:
@@ -447,7 +452,7 @@ def make_drivelength_plot(ax6,r,df,mode=['distance']):
     if 'time' in mode:
         timeTickFormatter = NullFormatter()
         ax6.xaxis.set_major_formatter(timeTickFormatter)
-    grid(True)
+    ax6.grid(True,which='major',axis='both')
 
 def make_drivetime_plot(ax7,self,df,mode=['distance']):
     if 'distance' in mode:
@@ -479,7 +484,7 @@ def make_drivetime_plot(ax7,self,df,mode=['distance']):
     if 'time' in mode:
         timeTickFormatter = NullFormatter()
         ax7.xaxis.set_major_formatter(timeTickFormatter)
-    grid(True)
+    ax7.grid(True,which='major',axis='both')
 
 def make_force_plot(ax8,self,df,mode=['distance']):
     if 'distance' in mode:
@@ -513,7 +518,7 @@ def make_force_plot(ax8,self,df,mode=['distance']):
     ax8.set_ylabel('Force (N)')
     #       ax8.set_yticks(range(25,300,25))
     # ax4.set_title('Power')
-    grid(True)
+    ax8.grid(True,which='major',axis='both')
 
     if 'time' in mode:
         timeTickFormatter = FuncFormatter(format_time_tick)
@@ -621,7 +626,7 @@ def make_power_plot(ax4,r,df,mode=['distance']):
         majorLocator = (1000)
         ax4.xaxis.set_major_formatter(majorKmFormatter)
 
-    grid(True)
+    ax4.grid(True,which='major',axis='both')
 
 def tailwind(bearing, vwind, winddir, vstream=0):
     """ Calculates head-on head/tailwind in direction of rowing
@@ -4321,7 +4326,7 @@ class rowingdata:
 
         self.piechart()
 
-    def get_metersplot_otw(self, title):
+    def get_metersplot_otw(self, title,pacerange=[]):
         if self.empty:
             return None
 
@@ -4334,7 +4339,7 @@ class rowingdata:
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(3, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['distance','water'])
+        make_pace_plot(ax2,self,df,mode=['distance','water'],pacerange=pacerange)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(3, 1, 3)
@@ -5350,7 +5355,7 @@ class rowingdata:
         ax2.set_ylabel('(sec/500)')
 #       ax2.set_yticks(range(175,90,-5))
         # ax2.set_title('Pace')
-        grid(True)
+        ax2.grid(True,which='major',axis='y')
         majorFormatter = FuncFormatter(format_pace_tick)
         majorLocator = (5)
         ax2.xaxis.set_major_formatter(timeTickFormatter)
