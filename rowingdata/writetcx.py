@@ -87,9 +87,21 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
 
     notes = notes.encode('utf-8')
 
-    totalseconds=int(df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min())
-    totalmeters=int(df['cum_dist'].max())
-    totalcalories=int(df[' Calories (kCal)'].max())
+    try:
+        totalseconds=int(df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min())
+    except ValueError:
+        totalseconds = 0
+        
+    try:
+        totalmeters=int(df['cum_dist'].max())
+    except ValueError:
+        totalmeters = 0
+
+    try:
+        totalcalories=int(df[' Calories (kCal)'].max())
+    except ValueError:
+        totalcalories = 0
+
     try:
         avghr=int(df[' HRCur (bpm)'].mean())
     except ValueError:
