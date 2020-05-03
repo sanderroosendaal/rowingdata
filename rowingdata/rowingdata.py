@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.8.6"
+__version__ = "2.8.7"
 
 from collections import Counter
 
@@ -266,7 +266,7 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
 
 
 
-def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
+def make_hr_bars(ax1,r,df,mode=['distance'],title=None,gridtrue=True,axis='x'):
 
     if not title:
         fig_title = "Input File:  " + r.readfilename + " --- HR / Pace / Rate / Power"
@@ -346,11 +346,11 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None):
         timeTickFormatter = NullFormatter()
         ax1.xaxis.set_major_formatter(timeTickFormatter)
 
-    ax1.grid(True,which='major',axis='both')
+    ax1.grid(gridtrue,which='major',axis=axis)
 
 
 
-def make_pace_plot(ax2,r,df,mode=['distance','ote'],pacerange=[]):
+def make_pace_plot(ax2,r,df,mode=['distance','ote'],pacerange=[],axis='both',gridtrue=True):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
         dist_max = 1000
@@ -395,12 +395,12 @@ def make_pace_plot(ax2,r,df,mode=['distance','ote'],pacerange=[]):
     majorTickFormatter = FuncFormatter(format_pace_tick)
     majorLocator = (5)
     ax2.yaxis.set_major_formatter(majorTickFormatter)
-    ax2.grid(True,which='major',axis='both')
+    ax2.grid(gridtrue,which='major',axis=axis)
     if 'time' in mode:
         timeTickFormatter = NullFormatter()
         ax2.xaxis.set_major_formatter(timeTickFormatter)
 
-def make_spm_plot(ax3,r,df,mode=['distance']):
+def make_spm_plot(ax3,r,df,mode=['distance'],axis='both',gridtrue=True):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
         dist_max = 1000
@@ -425,9 +425,9 @@ def make_spm_plot(ax3,r,df,mode=['distance']):
             timeTickFormatter = NullFormatter()
         ax3.xaxis.set_major_formatter(timeTickFormatter)
 
-    ax3.grid(True,which='major',axis='both')
+    ax3.grid(gridtrue,which='major',axis=axis)
 
-def make_drivelength_plot(ax6,r,df,mode=['distance']):
+def make_drivelength_plot(ax6,r,df,mode=['distance'],axis='both',gridtrue=True):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
         dist_max = 1000
@@ -452,9 +452,9 @@ def make_drivelength_plot(ax6,r,df,mode=['distance']):
     if 'time' in mode:
         timeTickFormatter = NullFormatter()
         ax6.xaxis.set_major_formatter(timeTickFormatter)
-    ax6.grid(True,which='major',axis='both')
+    ax6.grid(gridtrue,which='major',axis=axis)
 
-def make_drivetime_plot(ax7,self,df,mode=['distance']):
+def make_drivetime_plot(ax7,self,df,mode=['distance'],axis='both',gridtrue=True):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
         dist_max = 1000
@@ -484,9 +484,9 @@ def make_drivetime_plot(ax7,self,df,mode=['distance']):
     if 'time' in mode:
         timeTickFormatter = NullFormatter()
         ax7.xaxis.set_major_formatter(timeTickFormatter)
-    ax7.grid(True,which='major',axis='both')
+    ax7.grid(gridtrue,which='major',axis=axis)
 
-def make_force_plot(ax8,self,df,mode=['distance']):
+def make_force_plot(ax8,self,df,mode=['distance'],axis='both',gridtrue=True):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
         dist_max = 1000
@@ -518,7 +518,7 @@ def make_force_plot(ax8,self,df,mode=['distance']):
     ax8.set_ylabel('Force (N)')
     #       ax8.set_yticks(range(25,300,25))
     # ax4.set_title('Power')
-    ax8.grid(True,which='major',axis='both')
+    ax8.grid(gridtrue,which='major',axis=axis)
 
     if 'time' in mode:
         timeTickFormatter = FuncFormatter(format_time_tick)
@@ -533,7 +533,7 @@ def make_force_plot(ax8,self,df,mode=['distance']):
 
 
 
-def make_power_plot(ax4,r,df,mode=['distance']):
+def make_power_plot(ax4,r,df,mode=['distance'],axis='both',gridtrue=True):
     if 'distance' in mode:
         xcolumn = 'cum_dist'
 
@@ -626,7 +626,7 @@ def make_power_plot(ax4,r,df,mode=['distance']):
         majorLocator = (1000)
         ax4.xaxis.set_major_formatter(majorKmFormatter)
 
-    ax4.grid(True,which='major',axis='both')
+    ax4.grid(gridtrue,which='major',axis=axis)
 
 def tailwind(bearing, vwind, winddir, vstream=0):
     """ Calculates head-on head/tailwind in direction of rowing
@@ -4326,33 +4326,41 @@ class rowingdata:
 
         self.piechart()
 
-    def get_metersplot_otw(self, title,pacerange=[]):
+    def get_metersplot_otw(self, title,*args,**kwargs):
         if self.empty:
             return None
+
+
+        pacerange = kwargs.pop('pacerange',[])
+        gridtrue = kwargs.pop('gridtrue',True)
+        axis = kwargs.pop('axis','both')
 
         df = self.df
         fig1 = figure.Figure(figsize=(12, 10))
 
         # First panel, hr
         ax1 = fig1.add_subplot(3, 1, 1)
-        make_hr_bars(ax1,self,df,mode=['distance','water'])
+        make_hr_bars(ax1,self,df,mode=['distance','water'],gridtrue=gridtrue,axis=axis)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(3, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['distance','water'],pacerange=pacerange)
+        make_pace_plot(ax2,self,df,mode=['distance','water'],pacerange=pacerange,gridtrue=gridtrue,axis=axis)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(3, 1, 3)
-        make_spm_plot(ax3,self,df,mode=['distance','water'])
+        make_spm_plot(ax3,self,df,mode=['distance','water'],gridtrue=gridtrue,axis=axis)
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
 
         return fig1
 
-    def get_metersplot_erg2(self, title):
+    def get_metersplot_erg2(self, title, *args, **kwargs):
         if self.empty:
             return None
+
+        gridtrue = kwargs.pop('gridtrue',True)
+        axis = kwargs.pop('axis','both')
 
         df = self.df
         if self.absolutetimestamps:
@@ -4366,26 +4374,26 @@ class rowingdata:
 
         # Top plot is pace
         ax5 = fig2.add_subplot(4, 1, 1)
-        make_pace_plot(ax5,self,df,mode=['distance'])
+        make_pace_plot(ax5,self,df,mode=['distance'],gridtrue=gridtrue,axis=axis)
 
         # next we plot the drive length
         ax6 = fig2.add_subplot(4, 1, 2)
-        make_drivelength_plot(ax6,self,df,mode=['distance'])
+        make_drivelength_plot(ax6,self,df,mode=['distance'],gridtrue=gridtrue,axis=axis)
 
         # next we plot the drive time and recovery time
         ax7 = fig2.add_subplot(4, 1, 3)
-        make_drivetime_plot(ax7,self,df,mode=['distance'])
+        make_drivetime_plot(ax7,self,df,mode=['distance'],gridtrue=gridtrue,axis=axis)
 
         # Peak and average force
         ax8 = fig2.add_subplot(4, 1, 4)
-        make_force_plot(ax8,self,df,mode=['distance'])
+        make_force_plot(ax8,self,df,mode=['distance'],gridtrue=gridtrue,axis=axis)
 
         plt.subplots_adjust(hspace=0)
         fig2.subplots_adjust(hspace=0)
 
         return fig2
 
-    def get_timeplot_erg2(self, title):
+    def get_timeplot_erg2(self, title, *args, **kwargs):
         if self.empty:
             return None
 
@@ -4421,7 +4429,7 @@ class rowingdata:
 
         return fig2
 
-    def get_timeplot_otw(self, title):
+    def get_timeplot_otw(self, title, *args, **kwargs):
         if self.empty:
             return None
 
@@ -4452,7 +4460,7 @@ class rowingdata:
 
         return fig1
 
-    def get_pacehrplot(self, title):
+    def get_pacehrplot(self, title, *args, **kwargs):
         if self.empty:
             return None
 
@@ -4529,7 +4537,7 @@ class rowingdata:
 
         return 1
 
-    def get_paceplot(self, title):
+    def get_paceplot(self, title, *args, **kwargs):
         if self.empty:
             return None
 
@@ -4586,40 +4594,46 @@ class rowingdata:
 
         return fig
 
-    def get_metersplot_erg(self, title):
+    def get_metersplot_erg(self, title, *args, **kwargs):
         if self.empty:
             return None
 
         df = self.df
 
+        axis = kwargs.pop('axis','both')
+        gridtrue = kwargs.pop('gridtrue',True)
+
         fig1 = figure.Figure(figsize=(12, 10))
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        make_hr_bars(ax1,self,df)
+        make_hr_bars(ax1,self,df,axis=axis,gridtrue=gridtrue)
 
         grid(True)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df)
+        make_pace_plot(ax2,self,df,axis=axis,gridtrue=gridtrue)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        make_spm_plot(ax3,self,df,mode=['distance'])
+        make_spm_plot(ax3,self,df,mode=['distance'],axis=axis,gridtrue=gridtrue)
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        make_power_plot(ax4,self,df)
+        make_power_plot(ax4,self,df,axis=axis,gridtrue=gridtrue)
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
 
         return(fig1)
 
-    def get_metersplot_otwempower(self, title):
+    def get_metersplot_otwempower(self, title, *args, **kwargs):
         if self.empty:
             return None
+
+        axis = kwargs.pop('axis','both')
+        gridtrue = kwargs.pop('gridtrue',True)
 
         df = self.df
         if self.absolutetimestamps:
@@ -4631,29 +4645,32 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        make_hr_bars(ax1,self,df)
+        make_hr_bars(ax1,self,df,axis=axis,gridtrue=gridtrue)
 
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['distance','otw'])
+        make_pace_plot(ax2,self,df,mode=['distance','otw'],axis=axis,gridtrue=gridtrue)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        make_spm_plot(ax3,self,df)
+        make_spm_plot(ax3,self,df,axis=axis,gridtrue=gridtrue)
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        make_power_plot(ax4,self,df)
+        make_power_plot(ax4,self,df,axis=axis,gridtrue=gridtrue)
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
 
         return(fig1)
 
-    def get_metersplot_otwpower(self, title):
+    def get_metersplot_otwpower(self, title, *args, **kwargs):
         if self.empty:
             return None
+
+        axis = kwargs.pop('axis','both')
+        gridtrue = kwargs.pop('gridtrue',True)
 
         df = self.df
         if self.absolutetimestamps:
@@ -4666,28 +4683,32 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        make_hr_bars(ax1,self,df)
+        make_hr_bars(ax1,self,df,axis=axis,gridtrue=gridtrue)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['distance','otw'])
+        make_pace_plot(ax2,self,df,mode=['distance','otw'],axis=axis,gridtrue=gridtrue)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        make_spm_plot(ax3,self,df,mode=['distance','otw'])
+        make_spm_plot(ax3,self,df,mode=['distance','otw'],axis=axis,gridtrue=gridtrue)
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        make_power_plot(ax3,self,df,mode=['distance','otw'])
+        make_power_plot(ax3,self,df,mode=['distance','otw'],axis=axis,gridtrue=gridtrue)
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
 
         return(fig1)
 
-    def get_timeplot_erg(self, title):
+    def get_timeplot_erg(self, title,*args,**kwargs):
         if self.empty:
             return None
+
+        axis = kwargs.pop('axis','both')
+        gridtrue = kwargs.pop('gridtrue',False)
+
 
         df = self.df
         if self.absolutetimestamps:
@@ -4699,28 +4720,31 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        make_hr_bars(ax1,self,df,mode=['time'])
+        make_hr_bars(ax1,self,df,mode=['time'],axis=axis,gridtrue=gridtrue)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['time','ote'])
+        make_pace_plot(ax2,self,df,mode=['time','ote'],axis=axis,gridtrue=gridtrue)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        make_spm_plot(ax3,self,df,mode=['time'])
+        make_spm_plot(ax3,self,df,mode=['time'],axis=axis,gridtrue=gridtrue)
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        make_power_plot(ax4,self,df,mode=['time'])
+        make_power_plot(ax4,self,df,mode=['time'],axis=axis,gridtrue=gridtrue)
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
 
         return(fig1)
 
-    def get_timeplot_otwempower(self, title):
+    def get_timeplot_otwempower(self, title, *args, **kwargs):
         if self.empty:
             return None
+
+        axis = kwargs.pop('axis','both')
+        gridtrue = kwargs.pop('gridtrue',True)
 
         df = self.df
         if self.absolutetimestamps:
@@ -4732,27 +4756,30 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        make_hr_bars(ax1,self,df,mode=['time','otw'])
+        make_hr_bars(ax1,self,df,mode=['time','otw'],axis=axis,gridtrue=gridtrue)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['time','otw'])
+        make_pace_plot(ax2,self,df,mode=['time','otw'],axis=axis,gridtrue=gridtrue)
 
         ax3 = fig1.add_subplot(4, 1, 3)
-        make_spm_plot(ax3,self,df,mode=['time','otw'])
+        make_spm_plot(ax3,self,df,mode=['time','otw'],axis=axis,gridtrue=gridtrue)
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        make_power_plot(ax4,self,df,mode=['time','otw'])
+        make_power_plot(ax4,self,df,mode=['time','otw'],axis=axis,gridtrue=gridtrue)
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
 
         return(fig1)
 
-    def get_time_otwpower(self, title):
+    def get_time_otwpower(self, title, *args, **kwargs):
         if self.empty:
             return None
+
+        axis = kwargs.pop('axis','both')
+        gridtrue = kwargs.pop('gridtrue',True)
 
         df = self.df
         if self.absolutetimestamps:
@@ -4783,19 +4810,19 @@ class rowingdata:
 
         # First panel, hr
         ax1 = fig1.add_subplot(4, 1, 1)
-        make_hr_bars(ax1,self,df,mode=['time','otw'],title=fig_title)
+        make_hr_bars(ax1,self,df,mode=['time','otw'],title=fig_title,axis=axis,gridtrue=gridtrue)
 
         # Second Panel, Pace
         ax2 = fig1.add_subplot(4, 1, 2)
-        make_pace_plot(ax2,self,df,mode=['time','otw','wind'])
+        make_pace_plot(ax2,self,df,mode=['time','otw','wind'],axis=axis,gridtrue=gridtrue)
 
         # Third Panel, rate
         ax3 = fig1.add_subplot(4, 1, 3)
-        make_spm_plot(ax3,self,df,mode=['time','otw'])
+        make_spm_plot(ax3,self,df,mode=['time','otw'],axis=axis,gridtrue=gridtrue)
 
         # Fourth Panel, watts
         ax4 = fig1.add_subplot(4, 1, 4)
-        make_power_plot(ax4,self,df,mode=['time','otw'])
+        make_power_plot(ax4,self,df,mode=['time','otw'],axis=axis,gridtrue=gridtrue)
 
         plt.subplots_adjust(hspace=0)
         fig1.subplots_adjust(hspace=0)
