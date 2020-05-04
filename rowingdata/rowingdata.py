@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.8.8"
+__version__ = "2.8.9"
 
 from collections import Counter
 
@@ -5640,7 +5640,7 @@ class rowingdata:
         plt.show()
         return 1
 
-    def get_power_piechart(self, title):
+    def get_power_piechart(self, title, *args, **kwargs):
         """ Figure 3 - Heart Rate Time in band.
         This is not as simple as just totalling up the
         hits for each band of HR.  Since each data point represents
@@ -5722,7 +5722,7 @@ class rowingdata:
 
         return fig2
 
-    def get_piechart(self, title):
+    def get_piechart(self, title, *args, **kwargs):
         """ Figure 3 - Heart Rate Time in band.
         This is not as simple as just totalling up the
         hits for each band of HR.  Since each data point represents
