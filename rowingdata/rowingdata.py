@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.8.9"
+__version__ = "2.9.0"
 
 from collections import Counter
 
@@ -2405,7 +2405,7 @@ class rowingdata:
             dd = dp.dropna(axis=0,how='any')['y'].diff()
             dt = dp.dropna(axis=0,how='any')['x'].diff()
             velo = dd / dt
-            df[' Stroke500mPace (sec/500m)'] = 500. / velo
+            df[' Stroke500mPace (sec/500m)'] = 500. / df[' AverageBoatSpeed (m/s)']
         except KeyError:
             return False
 
