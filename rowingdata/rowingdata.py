@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.9.0"
+__version__ = "2.9.1"
 
 from collections import Counter
 
@@ -2395,6 +2395,18 @@ class rowingdata:
         self.df = df
 
         return True
+
+    def calc_dist_from_gps(self):
+        df = self.df
+        df['gps_dx'] = 0*df[' latitude']
+        for i in range(len(df)-2):
+            lat1 = df.loc[i,' latitude']
+            lat2 = df.loc[i+1,' latitude']
+            lon1 = df.loc[i,' longitude']
+            lon2 = df.loc[i+1,' longitude']
+            df.loc[i,'gps_dx'] = 1000*geo_distance(lat1,lon1,lat2,lon2)[0]
+
+        df['gps_dist_calculated'] = df['gps_dx'].cumsum()
 
     def use_gpsdata(self):
         df = self.df
