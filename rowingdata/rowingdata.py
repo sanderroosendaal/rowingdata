@@ -2388,7 +2388,7 @@ class rowingdata:
             dd = dp.dropna(axis=0,how='any')['y'].diff()
             dt = dp.dropna(axis=0,how='any')['x'].diff()
             velo = dd / dt
-            df[' Stroke500mPace (sec/500m)'] = 500. / velo
+            df[' Stroke500mPace (sec/500m)'] = 500. / df[' AverageBoatSpeed (m/s)']
         except KeyError:
             return False
 
