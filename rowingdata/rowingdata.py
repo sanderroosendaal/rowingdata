@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.9.1"
+__version__ = "2.9.2"
 
 from collections import Counter
 
@@ -214,7 +214,7 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
     if 'ote' in mode and param == ' Stroke500mPace (sec/500m)':
         yrange = y_axis_range(df.loc[:, param],
                               ultimate=[85, 160], quantiles=[0, 0.9])
-        ax.set_ylabel('(sec/500)')
+        ax.set_ylabel('(/500m)')
         grid(True)
         majorTickformatter = FuncFormatter(format_pace_tick)
         majorLocator = (5)
@@ -223,7 +223,7 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
                               ultimate=[85, 240], quantiles=[0, 0.9])
         majorTickformatter = FuncFormatter(format_pace_tick)
         majorLocator = (5)
-        ax.set_ylabel('(sec/500)')
+        ax.set_ylabel('(/500m)')
     elif param == ' Cadence (stokes/min)':
         ax.set_ylabel('SPM')
         ax.set_yticks(list(range(16,40,2)))
@@ -389,7 +389,7 @@ def make_pace_plot(ax2,r,df,mode=['distance','ote'],pacerange=[],axis='both',gri
     ax2.set_xticks(list(range(dist_max, end_dist, dist_max)))
     if end_dist < dist_max:
         ax2.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
-    ax2.set_ylabel('(sec/500)')
+    ax2.set_ylabel('(/500)')
     #       ax2.set_yticks(range(145,95,-5))
     # grid(True)
     majorTickFormatter = FuncFormatter(format_pace_tick)
@@ -4495,7 +4495,7 @@ class rowingdata:
 
         ax1.plot(t, p, 'b-')
         ax1.set_xlabel('Time (h:m)')
-        ax1.set_ylabel('(sec/500)')
+        ax1.set_ylabel('(/500)')
 
         yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, .9])
@@ -4578,7 +4578,7 @@ class rowingdata:
         fig, ax1 = plt.subplots()
         ax1.plot(t, p, 'b-')
         ax1.set_xlabel('Time')
-        ax1.set_ylabel('Pace (sec/500)')
+        ax1.set_ylabel('Pace (/500)')
 
         yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, 0.9])
@@ -4967,7 +4967,7 @@ class rowingdata:
         ax2.set_xticks(list(range(0, end_time, 300)))
         if end_time < 300:
             ax2.set_xticks(list(range(60, end_time, 60)))
-        ax2.set_ylabel('(sec/500)')
+        ax2.set_ylabel('(/500)')
 #       ax2.set_yticks(range(145,90,-5))
         # ax2.set_title('Pace')
         grid(True)
@@ -5049,7 +5049,7 @@ class rowingdata:
         ax5.set_xticks(list(range(0, end_time, 300)))
         if end_time < 300:
             ax5.set_xticks(list(range(60, end_time, 60)))
-        ax5.set_ylabel('(sec/500)')
+        ax5.set_ylabel('(/500)')
 #       ax5.set_yticks(range(145,90,-5))
         grid(True)
         ax5.set_title(fig_title)
@@ -5263,7 +5263,7 @@ class rowingdata:
         ax2.set_xticks(list(range(1000, end_dist, 1000)))
         if end_dist < 1000:
             ax2.set_xticks(list(range(100, end_dist, 100)))
-        ax2.set_ylabel('(sec/500)')
+        ax2.set_ylabel('(/500m)')
 #       ax2.set_yticks(range(175,95,-10))
         grid(True)
         majorTickFormatter = FuncFormatter(format_pace_tick)
@@ -5298,7 +5298,7 @@ class rowingdata:
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
         if end_dist < 1000:
             ax5.set_xticks(list(range(100, end_dist, 100)))
-        ax5.set_ylabel('(sec/500)')
+        ax5.set_ylabel('(/500)')
 #       ax5.set_yticks(range(175,95,-10))
         grid(True)
         ax5.set_title(fig_title)
@@ -5407,7 +5407,7 @@ class rowingdata:
         ax2.set_xticks(list(range(0, end_time, 300)))
         if end_time < 300:
             ax2.set_xticks(list(range(60, end_time, 60)))
-        ax2.set_ylabel('(sec/500)')
+        ax2.set_ylabel('(/500m)')
 #       ax2.set_yticks(range(175,90,-5))
         # ax2.set_title('Pace')
         ax2.grid(True,which='major',axis='y')
@@ -5455,7 +5455,7 @@ class rowingdata:
         ax5.set_xticks(list(range(0, end_time, 300)))
         if end_time < 300:
             ax5.set_xticks(list(range(60, end_time, 60)))
-        ax5.set_ylabel('(sec/500)')
+        ax5.set_ylabel('(/500m)')
 #       ax5.set_yticks(range(175,90,-5))
         grid(True)
         ax5.set_title(fig_title)

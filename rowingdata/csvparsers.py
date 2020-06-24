@@ -2341,6 +2341,8 @@ class SpeedCoach2Parser(CSVParser):
             try:
                 self.df['GPSSpeed'] = self.df['Speed (GPS)']
                 self.df['GPSDistance'] = self.df['Distance (GPS)']
+                self.columns['GPS Speed'] = 'Speed (GPS)'
+                self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
             except KeyError:
                 pass
 
