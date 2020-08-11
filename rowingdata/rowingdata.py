@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.9.2"
+__version__ = "2.9.3"
 
 from collections import Counter
 
@@ -16,7 +16,11 @@ try:
 except (ValueError,ImportError):
     matplotlib.use('Agg')
 
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
 
 from matplotlib.pyplot import grid
 from matplotlib.ticker import FuncFormatter, NullFormatter

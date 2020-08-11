@@ -1,6 +1,10 @@
 # Compiled python modules.
 *.pyc
 
+# Jupyter
+.ipy*
+*.ipynb
+
 # Setuptools distribution folder.
 /dist/
 /build/

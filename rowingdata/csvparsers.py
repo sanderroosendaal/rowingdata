@@ -2070,7 +2070,10 @@ class MysteryParser(CSVParser):
         lapidx = res[1]
 
         spm = self.df[self.columns[' Cadence (stokes/min)']]
-        strokelength = velo / (spm / 60.)
+        try:
+            strokelength = velo / (spm / 60.)
+        except TypeError:
+            strokelength = 0*velo
 
         unixtimes = pd.Series(seconds3 + totimestamp(self.row_date))
 
