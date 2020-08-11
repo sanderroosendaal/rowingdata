@@ -5,7 +5,7 @@ env:
   - PYTHON=3.6 PANDAS=MASTER
 before_install:
   - echo "before_install"
-  - pip install tk
+  - pip install tk, pycairo
 install:
   - python setup.py install
 script:
