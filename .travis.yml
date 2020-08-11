@@ -5,8 +5,7 @@ env:
   - PYTHON=3.6 PANDAS=MASTER
 before_install:
   - echo "before_install"
-  - pip uninstall matplotlib
-  - pip install matplotlib
+  - pip install tk
 install:
   - python setup.py install
 script:
