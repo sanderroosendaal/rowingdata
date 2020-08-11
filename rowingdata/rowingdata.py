@@ -16,7 +16,11 @@ try:
 except (ValueError,ImportError):
     matplotlib.use('Agg')
 
-import matplotlib.pyplot as plt
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
 
 from matplotlib.pyplot import grid
 from matplotlib.ticker import FuncFormatter, NullFormatter
