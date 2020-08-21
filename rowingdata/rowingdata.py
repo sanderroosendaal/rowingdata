@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.9.3"
+__version__ = "2.9.4"
 
 from collections import Counter
 
@@ -2403,12 +2403,12 @@ class rowingdata:
     def calc_dist_from_gps(self):
         df = self.df
         df['gps_dx'] = 0*df[' latitude']
-        for i in range(len(df)-2):
+        for i in range(len(df)-1):
             lat1 = df.loc[i,' latitude']
             lat2 = df.loc[i+1,' latitude']
             lon1 = df.loc[i,' longitude']
             lon2 = df.loc[i+1,' longitude']
-            df.loc[i,'gps_dx'] = 1000*geo_distance(lat1,lon1,lat2,lon2)[0]
+            df.loc[i+1,'gps_dx'] = 1000*geo_distance(lat1,lon1,lat2,lon2)[0]
 
         df['gps_dist_calculated'] = df['gps_dx'].cumsum()
 
@@ -3967,7 +3967,9 @@ class rowingdata:
 
         avgspm = wavg(df,' Cadence (stokes/min)','deltat')
         avgpower = wavg(df,' Power (watts)','deltat')
-        avgdps = totaldist / (totaltime * avgspm / 60.)
+        avgdps = 0
+        if totaltime * avgspm > 0:
+            avgdps = totaldist / (totaltime * avgspm / 60.)
 
         stri = summarystring(totaldist, totaltime, avgpace, avgspm,
                              avghr, maxhr, avgdps, avgpower,
