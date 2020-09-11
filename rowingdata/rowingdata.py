@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.9.4"
+__version__ = "2.9.5"
 
 from collections import Counter
 
@@ -2399,6 +2399,42 @@ class rowingdata:
         self.df = df
 
         return True
+
+    def extend_data(self):
+        df = self.df
+        l = len(df)
+        dlat = df.loc[l-1,' latitude']-df.loc[l-2,' latitude']
+        dlon = df.loc[l-1,' longitude']-df.loc[l-2,' longitude']
+        dt = df.loc[l-1, ' ElapsedTime (sec)']-df.loc[l-2,' ElapsedTime (sec)']
+        tnew = []
+        latnew = []
+        lonnew = []
+        unixtnew = []
+        tz = df.loc[l-1,' ElapsedTime (sec)']
+        unixtz = df.loc[l-1,'TimeStamp (sec)']
+        latz = df.loc[l-1,' latitude']
+        lonz = df.loc[l-1,' longitude']
+        aantal = int(10/dt)
+        for i in range(aantal):
+            tz += dt
+            unixtz += dt
+            latz += dlat
+            lonz += dlon
+            tnew.append(tz)
+            latnew.append(latz)
+            lonnew.append(lonz)
+            unixtnew.append(unixtz)
+
+        df = df.append(pd.DataFrame({
+            ' TimeStamp (sec)':unixtnew,
+            ' ElapsedTime (sec)':tnew,
+            ' latitude': latnew,
+            ' longitude': lonnew,
+        }))
+
+        df.interpolate()
+
+        self.df = df
 
     def calc_dist_from_gps(self):
         df = self.df
