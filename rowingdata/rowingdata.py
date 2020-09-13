@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.9.5"
+__version__ = "2.9.6"
 
 from collections import Counter
 
@@ -2435,6 +2435,9 @@ class rowingdata:
         }))
 
         df.interpolate(inplace=True)
+        df.fillna(inplace=True,method='ffill',axis=1)
+        df['index'] = range(len(df))
+        df.set_index('index',inplace=True)
 
         self.df = df
 
