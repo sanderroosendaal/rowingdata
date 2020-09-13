@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.9.5"
+__version__ = "2.9.6"
 
 from collections import Counter
 
@@ -2409,7 +2409,6 @@ class rowingdata:
         dlat = (df.loc[l-1,' latitude']-df.loc[l-nr,' latitude'])/float(nr-1)
         dlon = (df.loc[l-1,' longitude']-df.loc[l-nr,' longitude'])/float(nr-1)
         dt = (df.loc[l-1, ' ElapsedTime (sec)']-df.loc[l-nr,' ElapsedTime (sec)'])/float(nr-1)
-        print(dt)
         tnew = []
         latnew = []
         lonnew = []
@@ -2435,7 +2434,10 @@ class rowingdata:
             ' longitude': lonnew,
         }))
 
-        df.interpolate()
+        df.interpolate(inplace=True)
+        df.fillna(inplace=True,method='ffill',axis=1)
+        df['index'] = range(len(df))
+        df.set_index('index',inplace=True)
 
         self.df = df
 
