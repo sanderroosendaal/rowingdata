@@ -2403,9 +2403,13 @@ class rowingdata:
     def extend_data(self):
         df = self.df
         l = len(df)
-        dlat = df.loc[l-1,' latitude']-df.loc[l-2,' latitude']
-        dlon = df.loc[l-1,' longitude']-df.loc[l-2,' longitude']
-        dt = df.loc[l-1, ' ElapsedTime (sec)']-df.loc[l-2,' ElapsedTime (sec)']
+        nr = 10
+        if l<10:
+            nr = l-1
+        dlat = (df.loc[l-1,' latitude']-df.loc[l-nr,' latitude'])/float(nr-1)
+        dlon = (df.loc[l-1,' longitude']-df.loc[l-nr,' longitude'])/float(nr-1)
+        dt = (df.loc[l-1, ' ElapsedTime (sec)']-df.loc[l-nr,' ElapsedTime (sec)'])/float(nr-1)
+        print(dt)
         tnew = []
         latnew = []
         lonnew = []
@@ -2414,8 +2418,7 @@ class rowingdata:
         unixtz = df.loc[l-1,'TimeStamp (sec)']
         latz = df.loc[l-1,' latitude']
         lonz = df.loc[l-1,' longitude']
-        aantal = int(10/dt)
-        for i in range(aantal):
+        for i in range(10):
             tz += dt
             unixtz += dt
             latz += dlat
@@ -2426,7 +2429,7 @@ class rowingdata:
             unixtnew.append(unixtz)
 
         df = df.append(pd.DataFrame({
-            ' TimeStamp (sec)':unixtnew,
+            'TimeStamp (sec)':unixtnew,
             ' ElapsedTime (sec)':tnew,
             ' latitude': latnew,
             ' longitude': lonnew,
