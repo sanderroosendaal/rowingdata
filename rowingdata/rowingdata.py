@@ -2434,7 +2434,7 @@ class rowingdata:
             ' longitude': lonnew,
         }))
 
-        df.interpolate()
+        df.interpolate(inplace=True)
 
         self.df = df
 
