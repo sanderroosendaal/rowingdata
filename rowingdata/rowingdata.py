@@ -2409,7 +2409,6 @@ class rowingdata:
         dlat = (df.loc[l-1,' latitude']-df.loc[l-nr,' latitude'])/float(nr-1)
         dlon = (df.loc[l-1,' longitude']-df.loc[l-nr,' longitude'])/float(nr-1)
         dt = (df.loc[l-1, ' ElapsedTime (sec)']-df.loc[l-nr,' ElapsedTime (sec)'])/float(nr-1)
-        print(dt)
         tnew = []
         latnew = []
         lonnew = []
