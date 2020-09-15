@@ -2069,6 +2069,14 @@ class MysteryParser(CSVParser):
         seconds3 = res[0]
         lapidx = res[1]
 
+        # HR versions
+        try:
+            hr = self.df[self.columns[' HRCur (bpm)']]
+        except KeyError:
+            hr = self.df['HR (BPM)']
+            self.df[self.columns[' HRCur (bpm)']] = hr
+
+
         spm = self.df[self.columns[' Cadence (stokes/min)']]
         try:
             strokelength = velo / (spm / 60.)
