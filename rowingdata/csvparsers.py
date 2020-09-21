@@ -294,6 +294,13 @@ def get_file_type(f):
                 return 'tcx'
             except:
                 return 'unknown'
+        if extension == '.gpx':
+            try:
+                tree = etree.parse(f)
+                root = tree.getroot()
+                return 'gpx'
+            except:
+                return 'unknown'
 
         with gzip.open(f, readmode) as fop:
             try:
@@ -325,6 +332,13 @@ def get_file_type(f):
         except:
             return 'unknown'
 
+    if extension == 'gpx':
+        try:
+            tree = etree.parse(f)
+            root = tree.getroot()
+            return 'gpx'
+        except:
+            return 'unknown'
 
     if extension == '.fit':
         try:
