@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "2.9.8"
+__version__ = "2.9.9"
 
 from collections import Counter
 
@@ -113,7 +113,7 @@ try:
     from .otherparsers import TCXParser as TCXParserNoHR
     from .otherparsers import (
         FITParser, FitSummaryData, fitsummarydata,TCXParser,
-        ExcelTemplate
+        ExcelTemplate,GPXParser
     )
 
     from .utils import (

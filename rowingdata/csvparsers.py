@@ -265,6 +265,7 @@ def csvtests(s):
 def get_file_type(f):
     filename,extension = os.path.splitext(f)
     extension = extension.lower()
+
     if extension == '.xls':
         return 'xls'
     if extension == '.kml':
@@ -292,6 +293,13 @@ def get_file_type(f):
                 tree = etree.parse(f)
                 root = tree.getroot()
                 return 'tcx'
+            except:
+                return 'unknown'
+        if extension == '.gpx':
+            try:
+                tree = etree.parse(f)
+                root = tree.getroot()
+                return 'gpx'
             except:
                 return 'unknown'
 
@@ -325,6 +333,13 @@ def get_file_type(f):
         except:
             return 'unknown'
 
+    if extension == '.gpx':
+        try:
+            tree = etree.parse(f)
+            root = tree.getroot()
+            return 'gpx'
+        except:
+            return 'unknown'
 
     if extension == '.fit':
         try:
