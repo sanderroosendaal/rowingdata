@@ -6,10 +6,10 @@ from pandas import DataFrame
 from lxml import objectify
 from fitparse import FitFile
 try:
-    from . import tcxtools
+    from . import tcxtools,gpxtools
     from .utils import totimestamp, geo_distance
 except (ValueError,ImportError):
-    import tcxtools
+    import tcxtools,gpxtools
     from utils import totimestamp, geo_distance
 
 import sys
@@ -566,6 +566,30 @@ class TCXParserTester(object):
 
         return the_array
 
+
+class GPXParser(object):
+    def __init__(self, gpx_file, *args, **kwargs):
+        self.df = gpxtools.gpxtodf2(gpx_file)
+
+    def write_csv(self, writefile='example.csv', window_size=5, gzip=False):
+        data = self.df
+        data = data.sort_values(by='TimeStamp (sec)', ascending=True)
+        data = data.fillna(method='ffill')
+
+        # drop all-zero columns
+        for c in data.columns:
+            if (data[c] == 0).any() and data[c].mean() == 0:
+                data = data.drop(c, axis=1)
+            if c == 'Position':
+                data = data.drop(c, axis=1)
+            if c == 'Extensions':
+                data = data.drop(c, axis=1)
+
+        if gzip:
+            return data.to_csv(writefile+'.gz', index_label='index',
+                               compression='gzip')
+        else:
+            return data.to_csv(writefile, index_label='index')
 
 class TCXParser(object):
     def __init__(self, tcx_file, *args, **kwargs):

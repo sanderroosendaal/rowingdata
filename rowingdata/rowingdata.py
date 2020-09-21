@@ -113,7 +113,7 @@ try:
     from .otherparsers import TCXParser as TCXParserNoHR
     from .otherparsers import (
         FITParser, FitSummaryData, fitsummarydata,TCXParser,
-        ExcelTemplate
+        ExcelTemplate,GPXParser
     )
 
     from .utils import (
