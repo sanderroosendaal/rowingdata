@@ -178,7 +178,10 @@ def process_trackpoint(trackpoint):
             if elem.tag == '{%s}HeartRateBpm'%ns1:
                 for hrchild in elem:
                     if hrchild.tag == '{%s}Value'%ns1:
-                        trackp['hr'] = int(hrchild.text)
+                        try:
+                            trackp['hr'] = int(hrchild.text)
+                        except TypeError:
+                            trackp['hr'] = 0
             if elem.tag == '{%s}Extensions'%ns1:
                 for extchild in elem:
                     if extchild.tag == '{%s}TPX'%ns2:
