@@ -2,7 +2,7 @@ sudo: false
 language: python
 email: false
 env:
-  - PYTHON=3.6 PANDAS=MASTER
+  - PYTHON=3.8 PANDAS=MASTER
 before_install:
   - echo "before_install"
   - pip install tk
