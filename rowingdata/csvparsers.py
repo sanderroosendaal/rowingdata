@@ -232,6 +232,8 @@ def csvtests(s):
 
     if 'Total elapsed time (s)' in firstline:
         return 'ergstick'
+    if 'Total elapsed time' in firstline:
+        return 'ergstick'
 
     if 'Stroke Number' and 'Time (seconds)' in firstline:
         return 'ergdata'
@@ -1907,19 +1909,47 @@ class ErgStickParser(CSVParser):
         self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # calculations
-        self.df[self.columns[' DriveTime (ms)']] *= 1000.
-        self.df[self.columns[' StrokeRecoveryTime (ms)']] *= 1000.
+        try:
+            self.df[self.columns[' DriveTime (ms)']] *= 1000.
+            self.df[self.columns[' StrokeRecoveryTime (ms)']] *= 1000.
+        except KeyError:
+            pass
 
-        pace = self.df[self.columns[' Stroke500mPace (sec/500m)']]
-        pace = np.clip(pace, 1, 1e4)
+        try:
+            pace = self.df[self.columns[' Stroke500mPace (sec/500m)']]
+            pace = np.clip(pace, 1, 1e4)
+            self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+        except TypeError:
+            pace = self.df[self.columns[' Stroke500mPace (sec/500m)']]
+            pace = pace.apply(lambda x:flexistrptime(x))
+            pace = pace.apply(lambda x:60*x.minute+x.second+x.microsecond/1.e6)
+            pace = np.clip(pace, 1, 1e4)
+            self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+
+        # check distance
+        try:
+            distance = self.df[self.columns[' Horizontal (meters)']]
+        except KeyError:
+            self.columns[' Horizontal (meters)'] = 'Total distance'
+            distance = self.df[self.columns[' Horizontal (meters)']]
+            distance = distance.apply(lambda x:int(x[:-2]))
+            self.df[self.columns[' Horizontal (meters)']] = distance
 
         #velocity = 500. / pace
         #power = 2.8 * velocity**3
 
         #self.df[' Power (watts)'] = power
 
-        seconds = self.df[self.columns['TimeStamp (sec)']]
+        try:
+            seconds = self.df[self.columns['TimeStamp (sec)']]
+        except:
+            self.columns['TimeStamp (sec)'] = 'Total elapsed time'
+            seconds = self.df[self.columns['TimeStamp (sec)']]
+            seconds = seconds.apply(lambda x:flexistrptime(x))
+            seconds = seconds.apply(lambda x:3600*x.hour+60*x.minute+x.second+x.microsecond/1.e6)
+
         res = make_cumvalues(seconds)
         seconds2 = res[0] + seconds[0]
         lapidx = res[1]
