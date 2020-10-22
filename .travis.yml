@@ -6,7 +6,7 @@ env:
 before_install:
   - echo "before_install"
   - pip install tk
-  - pip install pycairo
+#  - pip install pycairo
   - pip install --upgrade certifi
 install:
   - python setup.py install
