@@ -6,7 +6,7 @@ env:
 before_install:
   - echo "before_install"
   - pip install tk
-#  - pip install pycairo
+  - pip install pycairo
   - pip install --upgrade certifi
   - sudo apt-get install pkg-config
   - sudo apt-get install libcairo-dev
