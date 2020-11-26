@@ -806,6 +806,14 @@ class CSVParser(object):
             ' longitude',
         ]
 
+        try:
+            x = self.df['TimeStamp (sec)']
+        except KeyError:
+            cols = self.df.columns
+            for col in cols:
+                if 'TimeStamp ' in col:
+                    self.df['TimeStamp (sec)'] = self.df[col]
+
         self.columns = {c: c for c in self.defaultcolumnnames}
 
     def to_standard(self):
