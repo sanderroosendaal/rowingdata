@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.0.3"
+__version__ = "3.0.4"
 
 from collections import Counter
 
@@ -2011,6 +2011,9 @@ class rowingdata:
                     print(name + ' is not found in file')
                 sled_df[name] = 0
                 sled_df.index = list(range(len(sled_df.index)))
+                if name == 'TimeStamp (sec)':
+                    time = sled_df['TimeStamp (sec utc)']
+                    sled_df[name] = time
                 if name == ' ElapsedTime (sec)':
                     elapsedtime = sled_df['TimeStamp (sec)'] - \
                         sled_df.loc[0, 'TimeStamp (sec)']
