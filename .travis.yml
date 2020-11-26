@@ -6,6 +6,7 @@ env:
 before_install:
   - echo "before_install"
   - sudo apt-get install libcairo-dev
+  - sudo apt install libcairo2-dev pkg-config python3-dev
   - pip3 install --upgrade pip setuptools wheel
   - pip install tk
   - pip install pycairo
