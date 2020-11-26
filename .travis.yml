@@ -5,6 +5,7 @@ env:
   - PYTHON=3.8 PANDAS=MASTER
 before_install:
   - echo "before_install"
+  - pip3 install --upgrade pip setuptools wheel
   - pip install tk
   - pip install pycairo
   - pip install --upgrade certifi
