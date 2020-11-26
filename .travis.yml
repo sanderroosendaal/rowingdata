@@ -9,7 +9,7 @@ before_install:
   - sudo apt install libcairo2-dev pkg-config python3-dev
   - pip3 install --upgrade pip setuptools wheel
   - pip install tk
-  - pip install pycairo
+  - pip install pycairo==1.18.0
   - pip install --upgrade certifi
   - sudo apt-get install pkg-config
 install:
