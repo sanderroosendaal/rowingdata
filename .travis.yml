@@ -1,5 +1,6 @@
 sudo: false
 language: python
+python: 3.8
 email: false
 env:
   - PYTHON=3.8 PANDAS=MASTER
@@ -9,6 +10,7 @@ before_install:
   - sudo apt install libcairo2-dev pkg-config python3-dev
   - pip3 install --upgrade pip setuptools wheel
   - pip install tk
+  - pip install cython
   - pip install pycairo==1.18.0
   - pip install --upgrade certifi
   - sudo apt-get install pkg-config
@@ -22,6 +24,7 @@ after_success:
 before_deploy:
 - pip install --upgrade pip
 - pip install setuptools twine wheel
+- pip install cython
 - python setup.py install
 - python setup.py sdist
 deploy:
@@ -33,5 +36,5 @@ deploy:
   distributions: sdist
   on:
     branch: master
-    python: 3.6
+    python: 3.8
     repo: sanderroosendaal/rowingdata

@@ -327,7 +327,7 @@ class TestCorrectedRowingData:
         totaldist=self.row.df['cum_dist'].max()
         totaltime=self.row.df['TimeStamp (sec)'].max()-self.row.df['TimeStamp (sec)'].min()
         totaltime=totaltime+self.row.df.loc[0,' ElapsedTime (sec)']
-        assert_equals(totaltime, 1309.9480600738525)
+        assert_equals(int(totaltime), 1309)
         assert_equals(totaldist, 5000)
         assert_equals(
             self.row.df[' Cadence (stokes/min)'].mean(),
