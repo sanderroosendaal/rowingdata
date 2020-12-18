@@ -35,5 +35,5 @@ deploy:
   distributions: sdist
   on:
     branch: master
-    python: 3.6
+    python: 3.8
     repo: sanderroosendaal/rowingdata
