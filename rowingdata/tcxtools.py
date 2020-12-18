@@ -19,6 +19,9 @@ from docopt import docopt
 ns1 = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 ns2 = 'http://www.garmin.com/xmlschemas/ActivityExtension/v2'
 
+import unicodedata
+def remove_control_characters(s):
+    return "".join(ch for ch in s if unicodedata.category(ch)[0]!="C")
 
 def strip_control_characters(input):
     if input:
@@ -31,7 +34,13 @@ def strip_control_characters(input):
                            unichr(0xd800),unichr(0xdbff),unichr(0xdc00),unichr(0xdfff),
                            unichr(0xd800),unichr(0xdbff),unichr(0xdc00),unichr(0xdfff),
                            )
+
         input = re.sub(RE_XML_ILLEGAL, "", input)
+
+
+
+        #input = "".join(ch for ch in input if unicodedata.category(ch)[0]!="C")
+
 
         # ascii control characters
         #input = re.sub(r"[\x01-\x1F\x7F]", "", input)
@@ -201,9 +210,28 @@ def process_trackpoint(trackpoint):
 
     return trackp
 
+import os
 
 def tcxtodf2(path):
-    tree = etree.parse(path)
+    extension = path[-3:].lower()
+    try:
+        if extension == '.gz':
+            with gzip.open(path,'r') as f:
+                input = f.read()
+                input = strip_control_characters(input)
+        else:
+            with open(path, 'r') as f:
+                input = f.read()
+                input = strip_control_characters(input)
+
+            with open('temp_xml.tcx','w') as f:
+                f.write(input)
+
+            tree = etree.parse('temp_xml.tcx')
+            os.remove('temp_xml.tcx')
+    except TypeError:
+        tree = etree.parse(path)
+
     root = tree.getroot()
 
     tracks = []
