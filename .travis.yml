@@ -1,5 +1,6 @@
 sudo: false
 language: python
+python: 3.8
 email: false
 env:
   - PYTHON=3.8 PANDAS=MASTER
