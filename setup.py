@@ -125,7 +125,7 @@ setup(name='rowingdata',
       },
 
       scripts=[
-          'bin/painsledplot2.py',
+          #'bin/painsledplot2.py',
       ]
 
 )
