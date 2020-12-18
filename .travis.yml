@@ -22,6 +22,7 @@ after_success:
 before_deploy:
 - pip install --upgrade pip
 - pip install setuptools twine wheel
+- pip install cython
 - python setup.py install
 - python setup.py sdist
 deploy:

@@ -40,6 +40,7 @@ setup(name='rowingdata',
       keywords='rowing ergometer concept2',
 
       install_requires=[
+	  'cython',
 	  'numpy',
 	  'scipy',
 	  'matplotlib',

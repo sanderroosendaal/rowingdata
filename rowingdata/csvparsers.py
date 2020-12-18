@@ -296,7 +296,18 @@ def get_file_type(f):
                 root = tree.getroot()
                 return 'tcx'
             except:
-                return 'unknown'
+                try:
+                    with open(path, 'r') as fop:
+                        input = fop.read()
+                        input = strip_control_characters(input)
+                    with open('temp_xml.tcx','w') as fout:
+                        fout.write(input)
+
+                    tree = etree.parse('temp_xml.tcx')
+                    os.remove('temp_xml.tcx')
+                    return 'tcx'
+                except:
+                    return 'unknown'
         if extension == '.gpx':
             try:
                 tree = etree.parse(f)
@@ -333,8 +344,18 @@ def get_file_type(f):
             root = tree.getroot()
             return 'tcx'
         except:
-            return 'unknown'
+            try:
+                with open(f, 'r') as fop:
+                    input = fop.read()
+                    input = strip_control_characters(input)
+                with open('temp_xml.tcx','w') as ftemp:
+                    ftemp.write(input)
 
+                tree = etree.parse('temp_xml.tcx')
+                os.remove('temp_xml.tcx')
+                return 'tcx'
+            except:
+                return 'unknown'
     if extension == '.gpx':
         try:
             tree = etree.parse(f)
