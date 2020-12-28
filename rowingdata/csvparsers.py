@@ -2040,6 +2040,11 @@ class RowPerfectParser(CSVParser):
             'time',
             ' latitude',
             ' longitude',
+            'work_per_pulse'
+        ]
+
+        self.defaultcolumnnames += [
+            'driveenergy'
         ]
 
 
