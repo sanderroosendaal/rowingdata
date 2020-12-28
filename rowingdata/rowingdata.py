@@ -2143,6 +2143,11 @@ class rowingdata:
                 else:
                     pass
 
+        # add driveenergy
+        try:
+            sled_df['driveenergy'] = 60.*sled_df[' Power (watts)']/sled_df[' Cadence (stokes/min)']
+        except KeyError:
+            sled_df['driveenergy'] = 0
 
         # these parameters are handy to have available in other routines
         self.number_of_rows = number_of_rows
