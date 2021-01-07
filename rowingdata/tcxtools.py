@@ -197,7 +197,7 @@ def process_trackpoint(trackpoint):
                         for pchild in extchild:
                             if pchild.tag == '{%s}Watts'%ns2:
                                 try:
-                                    trackp['power'] = int(pchild.text)
+                                    trackp['power'] = float(pchild.text)
                                 except TypeError:
                                     trackp['power'] = 0
             if elem.tag == '{%s}Position'%ns1:
