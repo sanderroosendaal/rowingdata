@@ -23,6 +23,7 @@ after_success:
 - coveralls --config_file .coveragerc
 before_deploy:
 - pip install --upgrade pip
+- pip install --upgrade twine
 - pip install setuptools twine wheel
 - pip install cython
 - python setup.py install

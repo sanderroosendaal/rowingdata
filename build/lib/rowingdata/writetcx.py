@@ -74,7 +74,7 @@ def lap_begin(f,datetimestring,totalmeters,avghr,maxhr,avgspm,totalseconds):
     f.write('          <TriggerMethod>Manual</TriggerMethod>\n')
     f.write('          <Track>\n')
 
-    
+
 def lap_end(f):
     f.write('          </Track>\n')
     f.write('          <Notes>rowingdata export</Notes>\n')
@@ -86,9 +86,22 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
         notes="Exported by rowingdata"
 
     notes = notes.encode('utf-8')
-    
-    totalseconds=int(df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min())
-    totalmeters=int(df['cum_dist'].max())
+
+    try:
+        totalseconds=int(df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min())
+    except ValueError:
+        totalseconds = 0
+        
+    try:
+        totalmeters=int(df['cum_dist'].max())
+    except ValueError:
+        totalmeters = 0
+
+    try:
+        totalcalories=int(df[' Calories (kCal)'].max())
+    except ValueError:
+        totalcalories = 0
+
     try:
         avghr=int(df[' HRCur (bpm)'].mean())
     except ValueError:
@@ -101,7 +114,11 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
         maxhr = 1
     if maxhr == 0:
         maxhr=1
-    avgspm=int(df[' Cadence (stokes/min)'].mean())
+
+    try:
+        avgspm=int(df[' Cadence (stokes/min)'].mean())
+    except ValueError:
+        avgspm = 10
 
     seconds=df['TimeStamp (sec)'].values
     distancemeters=df['cum_dist'].values
@@ -126,7 +143,7 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
         power=df[' Power (watts)'].values
     except KeyError:
         haspower=0
-        
+
     s="2000-01-01"
     tt=ps.parse(s)
 
@@ -156,12 +173,12 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
     distancemeters_el = SubElement(lap,'DistanceMeters')
     distancemeters_el.text = '{m}'.format(m=totalmeters)
     calories = SubElement(lap,'Calories')
-    calories.text = '1'
+    calories.text = '{c}'.format(c=totalcalories)
     avghr_el = SubElement(lap,'AverageHeartRateBpm')
     avghr_el.attrib['xsi:type'] = 'HeartRateInBeatsPerMinute_t'
     value = SubElement(avghr_el,'Value')
     value.text = '{s}'.format(s=avghr)
-    
+
     maxhr_el = SubElement(lap,'MaximumHeartRateBpm')
     maxhr_el.attrib['xsi:type'] = 'HeartRateInBeatsPerMinute_t'
     value = SubElement(maxhr_el,'Value')
@@ -178,7 +195,7 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
 
     track  = SubElement(lap,'Track')
 
-    
+
     for i in range(nr_rows):
         hri=heartrate[i]
         if hri == 0:
@@ -225,34 +242,34 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
     creator = SubElement(top,'Creator')
     name = SubElement(creator,'Name')
     name.text = 'rowsandall.com/rowingdata'
-        
+
     author = SubElement(top,'Author')
     author.attrib['xsi:type'] = 'Application_t'
 
     name = SubElement(author,'Name')
     name.text = 'rowingdata'
-    
+
     build = SubElement(author,'Build')
-    
+
     version = SubElement(build,'Version')
-    
+
     versionmajor = SubElement(version,'VersionMajor')
     versionmajor.text = '0'
-    
+
     versionminor = SubElement(version,'VersionMinor')
     versionminor.text = '75'
 
     type = SubElement(build,'Type')
     type.text = 'Release'
-    
+
     lang = SubElement(author,'LangID')
     lang.text = 'EN'
-    
+
     partnumber = SubElement(author,'PartNumber')
     partnumber.text = '000-00000-00'
-    
+
     return prettify(top)
-    
+
 def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata",
               sport="Other"):
 
@@ -260,8 +277,8 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata",
 
     with open(tcxFile,'w') as fop:
         fop.write(tcxtext)
-    
-    
+
+
     try:
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
@@ -284,19 +301,18 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata",
                 objectify.fromstring(some_xml_string, parser)
                 # print("YEAH!, your xml file has validated")
             except XMLSyntaxError:
-        
+
                 print("Oh NO!, your xml file does not validate")
                 pass
         except:
-            print("Oh NO!, your xmsl file does not validate")
+            print("Oh NO!, your xml file does not validate")
             pass
-        
+
     except six.moves.urllib.error.URLError:
         print("cannot download TCX schema")
         print("your TCX file is unvalidated. Good luck")
 
-    
-            
+
+
 
     return 1
-
