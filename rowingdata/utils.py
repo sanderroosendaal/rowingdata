@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import math
 import numpy as np
+np.seterr(divide='ignore', invalid='ignore')
 import re
 import time
 import matplotlib
