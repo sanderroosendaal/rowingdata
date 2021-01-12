@@ -94,10 +94,10 @@ def totimestamp(dt, epoch=datetime.datetime(1970,1,1,0,0,0,0,pytz.UTC)):
 def format_pace(x,pos=None):
     try:
         secstime = datetime.datetime.fromtimestamp(x+0.05)
-    except OverflowError:
+    except (OverflowError,ValueError):
         try:
             date = datetime.datetime(1970, 1, 1) + datetime.timedelta(x)
-        except OverflowError:
+        except (OverflowError,ValueError):
             return '00:00.0'
 
     stime =  '%s.%i' % (secstime.strftime("%M:%S"), secstime.microsecond/100000)
