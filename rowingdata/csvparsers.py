@@ -2416,58 +2416,6 @@ class SpeedCoach2Parser(CSVParser):
 
         self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
-        # get date from header
-        try:
-            dateline = get_file_line(4, csvfile)
-            dated = dateline.split(',')[1]
-            # self.row_date = parser.parse(dated, fuzzy=True, dayfirst=False)
-            self.row_date = parser.parse(dated,fuzzy=False,dayfirst=False)
-        except ValueError:
-            dateline = get_file_line(3, csvfile)
-            dated = dateline.split(',')[1]
-            try:
-                #                self.row_date = parser.parse(dated, fuzzy=True,dayfirst=False)
-                self.row_date = parser.parse(dated, fuzzy=False,dayfirst=False)
-            except ValueError:
-                self.row_date = datetime.datetime.now()
-
-        if self.row_date.tzinfo is None or self.row_date.tzinfo.utcoffset(self.row_date) is None:
-            try:
-                latavg = self.df[self.columns[' latitude']].mean()
-                lonavg = self.df[self.columns[' longitude']].mean()
-                tf = TimezoneFinder()
-                timezone_str = tf.timezone_at(lng=lonavg, lat=latavg)
-                if timezone_str is None:
-                    timezone_str = tf.closest_timezone_at(lng=lonavg,
-                                                          lat=latavg)
-                row_date = self.row_date
-                row_date = pytz.timezone(timezone_str).localize(row_date)
-            except KeyError:
-                row_date = pytz.timezone('UTC').localize(self.row_date)
-            self.row_date = row_date
-
-        self.df.sort_values(self.columns['TimeStamp (sec)'],axis=0,inplace=True)
-
-        timestrings = self.df[self.columns['TimeStamp (sec)']]
-        seconds = timestrings.apply(
-            lambda x: timestrtosecs2(x, unknown=np.nan)
-        )
-        seconds = clean_nan(np.array(seconds))
-        seconds = pd.Series(seconds).fillna(method='ffill').values
-        res = make_cumvalues_array(np.array(seconds))
-        seconds3 = res[0]
-        lapidx = res[1]
-
-        unixtimes = seconds3 + totimestamp(self.row_date)
-
-        if not self.df.empty:
-            self.df[self.columns[' lapIdx']] = lapidx
-            self.df[self.columns['TimeStamp (sec)']] = unixtimes
-            self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
-            self.df[self.columns[' ElapsedTime (sec)']] = unixtimes - unixtimes[0]
-
-
-
         # correct Power, Work per Stroke
         try:
             self.df[self.columns[' Power (watts)']] *= corr_factor
@@ -2556,7 +2504,6 @@ class SpeedCoach2Parser(CSVParser):
             except KeyError:
                 pass
 
-
         cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
         self.df[self.columns['cum_dist']] = cum_dist
         velo = self.df[self.columns['GPS Speed']]
@@ -2569,9 +2516,53 @@ class SpeedCoach2Parser(CSVParser):
         pace = pace.replace(np.nan, 300)
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
 
+        # get date from header
+        try:
+            dateline = get_file_line(4, csvfile)
+            dated = dateline.split(',')[1]
+            # self.row_date = parser.parse(dated, fuzzy=True, dayfirst=False)
+            self.row_date = parser.parse(dated,fuzzy=False,dayfirst=False)
+        except ValueError:
+            dateline = get_file_line(3, csvfile)
+            dated = dateline.split(',')[1]
+            try:
+                #                self.row_date = parser.parse(dated, fuzzy=True,dayfirst=False)
+                self.row_date = parser.parse(dated, fuzzy=False,dayfirst=False)
+            except ValueError:
+                self.row_date = datetime.datetime.now()
 
+        if self.row_date.tzinfo is None or self.row_date.tzinfo.utcoffset(self.row_date) is None:
+            try:
+                latavg = self.df[self.columns[' latitude']].mean()
+                lonavg = self.df[self.columns[' longitude']].mean()
+                tf = TimezoneFinder()
+                timezone_str = tf.timezone_at(lng=lonavg, lat=latavg)
+                if timezone_str is None:
+                    timezone_str = tf.closest_timezone_at(lng=lonavg,
+                                                          lat=latavg)
+                row_date = self.row_date
+                row_date = pytz.timezone(timezone_str).localize(row_date)
+            except KeyError:
+                row_date = pytz.timezone('UTC').localize(self.row_date)
+            self.row_date = row_date
 
+        timestrings = self.df[self.columns['TimeStamp (sec)']]
+        seconds = timestrings.apply(
+            lambda x: timestrtosecs2(x, unknown=np.nan)
+        )
+        seconds = clean_nan(np.array(seconds))
+        seconds = pd.Series(seconds).fillna(method='ffill').values
+        res = make_cumvalues_array(np.array(seconds))
+        seconds3 = res[0]
+        lapidx = res[1]
 
+        unixtimes = seconds3 + totimestamp(self.row_date)
+
+        if not self.df.empty:
+            self.df[self.columns[' lapIdx']] = lapidx
+            self.df[self.columns['TimeStamp (sec)']] = unixtimes
+            self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
+            self.df[self.columns[' ElapsedTime (sec)']] = unixtimes - unixtimes[0]
 
         self.to_standard()
 
