@@ -130,7 +130,7 @@ class ExcelTemplate(object):
                     time += restseconds
                     totdistance += restdistance
 
-        self.df['TimeStamp (sec)'] = unixnow+self.df.time
+        self.df['TimeStamp (sec)'] = unixnow+self.df['time']
         self.df['power'] = 2.8*self.df['velo']**3
         mapping = {
             'time': ' ElapsedTime (sec)',
