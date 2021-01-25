@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.1.0"
+__version__ = "3.1.1"
 
 from collections import Counter
 
@@ -204,7 +204,7 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
         if barlimits is None:
             barlimits = ['lim_ut2','lim_ut1','lim_at','lim_tr','lim_an','lim_max']
         if barverbosenames is None:
-            barverbosenames = ['UT2','UT1','AT','TR','AN','MAX']
+            barverbosenames = list(self.rwr.hrzones)
 
     colors = ['gray','y','g','blue','violet','r']
 
@@ -1326,6 +1326,7 @@ class summarydata:
 
 ftppowerperc = [55, 75, 90, 105, 120]
 ftppowernames = ['UT3', 'UT2', 'UT1', 'AT', 'TR', 'AN']
+hrzonenames = ['Rest','UT2','UT1','AT','TR','AN','max']
 
 class rower:
     """ This class contains all the personal data about the rower
@@ -1346,7 +1347,8 @@ class rower:
                  mc=72.5,
                  strokelength=1.35, ftp=226,
                  powerperc=ftppowerperc,
-                 powerzones=ftppowernames):
+                 powerzones=ftppowernames,
+                 hrzones=hrzonenames):
         self.ut2 = hrut2
         self.ut1 = hrut1
         self.at = hrat
@@ -1358,6 +1360,7 @@ class rower:
         self.ftp = ftp
         self.powerperc = powerperc
         self.powerzones = powerzones
+        self.hrzones = hrzones[1:5]
         if (weknowphysics == 1):
             self.rc = rowingphysics.crew(mc=mc, strokelength=strokelength)
         else:
@@ -5587,7 +5590,7 @@ class rowingdata:
                 time_in_zone[5] += time_increments[self.index[i]]
 
         # print(time_in_zone)
-        wedge_labels = ['<ut2', 'ut2', 'ut1', 'at', 'tr', 'an']
+        wedge_labels = list(self.rwr.hrzones)
         totaltime = time_in_zone.sum()
 
         perc = 100. * time_in_zone / totaltime
@@ -5828,7 +5831,7 @@ class rowingdata:
                 time_in_zone[5] += time_increments[i]
 
         # print(time_in_zone)
-        wedge_labels = ['<ut2', 'ut2', 'ut1', 'at', 'tr', 'an']
+        wedge_labels = list(self.rwr.hrzones)
         totaltime = time_in_zone.sum()
         perc = 100. * time_in_zone / totaltime
         cutoff = 1.0
