@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.0.9"
+__version__ = "3.1.1"
 
 from collections import Counter
 
@@ -204,7 +204,7 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
         if barlimits is None:
             barlimits = ['lim_ut2','lim_ut1','lim_at','lim_tr','lim_an','lim_max']
         if barverbosenames is None:
-            barverbosenames = ['UT2','UT1','AT','TR','AN','MAX']
+            barverbosenames = list(self.rwr.hrzones)
 
     colors = ['gray','y','g','blue','violet','r']
 
@@ -331,12 +331,12 @@ def make_hr_bars(ax1,r,df,mode=['distance'],title=None,gridtrue=True,axis='x'):
     ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_an'], color='k')
     ax1.plot(df.loc[:, xcolumn], df.loc[:, 'lim_max'], color='k')
 
-    ax1.text(5, r.rwr.ut2 + 1.5, "UT2", size=8)
-    ax1.text(5, r.rwr.ut1 + 1.5, "UT1", size=8)
-    ax1.text(5, r.rwr.at + 1.5, "AT", size=8)
-    ax1.text(5, r.rwr.tr + 1.5, "TR", size=8)
-    ax1.text(5, r.rwr.an + 1.5, "AN", size=8)
-    ax1.text(5, r.rwr.max + 1.5, "MAX", size=8)
+    ax1.text(5, r.rwr.ut2 + 1.5, r.rwr.hrzones[1], size=8)
+    ax1.text(5, r.rwr.ut1 + 1.5, r.rwr.hrzones[2], size=8)
+    ax1.text(5, r.rwr.at + 1.5, r.rwr.hrzones[3], size=8)
+    ax1.text(5, r.rwr.tr + 1.5, r.rwr.hrzones[4], size=8)
+    ax1.text(5, r.rwr.an + 1.5, r.rwr.hrzones[5], size=8)
+    ax1.text(5, r.rwr.max + 1.5, r.rwr.hrzones[6], size=8)
 
 
     ax1.axis([0, end_dist, 100, 1.1 * r.rwr.max])
@@ -1326,6 +1326,7 @@ class summarydata:
 
 ftppowerperc = [55, 75, 90, 105, 120]
 ftppowernames = ['UT3', 'UT2', 'UT1', 'AT', 'TR', 'AN']
+hrzonenames = ['Rest','UT2','UT1','AT','TR','AN','max']
 
 class rower:
     """ This class contains all the personal data about the rower
@@ -1346,7 +1347,8 @@ class rower:
                  mc=72.5,
                  strokelength=1.35, ftp=226,
                  powerperc=ftppowerperc,
-                 powerzones=ftppowernames):
+                 powerzones=ftppowernames,
+                 hrzones=hrzonenames):
         self.ut2 = hrut2
         self.ut1 = hrut1
         self.at = hrat
@@ -1358,6 +1360,7 @@ class rower:
         self.ftp = ftp
         self.powerperc = powerperc
         self.powerzones = powerzones
+        self.hrzones = hrzones
         if (weknowphysics == 1):
             self.rc = rowingphysics.crew(mc=mc, strokelength=strokelength)
         else:
@@ -4970,12 +4973,12 @@ class rowingdata:
         ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
         ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
         ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
+        ax1.text(5, self.rwr.ut2 + 1.5, self.rwr.hrzones[1], size=8)
+        ax1.text(5, self.rwr.ut1 + 1.5, self.rwr.hrzones[2], size=8)
+        ax1.text(5, self.rwr.at + 1.5, self.rwr.hrzones[3], size=8)
+        ax1.text(5, self.rwr.tr + 1.5, self.rwr.hrzones[4], size=8)
+        ax1.text(5, self.rwr.an + 1.5, self.rwr.hrzones[5], size=8)
+        ax1.text(5, self.rwr.max + 1.5, self.rwr.hrzones[6], size=8)
 
         end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
 
@@ -5215,12 +5218,12 @@ class rowingdata:
         ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
         ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
         ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
+        ax1.text(5, self.rwr.ut2 + 1.5, self.rwr.hrzones[1], size=8)
+        ax1.text(5, self.rwr.ut1 + 1.5, self.rwr.hrzones[2], size=8)
+        ax1.text(5, self.rwr.at + 1.5, self.rwr.hrzones[3], size=8)
+        ax1.text(5, self.rwr.tr + 1.5, self.rwr.hrzones[4], size=8)
+        ax1.text(5, self.rwr.an + 1.5, self.rwr.hrzones[5], size=8)
+        ax1.text(5, self.rwr.max + 1.5, self.rwr.hrzones[6], size=8)
 
         end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
@@ -5289,12 +5292,12 @@ class rowingdata:
         ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_an'], color='k')
         ax1.plot(df.loc[:, 'cum_dist'], df.loc[:, 'lim_max'], color='k')
 
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
+        ax1.text(5, self.rwr.ut2 + 1.5, self.rwr.hrzones[1], size=8)
+        ax1.text(5, self.rwr.ut1 + 1.5, self.rwr.hrzones[2], size=8)
+        ax1.text(5, self.rwr.at + 1.5, self.rwr.hrzones[3], size=8)
+        ax1.text(5, self.rwr.tr + 1.5, self.rwr.hrzones[4], size=8)
+        ax1.text(5, self.rwr.an + 1.5, self.rwr.hrzones[5], size=8)
+        ax1.text(5, self.rwr.max + 1.5, self.rwr.hrzones[6], size=8)
 
         end_dist = int(df.loc[df.index[-1], 'cum_dist'])
 
@@ -5431,12 +5434,12 @@ class rowingdata:
         ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_tr'], color='k')
         ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_an'], color='k')
         ax1.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, 'lim_max'], color='k')
-        ax1.text(5, self.rwr.ut2 + 1.5, "UT2", size=8)
-        ax1.text(5, self.rwr.ut1 + 1.5, "UT1", size=8)
-        ax1.text(5, self.rwr.at + 1.5, "AT", size=8)
-        ax1.text(5, self.rwr.tr + 1.5, "TR", size=8)
-        ax1.text(5, self.rwr.an + 1.5, "AN", size=8)
-        ax1.text(5, self.rwr.max + 1.5, "MAX", size=8)
+        ax1.text(5, self.rwr.ut2 + 1.5, self.rwr.hrzones[1], size=8)
+        ax1.text(5, self.rwr.ut1 + 1.5, self.rwr.hrzones[2], size=8)
+        ax1.text(5, self.rwr.at + 1.5, self.rwr.hrzones[3], size=8)
+        ax1.text(5, self.rwr.tr + 1.5, self.rwr.hrzones[4], size=8)
+        ax1.text(5, self.rwr.an + 1.5, self.rwr.hrzones[5], size=8)
+        ax1.text(5, self.rwr.max + 1.5, self.rwr.hrzones[6], size=8)
 
         end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         ax1.axis([0, end_time, 100, 1.1 * self.rwr.max])
@@ -5587,7 +5590,8 @@ class rowingdata:
                 time_in_zone[5] += time_increments[self.index[i]]
 
         # print(time_in_zone)
-        wedge_labels = ['<ut2', 'ut2', 'ut1', 'at', 'tr', 'an']
+        wedge_labels = list(self.rwr.hrzones[1:7])
+
         totaltime = time_in_zone.sum()
 
         perc = 100. * time_in_zone / totaltime
@@ -5828,7 +5832,7 @@ class rowingdata:
                 time_in_zone[5] += time_increments[i]
 
         # print(time_in_zone)
-        wedge_labels = ['<ut2', 'ut2', 'ut1', 'at', 'tr', 'an']
+        wedge_labels = list(self.rwr.hrzones[1:7])
         totaltime = time_in_zone.sum()
         perc = 100. * time_in_zone / totaltime
         cutoff = 1.0
