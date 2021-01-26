@@ -5590,7 +5590,7 @@ class rowingdata:
                 time_in_zone[5] += time_increments[self.index[i]]
 
         # print(time_in_zone)
-        wedge_labels = list(self.rwr.hrzones[1:7])
+        wedge_labels = list(self.rwr.hrzones[0:6])
 
         totaltime = time_in_zone.sum()
 
@@ -5832,7 +5832,7 @@ class rowingdata:
                 time_in_zone[5] += time_increments[i]
 
         # print(time_in_zone)
-        wedge_labels = list(self.rwr.hrzones[1:7])
+        wedge_labels = list(self.rwr.hrzones[0:6])
         totaltime = time_in_zone.sum()
         perc = 100. * time_in_zone / totaltime
         cutoff = 1.0
