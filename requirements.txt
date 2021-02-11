@@ -1,6 +1,6 @@
 arrow==0.15.4
 backcall==0.1.0
-bleach==3.2.1
+bleach==3.3.0
 cairocffi==1.0.2
 certifi==2019.3.9
 cffi==1.12.2
@@ -53,7 +53,7 @@ readme-renderer==28.0
 requests==2.21.0
 requests-toolbelt==0.9.1
 rfc3986==1.4.0
-rowingdata==2.6.7
+rowingdata==3.1.2
 rowingphysics==0.5.0
 scipy==1.2.1
 seaborn==0.10.0
