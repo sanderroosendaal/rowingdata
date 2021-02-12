@@ -203,12 +203,6 @@ def parsetodict(s):
 def parse(s):
     r = Syntax().parseString(s).asList()
     res = getinterval(r)
-#    if len(r)==2:
-#        res =  getinterval(r)
-#    elif len(r)==1:
-#        res =  getinterval(r[0])
-#    else:
-#        res =  getinterval(r[0])+getinterval(r[2:])
 
     xres = []
 
