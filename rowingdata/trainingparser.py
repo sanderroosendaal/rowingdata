@@ -200,6 +200,60 @@ def parsetodict(s):
 
     return xres
 
+def simpletofit(step,message_index=0,name=''):
+    type = step['type']
+    value = step['value']
+    unit = step['unit']
+
+    d = {
+        'wkt_step_name': name,
+        'message_index': message_index,
+    }
+
+    if unit == 'seconds':
+        d['duration_type'] = 'time'
+        d['duration_time'] = value
+    else:
+        d['duration_type'] = 'distance'
+        d['duration_distance'] = value
+
+    d['intensity'] = 'active'
+    if type == 'rest':
+        d['intensity'] = 'rest'
+
+    try:
+        target = step['target']
+        targetunit = step['targetunit']
+        if targetunit == 'W':
+            d['target_type'] = 'power'
+            d['custom_target_power_low'] = target
+        if targetunit == 'spm':
+            d['target_type'] = 'cadence'
+            d['custom_target_cadence_low'] = target
+        if targetunit in ['bpm','hr']:
+            d['target_tyoe'] = 'heart_rate'
+            d['custom_target_heart_rate_low'] = target
+    except KeyError:
+        pass
+
+    return d
+
+def tofitdict(steps,name='',sport='rowing'):
+    newsteps = []
+    message_index = 0
+    for step in steps:
+        newsteps.append(simpletofit(step,message_index=message_index,name=str(message_index)))
+        message_index = message_index+1
+
+    d = {
+        'name':name,
+        'sport':sport,
+        'filename':'',
+        'steps':newsteps
+    }
+
+    return d
+
 def parse(s):
     r = Syntax().parseString(s).asList()
     res = getinterval(r)
