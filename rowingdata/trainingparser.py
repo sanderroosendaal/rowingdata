@@ -120,6 +120,8 @@ def getinterval(l):
         for i in range(int(l[0])):
             u+=getinterval(l[2])
         return u
+    elif len(l)==3 and l[1] == '@':
+        return getinterval(l[0])
     elif len(l)==1:
         return getinterval(l[0])
     else:
