@@ -153,6 +153,75 @@ class TestStringParser:
               300,'seconds','work',60,'seconds','rest',
               600,'seconds','work',600,'seconds','work']
 
+        d1=[
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':120,'unit':'seconds','type':'rest'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':120,'unit':'seconds','type':'rest'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':120,'unit':'seconds','type':'rest'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':120,'unit':'seconds','type':'rest'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':120,'unit':'seconds','type':'rest'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':120,'unit':'seconds','type':'rest'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':120,'unit':'seconds','type':'rest'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':120,'unit':'seconds','type':'rest'},
+        ]
+
+        d2=[{'value':10000,'unit':'meters','type':'work'}]
+
+        d3=[
+            {'value':180,'unit':'seconds','type':'work'},
+            {'value':180,'unit':'seconds','type':'rest'},
+            {'value':180,'unit':'seconds','type':'work'}
+            ]
+        d4=[
+            {'value':180,'unit':'seconds','type':'work'},
+            {'value':180,'unit':'seconds','type':'rest'},
+            {'value':180,'unit':'seconds','type':'work'},
+            ]
+
+        d5=[
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':120,'unit':'seconds','type':'rest'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':120,'unit':'seconds','type':'rest'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':120,'unit':'seconds','type':'rest'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':120,'unit':'seconds','type':'rest'},
+            ]
+
+        d6=[
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':500,'unit':'meters','type':'rest'},
+            {'value':500,'unit':'meters','type':'work'},
+            {'value':500,'unit':'meters','type':'rest'},
+            ]
+
+        d7 = [
+            {'value': 30, 'unit': 'seconds', 'type': 'work'},
+            {'value': 30, 'unit': 'seconds', 'type': 'rest'},
+            {'value': 30, 'unit': 'seconds', 'type': 'work'},
+            {'value': 30, 'unit': 'seconds', 'type': 'rest'},
+            {'value': 30, 'unit': 'seconds', 'type': 'work'},
+            {'value': 30, 'unit': 'seconds', 'type': 'rest'},
+            {'value': 30, 'unit': 'seconds', 'type': 'work'},
+            {'value': 30, 'unit': 'seconds', 'type': 'rest'},
+            {'value': 300, 'unit': 'seconds', 'type': 'work'},
+            {'value': 60, 'unit': 'seconds', 'type': 'rest'},
+            {'value': 600, 'unit': 'seconds', 'type': 'work'},
+            {'value': 600, 'unit': 'seconds', 'type': 'work'}
+            ]
+
         t1=rowingdata.trainingparser.parse(s1)
         t2=rowingdata.trainingparser.parse(s2)
         t3=rowingdata.trainingparser.parse(s3)
@@ -168,6 +237,22 @@ class TestStringParser:
         assert_equals(t5,r5)
         assert_equals(t6,r6)
         assert_equals(t7,r7)
+
+        t1=rowingdata.trainingparser.parsetodict(s1)
+        t2=rowingdata.trainingparser.parsetodict(s2)
+        t3=rowingdata.trainingparser.parsetodict(s3)
+        t4=rowingdata.trainingparser.parsetodict(s4)
+        t5=rowingdata.trainingparser.parsetodict(s5)
+        t6=rowingdata.trainingparser.parsetodict(s6)
+        t7=rowingdata.trainingparser.parsetodict(s7)
+
+        assert_equals(t1,d1)
+        assert_equals(t2,d2)
+        assert_equals(t3,d3)
+        assert_equals(t4,d4)
+        assert_equals(t5,d5)
+        assert_equals(t6,d6)
+        assert_equals(t7,d7)
 
 class TestPhysics:
     row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')

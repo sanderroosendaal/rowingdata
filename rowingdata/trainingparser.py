@@ -26,6 +26,7 @@ def Syntax():
     restop = "/"
     times = "x"
     minsep = ":"
+    targetop = "@"
 
 
     lpar  = Literal( '(' ).suppress()
@@ -36,21 +37,64 @@ def Syntax():
     ntimes = num+"x"
     unit = Word(alphas)
     interval = Group(timeordist+unit) | timeordist  # 5min
-    
+    target = Group(num+unit)
+
     multipleinterval = Group(ntimes+interval)  # 3x5min
     set = multipleinterval | interval  # 5min or 3x5min
     intervalwithrest = Group(set+"/"+interval) # 5min/3min or 3x5min/3min
+    intervalwithtarget = Group(set+"@"+target)
+    intervalwithtargetandrest = Group(intervalwithtarget+"/"+interval)
     expr = Forward()
 
-    atom = intervalwithrest | set | multipleinterval | interval | Group(lpar+expr+rpar)
+    atom = intervalwithtargetandrest | intervalwithtarget | intervalwithrest | set | multipleinterval | interval | Group(lpar+expr+rpar)
 
     bigset = Group(ntimes+atom) | atom
     bigsetwithrest = Group(bigset+"/"+interval)
-    majorset = bigsetwithrest | bigset
+    bigsetwithtarget = Group(bigset+"@"+target)
+    bigsetwithtargetandrest = Group(bigsetwithtarget+"/"+interval)
+    majorset = bigsetwithtargetandrest | bigsetwithtarget | bigsetwithrest | bigset
 
-    
+
     expr << majorset + ZeroOrMore( "+" + expr )
     return expr
+
+def getintervalasdict(l,target=None):
+    if len(l)==0:
+        return [{}]
+    elif len(l)==2:
+        try:
+            value = int(l[0])
+            unit = l[1]
+        except TypeError:
+            valuemin = int(l[0][0])
+            valuesec = int(l[0][2])
+            value = 60*valuemin+valuesec
+            unit = 'sec'
+        d = {
+            'value': value,
+            'unit': unit,
+            'type': 'work'
+        }
+        if target is not None:
+            d['target'] = target[0]
+            d['targetunit'] = target[1]
+        return [d]
+    elif len(l)==3 and l[1] == '/':
+        a = getintervalasdict(l[0])
+        b = getintervalasdict(l[2])
+        b[0]['type'] = 'rest'
+        return [a,b]
+    elif len(l)==3 and l[1] == 'x':
+        u = []
+        for i in range(int(l[0])):
+            u.append(getintervalasdict(l[2]))
+        return u
+    elif len(l)==3 and l[1] == '@':
+        return getintervalasdict(l[0],target=l[2])
+    elif len(l)==1:
+        return getintervalasdict(l[0])
+    else:
+        return [getintervalasdict(l[0]),getintervalasdict(l[2:])]
 
 
 def getinterval(l):
@@ -76,6 +120,8 @@ def getinterval(l):
         for i in range(int(l[0])):
             u+=getinterval(l[2])
         return u
+    elif len(l)==3 and l[1] == '@':
+        return getinterval(l[0])
     elif len(l)==1:
         return getinterval(l[0])
     else:
@@ -94,6 +140,22 @@ def pieceparse(v):
         value *= 60
 
     return [value,unit]
+
+def pieceparsedict(v):
+    value = v['value']
+    unit = 'seconds'
+    if v['unit'] in ['meter','meters','m']:
+        unit = 'meters'
+    if v['unit'] in ['km','k','kilometer']:
+        value *= 1000
+        unit = 'meters'
+    if v['unit'] in ['min','minute','minutes',"'"]:
+        unit = 'seconds'
+        value *= 60
+
+    v['value'] = value
+    v['unit'] = unit
+    return v
 
 def getlist(s,sel='value'):
     s1=s[0:3]
@@ -116,14 +178,37 @@ def getlist(s,sel='value'):
 
     return 0
 
+def flattenlist(l):
+    flatlist = []
+    for sublist in l:
+        if type(sublist)==dict:
+            flatlist.append(pieceparsedict(sublist))
+            continue
+        elif type(sublist)==list:
+            for item in flattenlist(sublist):
+                flatlist.append(item)
+        else:
+            pass
+
+    return(flatlist)
+
+def parsetodict(s):
+    r = Syntax().parseString(s).asList()
+    res = getintervalasdict(r)
+
+    xres = flattenlist(res)
+
+    return xres
+
 def parse(s):
-    r = Syntax().parseString(s)
-    if len(r)==2:
-        res =  getinterval(r)
-    elif len(r)==1:
-        res =  getinterval(r[0])
-    else:
-        res =  getinterval(r[0])+getinterval(r[2:])
+    r = Syntax().parseString(s).asList()
+    res = getinterval(r)
+#    if len(r)==2:
+#        res =  getinterval(r)
+#    elif len(r)==1:
+#        res =  getinterval(r[0])
+#    else:
+#        res =  getinterval(r[0])+getinterval(r[2:])
 
     xres = []
 
