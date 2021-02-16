@@ -446,8 +446,11 @@ class FITParser(object):
             except KeyError:
                 velo = pd.Series(np.zeros(len(self.df)))
 
-        if velo.mean() >= 1000:
-            velo = velo/1000.
+        try:
+            if velo.mean() >= 1000:
+                velo = velo/1000.
+        except TypeError:
+            pass
 
 
         try:
