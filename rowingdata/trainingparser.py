@@ -207,7 +207,7 @@ def simpletofit(step,message_index=0,name=''):
 
     d = {
         'wkt_step_name': name,
-        'message_index': message_index,
+        'stepId': message_index,
     }
 
     if unit == 'seconds':
