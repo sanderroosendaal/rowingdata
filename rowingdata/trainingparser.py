@@ -215,7 +215,7 @@ def simpletofit(step,message_index=0,name=''):
         d['durationValue'] = value
     else:
         d['durationType'] = 'Distance'
-        d['durationValue'] = value
+        d['durationValue'] = value*100
 
     d['intensity'] = 'Active'
     if type == 'rest':
@@ -226,13 +226,13 @@ def simpletofit(step,message_index=0,name=''):
         targetunit = step['targetunit']
         if targetunit == 'W':
             d['targetType'] = 'Power'
-            d['targetValue'] = target
+            d['targetValue'] = target+1000
         if targetunit == 'spm':
             d['targetType'] = 'Cadence'
             d['targetValue'] = target
         if targetunit in ['bpm','hr']:
             d['targetType'] = 'HeartRate'
-            d['targetValue'] = target
+            d['targetValue'] = target+100
     except KeyError:
         pass
 
