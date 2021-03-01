@@ -928,7 +928,7 @@ class ETHParser(CSVParser):
 
         startdatetime = datetime.datetime.utcnow()
         elapsed = self.df[self.columns[' ElapsedTime (sec)']]
-        starttimeunix = arrow.get(startdatetime).timestamp
+        starttimeunix = arrow.get(startdatetime).timestamp()
 
         unixtimes = starttimeunix+elapsed
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
@@ -984,7 +984,7 @@ class HumonParser(CSVParser):
         dateline = get_file_line(2,csvfile)
         row_datetime = parser.parse(dateline, fuzzy=True,yearfirst=True,dayfirst=False)
 
-        timestamp = arrow.get(row_datetime).timestamp
+        timestamp = arrow.get(row_datetime).timestamp()
 
         time = self.df[self.columns['TimeStamp (sec)']]
         time += timestamp
@@ -1079,11 +1079,11 @@ class RitmoTimeParser(CSVParser):
                 timezonestr = 'UTC'
 
         elapsed = self.df[self.columns[' ElapsedTime (sec)']]
-        starttimeunix = arrow.get(startdatetime).timestamp
+        starttimeunix = arrow.get(startdatetime).timestamp()
         #tts = startdatetime + elapsed.apply(lambda x: datetime.timedelta(seconds=x))
         #unixtimes=tts.apply(lambda x: time.mktime(x.utctimetuple()))
         #unixtimes = tts.apply(lambda x: arrow.get(
-        #    x).timestamp + arrow.get(x).microsecond / 1.e6)
+        #    x).timestamp() + arrow.get(x).microsecond / 1.e6)
         unixtimes = starttimeunix+elapsed
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
 
@@ -1215,9 +1215,9 @@ class BoatCoachOTWParser(CSVParser):
             row_datetime = row_datetime.apply(
                 lambda x: parser.parse(x, fuzzy=True,yearfirst=True,dayfirst=False))
             unixtimes = row_datetime.apply(lambda x: arrow.get(
-                x).timestamp + arrow.get(x).microsecond / 1.e6)
+                x).timestamp() + arrow.get(x).microsecond / 1.e6)
         except KeyError:
-            row_date2 = arrow.get(row_date).timestamp
+            row_date2 = arrow.get(row_date).timestamp()
             timecolumn = self.df[self.columns[' ElapsedTime (sec)']]
             timesecs = timecolumn.apply(timestrtosecs)
             timesecs = make_cumvalues(timesecs)[0]
@@ -1293,7 +1293,7 @@ class CoxMateParser(CSVParser):
         tts = now + elapsed.apply(lambda x: datetime.timedelta(seconds=x))
         #unixtimes=tts.apply(lambda x: time.mktime(x.utctimetuple()))
         unixtimes = tts.apply(lambda x: arrow.get(
-            x).timestamp + arrow.get(x).microsecond / 1.e6)
+            x).timestamp() + arrow.get(x).microsecond / 1.e6)
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
 
 
@@ -1341,8 +1341,7 @@ class painsledDesktopParser(CSVParser):
         # convert to unix style time stamp
         tts = timestamps.apply(lambda x: iso8601.parse_date(x[2:-1]))
         #unixtimes=tts.apply(lambda x: time.mktime(x.utctimetuple()))
-        unixtimes = tts.apply(lambda x: arrow.get(
-            x).timestamp + arrow.get(x).microsecond / 1.e6)
+        unixtimes = tts.apply(lambda x: arrow.get(x).timestamp() + arrow.get(x).microsecond / 1.e6)
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
         self.df[
@@ -1436,12 +1435,12 @@ class BoatCoachParser(CSVParser):
             row_date = parser.parse(datetime[0], fuzzy=True,yearfirst=True,dayfirst=False)
             row_datetime = datetime.apply(lambda x: parser.parse(x, fuzzy=True,yearfirst=True,dayfirst=False))
             unixtimes = row_datetime.apply(
-                lambda x: arrow.get(x).timestamp + arrow.get(x).microsecond / 1.e6
+                lambda x: arrow.get(x).timestamp() + arrow.get(x).microsecond / 1.e6
             )
         except KeyError:
             # calculations
             # row_date2=time.mktime(row_date.utctimetuple())
-            row_date2 = arrow.get(row_date).timestamp
+            row_date2 = arrow.get(row_date).timestamp()
             timecolumn = self.df[self.columns[' ElapsedTime (sec)']]
             timesecs = timecolumn.apply(timestrtosecs)
             timesecs = make_cumvalues(timesecs)[0]
@@ -1604,7 +1603,7 @@ class KinoMapParser(CSVParser):
             lambda x: parser.parse(x, fuzzy=True,yearfirst=True,dayfirst=False))
         #unixtimes=datetime.apply(lambda x: time.mktime(x.utctimetuple()))
         unixtimes = row_datetime.apply(lambda x: arrow.get(
-            x).timestamp + arrow.get(x).microsecond / 1.e6)
+            x).timestamp() + arrow.get(x).microsecond / 1.e6)
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
         self.columns[' ElapsedTime (sec)'] = ' ElapsedTime (sec)'
 
@@ -1707,11 +1706,11 @@ class BoatCoachAdvancedParser(CSVParser):
             row_date = parser.parse(datetime[0], fuzzy=True,yearfirst=True,dayfirst=False)
             rowdatetime = row_datetime.apply(lambda x: parser.parse(x, fuzzy=True,yearfirst=True,dayfirst=False))
             unixtimes = row_datetime.apply(lambda x: arrow.get(
-                x).timestamp + arrow.get(x).microsecond / 1.e6)
+                x).timestamp() + arrow.get(x).microsecond / 1.e6)
         except KeyError:
             # calculations
             # row_date2=time.mktime(row_date.utctimetuple())
-            row_date2 = arrow.get(row_date).timestamp
+            row_date2 = arrow.get(row_date).timestamp()
             timecolumn = self.df[self.columns[' ElapsedTime (sec)']]
             timesecs = timecolumn.apply(timestrtosecs)
             timesecs = make_cumvalues(timesecs)[0]
@@ -2297,7 +2296,7 @@ class RowProParser(CSVParser):
         lapidx = res[1]
         seconds3 = seconds2.interpolate()
         seconds3[0] = seconds[0]
-        unixtimes = seconds3 + arrow.get(self.row_date).timestamp
+        unixtimes = seconds3 + arrow.get(self.row_date).timestamp()
 
 #        seconds3 = pd.to_timedelta(seconds3, unit='s')
 
@@ -2305,7 +2304,7 @@ class RowProParser(CSVParser):
 #        try:
 #            tts = self.row_date + seconds3
 #            unixtimes = tts.apply(lambda x: arrow.get(
-#                x).timestamp + arrow.get(x).microsecond / 1.e6)
+#                x).timestamp() + arrow.get(x).microsecond / 1.e6)
 #        except ValueError:
 #            seconds3 = seconds2.interpolate()
 

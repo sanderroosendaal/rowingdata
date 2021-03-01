@@ -112,7 +112,7 @@ def tcxtrack_getdata(track):
     df = pd.DataFrame(trackpoints)
     datetime = df['Time'].apply(lambda x: parser.parse(x, fuzzy=True))
     df['timestamp'] = datetime.apply(
-        lambda x: arrow.get(x).timestamp+arrow.get(x).microsecond/1.e6
+        lambda x: arrow.get(x).timestamp()+arrow.get(x).microsecond/1.e6
     )
     try:
         #df['latitude'] = df['Position'].apply(lambda x: x['LatitudeDegrees'])
@@ -258,7 +258,7 @@ def tcxtodf2(path):
                 trackp = process_trackpoint(child)
                 try:
                     time = parser.parse(trackp['time'])
-                    timestamp = arrow.get(time).timestamp+arrow.get(time).microsecond/1.e6
+                    timestamp = arrow.get(time).timestamp()+arrow.get(time).microsecond/1.e6
                     t.append(timestamp)
                 except KeyError:
                     t.append(np.nan)
