@@ -212,7 +212,7 @@ def simpletofit(step,message_index=0,name=''):
 
     if unit == 'seconds':
         d['durationType'] = 'Time'
-        d['durationValue'] = value
+        d['durationValue'] = value*1000
     else:
         d['durationType'] = 'Distance'
         d['durationValue'] = value*100
