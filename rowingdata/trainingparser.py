@@ -211,27 +211,27 @@ def simpletofit(step,message_index=0,name=''):
     }
 
     if unit == 'seconds':
-        d['durationType'] = 'time'
+        d['durationType'] = 'Time'
         d['durationValue'] = value
     else:
-        d['durationType'] = 'distance'
+        d['durationType'] = 'Distance'
         d['durationValue'] = value
 
-    d['intensity'] = 'active'
+    d['intensity'] = 'Active'
     if type == 'rest':
-        d['intensity'] = 'rest'
+        d['intensity'] = 'Rest'
 
     try:
         target = step['target']
         targetunit = step['targetunit']
         if targetunit == 'W':
-            d['targetType'] = 'power'
+            d['targetType'] = 'Power'
             d['targetValue'] = target
         if targetunit == 'spm':
-            d['targetType'] = 'cadence'
+            d['targetType'] = 'Cadence'
             d['targetValue'] = target
         if targetunit in ['bpm','hr']:
-            d['targetType'] = 'heart_rate'
+            d['targetType'] = 'HeartRate'
             d['targetValue'] = target
     except KeyError:
         pass
