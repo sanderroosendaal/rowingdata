@@ -459,7 +459,7 @@ class TestpainsledDesktopParser:
         assert_equals(row.number_of_rows,638)
         totaldist=row.df['cum_dist'].max()
         assert_equals(totaldist,7097)
-        assert_equals(row.rowdatetime,datetime.datetime(2016,3,29,17,41,27,93000,utc))
+        assert_equals(row.rowdatetime,datetime.datetime(2016,3,29,17,41,27,186000,utc))
         totaltime=row.df['TimeStamp (sec)'].max()-row.df['TimeStamp (sec)'].min()
         assert_equals(int(totaltime),1802)
         checks = row.check_consistency()

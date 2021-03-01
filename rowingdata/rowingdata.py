@@ -2196,12 +2196,12 @@ class rowingdata:
 
         if not self.absolutetimestamps:
             # starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
-            starttimeunix1 = arrow.get(self.rowdatetime).timestamp
+            starttimeunix1 = arrow.get(self.rowdatetime).timestamp()
             self_df['TimeStamp (sec)'] = self_df['TimeStamp (sec)'] + \
                 starttimeunix1
         if not other.absolutetimestamps:
             # starttimeunix=time.mktime(other.rowdatetime.utctimetuple())
-            starttimeunix2 = arrow.get(other.rowdatetime).timestamp
+            starttimeunix2 = arrow.get(other.rowdatetime).timestamp()
             other_df['TimeStamp (sec)'] = other_df['TimeStamp (sec)'] + \
                 starttimeunix2
 
@@ -2382,7 +2382,7 @@ class rowingdata:
         if not self.absolutetimestamps and not self.empty:
             try:
                 # starttimeunix=time.mktime(self.rowdatetime.utctimetuple())
-                starttimeunix = arrow.get(self.rowdatetime).timestamp
+                starttimeunix = arrow.get(self.rowdatetime).timestamp()
             except:
                 starttimeunix = time.mktime(
                     datetime.datetime.now().utctimetuple())

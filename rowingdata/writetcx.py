@@ -91,7 +91,7 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
         totalseconds=int(df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min())
     except ValueError:
         totalseconds = 0
-        
+
     try:
         totalmeters=int(df['cum_dist'].max())
     except ValueError:
@@ -147,10 +147,10 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
     s="2000-01-01"
     tt=ps.parse(s)
 
-    timezero=arrow.get(tt).timestamp
+    timezero=arrow.get(tt).timestamp()
     if seconds[0]<timezero:
         dateobj=ps.parse(row_date)
-        unixtimes=seconds+arrow.get(dateobj).timestamp #time.mktime(dateobj.timetuple())
+        unixtimes=seconds+arrow.get(dateobj).timestamp() #time.mktime(dateobj.timetuple())
 
     top = Element('TrainingCenterDatabase')
     top.attrib['xmlns'] = "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"
