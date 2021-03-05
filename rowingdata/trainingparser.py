@@ -193,7 +193,10 @@ def flattenlist(l):
     return(flatlist)
 
 def parsetodict(s):
-    r = Syntax().parseString(s).asList()
+    try:
+        r = Syntax().parseString(s).asList()
+    except:
+        return {}
     res = getintervalasdict(r)
 
     xres = flattenlist(res)
@@ -255,7 +258,11 @@ def tofitdict(steps,name='',sport='rowing'):
     return d
 
 def parse(s):
-    r = Syntax().parseString(s).asList()
+    try:
+        r = Syntax().parseString(s).asList()
+    except:
+        return []
+    
     res = getinterval(r)
 
     xres = []
