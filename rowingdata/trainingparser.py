@@ -76,8 +76,11 @@ def getintervalasdict(l,target=None):
             'type': 'work'
         }
         if target is not None:
-            d['target'] = target[0]
-            d['targetunit'] = target[1]
+            try:
+                d['target'] = int(target[0])
+                d['targetunit'] = target[1]
+            except ValueError:
+                pass
         return [d]
     elif len(l)==3 and l[1] == '/':
         a = getintervalasdict(l[0])
@@ -262,7 +265,7 @@ def parse(s):
         r = Syntax().parseString(s).asList()
     except:
         return []
-    
+
     res = getinterval(r)
 
     xres = []
