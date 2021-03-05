@@ -1544,7 +1544,7 @@ class BoatCoachParser(CSVParser):
         self.df['cumdist'] = res[0]
         maxdist = self.df['cumdist'].max()
         mask = (self.df['cumdist'] == maxdist)
-        while len(self.df[mask]) > 2:
+        while len(self.df.loc[mask]) > 2:
             mask = (self.df['cumdist'] == maxdist)
             self.df.drop(self.df.index[-1], inplace=True)
 
