@@ -1491,14 +1491,13 @@ class BoatCoachParser(CSVParser):
         dif = abs(power - self.df[self.columns[' Power (watts)']])
 
         moving = self.df[self.columns[' Horizontal (meters)']].diff()
-
-
+        moving = moving.apply(lambda x:abs(x))
 
         power[dif < 5] = self.df[self.columns[' Power (watts)']][dif < 5]
 
         power[dif > 1000] = self.df[self.columns[' Power (watts)']][dif > 1000]
 
-        power[moving <= 0] = 0
+        power[moving <= 1] = 0
 
         self.df[self.columns[' Power (watts)']] = power
 
