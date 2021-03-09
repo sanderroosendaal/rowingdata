@@ -153,24 +153,13 @@ class TestStringParser:
               300,'seconds','work',60,'seconds','rest',
               600,'seconds','work',600,'seconds','work']
 
-        d1=[
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':120,'unit':'seconds','type':'rest'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':120,'unit':'seconds','type':'rest'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':120,'unit':'seconds','type':'rest'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':120,'unit':'seconds','type':'rest'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':120,'unit':'seconds','type':'rest'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':120,'unit':'seconds','type':'rest'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':120,'unit':'seconds','type':'rest'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':120,'unit':'seconds','type':'rest'},
-        ]
+        d1 = [
+            {'value': 8, 'type': 'repeatstart', 'unit': 'meters'},
+            {'value': 500, 'unit': 'meters', 'type': 'work'},
+            {'value': 120, 'unit': 'seconds', 'type': 'rest'},
+            {'value': 8, 'type': 'repeat', 'unit': 'meters'}
+            ]
+
 
         d2=[{'value':10000,'unit':'meters','type':'work'}]
 
@@ -186,41 +175,35 @@ class TestStringParser:
             ]
 
         d5=[
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':120,'unit':'seconds','type':'rest'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':120,'unit':'seconds','type':'rest'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':120,'unit':'seconds','type':'rest'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':120,'unit':'seconds','type':'rest'},
+            {'value': 4, 'type': 'repeatstart', 'unit': 'meters'},
+            {'value': 500, 'unit': 'meters', 'type': 'work'},
+            {'value': 500, 'unit': 'meters', 'type': 'work'},
+            {'value': 120, 'unit': 'seconds', 'type': 'rest'},
+            {'value': 4, 'type': 'repeat', 'unit': 'meters'}
             ]
+
 
         d6=[
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':500,'unit':'meters','type':'rest'},
-            {'value':500,'unit':'meters','type':'work'},
-            {'value':500,'unit':'meters','type':'rest'},
+            {'value': 2, 'type': 'repeatstart', 'unit': 'meters'},
+            {'value': 500, 'unit': 'meters', 'type': 'work'},
+            {'value': 500, 'unit': 'meters', 'type': 'rest'},
+            {'value': 2, 'type': 'repeat', 'unit': 'meters'}
             ]
 
+
         d7 = [
+            {'value': 4, 'type': 'repeatstart', 'unit': 'meters'},
             {'value': 30, 'unit': 'seconds', 'type': 'work'},
             {'value': 30, 'unit': 'seconds', 'type': 'rest'},
-            {'value': 30, 'unit': 'seconds', 'type': 'work'},
-            {'value': 30, 'unit': 'seconds', 'type': 'rest'},
-            {'value': 30, 'unit': 'seconds', 'type': 'work'},
-            {'value': 30, 'unit': 'seconds', 'type': 'rest'},
-            {'value': 30, 'unit': 'seconds', 'type': 'work'},
-            {'value': 30, 'unit': 'seconds', 'type': 'rest'},
+            {'value': 4, 'type': 'repeat', 'unit': 'meters'},
             {'value': 300, 'unit': 'seconds', 'type': 'work'},
             {'value': 60, 'unit': 'seconds', 'type': 'rest'},
+            {'value': 2, 'type': 'repeatstart', 'unit': 'meters'},
             {'value': 600, 'unit': 'seconds', 'type': 'work'},
-            {'value': 600, 'unit': 'seconds', 'type': 'work'}
+            {'value': 2, 'type': 'repeat', 'unit': 'meters'}
             ]
+
+
 
         t1=rowingdata.trainingparser.parse(s1)
         t2=rowingdata.trainingparser.parse(s2)
