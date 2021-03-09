@@ -89,8 +89,11 @@ def getintervalasdict(l,target=None):
         return [a,b]
     elif len(l)==3 and l[1] == 'x':
         u = []
-        for i in range(int(l[0])):
-            u.append(getintervalasdict(l[2]))
+        u.append({'value':int(l[0]),'type':'repeatstart','unit':'m'})
+        u.append(getintervalasdict(l[2]))
+        u.append({'value':int(l[0]),'type':'repeat','unit':'m'})
+        #for i in range(int(l[0])):
+        #    u.append(getintervalasdict(l[2]))
         return u
     elif len(l)==3 and l[1] == '@':
         return getintervalasdict(l[0],target=l[2])
@@ -244,10 +247,31 @@ def simpletofit(step,message_index=0,name=''):
 
     return d
 
+def repeatstep(step,startindex,name='',message_index=0):
+    value = step['value']
+
+    d = {
+        'wkt_step_name': name,
+        'stepId': message_index,
+    }
+
+    d['durationType'] = 'RepeatUntilStepsCmplt'
+    d['targetValue'] = value
+    d['durationValue'] = startindex
+
+    return d
+
 def tofitdict(steps,name='',sport='rowing'):
     newsteps = []
     message_index = 0
+    repeatstack = []
     for step in steps:
+        if step['type'] == 'repeatstart':
+            repeatstack.append(message_index)
+            continue
+        if step['type'] == 'repeat':
+            newsteps.append(repeatstep(step,repeatstack.pop(),message_index=message_index,name=str(message_index)))
+            continue
         newsteps.append(simpletofit(step,message_index=message_index,name=str(message_index)))
         message_index = message_index+1
 
