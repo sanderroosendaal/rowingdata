@@ -271,6 +271,7 @@ def tofitdict(steps,name='',sport='rowing'):
             continue
         if step['type'] == 'repeat':
             newsteps.append(repeatstep(step,repeatstack.pop(),message_index=message_index,name=str(message_index)))
+            message_index = message_index+1
             continue
         newsteps.append(simpletofit(step,message_index=message_index,name=str(message_index)))
         message_index = message_index+1
