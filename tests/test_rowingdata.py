@@ -114,7 +114,7 @@ class TestBasicRowingData:
 
 class TestStringParser:
     def teststringparser(self):
-        x<sx<1='8x500m/2min'
+        s1='8x500m/2min'
         s2='10km'
         s3='3min/3min+3min'
         s4='3min/3min + 3min'
