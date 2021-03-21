@@ -1833,8 +1833,11 @@ class ErgDataParser(CSVParser):
         # calculations
         # get date from footer
         pace = self.df[self.columns[' Stroke500mPace (sec/500m)']]
-        pace = np.clip(pace, 0, 1e4)
-        pace = pace.replace(0, 300)
+        try:
+            pace = np.clip(pace, 0, 1e4)
+            pace = pace.replace(0, 300)
+        except TypeError:
+            pass
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
 
         seconds = self.df[self.columns['TimeStamp (sec)']]
