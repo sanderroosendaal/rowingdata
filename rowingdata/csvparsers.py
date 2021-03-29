@@ -2523,14 +2523,22 @@ class SpeedCoach2Parser(CSVParser):
             dated = dateline.split(',')[1]
             # self.row_date = parser.parse(dated, fuzzy=True, dayfirst=False)
             self.row_date = parser.parse(dated,fuzzy=False,dayfirst=False)
+            alt_date = parser.parse(dated,fuzzy=False,dayfirst=True)
         except ValueError:
             dateline = get_file_line(3, csvfile)
             dated = dateline.split(',')[1]
             try:
                 #                self.row_date = parser.parse(dated, fuzzy=True,dayfirst=False)
                 self.row_date = parser.parse(dated, fuzzy=False,dayfirst=False)
+                alt_date = parser.parse(dated,fuzzy=False,dayfirst=True)
             except ValueError:
                 self.row_date = datetime.datetime.now()
+                alt_date = self.row_date
+
+        if alt_date.month == datetime.datetime.now().month:
+            if alt_date != self.row_date:
+                self.row_date = alt_date
+
 
         if self.row_date.tzinfo is None or self.row_date.tzinfo.utcoffset(self.row_date) is None:
             try:
@@ -2546,6 +2554,7 @@ class SpeedCoach2Parser(CSVParser):
             except KeyError:
                 row_date = pytz.timezone('UTC').localize(self.row_date)
             self.row_date = row_date
+
 
         timestrings = self.df[self.columns['TimeStamp (sec)']]
         seconds = timestrings.apply(
