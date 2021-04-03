@@ -2387,6 +2387,8 @@ class NKLiNKLogbookParser(CSVParser):
 
         self.df[' StrokeRecoveryTime (ms)'] = self.df['cycleTime']-self.df[self.columns[' DriveTime (ms)']]
 
+        self.to_standard()
+
 
 
 class SpeedCoach2Parser(CSVParser):
