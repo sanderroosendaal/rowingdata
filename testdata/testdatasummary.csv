@@ -1,5 +1,6 @@
 filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrintervals,lap 1 time,lap 1 dist,timezone
-SpdCoachAmbiguous.csv,speedcoach2,0,2021,3,1,0,0,0,0,0,0,0,0,UTC
+nk_logbook.csv,nklinklogbook,1613,2021,3,30,11,13,4,12155,3901,1,3901,12155,UTC
+SpdCoachAmbiguous.csv,speedcoach2,0,2021,1,3,0,0,0,0,0,0,0,0,UTC
 rowingdata_eth.csv,eth,45,0,0,0,0,0,0,481,122,1,122,481,UTC
 spdcoach2noheader.csv,speedcoach2,255,0,0,0,0,0,0,2372,737,1,737,2372,UTC
 ritmointervals.csv,ritmotime,1045,2019,4,6,14,22,46,11417,5452,9,1099,1929,UTC

@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.2.8"
+__version__ = "3.3.0"
 
 from collections import Counter
 
@@ -107,7 +107,7 @@ try:
         painsledDesktopParser, skip_variable_footer,
         skip_variable_header, speedcoachParser, timestrtosecs,
         timestrtosecs2, totimestamp, empower_bug_correction,
-        get_empower_firmware
+        get_empower_firmware, NKLiNKLogbookParser,
     )
 
     from .otherparsers import TCXParser as TCXParserNoHR
