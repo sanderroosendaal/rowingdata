@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.3.0"
+__version__ = "3.3.1"
 
 from collections import Counter
 
@@ -127,7 +127,7 @@ except (ValueError,ImportError):
         BoatCoachParser, CoxMateParser, CSVParser,
         ErgDataParser, ErgStickParser, KinoMapParser,
         MysteryParser, RowPerfectParser, RowProParser,
-        QuiskeParser,
+        QuiskeParser,NKLiNKLogbookParser,
         SpeedCoach2Parser, get_empower_rigging, get_file_line,
         get_file_type, get_rowpro_footer, lbstoN,
         make_cumvalues, make_cumvalues_array,
