@@ -157,6 +157,9 @@ def csvtests(s):
     except IndexError:
         ninthline = ''
 
+    if 'timestamp' in firstline and 'InstaSpeed' in firstline:
+        return 'nklinklogbook'
+
 
     if 'RitmoTime' in firstline:
         return 'ritmotime'
@@ -2318,6 +2321,73 @@ class RowProParser(CSVParser):
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes - unixtimes.iloc[0]
 
         self.to_standard()
+
+class NKLiNKLogbookParser(CSVParser):
+    def __init__(self, *args, **kwargs):
+        if args:
+            csvfile = args[0]
+        else:
+            csvfile = kwargs['csvfile']
+
+        super(NKLiNKLogbookParser, self).__init__(*args, **kwargs)
+
+        self.cols = [
+            'timestamp',
+            'gpsTotalDistance',
+            'strokeRate',
+            'heartRate',
+            'gpsPace',
+            'power',
+            '',
+            'gpsDistStroke',
+            'driveTime',
+            '',
+            '',
+            'handleForceAvg',
+            'maxHandleForce',
+            'sessionIntervalId',
+            'elapsedTime',
+            'latitude',
+            'longitude',
+            'gpsInstaSpeed',
+            'catchAngle',
+            'slip',
+            'finishAngle',
+            'wash',
+            'realWorkPerStroke',
+            'positionOfMaxForce',
+            'gpsTotalDistance',
+        ]
+
+        self.defaultcolumnnames += [
+            'GPS Speed',
+            'catch',
+            'slip',
+            'finish',
+            'wash',
+            'driveenergy',
+            'peakforceangle',
+            'cum_dist',
+        ]
+
+        self.cols = [b if a == '' else a
+                     for a, b in zip(self.cols, self.defaultcolumnnames)]
+
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
+
+        # do something with impeller stuff
+
+        # force is in Newtons
+        self.df[self.columns[' PeakDriveForce (lbs)']] /= lbstoN
+        self.df[self.columns[' AverageDriveForce (lbs)']] /= lbstoN
+
+        # timestamp is in milliseconds
+        self.df[self.columns['TimeStamp (sec)']] /= 1000.
+        self.df[self.columns[' ElapsedTime (sec)']] /= 1000.
+
+        self.df[' StrokeRecoveryTime (ms)'] = self.df['cycleTime']-self.df[self.columns[' DriveTime (ms)']]
+
+
 
 class SpeedCoach2Parser(CSVParser):
 
