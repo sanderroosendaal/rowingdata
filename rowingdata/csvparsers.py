@@ -2387,7 +2387,11 @@ class NKLiNKLogbookParser(CSVParser):
 
         self.df[' StrokeRecoveryTime (ms)'] = self.df['cycleTime']-self.df[self.columns[' DriveTime (ms)']]
 
+
         self.to_standard()
+
+        self.df = self.df.sort_values(by='TimeStamp (sec)',ascending=True)
+
 
 
 
