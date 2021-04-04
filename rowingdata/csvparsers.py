@@ -2382,15 +2382,21 @@ class NKLiNKLogbookParser(CSVParser):
         # do something with impeller stuff
 
         # force is in Newtons
-        self.df[self.columns[' PeakDriveForce (lbs)']] /= lbstoN
-        self.df[self.columns[' AverageDriveForce (lbs)']] /= lbstoN
+        try:
+            self.df[self.columns[' PeakDriveForce (lbs)']] /= lbstoN
+            self.df[self.columns[' AverageDriveForce (lbs)']] /= lbstoN
+        except KeyError: # no oarlock data
+            pass
 
         # timestamp is in milliseconds
         self.df[self.columns['TimeStamp (sec)']] /= 1000.
         self.df[self.columns[' ElapsedTime (sec)']] /= 1000.
         self.df[self.columns[' Stroke500mPace (sec/500m)']] /= 1000.
 
-        self.df[' StrokeRecoveryTime (ms)'] = self.df['cycleTime']-self.df[self.columns[' DriveTime (ms)']]
+        try:
+            self.df[' StrokeRecoveryTime (ms)'] = self.df['cycleTime']-self.df[self.columns[' DriveTime (ms)']]
+        except KeyError:
+            pass
 
 
         self.to_standard()
