@@ -2357,6 +2357,8 @@ class NKLiNKLogbookParser(CSVParser):
             'realWorkPerStroke',
             'positionOfMaxForce',
             'gpsTotalDistance',
+            'impellerInstaSpeed',
+            'impellerTotalDistance'
         ]
 
         self.defaultcolumnnames += [
@@ -2368,6 +2370,8 @@ class NKLiNKLogbookParser(CSVParser):
             'driveenergy',
             'peakforceangle',
             'cum_dist',
+            'ImpellerSpeed',
+            'ImpellerDistance'
         ]
 
         self.cols = [b if a == '' else a
@@ -2384,6 +2388,7 @@ class NKLiNKLogbookParser(CSVParser):
         # timestamp is in milliseconds
         self.df[self.columns['TimeStamp (sec)']] /= 1000.
         self.df[self.columns[' ElapsedTime (sec)']] /= 1000.
+        self.df[self.columns[' Stroke500mPace (sec/500m)']] /= 1000.
 
         self.df[' StrokeRecoveryTime (ms)'] = self.df['cycleTime']-self.df[self.columns[' DriveTime (ms)']]
 
