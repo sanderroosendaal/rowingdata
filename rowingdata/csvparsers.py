@@ -2371,7 +2371,7 @@ class NKLiNKLogbookParser(CSVParser):
             'peakforceangle',
             'cum_dist',
             'ImpellerSpeed',
-            'ImpellerDistance'
+            'ImpellerDistance',
         ]
 
         self.cols = [b if a == '' else a
@@ -2380,6 +2380,8 @@ class NKLiNKLogbookParser(CSVParser):
         self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
 
         # do something with impeller stuff
+        self.df['GPSSpeed'] = self.df['gpsInstaSpeed']
+        self.df['GPSDistance'] = self.df['gpsTotalDistance']
 
         # force is in Newtons
         try:
@@ -2397,7 +2399,6 @@ class NKLiNKLogbookParser(CSVParser):
             self.df[' StrokeRecoveryTime (ms)'] = self.df['cycleTime']-self.df[self.columns[' DriveTime (ms)']]
         except KeyError:
             pass
-
 
         self.to_standard()
 
