@@ -2329,6 +2329,16 @@ class NKLiNKLogbookParser(CSVParser):
         else:
             csvfile = kwargs['csvfile']
 
+        firmware = kwargs.get('firmware',None)
+        oarlength = kwargs.get('oarlength',None)
+        inboard = kwargs.get('inboard',None)
+
+        if firmware is not None:
+            try:
+                firmware = np.float(firmware)
+            except ValueError:
+                firmware = None
+
         super(NKLiNKLogbookParser, self).__init__(*args, **kwargs)
 
         self.cols = [
@@ -2399,6 +2409,29 @@ class NKLiNKLogbookParser(CSVParser):
             self.df[' StrokeRecoveryTime (ms)'] = self.df['cycleTime']-self.df[self.columns[' DriveTime (ms)']]
         except KeyError:
             pass
+
+        corr_factor = 1.0
+        if firmware is not None:
+            if firmware < 2.18:
+                # apply correction
+                oarlength, inboard = get_empower_rigging(csvfile)
+                if oarlength is not None and oarlength > 3.30:
+                    # sweep
+                    a = 0.15
+                    b = 0.275
+                    corr_factor = empower_bug_correction(oarlength,inboard,a,b)
+                elif oarlength is not None and oarlength <= 3.3:
+                    # scull
+                    a = 0.06
+                    b = 0.225
+                    corr_factor = empower_bug_correction(oarlength,inboard,a,b)
+
+        try:
+            self.df[self.columns[' Power (watts)']] *= corr_factor
+            self.df[self.columns['driveenergy']] *= corr_factor
+        except KeyError:
+            pass
+
 
         self.to_standard()
 
