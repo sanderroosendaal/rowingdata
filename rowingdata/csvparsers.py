@@ -2437,6 +2437,24 @@ class NKLiNKLogbookParser(CSVParser):
 
         self.df = self.df.sort_values(by='TimeStamp (sec)',ascending=True)
 
+    def impellerconsistent(self, threshold = 0.3):
+        impellerconsistent = True
+        try:
+            impspeed = self.df['ImpellerSpeed']
+        except KeyError:
+            return False, True, 0
+
+        nrvalues = len(impspeed)
+
+        impspeed.fillna(inplace=True,value=0)
+        nrvalid = impspeed.astype(bool).sum()
+
+        ratio = float(nrvalues-nrvalid)/float(nrvalues)
+
+        if ratio > threshold:
+            impellerconsistent = False
+
+        return True, impellerconsistent, ratio
 
 
 
