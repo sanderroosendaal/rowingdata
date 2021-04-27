@@ -11,7 +11,7 @@ from pytz import utc
 import six
 import os
 import warnings
-warnings.filterwarnings("error")
+#warnings.filterwarnings("error")
 
 from unittest import mock
 
