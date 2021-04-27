@@ -734,7 +734,8 @@ def getrower(fileName="defaultrower.txt", mc=70.0):
     """
 
     try:
-        r = pickle.load(open(fileName,'rb'))
+        with open(fileName,'rb') as f:
+            r = pickle.load(f)
     except (IOError, ImportError):
         if __name__ == '__main__':
             print("Getrower: Default rower file doesn't exist. Create new rower")
@@ -1382,7 +1383,8 @@ def roweredit(fileName="defaultrower.txt"):
     """
 
     try:
-        r = pickle.load(open(fileName,'rb'))
+        with open(fileName,'rb') as f:
+            r = pickle.load(f)
     except IOError:
         print("Roweredit: File does not exist. Reverting to defaultrower.txt")
         r = getrower()
@@ -1587,7 +1589,8 @@ def boatedit(fileName="my1x.txt"):
     """
 
     try:
-        rg = pickle.load(open(fileName,'rb'))
+        with open(fileName,'rb') as f:
+            rg = pickle.load(f)
     except IOError:
         print("Boatedit: File does not exist. Reverting to my1x.txt")
         rg = getrigging()
@@ -3845,17 +3848,19 @@ class rowingdata:
                 else:
                     res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 if not np.isnan(res[0]) and res[0] < 800:
-                    df.loc[:, 'power (model)'].iloc[i] = res[0] # ix -> loc/ilic
+                    #df.loc[:, 'power (model)'].iloc[i] = res[0]
+                    df.loc[i,'power(model)'] = res[0]
                 else:
-                    df.loc[:, 'power (model)'].iloc[i] = np.nan # ix -> loc/ilic
+                    #df.loc[:, 'power (model)'].iloc[i] = np.nan
+                    df.loc[i,'power(model)'] = np.nan
 
                 # replacing ix with loc/iloc below
-                df.loc[:, 'averageforce (model)'].iloc[i] = res[2] / lbstoN
-                df.loc[:, ' DriveTime (ms)'].iloc[i] = res[1] * drivetime
-                df.loc[:, ' StrokeRecoveryTime (ms)'].iloc[i] = (1 - res[1]) * drivetime
-                df.loc[:, 'drivelength (model)'].iloc[i] = r.strokelength
-                df.loc[:, 'nowindpace'].iloc[i] = res[3]
-                df.loc[:, 'equivergpower'].iloc[i] = res[4]
+                df.loc[i, 'averageforce (model)'] = res[2] / lbstoN
+                df.loc[i, ' DriveTime (ms)'] = res[1] * drivetime
+                df.loc[i, ' StrokeRecoveryTime (ms)'] = (1 - res[1]) * drivetime
+                df.loc[i, 'drivelength (model)'] = r.strokelength
+                df.loc[i, 'nowindpace'] = res[3]
+                df.loc[i, 'equivergpower'] = res[4]
                 # update_progress(i,nr_of_rows)
 
             else:
