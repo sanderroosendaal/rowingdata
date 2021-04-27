@@ -2389,7 +2389,7 @@ class rowingdata:
             except:
                 starttimeunix = time.mktime(
                     datetime.datetime.now().utctimetuple())
-            data.loc[:,'TimeStamp (sec)'] = data.loc[:,'TimeStamp (sec)'] + starttimeunix
+            data['TimeStamp (sec)'] = data['TimeStamp (sec)'] + starttimeunix
 
         if gzip:
             return data.to_csv(writeFile + '.gz', index_label='index',
@@ -3200,14 +3200,12 @@ class rowingdata:
         intervalnr = 0
 
         for i in range(len(indices[1:])):
-            if debug:
-                print(indices[i+1]-indices[i])
             # replacing ix with loc/iloc
-            df.loc[:,' lapIdx'].iloc[indices[i]:indices[i+1]] = intervalnr
+            df.loc[indices[i]:indices[i+1],' lapIdx'] = intervalnr
             intervalnr += 1
 
         # replacing ix with loc/iloc
-        df.loc[:,' lapIdx'].iloc[indices[-1]:] = intervalnr
+        df.loc[indices[-1]:,' lapIdx'] = intervalnr
         df['values'] = (1+df[' lapIdx'])*10 + df[' WorkoutState']
 
         valuecounts = Counter(df['values'])
