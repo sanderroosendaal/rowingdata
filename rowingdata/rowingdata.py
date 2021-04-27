@@ -2389,7 +2389,7 @@ class rowingdata:
             except:
                 starttimeunix = time.mktime(
                     datetime.datetime.now().utctimetuple())
-            data['TimeStamp (sec)'] = data['TimeStamp (sec)'] + starttimeunix
+            data.loc[:,'TimeStamp (sec)'] = data.loc[:,'TimeStamp (sec)'] + starttimeunix
 
         if gzip:
             return data.to_csv(writeFile + '.gz', index_label='index',
