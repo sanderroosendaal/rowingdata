@@ -30,7 +30,7 @@ from scipy.signal import savgol_filter
 try:
     from six.moves.tkinter import Tk
     tkavail = 1
-except ImportError:
+except ImportError: # pragma: no cover
     tkavail = 0
 
 import datetime
@@ -74,14 +74,14 @@ try:
     import rowingphysics
     weknowphysics = 1
     theerg = rowingphysics.erg()
-except ImportError:
+except ImportError: # pragma: no cover
     weknowphysics = 0
 
 try:
     from . import gpxwrite
     from . import trainingparser
     from . import writetcx
-except (ValueError,ImportError):
+except (ValueError,ImportError): # pragma: no cover
     import rowingdata.gpxwrite
     import rowingdata.trainingparser
     import rowingdata.writetcx
@@ -90,7 +90,7 @@ import requests
 
 try:
     from . import checkdatafiles
-except (ValueError,ImportError):
+except (ValueError,ImportError): # pragma: no cover
     import rowingdata.checkdatafiles
 
 try:
@@ -120,7 +120,7 @@ try:
         ewmovingaverage, geo_distance, totimestamp, format_pace,
         format_time, wavg
     )
-except (ValueError,ImportError):
+except (ValueError,ImportError): # pragma: no cover
     from rowingdata.csvparsers import (
         BoatCoachAdvancedParser, BoatCoachOTWParser,
         RitmoTimeParser, HumonParser,ETHParser,
@@ -148,19 +148,19 @@ except (ValueError,ImportError):
         format_time, wavg
     )
 
-if tkavail == 0:
+if tkavail == 0: # pragma: no cover
     matplotlib.use('Agg')
 
 
 
 
-def main():
+def main(): # pragma: no cover
     str = "Executing rowingdata version %s. " % __version__
     if weknowphysics:
         str += rowingphysics.main()
     return str
 
-def my_autopct(pct, cutoff=5):
+def my_autopct(pct, cutoff=5): # pragma: no cover
     return ('%4.1f%%' % pct) if pct > cutoff else ''
 
 def nanstozero(nr):
@@ -170,7 +170,7 @@ def nanstozero(nr):
         return nr
 
 
-def post_progress(secret,progressurl,progress):
+def post_progress(secret,progressurl,progress): # pragma: no cover
     post_data = {
         "secret":secret,
         "value":progress,
@@ -184,7 +184,7 @@ def post_progress(secret,progressurl,progress):
 
 
 # toekomstmuziek - nog niet gebruikt
-def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
+def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None): # pragma: no cover
     if 'distance' in mode:
         xcolumn = 'cum_dist'
         dist_max = 1000
@@ -372,7 +372,7 @@ def make_pace_plot(ax2,r,df,mode=['distance','ote'],pacerange=[],axis='both',gri
             ax2.plot(df.loc[:, xcolumn],df.loc[:, 'nowindpace'])
             ax2.legend(['Pace', 'Wind corrected pace'],
                        prop={'size':10}, loc=0)
-        except KeyError:
+        except KeyError: # pragma: no cover
             pass
     if 'ote' in mode:
         yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
@@ -387,7 +387,7 @@ def make_pace_plot(ax2,r,df,mode=['distance','ote'],pacerange=[],axis='both',gri
 
     try:
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
-    except ValueError:
+    except ValueError: # pragma: no cover
         ax2.axis([0, end_dist, 85, 240])
 
     ax2.set_xticks(list(range(dist_max, end_dist, dist_max)))
@@ -448,7 +448,7 @@ def make_drivelength_plot(ax6,r,df,mode=['distance'],axis='both',gridtrue=True):
                           ultimate=[1.0, 15])
     ax6.axis([0, end_dist, yrange[0], yrange[1]])
     ax6.set_xticks(list(range(0, end_dist, dist_max)))
-    if end_dist < dist_max:
+    if end_dist < dist_max: # pragma: no cover
         ax6.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
     ax6.set_xlabel('Time (sec)')
     ax6.set_ylabel('Drive Len(m)')
@@ -479,7 +479,7 @@ def make_drivetime_plot(ax7,self,df,mode=['distance'],axis='both',gridtrue=True)
 
     ax7.axis([0, end_dist, yrange[0], yrange[1]])
     ax7.set_xticks(list(range(0, end_dist, dist_max)))
-    if end_dist < dist_max:
+    if end_dist < dist_max: # pragma: no cover
         ax7.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
 
     ax7.set_xlabel('Time (sec)')
@@ -511,7 +511,7 @@ def make_force_plot(ax8,self,df,mode=['distance'],axis='both',gridtrue=True):
 
     ax8.axis([0, end_dist, yrange[0], yrange[1]])
     ax8.set_xticks(list(range(0, end_dist, dist_max)))
-    if end_dist < dist_max:
+    if end_dist < dist_max: # pragma: no cover
         ax8.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
 
     if 'distance' in mode:
@@ -527,7 +527,7 @@ def make_force_plot(ax8,self,df,mode=['distance'],axis='both',gridtrue=True):
     if 'time' in mode:
         timeTickFormatter = FuncFormatter(format_time_tick)
         majorLocator = (15 * 60)
-        if end_dist < dist_max:
+        if end_dist < dist_max: # pragma: no cover
             majorLocator = (1 * 60)
         ax8.xaxis.set_major_formatter(timeTickFormatter)
     else:
@@ -605,7 +605,7 @@ def make_power_plot(ax4,r,df,mode=['distance'],axis='both',gridtrue=True):
         ax4.text(5, at + 1.5, r.rwr.powerzones[3], size=8)
     if tr + 1.5 < yrange[1] and tr + 1.5 > yrange[0]:
         ax4.text(5, tr + 1.5, r.rwr.powerzones[4], size=8)
-    if an + 1.5 < yrange[1] and an + 1.5 > yrange[0]:
+    if an + 1.5 < yrange[1] and an + 1.5 > yrange[0]: # pragma: no cover
         ax4.text(5, an + 1.5, r.rwr.powerzones[5], size=8)
 
     ax4.set_xticks(list(range(0, end_dist, dist_max)))
@@ -646,7 +646,7 @@ def tailwind(bearing, vwind, winddir, vstream=0):
 
     return vtail
 
-def copytocb(s):
+def copytocb(s): # pragma: no cover
     """ Copy to clipboard for pasting into blog
 
     Doesn't work on Mac OS X
@@ -686,25 +686,25 @@ def phys_getpower(velo, rower, rigging,
                                                         theerg, theconst=1.0,
                                                         aantal=20, aantal2=20,
                                                         ratiomin=ratio - 0.2, ratiomax=ratio + 0.2)
-            except:
+            except: # pragma: no cover
                 reserg = [np.nan, np.nan, np.nan, np.nan, np.nan]
-        else:
+        else: # pragma: no cover
             reserg = [np.nan, np.nan, np.nan, np.nan, np.nan]
         ergpower = reserg[4]
 
         result = [power, ratio, force, pnowind, ergpower]
-    else:
+    else: # pragma: no cover
         result = [np.nan, np.nan, np.nan, np.nan, np.nan]
 
     return result
 
 
-def write_obj(obj, filename):
+def write_obj(obj, filename): # pragma: no cover
     """ Save an object (e.g. your rower) to a file
     """
     pickle.dump(obj, open(filename, "wb"))
 
-def read_obj(filename):
+def read_obj(filename): # pragma: no cover
     """ Read an object (e.g. your rower, including passwords) from a file
         Usage: john=rowingdata.read_obj("john.txt")
     """
@@ -717,7 +717,7 @@ def getrigging(fileName="my1x.txt"):
 
     try:
         rg = pickle.load(open(fileName,'rb'))
-    except (IOError, ImportError, ValueError):
+    except (IOError, ImportError, ValueError): # pragma: no cover
         if __name__ == '__main__':
             print("Getrigging: File doesn't exist or is not valid. Creating new")
             print(fileName)
@@ -736,7 +736,7 @@ def getrower(fileName="defaultrower.txt", mc=70.0):
     try:
         with open(fileName,'rb') as f:
             r = pickle.load(f)
-    except (IOError, ImportError):
+    except (IOError, ImportError): # pragma: no cover
         if __name__ == '__main__':
             print("Getrower: Default rower file doesn't exist. Create new rower")
         r = rower(mc=mc)
@@ -782,10 +782,10 @@ def cumcpdata(rows,debug=False):
         ww = row.df[' Power (watts)'].copy()
 
         tmax = tt.max()
-        if debug:
+        if debug: # pragma: no cover
             print('tmax = ',tmax)
 
-        if tmax > 500000:
+        if tmax > 500000: # pragma: no cover
             newlen = int(tmax/2000.)
             newt = np.arange(newlen)*tmax/float(newlen)
             deltat = newt[1]-newt[0]
@@ -808,7 +808,7 @@ def cumcpdata(rows,debug=False):
 
         distances = pd.DataFrame(h[1]-h[0])
 
-        if debug:
+        if debug: # pragma: no cover
             print(len(tt))
             print(distances)
 
@@ -823,12 +823,12 @@ def cumcpdata(rows,debug=False):
 
         Gdif = pd.DataFrame(Gdif)
 
-        if debug:
+        if debug: # pragma: no cover
             print(Gdif)
 
         F = (Gdif)/(distances)
 
-        if debug:
+        if debug: # pragma: no cover
             print('=====================F============')
             print(F)
             print('==================================')
@@ -843,7 +843,7 @@ def cumcpdata(rows,debug=False):
         for i in np.arange(0,len(tt)+1,1):
             restime.append(deltat*i)
             cp = np.diag(F,i).max()
-            if debug:
+            if debug: # pragma: no cover
                 print(np.diag(F,i))
                 print(i,deltat*i,cp)
             power.append(cp)
@@ -884,7 +884,7 @@ def cumcpdata(rows,debug=False):
 
     #df = df[df['Distance']>100]
 
-    if debug:
+    if debug: # pragma: no cover
         return df, F
 
     return df
@@ -905,7 +905,7 @@ def interval_string(nr, totaldist, totaltime, avgpace, avgspm,
             td=totaldist,
             inttime=format_pace(totaltime)
         )
-    except ValueError:
+    except ValueError: # pragma: no cover
         stri = "{nr}{sep}{td:0>5.0f}{sep}{inttime:0>5}{sep}".format(
             nr=nr,
             sep=separator,
@@ -934,21 +934,21 @@ def workstring(totaldist, totaltime, avgpace, avgspm, avghr, maxhr, avgdps,
                avgpower,
                separator="|", symbol='W'):
 
-    if np.isnan(totaldist):
+    if np.isnan(totaldist): # pragma: no cover
         totaldist = 0
-    if np.isnan(avgpace):
+    if np.isnan(avgpace): # pragma: no cover
         avgpace = 0
-    if np.isnan(avgspm):
+    if np.isnan(avgspm): # pragma: no cover
         avgspm = 0
-    if np.isnan(avghr):
+    if np.isnan(avghr): # pragma: no cover
         avghr = 0
-    if np.isnan(maxhr):
+    if np.isnan(maxhr): # pragma: no cover
         maxhr = 0
-    if np.isnan(avgdps):
+    if np.isnan(avgdps): # pragma: no cover
         avgdps = 0
-    if np.isnan(avgpower):
+    if np.isnan(avgpower): # pragma: no cover
         avgpower = 0
-    if np.isnan(totaltime):
+    if np.isnan(totaltime): # pragma: no cover
         totaltime = 0
 
     pacestring = format_pace(avgpace)
@@ -986,21 +986,21 @@ def summarystring(totaldist, totaltime, avgpace, avgspm, avghr, maxhr,
     """ Used to create a nifty string summarizing your entire row
     """
 
-    if np.isnan(totaldist):
+    if np.isnan(totaldist): # pragma: no cover
         totaldist = 0
-    if np.isnan(avgpace):
+    if np.isnan(avgpace): # pragma: no cover
         avgpace = 0
-    if np.isnan(avgspm):
+    if np.isnan(avgspm): # pragma: no cover
         avgspm = 0
-    if np.isnan(avghr):
+    if np.isnan(avghr): # pragma: no cover
         avghr = 0
-    if np.isnan(maxhr):
+    if np.isnan(maxhr): # pragma: no cover
         maxhr = 0
-    if np.isnan(avgdps):
+    if np.isnan(avgdps): # pragma: no cover
         avgdps = 0
-    if np.isnan(avgpower):
+    if np.isnan(avgpower): # pragma: no cover
         avgpower = 0
-    if np.isnan(totaltime):
+    if np.isnan(totaltime): # pragma: no cover
         totaltime = 0
 
     stri1 = "Workout Summary - " + readFile + "\n"
@@ -1041,7 +1041,7 @@ def summarystring(totaldist, totaltime, avgpace, avgspm, avghr, maxhr,
     return stri1
 
 
-def format_pace_tick(x, pos=None):
+def format_pace_tick(x, pos=None): # pragma: no cover
     min = int(x / 60)
     sec = int(x - min * 60.)
     sec_str = str(sec).zfill(2)
@@ -1069,14 +1069,14 @@ def y_axis_range(ydata, **kwargs):
         ymin = np.ma.masked_invalid(ydata).min()
         ymin = ds.quantile(q=qmin)
 
-    if not 'ultimate' in kwargs:
+    if not 'ultimate' in kwargs: # pragma: no cover
         ultimate = [-1e9, 1e9]
     else:
         ultimate = kwargs['ultimate']
 
     if not 'padding' in kwargs:
         padding = .1
-    else:
+    else: # pragma: no cover
         padding = kwargs['padding']
 
     # ydata must by a numpy array
@@ -1093,13 +1093,13 @@ def y_axis_range(ydata, **kwargs):
         if 'miny' not in kwargs:
             if ymin == 0:
                 yrangemin = -padding
-            else:
+            else: # pragma: no cover
                 yrangemin = ymin - ymin * padding
         else:
             yrangemin = ymin
         if ymax == 0:
             yrangemax = padding
-        else:
+        else: # pragma: no cover
             yrangemax = ymax + ymax * padding
     else:
         if 'miny' not in kwargs:
@@ -1112,24 +1112,24 @@ def y_axis_range(ydata, **kwargs):
     if (yrangemin < ultimate[0]):
         yrangemin = ultimate[0]
 
-    if (yrangemax > ultimate[1]):
+    if (yrangemax > ultimate[1]): # pragma: no cover
         yrangemax = ultimate[1]
 
-    if not np.isfinite(yrangemin):
+    if not np.isfinite(yrangemin): # pragma: no cover
         yrangemin = ymin
 
-    if not np.isfinite(yrangemax):
+    if not np.isfinite(yrangemax): # pragma: no cover
         yrangemax = ymax
 
     return [yrangemin, yrangemax]
 
 
-def format_dist_tick(x, pos=None):
+def format_dist_tick(x, pos=None): # pragma: no cover
     km = x / 1000.
     template = '%6.3f'
     return template % (km)
 
-def format_time_tick(x, pos=None):
+def format_time_tick(x, pos=None): # pragma: no cover
     hour = int(x / 3600)
     min = int((x - hour * 3600.) / 60)
     min_str = str(min).zfill(2)
@@ -1137,7 +1137,7 @@ def format_time_tick(x, pos=None):
     return template % (hour, min_str)
 
 
-class summarydata:
+class summarydata: # pragma: no cover
     """ This is used to create nice summary texts from CrewNerd's summary CSV
 
     Usage: sumd=rowingdata.summarydata("crewnerdsummary.CSV")
@@ -1364,19 +1364,19 @@ class rower:
         self.hrzones = hrzones
         if (weknowphysics == 1):
             self.rc = rowingphysics.crew(mc=mc, strokelength=strokelength)
-        else:
+        else: # pragma: no cover
             self.rc = 0
-        if (weightcategory != "hwt") and (weightcategory != "lwt"):
+        if (weightcategory != "hwt") and (weightcategory != "lwt"): # pragma: no cover
             print("Weightcategory unrecognized. Set to hwt")
             weightcategory = "hwt"
 
         self.weightcategory = weightcategory
 
-    def write(self, fileName):
+    def write(self, fileName): # pragma: no cover
         res = write_obj(self, fileName)
 
 
-def roweredit(fileName="defaultrower.txt"):
+def roweredit(fileName="defaultrower.txt"): # pragma: no cover
     """ Easy editing or creation of a rower file.
     Mainly for using from the windows command line
 
@@ -1582,7 +1582,7 @@ def roweredit(fileName="defaultrower.txt"):
     print("Done")
     return 1
 
-def boatedit(fileName="my1x.txt"):
+def boatedit(fileName="my1x.txt"): # pragma: no cover
     """ Easy editing or creation of a boat rigging data file.
     Mainly for using from the windows command line
 
@@ -1770,7 +1770,7 @@ def addpowerzones(df, ftp, powerperc):
         mask = (df[' Power (watts)'] >= an) & (
             df[' Stroke500mPace (sec/500m)'] < 360)
         df.loc[mask, 'pw_max'] = df.loc[mask, ' Power (watts)']
-    except TypeError:
+    except TypeError: # pragma: no cover
         pass
 
     df = df.fillna(method='ffill')
@@ -1891,7 +1891,7 @@ class rowingdata:
 
     def __init__(self, *args, **kwargs):
 
-        if 'debug' in kwargs:
+        if 'debug' in kwargs: # pragma: no cover
             debug = kwargs['debug']
         else:
             debug = False
@@ -1908,7 +1908,7 @@ class rowingdata:
         else:
             self.absolutetimestamps = False
 
-        if args:
+        if args: # pragma: no cover
             readFile = args[0]
             warnings.warn(
                 "Depreciated. Use rowingdata(csvfile=csvfile)", UserWarning)
@@ -1927,9 +1927,9 @@ class rowingdata:
             try:
                 try:
                     sled_df = pd.read_csv(readFile,encoding='utf-8')
-                except IOError:
+                except IOError: # pragma: no cover
                     sled_df = pd.read_csv(readFile + '.gz',encoding='utf-8')
-            except IOError:
+            except IOError: # pragma: no cover
                 try:
                     f = open(readFile)
                     sled_df = pd.read_csv(f)
@@ -1941,7 +1941,7 @@ class rowingdata:
                         f.close()
                     except:
                         sled_df = pd.DataFrame()
-            except UnicodeEncodeError:
+            except UnicodeEncodeError: # pragma: no cover
                 try:
                     f = open(readFile)
                     sled_df = pd.read_csv(f)
@@ -2013,11 +2013,11 @@ class rowingdata:
 
         for name in mandatorynames:
             if name not in sled_df.columns and not sled_df.empty:
-                if debug:
+                if debug: # pragma: no cover
                     print(name + ' is not found in file')
                 sled_df[name] = 0
                 sled_df.index = list(range(len(sled_df.index)))
-                if name == 'TimeStamp (sec)':
+                if name == 'TimeStamp (sec)': # pragma: no cover
                     time = sled_df['TimeStamp (sec utc)']
                     sled_df[name] = time
                 if name == ' ElapsedTime (sec)':
@@ -2028,7 +2028,7 @@ class rowingdata:
                     sled_df[name] = 4
                 if name == ' Calories (kCal)':
                     sled_df[name] = 1
-                if name == ' Stroke500mPace (sec/500m)':
+                if name == ' Stroke500mPace (sec/500m)': # pragma: no cover
                     dd = sled_df[' Horizontal (meters)'].diff()
                     dt = sled_df[' ElapsedTime (sec)'].diff()
                     velo = dd / dt
@@ -2036,7 +2036,7 @@ class rowingdata:
                 if name == ' AverageBoatSpeed (m/s)':
                     try:
                         velo = 500./sled_df[' Stroke500mPace (sec/500m)']
-                    except (KeyError,ValueError):
+                    except (KeyError,ValueError): # pragma: no cover
                         dd = sled_df[' Horizontal (meters)'].diff()
                         dt = sled_df[' ElapsedTime (sec)'].diff()
                         velo = dd / dt
@@ -2052,27 +2052,27 @@ class rowingdata:
                     try:
                         forcelbs = sled_df[' AverageDriveForce (lbs)']
                         sled_df[name] = forcelbs * lbstoN
-                    except KeyError:
+                    except KeyError: # pragma: no cover
                         pass
                 if name == ' PeakDriveForce (N)':
                     try:
                         forcelbs = sled_df[' PeakDriveForce (lbs)']
                         sled_df[name] = forcelbs * lbstoN
-                    except KeyError:
+                    except KeyError: # pragma: no cover
                         pass
                 if name == ' PeakDriveForce (lbs)':
-                    try:
+                    try: # pragma: no cover
                         forcen = sled_df[' PeakDriveForce (N)']
                         sled_df[name] = forcen / lbstoN
-                    except KeyError:
+                    except KeyError: # pragma: no cover
                         pass
                 if name == ' Cadence (stokes/min)':
                     try:
                         spm = sled_df[' Cadence (strokes/min)']
-                        if debug:
+                        if debug: # pragma: no cover
                             print('Cadence found')
                         sled_df[name] = spm
-                    except KeyError:
+                    except KeyError: # pragma: no cover
                         pass
 
         mandatorynames.remove(' lapIdx')
@@ -2108,7 +2108,7 @@ class rowingdata:
 
         # get the date of the row
         starttime = 0
-        if not sled_df.empty:
+        if not sled_df.empty: # pragma: no cover
             try:
                 starttime = sled_df['TimeStamp (sec)'].values[0]
             except KeyError as IndexError:
@@ -2117,7 +2117,7 @@ class rowingdata:
         # create start time timezone aware time object
         try:
             self.rowdatetime = arrow.get(starttime).datetime
-        except ValueError:
+        except ValueError: # pragma: no cover
             self.rowdatetime = datetime.datetime.utcnow()
 
         # remove the start time from the time stamps
@@ -2149,7 +2149,7 @@ class rowingdata:
 
                 sled_df[' Stroke Number'] = strokenumbers.astype('int')
             except KeyError:
-                if debug:
+                if debug: # pragma: no cover
                     print("Could not calculate stroke number")
                 else:
                     pass
@@ -2220,7 +2220,7 @@ class rowingdata:
         # remove overlap
         if overlap1:
             delta = self_df['TimeStamp (sec)'].max() - starttimeunix2
-            if delta < 60:
+            if delta < 60: # pragma: no cover
                 starttimeunix2 += delta+0.1
                 other_df['TimeStamp (sec)'] += delta+0.1
 
@@ -2237,7 +2237,7 @@ class rowingdata:
             try:
                 other_df[' lapIdx'] = other_df[' lapIdx'].apply(
                     lambda n: n + 1)
-            except TypeError:
+            except TypeError: # pragma: no cover
                 other_df[' lapIdx'] = other_df[' lapIdx'].apply(
                     lambda s: 'i' + s)
             otherlapids = other_df[' lapIdx'].unique()
@@ -2263,7 +2263,7 @@ class rowingdata:
                           rowtype=self.rowtype,
                           absolutetimestamps=self.absolutetimestamps)
 
-    def change_drag(self, dragfactor):
+    def change_drag(self, dragfactor): # pragma: no cover
         self.df[' DragFactor'] = dragfactor
         self.dragfactor = dragfactor
 
@@ -2282,7 +2282,7 @@ class rowingdata:
     def __len__(self):
         return len(self.df)
 
-    def get_additional_metrics(self):
+    def get_additional_metrics(self): # pragma: no cover
         cols = self.df.columns.values
         dif = np.setdiff1d(cols,self.defaultnames)
 
@@ -2305,7 +2305,7 @@ class rowingdata:
 
         result = {}
 
-        if self.empty:
+        if self.empty: # pragma: no cover
             result['velo_time_distance'] = True
             result['velo_valid'] = True
             return result
@@ -2325,7 +2325,7 @@ class rowingdata:
 
         if np.isfinite(totaldfromvelo):
             testresult = totaldfromvelo * r1 <= totaldfromcumdist <= totaldfromvelo * r2
-        else:
+        else: # pragma: no cover
             testresult = True
 
         result['velo_time_distance'] = testresult
@@ -2333,7 +2333,7 @@ class rowingdata:
         # standard deviation of velocity must be non-zero
         try:
             result['velo_valid'] = (velo.std() / velo.mean() >= velovariation)
-        except ZeroDivisionError:
+        except ZeroDivisionError: # pragma: no cover
             result['velo_valid'] = True
 
         return result
@@ -2343,7 +2343,7 @@ class rowingdata:
 
         checks = self.check_consistency()
 
-        if not checks['velo_time_distance'] and checks['velo_valid']:
+        if not checks['velo_time_distance'] and checks['velo_valid']: # pragma: no cover
             # calculate distance from velocity and time
             velo = 500. / data[' Stroke500mPace (sec/500m)']
             time = data['TimeStamp (sec)']
@@ -2398,7 +2398,7 @@ class rowingdata:
                     datetime.datetime.now().utctimetuple())
             data['TimeStamp (sec)'] = data['TimeStamp (sec)'] + starttimeunix
 
-        if gzip:
+        if gzip: # pragma: no cover
             return data.to_csv(writeFile + '.gz', index_label='index',
                                compression='gzip')
         else:
@@ -2406,7 +2406,7 @@ class rowingdata:
 
     def use_impellerdata(self):
         df = self.df
-        try:
+        try: # pragma: no cover
             df[' AverageBoatSpeed (m/s)'] = df['ImpellerSpeed']
             df[' Horizontal (meters)'] = df['ImpellerDistance']
             dp = pd.DataFrame({'x':df[' ElapsedTime (sec)'].values,'y':df[' Horizontal (meters)'].values})
@@ -2417,15 +2417,15 @@ class rowingdata:
         except KeyError:
             return False
 
-        self.df = df
+        self.df = df # pragma: no cover
 
         return True
 
-    def extend_data(self):
+    def extend_data(self): # pragma: no cover
         df = self.df
         l = len(df)
         nr = 10
-        if l<10:
+        if l<10: # pragma: no cover
             nr = l-1
         dlat = (df.loc[l-1,' latitude']-df.loc[l-nr,' latitude'])/float(nr-1)
         dlon = (df.loc[l-1,' longitude']-df.loc[l-nr,' longitude'])/float(nr-1)
@@ -2462,7 +2462,7 @@ class rowingdata:
 
         self.df = df
 
-    def calc_dist_from_gps(self):
+    def calc_dist_from_gps(self): # pragma: no cover
         df = self.df
         df['gps_dx'] = 0*df[' latitude']
         for i in range(len(df)-1):
@@ -2474,7 +2474,7 @@ class rowingdata:
 
         df['gps_dist_calculated'] = df['gps_dx'].cumsum()
 
-    def use_gpsdata(self):
+    def use_gpsdata(self): # pragma: no cover
         df = self.df
         try:
             df[' AverageBoatSpeed (m/s)'] = df['GPSSpeed']
@@ -2503,7 +2503,7 @@ class rowingdata:
 
         return cols
 
-    def add_instroke_maxminpos(self,c):
+    def add_instroke_maxminpos(self,c): # pragma: no cover
         df = self.get_instroke_data(c)
         aantalcol = len(df.columns)
         minpos = aantalcol/10
@@ -2527,7 +2527,7 @@ class rowingdata:
         self.df[c+'_minpos'] = minpos
         self.df[c+'_maxpos'] = maxpos
 
-    def add_instroke_diff(self,c):
+    def add_instroke_diff(self,c): # pragma: no cover
         df = self.get_instroke_data(c)
         dfnorm = df.copy()
         dfnorm = (dfnorm.transpose()/dfnorm.transpose().max()).transpose()
@@ -2549,7 +2549,7 @@ class rowingdata:
         self.df[c+'_diff'] = diff_c
 
 
-    def add_instroke_metrics(self,c):
+    def add_instroke_metrics(self,c): # pragma: no cover
         df = self.get_instroke_data(c)
         dfnorm = df.copy().abs()
         dfnorm = (dfnorm.transpose()/dfnorm.transpose().max()).transpose()
@@ -2569,7 +2569,7 @@ class rowingdata:
         self.df[c+'_q3'] = third
         self.df[c+'_q4'] = fourth
 
-    def set_instroke_metrics(self):
+    def set_instroke_metrics(self): # pragma: no cover
         cols = self.get_instroke_columns()
         for c in cols:
             self.add_instroke_metrics(str(c))
@@ -2582,7 +2582,7 @@ class rowingdata:
 
         return df
 
-    def plot_instroke(self,column_name):
+    def plot_instroke(self,column_name): # pragma: no cover
         df  = self.get_instroke_data(column_name)
 
         mean_vals = df.median()
@@ -2604,7 +2604,7 @@ class rowingdata:
 
         plt.show()
 
-    def get_plot_instroke(self,column_name):
+    def get_plot_instroke(self,column_name): # pragma: no cover
         df  = self.get_instroke_data(column_name)
 
         mean_vals = df.median()
@@ -2637,7 +2637,7 @@ class rowingdata:
             df[' Cadence (stokes/min)'] = spm
             self.df = df
 
-    def erg_recalculatepower(self):
+    def erg_recalculatepower(self): # pragma: no cover
         if not self.empty:
             df = self.df
             velo = df[' Speed (m/sec)']
@@ -2656,7 +2656,7 @@ class rowingdata:
                 row_date=self.rowdatetime.isoformat(), notes=notes,
                 sport=sport
             )
-        else:
+        else: # pragma: no cover
             emptytcx = writetcx.get_empty_tcx()
             bytes = emptytcx.encode(encoding='UTF-8')
             with open(fileName,'wb+') as f_out:
@@ -2761,7 +2761,7 @@ class rowingdata:
 
         intervalnrs = pd.unique(df[' lapIdx'])
 
-        if debug:
+        if debug: # pragma: no cover
             print('Interval numbers',intervalnrs)
 
         itime = []
@@ -2774,7 +2774,7 @@ class rowingdata:
 
         try:
             test = df[' WorkoutState']
-        except KeyError:
+        except KeyError: # pragma: no cover
             df[' WorkoutState'] = 4
 
         for idx in intervalnrs:
@@ -2862,7 +2862,7 @@ class rowingdata:
 
         try:
             test = df[' WorkoutState']
-        except KeyError:
+        except KeyError: # pragma: no cover
             return self.intervalstats()
 
         for index, idx in enumerate(intervalnrs):
@@ -2908,7 +2908,7 @@ class rowingdata:
             avgdps = intervaldistance / (intervalduration * avgspm / 60.)
             if isnan(avgdps) or isinf(avgdps):
                 avgdps = 0
-            if isnan(intervalpace) or isinf(intervalpace):
+            if isnan(intervalpace) or isinf(intervalpace): # pragma: no cover
                 intervalpace = 0
             if isnan(avgspm) or isinf(avgspm):
                 avgspm = 0
@@ -2925,7 +2925,7 @@ class rowingdata:
                                             intervalpace, avgspm,
                                             avghr, maxhr, avgdps, avgpower,
                                             separator=separator)
-                except IndexError:
+                except IndexError: # pragma: no cover
                     stri += interval_string(len(intervalnrs) + 1,
                                             intervaldistance,
                                             intervalduration,
@@ -2937,7 +2937,7 @@ class rowingdata:
 
     def restoreintervaldata(self):
 
-        try:
+        try: # pragma: no cover
             self.df[' Horizontal (meters)'] = self.df['orig_dist']
             self.df['TimeStamp (sec)'] = self.df['orig_time']
             self.df[' ElapsedTime (sec)'] = self.df['orig_reltime']
@@ -2959,7 +2959,7 @@ class rowingdata:
         types=['work','rest','work','rest']
         """
 
-        if self.empty:
+        if self.empty: # pragma: no cover
             return None
 
         df = self.df
@@ -2990,7 +2990,7 @@ class rowingdata:
         endseconds = startseconds
         endmeters = startmeters
 
-        if debug:
+        if debug: # pragma: no cover
             print('Duration', df['TimeStamp (sec)'].max() - df['TimeStamp (sec)'].min())
 
         # erase existing lap data
@@ -3004,10 +3004,10 @@ class rowingdata:
             theunit = iunits[i]
             thetype = itypes[i]
 
-            if debug:
+            if debug: # pragma: no cover
                 print(thevalue, theunit, thetype)
 
-            if thetype == 'rest' and intervalnr != 0:
+            if thetype == 'rest' and intervalnr != 0: # pragma: no cover
                 intervalnr = intervalnr - 1
 
             workouttype = 1
@@ -3034,9 +3034,9 @@ class rowingdata:
 
                 try:
                     res = iresults[i]
-                    if not np.isnan(res):
+                    if not np.isnan(res): # pragma: no cover
                         mask2 = (df['cum_dist'] == recordedmaxmeters)
-                        if res == 0:
+                        if res == 0: # pragma: no cover
                             raise IndexError
                         deltatime = res - df.loc[mask2, ' ElapsedTime (sec)']
                         mask2 = (df['cum_dist'] == recordedmaxmeters)
@@ -3053,7 +3053,7 @@ class rowingdata:
                         ].values[0]
                         veloend = 500. / paceend
                         deltatime = deltadist / veloend
-                    except IndexError:
+                    except IndexError: # pragma: no cover
                         deltatime = 0
 
                     df.loc[mask2, ' ElapsedTime (sec)'] += deltatime
@@ -3064,7 +3064,7 @@ class rowingdata:
                 # + deltatime?
                 endseconds = df.loc[mask, 'TimeStamp (sec)'].max()
 
-            if theunit == 'seconds' and thevalue > 0:
+            if theunit == 'seconds' and thevalue > 0: # pragma: no cover
                 workouttype = 4
 
                 if thetype == 'rest':
@@ -3124,7 +3124,7 @@ class rowingdata:
             startseconds = endseconds
             startmeters = endmeters
 
-            if debug:
+            if debug: # pragma: no cover
                 print(intervalnr, startseconds, startmeters)
 
         self.df = df
@@ -3132,8 +3132,8 @@ class rowingdata:
     def updateinterval_metric(self, metricname, value, debug=False,
                               mode='split',unit='seconds',
                               smoothwindow = 60.,
-                              activewindow = []):
-        if self.empty:
+                              activewindow = []): # pragma: no cover
+        if self.empty: # pragma: no cover
             return None
 
         df = self.df
@@ -3200,7 +3200,7 @@ class rowingdata:
         steps = df[' WorkoutState'].diff()
 
         indices = df.index[steps!=0].tolist()
-        if debug:
+        if debug: # pragma: no cover
             print('indices ',indices)
             print('----------------------')
 
@@ -3216,7 +3216,7 @@ class rowingdata:
         df['values'] = (1+df[' lapIdx'])*10 + df[' WorkoutState']
 
         valuecounts = Counter(df['values'])
-        if debug:
+        if debug: # pragma: no cover
             print(valuecounts)
             print('----------------------------')
 
@@ -3224,12 +3224,12 @@ class rowingdata:
         f = df['TimeStamp (sec)'].diff().mean()
 
         tenstrokes = int(25/f)
-        if debug:
+        if debug: # pragma: no cover
             print('Ten Strokes = ',tenstrokes,' data points')
 
         for key, value in valuecounts.items():
             if value < tenstrokes:
-                if debug:
+                if debug: # pragma: no cover
                     print(key,value)
                 mask = df['values'] == key
                 df.loc[mask,' WorkoutState'] = np.nan
@@ -3244,7 +3244,7 @@ class rowingdata:
         indices = df.index[steps!=0].tolist()
 
 
-        if debug:
+        if debug: # pragma: no cover
             print('indices ',indices)
             print('----------------------')
 
@@ -3270,7 +3270,7 @@ class rowingdata:
                 startindex = 0
 
 
-            if debug:
+            if debug: # pragma: no cover
                 print(df.loc[startindex,'cum_dist']) # replaced ix with loc
 
             startelapsed = df.loc[startindex,elapsemetric] # replaced ix with loc
@@ -3288,7 +3288,7 @@ class rowingdata:
 
             typ.append(tt)
 
-            if debug:
+            if debug: # pragma: no cover
                 print(startindex,startelapsed-previouselapsed,unit,tt)
 
             previouselapsed = startelapsed
@@ -3297,7 +3297,7 @@ class rowingdata:
         startindex = df.index[-1]
         startelapsed = df.loc[startindex,elapsemetric] # replaced ix with loc
 
-        if debug:
+        if debug: # pragma: no cover
             print(df.loc[startindex,'cum_dist']) # replaced ix with loc
 
         units.append(unit)
@@ -3313,17 +3313,17 @@ class rowingdata:
 
         typ.append(tt)
 
-        if debug:
+        if debug: # pragma: no cover
             print(startindex,startelapsed-previouselapsed,unit,tt)
 
-        if debug:
+        if debug: # pragma: no cover
             print('--------------------------------')
 
         self.df = df
         self.updateintervaldata(vals,units,typ,debug=debug)
 
 
-        if debug:
+        if debug: # pragma: no cover
             print(vals)
             print(units)
             print(typ)
@@ -3377,17 +3377,17 @@ class rowingdata:
 
         return 1
 
-    def add_stream(self, vstream, units='m'):
+    def add_stream(self, vstream, units='m'): # pragma: no cover
         # foot/second
-        if (units == 'f'):
+        if (units == 'f'): # pragma: no cover
             vstream = 0.3048 * vstream
 
         # knots
-        if (units == 'k'):
+        if (units == 'k'): # pragma: no cover
             vstream = vstream / 1.994
 
         # pace difference (approximate)
-        if (units == 'p'):
+        if (units == 'p'): # pragma: no cover
             vstream = vstream * 8 / 500.
 
         df = self.df
@@ -3396,7 +3396,7 @@ class rowingdata:
 
         self.df = df
 
-    def add_wind(self, vwind, winddirection, units='m'):
+    def add_wind(self, vwind, winddirection, units='m'): # pragma: no cover
 
         # beaufort
         if (units == 'b'):
@@ -3420,7 +3420,7 @@ class rowingdata:
 
         self.df = df
 
-    def update_stream(self, stream1, stream2, dist1, dist2, units='m'):
+    def update_stream(self, stream1, stream2, dist1, dist2, units='m'): # pragma: no cover
         try:
             vs = self.df.loc[:, 'vstream'] # replaced ix with loc
         except KeyError:
@@ -3459,7 +3459,7 @@ class rowingdata:
 
         self.df = df
 
-    def get_smoothed(self, metricname, windowseconds):
+    def get_smoothed(self, metricname, windowseconds): # pragma: no cover
         if metricname == ' Stroke500mPace (sec/500m)':
             pace = self.df[' Stroke500mPace (sec/500m)'].values
             thevalues = 500. / pace
@@ -3487,7 +3487,7 @@ class rowingdata:
         return newvalues
 
     def update_wind(self, vwind1, vwind2, winddirection1,
-                    winddirection2, dist1, dist2, units='m'):
+                    winddirection2, dist1, dist2, units='m'): # pragma: no cover
 
         try:
             vw = self.df.loc[:, 'vwind'] # replaced ix with loc
@@ -3542,7 +3542,7 @@ class rowingdata:
                      powermeasured=False,
                      secret=None,progressurl=None,
                      usetable=False,storetable=None,
-                     silent=False):
+                     silent=False): # pragma: no cover
         """ Adds power from rowing physics calculations to OTW result
 
         For now, works only in singles
