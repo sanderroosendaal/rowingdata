@@ -11,7 +11,7 @@ from pytz import utc
 import six
 import os
 import warnings
-#warnings.filterwarnings("error")
+warnings.filterwarnings("error")
 
 from unittest import mock
 
@@ -35,7 +35,7 @@ class TestEmpty:
         assert_equal(len(contents), 456)
 
     def test_write_csv(self):
-        row = rowingdata.rowingdata()
+        row = rowingdata.rowingdata(csvfile='testdata/testdata.csv',absolutetimestamps=False)
         filename = os.getcwd()+'/test_write.csv'
 
         try:
@@ -49,7 +49,7 @@ class TestEmpty:
                 os.remove(filename)
             except FileNotFoundError:
                 pass
-        assert_equal(len(contents), 18)
+        assert_equal(len(contents), 38371)
 
     def test_write_tcx(self):
         row = rowingdata.rowingdata()

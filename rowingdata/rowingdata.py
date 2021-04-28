@@ -2353,7 +2353,7 @@ class rowingdata:
             data[' Stroke500mPace (sec/500m)'] = pace
 
     def write_csv(self, writeFile, gzip=False):
-        data = self.df
+        data = self.df.copy()
         data = data.drop(['index',
                           'hr_ut2',
                           'hr_ut1',
