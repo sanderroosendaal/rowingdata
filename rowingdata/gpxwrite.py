@@ -140,17 +140,12 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
                 objectify.fromstring(some_xml_string, parser)
                 # print("YEAH!, your xml file has validated")
             except XMLSyntaxError:
-
-                print("Oh NO!, your xml file does not validate")
                 pass
         except:
-            print("Oh No!, your xml file does not validate")
             pass
 
     except six.moves.urllib.error.URLError:
-        print("cannot download GPX schema")
-        print("your GPX file is unvalidated. Good luck")
-
+        pass
 
 
 
