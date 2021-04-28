@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.3.11"
+__version__ = "3.3.12"
 
 from collections import Counter
 
@@ -2082,6 +2082,11 @@ class rowingdata:
         except KeyError:
             pass
 
+        try:
+            sled_df[mandatorynames] = sled_df[mandatorynames].astype('float')
+        except KeyError:
+            pass
+
         if len(sled_df):
             # Remove zeros from HR
             hrmean = sled_df[' HRCur (bpm)'].mean()
@@ -2238,6 +2243,8 @@ class rowingdata:
             otherlapids = other_df[' lapIdx'].unique()
             overlapping = list(set(lapids) & set(otherlapids))
 
+        self_df = self_df.astype('float')
+        other_df = other_df.astype('float')
         self_df = pd.merge(self_df, other_df, how='outer')
         # drop duplicates
         self_df.drop_duplicates(subset='TimeStamp (sec)',
@@ -2353,7 +2360,7 @@ class rowingdata:
             data[' Stroke500mPace (sec/500m)'] = pace
 
     def write_csv(self, writeFile, gzip=False):
-        data = self.df
+        data = self.df.copy()
         data = data.drop(['index',
                           'hr_ut2',
                           'hr_ut1',

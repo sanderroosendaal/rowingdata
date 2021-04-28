@@ -35,7 +35,7 @@ class TestEmpty:
         assert_equal(len(contents), 456)
 
     def test_write_csv(self):
-        row = rowingdata.rowingdata()
+        row = rowingdata.rowingdata(csvfile='testdata/testdata.csv',absolutetimestamps=False)
         filename = os.getcwd()+'/test_write.csv'
 
         try:
@@ -49,7 +49,7 @@ class TestEmpty:
                 os.remove(filename)
             except FileNotFoundError:
                 pass
-        assert_equal(len(contents), 18)
+        assert_equal(True,len(contents)>30000)
 
     def test_write_tcx(self):
         row = rowingdata.rowingdata()
@@ -318,6 +318,17 @@ class TestOperations:
         len2 = len(row1)
 
         assert_equal(len1,len2)
+
+    def test_addition(self):
+        row1 = rowingdata.rowingdata(csvfile='testdata/testdata_part1.csv')
+        row2 = rowingdata.rowingdata(csvfile='testdata/testdata_part2.csv')
+        row = row1 + row2
+
+        len1 = len(row2)
+        len2 = len(row1)
+
+        assert_equal(len(row),len1+len2)
+
 
     def test_getvalues(self):
         row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
