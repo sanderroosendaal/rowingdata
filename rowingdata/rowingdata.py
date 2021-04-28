@@ -2082,6 +2082,11 @@ class rowingdata:
         except KeyError:
             pass
 
+        try:
+            sled_df[mandatorynames] = sled_df[mandatorynames].astype('float')
+        except KeyError:
+            pass
+
         if len(sled_df):
             # Remove zeros from HR
             hrmean = sled_df[' HRCur (bpm)'].mean()
@@ -2238,6 +2243,8 @@ class rowingdata:
             otherlapids = other_df[' lapIdx'].unique()
             overlapping = list(set(lapids) & set(otherlapids))
 
+        self_df = self_df.astype('float')
+        other_df = other_df.astype('float')
         self_df = pd.merge(self_df, other_df, how='outer')
         # drop duplicates
         self_df.drop_duplicates(subset='TimeStamp (sec)',

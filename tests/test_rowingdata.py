@@ -11,7 +11,7 @@ from pytz import utc
 import six
 import os
 import warnings
-warnings.filterwarnings("error")
+#warnings.filterwarnings("error")
 
 from unittest import mock
 
@@ -318,6 +318,17 @@ class TestOperations:
         len2 = len(row1)
 
         assert_equal(len1,len2)
+
+    def test_addition(self):
+        row1 = rowingdata.rowingdata(csvfile='testdata/testdata_part1.csv')
+        row2 = rowingdata.rowingdata(csvfile='testdata/testdata_part2.csv')
+        row = row1 + row2
+
+        len1 = len(row2)
+        len2 = len(row1)
+
+        assert_equal(len(row),len1+len2)
+
 
     def test_getvalues(self):
         row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
