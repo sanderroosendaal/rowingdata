@@ -138,7 +138,6 @@ def write_gpx(gpxFile,df,row_date="2016-01-01",notes="Exported by rowingdata"):
                 schema=etree.XMLSchema(file=xsd_filename)
                 parser=objectify.makeparser(schema=schema)
                 objectify.fromstring(some_xml_string, parser)
-                # print("YEAH!, your xml file has validated")
             except XMLSyntaxError:
                 pass
         except:
