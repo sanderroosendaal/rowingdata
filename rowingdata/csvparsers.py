@@ -278,6 +278,10 @@ def get_file_type(f):
     if extension == '.txt':
         if os.path.basename(f)[0:3].lower() == 'att':
             return 'att'
+    if extension in ['.jpg','.jpeg','.tiff','.png','.gif','.bmp']:
+        return 'imageformat'
+    if extension in ['.json']:
+        return 'json'
     if extension == '.gz':
         filename,extension = os.path.splitext(filename)
         if extension == '.fit':
