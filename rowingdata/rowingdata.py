@@ -107,7 +107,7 @@ try:
         painsledDesktopParser, skip_variable_footer,
         skip_variable_header, speedcoachParser, timestrtosecs,
         timestrtosecs2, totimestamp, empower_bug_correction,
-        get_empower_firmware, NKLiNKLogbookParser,
+        get_empower_firmware, NKLiNKLogbookParser, HeroParser,
     )
 
     from .otherparsers import TCXParser as TCXParserNoHR

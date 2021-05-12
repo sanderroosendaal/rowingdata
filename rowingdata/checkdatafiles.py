@@ -103,6 +103,9 @@ def checkfile(f2, verbose=False):
         if (fileformat == 'eth'):
             row = rowingdata.ETHParser(f2)
 
+        if (fileformat == 'hero'):
+            row = rowingdata.HeroParser(f2)
+
         # handle FIT
         if (fileformat == 'fit'):
             row = rowingdata.FITParser(f2)

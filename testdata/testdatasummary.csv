@@ -1,4 +1,5 @@
 filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrintervals,lap 1 time,lap 1 dist,timezone
+herodata.csv,hero,300,2021,4,26,13,37,33,3512,896,1,896,3512,UTC
 nk_logbook.csv,nklinklogbook,1613,2021,3,30,11,13,4,12155,3901,1,3901,12155,UTC
 SpdCoachAmbiguous.csv,speedcoach2,0,2021,1,3,0,0,0,0,0,0,0,0,UTC
 rowingdata_eth.csv,eth,45,0,0,0,0,0,0,481,122,1,122,481,UTC

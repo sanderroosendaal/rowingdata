@@ -37,7 +37,7 @@ try:
     )
 
     from .tcxtools import strip_control_characters
-except (ValueError,ImportError):
+except (ValueError,ImportError): # pragma: no cover
     from rowingdata.utils import (
         totimestamp, format_pace, format_time,
     )
@@ -50,7 +50,7 @@ from six.moves import range
 from six.moves import zip
 
 import sys
-if sys.version_info[0]<=2:
+if sys.version_info[0]<=2: # pragma: no cover
     pythonversion = 2
     readmode = 'r'
     readmodebin = 'rb'
@@ -85,7 +85,7 @@ def make_converter(convertlistbase,df):
                 converters[key] = lambda x: float(x.replace('.', '').replace(',', '.'))
             except AttributeError:
                 pass
-        except KeyError:
+        except KeyError: # pragma: no cover
             pass
 
     return converters
@@ -104,7 +104,7 @@ def flexistrptime(inttime):
             except ValueError:
                 try:
                     t = datetime.datetime.strptime(inttime, "%M:%S.%f")
-                except ValueError:
+                except ValueError: # pragma: no cover
                     t = datetime.datetime.utcnow()
 
     return t
@@ -129,33 +129,36 @@ def csvtests(s):
 
     try:
         firstline = s[0]
-    except IndexError:
+    except IndexError: # pragma: no cover
         firstline = ''
 
     try:
         secondline = s[1]
-    except IndexError:
+    except IndexError: # pragma: no cover
         secondline = ''
 
     try:
         thirdline = s[2]
-    except IndexError:
+    except IndexError: # pragma: no cover
         thirdline = ''
 
     try:
         fourthline = s[3]
-    except IndexError:
+    except IndexError: # pragma: no cover
         fourthline = ''
 
     try:
         seventhline = s[6]
-    except IndexError:
+    except IndexError: # pragma: no cover
         seventhline = ''
 
     try:
         ninthline = s[8]
-    except IndexError:
+    except IndexError: # pragma: no cover
         ninthline = ''
+
+    if 'Potential Split' in firstline:
+        return 'hero'
 
     if 'timestamp' in firstline and 'InstaSpeed' in firstline:
         return 'nklinklogbook'
@@ -167,25 +170,25 @@ def csvtests(s):
     if 'Quiske' in firstline:
         return 'quiske'
 
-    if 'RowDate' in firstline:
+    if 'RowDate' in firstline: # pragma: no cover
         return 'rowprolog'
 
     if 'Workout Name' in firstline:
         return 'c2log'
 
-    if 'Concept2 Utility' in firstline:
+    if 'Concept2 Utility' in firstline: # pragma: no cover
         return 'c2log'
 
-    if 'Concept2' in firstline:
+    if 'Concept2' in firstline: # pragma: no cover
         return 'c2log'
 
-    if 'Workout #' in firstline:
+    if 'Workout #' in firstline: # pragma: no cover
         return 'c2log'
 
-    if 'Activity Type' in firstline and 'Date' in firstline:
+    if 'Activity Type' in firstline and 'Date' in firstline: # pragma: no cover
         return 'c2log'
 
-    if 'Avg Watts' in firstline:
+    if 'Avg Watts' in firstline: # pragma: no cover
         return 'c2log'
 
     if 'Avg Speed (IMP)' in firstline:
@@ -194,22 +197,22 @@ def csvtests(s):
     if 'LiNK' in ninthline:
         return 'speedcoach2'
 
-    if 'SpeedCoach GPS Pro' in fourthline:
+    if 'SpeedCoach GPS Pro' in fourthline: # pragma: no cover
         return 'speedcoach2'
 
-    if 'SpeedCoach GPS' in fourthline:
+    if 'SpeedCoach GPS' in fourthline: # pragma: no cover
         return 'speedcoach2'
 
-    if 'SpeedCoach GPS2' in fourthline:
+    if 'SpeedCoach GPS2' in fourthline: # pragma: no cover
         return 'speedcoach2'
 
-    if 'SpeedCoach GPS Pro' in thirdline:
+    if 'SpeedCoach GPS Pro' in thirdline: # pragma: no cover
         return 'speedcoach2'
 
     if 'Practice Elapsed Time (s)' in firstline:
         return 'mystery'
 
-    if 'Mike' in firstline and 'process' in firstline:
+    if 'Mike' in firstline and 'process' in firstline: # pragma: no cover
         return 'bcmike'
 
     if 'Club' in firstline and 'workoutType' in secondline:
@@ -221,7 +224,7 @@ def csvtests(s):
     if 'Club' in secondline and 'Piece Stroke Count' in thirdline:
         return 'boatcoachotw'
 
-    if 'Club' in firstline and 'Piece Stroke Count' in secondline:
+    if 'Club' in firstline and 'Piece Stroke Count' in secondline: # pragma: no cover
         return 'boatcoachotw'
 
     if 'peak_force_pos' in firstline:
@@ -230,7 +233,7 @@ def csvtests(s):
     if 'Hair' in seventhline:
         return 'rp'
 
-    if 'smo2' in thirdline:
+    if 'smo2' in thirdline: # pragma: no cover
         return 'humon'
 
     if 'Total elapsed time (s)' in firstline:
@@ -241,13 +244,13 @@ def csvtests(s):
     if 'Stroke Number' and 'Time (seconds)' in firstline:
         return 'ergdata'
 
-    if 'Number' in firstline and 'Cal/Hr' in firstline:
+    if 'Number' in firstline and 'Cal/Hr' in firstline: # pragma: no cover
         return 'ergdata'
 
     if ' DriveTime (ms)' in firstline:
         return 'csv'
 
-    if 'ElapsedTime (sec)' in firstline:
+    if 'ElapsedTime (sec)' in firstline: # pragma: no cover
         return 'csv'
 
     if 'HR' in firstline and 'Interval' in firstline and 'Avg HR' not in firstline:
@@ -265,22 +268,22 @@ def csvtests(s):
     if '500m Split (secs)' in firstline and 'Force Curve Data Points (Newtons)' in firstline:
         return 'eth' # it's unknown but it was first submitted by a student from ETH Zurich
 
-    return 'unknown'
+    return 'unknown' # pragma: no cover
 
 def get_file_type(f):
     filename,extension = os.path.splitext(f)
     extension = extension.lower()
 
-    if extension == '.xls':
+    if extension == '.xls': # pragma: no cover
         return 'xls'
-    if extension == '.kml':
+    if extension == '.kml': # pragma: no cover
         return 'kml'
-    if extension == '.txt':
+    if extension == '.txt': # pragma: no cover
         if os.path.basename(f)[0:3].lower() == 'att':
             return 'att'
-    if extension in ['.jpg','.jpeg','.tiff','.png','.gif','.bmp']:
+    if extension in ['.jpg','.jpeg','.tiff','.png','.gif','.bmp']: # pragma: no cover
         return 'imageformat'
-    if extension in ['.json']:
+    if extension in ['.json']: # pragma: no cover
         return 'json'
     if extension == '.gz':
         filename,extension = os.path.splitext(filename)
@@ -293,16 +296,16 @@ def get_file_type(f):
                 try:
                     FitFile(newfile, check_crc=False).parse()
                     return 'fit'
-                except:
+                except: # pragma: no cover
                     return 'unknown'
 
-            return 'fit'
+            return 'fit' # pragma: no cover
         if extension == '.tcx':
             try:
                 tree = etree.parse(f)
                 root = tree.getroot()
                 return 'tcx'
-            except:
+            except: # pragma: no cover
                 try:
                     with open(path, 'r') as fop:
                         input = fop.read()
@@ -315,7 +318,7 @@ def get_file_type(f):
                     return 'tcx'
                 except:
                     return 'unknown'
-        if extension == '.gpx':
+        if extension == '.gpx': # pragma: no cover
             try:
                 tree = etree.parse(f)
                 root = tree.getroot()
@@ -329,14 +332,14 @@ def get_file_type(f):
                     s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
                     return csvtests(s)
 
-            except IOError:
+            except IOError: # pragma: no cover
                 return 'notgzip'
     if extension == '.csv':
         linecount,isbinary = get_file_linecount(f)
-        if linecount <= 2:
+        if linecount <= 2: # pragma: no cover
             return 'nostrokes'
 
-        if isbinary:
+        if isbinary: # pragma: no cover
             with open(f,readmodebin) as fop:
                 s = fop.read().replace('\r\n','\n').replace('\r','\n').split('\n')
         else:
@@ -363,7 +366,7 @@ def get_file_type(f):
                 return 'tcx'
             except:
                 return 'unknown'
-    if extension == '.gpx':
+    if extension == '.gpx': # pragma: no cover
         try:
             tree = etree.parse(f)
             root = tree.getroot()
@@ -374,12 +377,12 @@ def get_file_type(f):
     if extension == '.fit':
         try:
             FitFile(f, check_crc=False).parse()
-        except:
+        except: # pragma: no cover
             return 'unknown'
 
         return 'fit'
 
-    if extension == '.zip':
+    if extension == '.zip': # pragma: no cover
         try:
             z = zipfile.ZipFile(f)
             f2 = z.extract(z.namelist()[0])
@@ -395,7 +398,7 @@ def get_file_linecount(f):
     #    extension = f[-3:].lower()
     extension = os.path.splitext(f)[1].lower()
     isbinary = False
-    if extension == '.gz':
+    if extension == '.gz': # pragma: no cover
         with gzip.open(f,'rb') as fop:
             count = sum(1 for line in fop if line.rstrip('\n'))
         if count <= 2:
@@ -408,9 +411,9 @@ def get_file_linecount(f):
         with open(f, 'r') as fop:
             try:
                 count = sum(1 for line in fop if line.rstrip('\n'))
-            except:
+            except: # pragma: no cover
                 return 0,False
-        if count <= 2:
+        if count <= 2: # pragma: no cover
             # test for \r
             with open(f,readmodebin) as fop:
                 isbinary = True
@@ -474,7 +477,7 @@ def getfirmware(line):
     l = line.lower().split(',')
     try:
         firmware = l[l.index("firmware version:")+1]
-    except ValueError:
+    except ValueError: # pragma: no cover
         firmware = ''
 
     return firmware
@@ -494,9 +497,9 @@ def get_empower_rigging(f):
                 if 'Inboard' in line:
                     try:
                         inboard = getinboard(line)
-                    except ValueError:
+                    except ValueError: # pragma: no cover
                         return None,None
-    except (UnicodeDecodeError,ValueError):
+    except (UnicodeDecodeError,ValueError): # pragma: no cover
         with gzip.open(f, readmode) as fop:
             for line in fop:
                 if 'Oar Length' in line:
@@ -504,7 +507,7 @@ def get_empower_rigging(f):
                         oarlength = getoarlength(line)
                     except ValueError:
                         return None,None
-                if 'Inboard' in line:
+                if 'Inboard' in line: # pragma: no cover
                     try:
                         inboard = getinboard(line)
                     except ValueError:
@@ -633,7 +636,7 @@ def ritmo_variable_header(f):
     counter = 0
     extension = os.path.splitext(f)[1].lower()
     # extension = f[-3:].lower()
-    if extension == '.gz':
+    if extension == '.gz': # pragma: no cover
         fop = gzip.open(f,readmode)
     else:
         fop = open(f, 'r')
@@ -645,7 +648,7 @@ def ritmo_variable_header(f):
             fop.close()
             return counter
 
-    return counter
+    return counter # pragma: no cover
 
 def bc_variable_header(f):
     counter = 0
@@ -664,9 +667,9 @@ def bc_variable_header(f):
         else:
             counter += 1
 
-    fop.close()
+    fop.close() # pragma: no cover
 
-    return 0
+    return 0 # pragma: no cover
 
 def make_cumvalues_array(xvalues,doequal=False):
     """ Takes a Pandas dataframe with one column as input value.
@@ -676,7 +679,7 @@ def make_cumvalues_array(xvalues,doequal=False):
 
     try:
         newvalues = 0.0 * xvalues
-    except TypeError:
+    except TypeError: # pragma: no cover
         return [xvalues,0]
 
     dx = np.diff(xvalues)
@@ -839,7 +842,7 @@ class CSVParser(object):
         except KeyError:
             cols = self.df.columns
             for col in cols:
-                if 'TimeStamp ' in col:
+                if 'TimeStamp ' in col: # pragma: no cover
                     self.df['TimeStamp (sec)'] = self.df[col]
 
         self.columns = {c: c for c in self.defaultcolumnnames}
@@ -856,7 +859,7 @@ class CSVParser(object):
         return unixtimes
 
     def write_csv(self, *args, **kwargs):
-        if self.df.empty:
+        if self.df.empty: # pragma: no cover
             return None
 
         isgzip = kwargs.pop('gzip', False)
@@ -890,7 +893,7 @@ class CSVParser(object):
             if (data[c] == 0).any() and data[c].mean() == 0:
                 data = data.drop(c, axis=1)
 
-        if isgzip:
+        if isgzip: # pragma: no cover
             return data.to_csv(writeFile + '.gz', index_label='index',
                                compression='gzip')
         else:
@@ -901,7 +904,7 @@ class ETHParser(CSVParser):
     def __init__(self, *args, **kwargs):
         if args:
             csvfile = args[0]
-        else:
+        else: # pragma: no cover
             csvfile = kwargs['csvfile']
 
         super(ETHParser, self).__init__(*args, **kwargs)
@@ -945,7 +948,7 @@ class ETHParser(CSVParser):
 
 
 # Parsing CSV files from Humon
-class HumonParser(CSVParser):
+class HumonParser(CSVParser): # pragma: no cover
     def __init__(self, *args, **kwargs):
         if args:
             csvfile = args[0]
@@ -1003,7 +1006,7 @@ class RitmoTimeParser(CSVParser):
     def __init__(self, *args, **kwargs):
         if args:
             csvfile = args[0]
-        else:
+        else: # pragma: no cover
             csvfile = kwargs['csvfile']
 
         skiprows = ritmo_variable_header(csvfile)
@@ -1016,7 +1019,7 @@ class RitmoTimeParser(CSVParser):
         # crude EU format detector
         try:
             ll = self.df['Longitude (deg)']*10.0
-        except TypeError:
+        except TypeError: # pragma: no cover
             convertlistbase = [
                 'Total Time (sec)',
                 'Rate (spm)',
@@ -1068,7 +1071,7 @@ class RitmoTimeParser(CSVParser):
         firstline = get_file_line(1, csvfile)
         try:
             startdatetime = parser.parse(firstline,fuzzy=True)
-        except ValueError:
+        except ValueError: # pragma: no cover
             startdatetime = datetime.datetime.utcnow()
 
         if startdatetime.tzinfo is None:
@@ -1077,11 +1080,11 @@ class RitmoTimeParser(CSVParser):
                 lonavg = self.df[self.columns[' longitude']].mean()
                 tf = TimezoneFinder()
                 timezone_str = tf.timezone_at(lng=lonavg, lat=latavg)
-                if timezone_str is None:
+                if timezone_str is None: # pragma: no cover
                     timezone_str = tf.closest_timezone_at(lng=lonavg,lat=latavg)
 
                 startdatetime = pytz.timezone(timezone_str).localize(startdatetime)
-            except KeyError:
+            except KeyError: # pragma: no cover
                 startdatetime = pytz.timezone('UTC').localize(startdatetime)
                 timezonestr = 'UTC'
 
@@ -1101,7 +1104,7 @@ class QuiskeParser(CSVParser):
         kwargs['skiprows'] = 1
         if args:
             csvfile = args[0]
-        else:
+        else: # pragma: no cover
             csvfile = kwargs['csvfile']
 
         super(QuiskeParser, self).__init__(*args, **kwargs)
@@ -1155,7 +1158,7 @@ class BoatCoachOTWParser(CSVParser):
     def __init__(self, *args, **kwargs):
         if args:
             csvfile = args[0]
-        else:
+        else: # pragma: no cover
             csvfile = kwargs['csvfile']
 
         skiprows = bc_variable_header(csvfile)
@@ -1169,7 +1172,7 @@ class BoatCoachOTWParser(CSVParser):
         # 500m or km based
         try:
             pace = self.df['Last 10 Stroke Speed(/500m)']
-        except KeyError:
+        except KeyError: # pragma: no cover
             pace1 = self.df['Last 10 Stroke Speed(/km)']
             self.df['Last 10 Stroke Speed(/500m)'] = pace1.values
 
@@ -1177,7 +1180,7 @@ class BoatCoachOTWParser(CSVParser):
         # crude EU format detector
         try:
             ll = self.df['Longitude']*10.0
-        except TypeError:
+        except TypeError: # pragma: no cover
             convertlistbase = [
                 'TOTAL Distance Since Start BoatCoach(m)',
                 'Stroke Rate',
@@ -1223,7 +1226,7 @@ class BoatCoachOTWParser(CSVParser):
                 lambda x: parser.parse(x, fuzzy=True,yearfirst=True,dayfirst=False))
             unixtimes = row_datetime.apply(lambda x: arrow.get(
                 x).timestamp() + arrow.get(x).microsecond / 1.e6)
-        except KeyError:
+        except KeyError: # pragma: no cover
             row_date2 = arrow.get(row_date).timestamp()
             timecolumn = self.df[self.columns[' ElapsedTime (sec)']]
             timesecs = timecolumn.apply(timestrtosecs)
@@ -1235,7 +1238,7 @@ class BoatCoachOTWParser(CSVParser):
 
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes - unixtimes[0]
 
-        try:
+        try: # pragma: no cover
             d = self.df['Last 10 Stroke Speed(/km)']
             multiplicator = 0.5
         except:
@@ -1560,7 +1563,7 @@ class BoatCoachParser(CSVParser):
                 mask,
                 self.columns[' lapIdx']
             ] = self.df.loc[self.df.index[-3], self.columns[' lapIdx']]
-        except IndexError:
+        except IndexError: # pragma: no cover
             pass
 
 
@@ -1574,7 +1577,7 @@ class KinoMapParser(CSVParser):
 
         if args:
             csvfile = args[0]
-        else:
+        else: # pragma: no cover
             csvfile = kwargs['csvfile']
 
         super(KinoMapParser, self).__init__(*args, **kwargs)
@@ -1623,7 +1626,7 @@ class KinoMapParser(CSVParser):
         self.df['cumdist'] = res[0]
         maxdist = self.df['cumdist'].max()
         mask = (self.df['cumdist'] == maxdist)
-        while len(self.df[mask]) > 2:
+        while len(self.df[mask]) > 2: # pragma: no cover
             mask = (self.df['cumdist'] == maxdist)
             self.df.drop(self.df.index[-1], inplace=True)
 
@@ -1634,7 +1637,7 @@ class KinoMapParser(CSVParser):
 
 class BoatCoachAdvancedParser(CSVParser):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs): # pragma: no cover
         kwargs['skiprows'] = 1
         kwargs['usecols'] = list(range(25))
 
@@ -1825,7 +1828,7 @@ class ErgDataParser(CSVParser):
 
         try:
             pace = self.df[self.cols[4]]
-        except KeyError:
+        except KeyError: # pragma: no cover
             self.cols[4] = 'Pace (seconds per 500m)'
             try:
                 pace = self.df[self.cols[4]]
@@ -1843,7 +1846,7 @@ class ErgDataParser(CSVParser):
         try:
             pace = np.clip(pace, 0, 1e4)
             pace = pace.replace(0, 300)
-        except TypeError:
+        except TypeError: # pragma: no cover
             pass
         self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
 
@@ -1866,6 +1869,67 @@ class ErgDataParser(CSVParser):
         self.df[self.columns[' Power (watts)']] = power
 
         self.to_standard()
+
+class HeroParser(CSVParser):
+
+    def __init__(self, *args, **kwargs):
+        if args:
+            csvfile = args[0]
+        else: # pragma: no cover
+            csvfile = kwargs.pop('csvfile', None)
+
+        headerdata = get_file_line(2,csvfile).split(',')
+        rowdatetime = arrow.get(headerdata[0],'YYYY-MM-DD HH:mm:ss ZZ')
+
+        dragfactor = headerdata[6]
+
+        kwargs['skiprows'] = 3
+        super(HeroParser, self).__init__(*args, **kwargs)
+
+        self.cols = [
+            'Time',
+            'Distance',
+            'Stroke Rate',
+            'HR',
+            'Split',
+            'Watts',
+            'Stroke Length',
+            'Distance per Stroke',
+            'Drive Time',
+            'Drag Factor',
+            'Recovery Time',
+            'Average Drive Force (N)',
+            'Peak Drive Force (N)',
+            '',
+            '',
+            '',
+            '',
+        ]
+
+        starttimeunix = rowdatetime.timestamp()
+        self.cols = [b if a == '' else a
+                     for a,b in zip(self.cols, self.defaultcolumnnames)]
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
+
+        self.df[self.columns[' DriveTime (ms)']] *= 1000
+        self.df[self.columns[' StrokeRecoveryTime (ms)']] *= 1000
+        self.df[self.columns[' DriveLength (meters)']] /= 100.
+        self.df[self.columns[' AverageDriveForce (lbs)']] /= lbstoN
+        self.df[self.columns[' PeakDriveForce (lbs)']] /= lbstoN
+        time = self.df[self.columns['TimeStamp (sec)']].apply(timestrtosecs2)
+        self.df[self.columns['TimeStamp (sec)']] = time+starttimeunix
+        self.df[' ElapsedTime (sec)'] = time
+
+        pace = self.df[self.columns[' Stroke500mPace (sec/500m)']].apply(timestrtosecs2)
+
+        self.df[self.columns[' Stroke500mPace (sec/500m)']] = pace
+
+        self.to_standard()
+
+        # pace column
+
+
+
 
 class speedcoachParser(CSVParser):
 
@@ -2167,7 +2231,7 @@ class MysteryParser(CSVParser):
         spm = self.df[self.columns[' Cadence (stokes/min)']]
         try:
             strokelength = velo / (spm / 60.)
-        except TypeError:
+        except TypeError: # pragma: no cover
             strokelength = 0*velo
 
         unixtimes = pd.Series(seconds3 + totimestamp(self.row_date))
@@ -2204,7 +2268,7 @@ class RowProParser(CSVParser):
         # crude EU format detector
         try:
             p = self.df['Pace'] * 500.
-        except TypeError:
+        except TypeError: # pragma: no cover
             convertlistbase = [
                 'Time',
                 'Distance',
@@ -2242,7 +2306,7 @@ class RowProParser(CSVParser):
                 self.df.loc[therowindex[nr], 'Distance'] = distance
                 nr += 1
 
-        if len(footerwork) == len(therowindex) + 1:
+        if len(footerwork) == len(therowindex) + 1: # pragma: no cover
             self.df.loc[-1, 'Time'] = 0
             dt = self.df['Time'].diff()
             therowindex = self.df[dt < 0].index
@@ -2269,7 +2333,7 @@ class RowProParser(CSVParser):
         dated2 = dateline.split(';')[0]
         try:
             self.row_date = parser.parse(dated, fuzzy=True,yearfirst=True,dayfirst=False)
-        except ValueError:
+        except ValueError: # pragma: no cover
             self.row_date = parser.parse(dated2, fuzzy=True,yearfirst=True,dayfirst=False)
 
         self.cols = [
@@ -2330,7 +2394,7 @@ class NKLiNKLogbookParser(CSVParser):
     def __init__(self, *args, **kwargs):
         if args:
             csvfile = args[0]
-        else:
+        else: # pragma: no cover
             csvfile = kwargs['csvfile']
 
         firmware = kwargs.get('firmware',None)
@@ -2338,9 +2402,9 @@ class NKLiNKLogbookParser(CSVParser):
         inboard = kwargs.get('inboard',None)
 
         if firmware is not None:
-            try:
+            try: # pragma: no cover
                 firmware = np.float(firmware)
-            except ValueError:
+            except ValueError: # pragma: no cover
                 firmware = None
 
         super(NKLiNKLogbookParser, self).__init__(*args, **kwargs)
@@ -2401,7 +2465,7 @@ class NKLiNKLogbookParser(CSVParser):
         try:
             self.df[self.columns[' PeakDriveForce (lbs)']] /= lbstoN
             self.df[self.columns[' AverageDriveForce (lbs)']] /= lbstoN
-        except KeyError: # no oarlock data
+        except KeyError:  # pragma: no cover # no oarlock data
             pass
 
         # timestamp is in milliseconds
@@ -2411,12 +2475,12 @@ class NKLiNKLogbookParser(CSVParser):
 
         try:
             self.df[' StrokeRecoveryTime (ms)'] = self.df['cycleTime']-self.df[self.columns[' DriveTime (ms)']]
-        except KeyError:
+        except KeyError: # pragma: no cover
             pass
 
         corr_factor = 1.0
         if firmware is not None:
-            if firmware < 2.18:
+            if firmware < 2.18: # pragma: no cover
                 # apply correction
                 oarlength, inboard = get_empower_rigging(csvfile)
                 if oarlength is not None and oarlength > 3.30:
@@ -2433,7 +2497,7 @@ class NKLiNKLogbookParser(CSVParser):
         try:
             self.df[self.columns[' Power (watts)']] *= corr_factor
             self.df[self.columns['driveenergy']] *= corr_factor
-        except KeyError:
+        except KeyError: # pragma: no cover
             pass
 
 
@@ -2441,7 +2505,7 @@ class NKLiNKLogbookParser(CSVParser):
 
         self.df = self.df.sort_values(by='TimeStamp (sec)',ascending=True)
 
-    def impellerconsistent(self, threshold = 0.3):
+    def impellerconsistent(self, threshold = 0.3): # pragma: no cover
         impellerconsistent = True
         try:
             impspeed = self.df['ImpellerSpeed']
@@ -2479,7 +2543,7 @@ class SpeedCoach2Parser(CSVParser):
             if firmware < 2.18:
                 # apply correction
                 oarlength, inboard = get_empower_rigging(csvfile)
-                if oarlength is not None and oarlength > 3.30:
+                if oarlength is not None and oarlength > 3.30: # pragma: no cover
                     # sweep
                     a = 0.15
                     b = 0.275
@@ -2497,7 +2561,7 @@ class SpeedCoach2Parser(CSVParser):
         self.dist_unit = 'm'
         if 'KPH' in unitrow:
             self.velo_unit = 'kph'
-        if 'MPH' in unitrow:
+        if 'MPH' in unitrow: # pragma: no cover
             self.velo_unit = 'mph'
 
         if 'Kilometer' in unitrow:
@@ -2613,7 +2677,7 @@ class SpeedCoach2Parser(CSVParser):
                 self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
                 if 'GPS' in self.columns['GPS Speed']:
                     self.columns['GPS Speed'] = 'Speed (GPS)'
-            except KeyError:
+            except KeyError: # pragma: no cover
                 try:
                     dist2 = self.df['Imp Distance']
                     self.columns[' Horizontal (meters)'] = 'Distance (GPS)'
@@ -2633,7 +2697,7 @@ class SpeedCoach2Parser(CSVParser):
             if self.force_unit == 'N':
                 self.df[self.columns[' PeakDriveForce (lbs)']] /= lbstoN
                 self.df[self.columns[' AverageDriveForce (lbs)']] /= lbstoN
-        except KeyError:
+        except KeyError: # pragma: no cover
             pass
 
         if self.dist_unit == 'km':
@@ -2641,11 +2705,11 @@ class SpeedCoach2Parser(CSVParser):
             self.df[self.columns[' Horizontal (meters)']] *= 1000.
             try:
                 self.df['GPSDistance'] *= 1000.
-            except KeyError:
+            except KeyError: # pragma: no cover
                 pass
             try:
                 self.df['ImpellerDistance'] *= 1000.
-            except KeyError:
+            except KeyError: # pragma: no cover
                 pass
 
         cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
@@ -2653,7 +2717,7 @@ class SpeedCoach2Parser(CSVParser):
         velo = self.df[self.columns['GPS Speed']]
         if self.velo_unit == 'kph':
             velo = velo / 3.6
-        if self.velo_unit == 'mph':
+        if self.velo_unit == 'mph': # pragma: no cover
             velo = velo * 0.44704
 
         pace = 500. / velo
@@ -2689,7 +2753,7 @@ class SpeedCoach2Parser(CSVParser):
                 lonavg = self.df[self.columns[' longitude']].mean()
                 tf = TimezoneFinder()
                 timezone_str = tf.timezone_at(lng=lonavg, lat=latavg)
-                if timezone_str is None:
+                if timezone_str is None: # pragma: no cover
                     timezone_str = tf.closest_timezone_at(lng=lonavg,
                                                           lat=latavg)
                 row_date = self.row_date
@@ -2730,7 +2794,7 @@ class SpeedCoach2Parser(CSVParser):
                                                skipfooter=skipfooter,
                                                engine='python')
                 self.summarydata.drop(0, inplace=True)
-            except:
+            except: # pragma: no cover
                 self.summarydata = pd.DataFrame()
         else:
             self.summarydata = pd.DataFrame()
@@ -2745,7 +2809,7 @@ class SpeedCoach2Parser(CSVParser):
                                                skipfooter=skipfooter,
                                                engine='python')
                 self.sessiondata.drop(0,inplace=True)
-            except:
+            except: # pragma: no cover
                 self.sessiondata = pd.DataFrame()
         else:
             self.sessiondata = pd.DataFrame()
@@ -2754,7 +2818,7 @@ class SpeedCoach2Parser(CSVParser):
         impellerconsistent = True
         try:
             impspeed = self.df['ImpellerSpeed']
-        except KeyError:
+        except KeyError: # pragma: no cover
             return False, True, 0
 
         nrvalues = len(impspeed)
@@ -2825,7 +2889,7 @@ class SpeedCoach2Parser(CSVParser):
 
         try:
             maxhr = self.df[self.columns[' HRCur (bpm)']].max()
-        except KeyError:
+        except KeyError: # pragma: no cover
             maxhr = 0
 
         stri1 += "--{sep}{dist:0>5.0f}{sep}".format(
@@ -2947,7 +3011,7 @@ class SpeedCoach2Parser(CSVParser):
                                             'Total Strokes']
             try:
                 dps = float(sdist) / float(nrstrokes)
-            except ZeroDivisionError:
+            except ZeroDivisionError: # pragma: no cover
                 dps = 0.0
 
             splitstring = split
