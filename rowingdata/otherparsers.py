@@ -458,7 +458,10 @@ class FITParser(object):
         except AttributeError: # pragma: no cover
             pass
 
-        pace = 500./velo
+        try:
+            pace = 500./velo
+        except TypeError: # pragma: no cover
+            pace = pd.Series(np.zeros(len(self.df)))
         elapsed_time = timestamps-timestamps.values[0]
 
         self.df['TimeStamp (sec)'] = timestamps

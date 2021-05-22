@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.3.16"
+__version__ = "3.3.17"
 
 from collections import Counter
 
@@ -18,7 +18,7 @@ except (ValueError,ImportError): # pragma: no cover
 
 try:
     import matplotlib.pyplot as plt
-except ImportError:
+except ImportError: # pragma: no cover
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
 
@@ -2749,7 +2749,7 @@ class rowingdata:
 
         """
 
-        if self.empty:
+        if self.empty: # pragma: no cover
             return ([],[],[])
 
         df = self.df
@@ -3850,7 +3850,7 @@ class rowingdata:
                                     T[u,v,w] = (count*T[u,v,w]+res[0])/count
                                     S[u,v,w] = (count*S[u,v,w]+res[0])/count
                                     C[u,v,w] += 1.
-                        except:
+                        except: # pragma: no cover
                             res = [np.nan, np.nan, np.nan, np.nan, np.nan]
                 else:
                     res = [np.nan, np.nan, np.nan, np.nan, np.nan]
@@ -3961,7 +3961,7 @@ class rowingdata:
             self.df[' AverageDriveForce (lbs)'] = self.df['averageforce (model)']
             self.df[' DriveLength (meters)'] = self.df['drivelength (model)']
 
-    def otw_testphysics(self, rg=getrigging(), mc=70.0, p=120., spm=30.):
+    def otw_testphysics(self, rg=getrigging(), mc=70.0, p=120., spm=30.): # pragma: no cover
         """ Check if erg pace is in right order
 
         For now, works only in singles
@@ -4513,7 +4513,7 @@ class rowingdata:
         return fig2
 
     def get_timeplot_otw(self, title, *args, **kwargs):
-        if self.empty:
+        if self.empty: # pragma: no cover
             return None
 
         pacerange = kwargs.pop('pacerange',[])
@@ -4521,7 +4521,7 @@ class rowingdata:
         axis = kwargs.pop('axis','both')
 
         df = self.df
-        if self.absolutetimestamps:
+        if self.absolutetimestamps: # pragma: no cover
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
 
@@ -4756,7 +4756,7 @@ class rowingdata:
         return(fig1)
 
     def get_metersplot_otwpower(self, title, *args, **kwargs):
-        if self.empty:
+        if self.empty: # pragma: no cover
             return None
 
         axis = kwargs.pop('axis','both')
@@ -4764,7 +4764,7 @@ class rowingdata:
         pacerange = kwargs.pop('pacerange',[])
 
         df = self.df
-        if self.absolutetimestamps:
+        if self.absolutetimestamps: # pragma: no cover
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
 
@@ -5813,11 +5813,11 @@ class rowingdata:
         HR data and adds that incremental time in each band
 
         """
-        if self.empty:
+        if self.empty: # pragma: no cover
             return None
 
         df = self.df
-        if self.absolutetimestamps:
+        if self.absolutetimestamps: # pragma: no cover
             df['TimeStamp (sec)'] = df['TimeStamp (sec)'] - \
                 df['TimeStamp (sec)'].values[0]
         number_of_rows = self.number_of_rows
@@ -5836,11 +5836,11 @@ class rowingdata:
                 time_in_zone[1] += time_increments[i]
             elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.at:
                 time_in_zone[2] += time_increments[i]
-            elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.tr:
+            elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.tr: # pragma: no cover
                 time_in_zone[3] += time_increments[i]
-            elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.an:
+            elif df.loc[i, ' HRCur (bpm)'] <= self.rwr.an: # pragma: no cover
                 time_in_zone[4] += time_increments[i]
-            else:
+            else: # pragma: no cover
                 time_in_zone[5] += time_increments[i]
 
         # print(time_in_zone)
@@ -5882,7 +5882,7 @@ class rowingdata:
 
 
 
-def dorowall(readFile="testdata", window_size=20):
+def dorowall(readFile="testdata", window_size=20): # pragma: no cover
     """ Used if you have CrewNerd TCX and summary CSV with the same file name
 
     Creates all the plots and spits out a text summary (and copies it
