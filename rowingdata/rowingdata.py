@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.4.0"
+__version__ = "3.4.1"
 
 from collections import Counter
 
@@ -2198,6 +2198,8 @@ class rowingdata:
 
         if self.empty: # pragma: no cover
             return other
+        if len(self.df) < 30: # pragma: no cover
+            return None
 
         if other.empty: # pragma: no cover
             return self
@@ -2290,6 +2292,8 @@ class rowingdata:
         """
 
         if self.empty: # pragma: no cover
+            return np.array([])
+        if len(self.df) < 30: # pragma: no cover
             return np.array([])
 
         return self.df[keystring].values
@@ -4282,6 +4286,8 @@ class rowingdata:
     def plototwergpower(self): # pragma: no cover
         if self.empty:
             return None
+        if len(self.df) < 30: # pragma: no cover
+            return None
 
         df = self.df
         pe = df['equivergpower']
@@ -4305,6 +4311,8 @@ class rowingdata:
 
         """
         if self.empty: # pragma: no cover
+            return None
+        if len(self.df) < 30: # pragma: no cover
             return None
 
         df = self.df
@@ -4367,6 +4375,11 @@ class rowingdata:
         """
         if self.empty: # pragma: no cover
             return None
+        if len(self.df) < 30: # pragma: no cover
+            return None
+
+        if len(self.df) < 30:
+            return None
 
         df = self.df
         if self.absolutetimestamps: # pragma: no cover
@@ -4426,6 +4439,8 @@ class rowingdata:
     def get_metersplot_otw(self, title,*args,**kwargs):
         if self.empty: # pragma: no cover
             return None
+        if len(self.df) < 30: # pragma: no cover
+            return None
 
 
         pacerange = kwargs.pop('pacerange',[])
@@ -4454,6 +4469,8 @@ class rowingdata:
 
     def get_metersplot_erg2(self, title, *args, **kwargs):
         if self.empty: # pragma: no cover
+            return None
+        if len(self.df) < 30: # pragma: no cover
             return None
 
         pacerange = kwargs.pop('pacerange',[])
@@ -4494,6 +4511,8 @@ class rowingdata:
     def get_timeplot_erg2(self, title, *args, **kwargs):
         if self.empty: # pragma: no cover
             return None
+        if len(self.df) < 30: # pragma: no cover
+            return None
 
         df = self.df
         if self.absolutetimestamps: # pragma: no cover
@@ -4530,6 +4549,8 @@ class rowingdata:
     def get_timeplot_otw(self, title, *args, **kwargs):
         if self.empty: # pragma: no cover
             return None
+        if len(self.df) < 30: # pragma: no cover
+            return None
 
         pacerange = kwargs.pop('pacerange',[])
         gridtrue = kwargs.pop('gridtrue',True)
@@ -4564,6 +4585,8 @@ class rowingdata:
 
     def get_pacehrplot(self, title, *args, **kwargs):
         if self.empty: # pragma: no cover
+            return None
+        if len(self.df) < 30: # pragma: no cover
             return None
 
         df = self.df
@@ -4619,6 +4642,8 @@ class rowingdata:
     def bokehpaceplot(self): # pragma: no cover
         if self.empty:
             return None
+        if len(self.df) < 30: # pragma: no cover
+            return None
 
         df = self.df
         if self.absolutetimestamps:
@@ -4641,6 +4666,8 @@ class rowingdata:
 
     def get_paceplot(self, title, *args, **kwargs):
         if self.empty: # pragma: no cover
+            return None
+        if len(self.df) < 30: # pragma: no cover
             return None
 
         df = self.df
@@ -4699,6 +4726,8 @@ class rowingdata:
     def get_metersplot_erg(self, title, *args, **kwargs):
         if self.empty: # pragma: no cover
             return None
+        if len(self.df) < 30: # pragma: no cover
+            return None
 
         df = self.df
 
@@ -4733,6 +4762,8 @@ class rowingdata:
 
     def get_metersplot_otwempower(self, title, *args, **kwargs):
         if self.empty: # pragma: no cover
+            return None
+        if len(self.df) < 30: # pragma: no cover
             return None
 
         axis = kwargs.pop('axis','both')
@@ -4773,6 +4804,8 @@ class rowingdata:
     def get_metersplot_otwpower(self, title, *args, **kwargs):
         if self.empty: # pragma: no cover
             return None
+        if len(self.df) < 30: # pragma: no cover
+            return None
 
         axis = kwargs.pop('axis','both')
         gridtrue = kwargs.pop('gridtrue',True)
@@ -4811,6 +4844,8 @@ class rowingdata:
 
     def get_timeplot_erg(self, title,*args,**kwargs):
         if self.empty: # pragma: no cover
+            return None
+        if len(self.df) < 30: # pragma: no cover
             return None
 
         axis = kwargs.pop('axis','both')
@@ -4851,6 +4886,8 @@ class rowingdata:
     def get_timeplot_otwempower(self, title, *args, **kwargs):
         if self.empty: # pragma: no cover
             return None
+        if len(self.df) < 30: # pragma: no cover
+            return None
 
         axis = kwargs.pop('axis','both')
         gridtrue = kwargs.pop('gridtrue',True)
@@ -4887,6 +4924,8 @@ class rowingdata:
 
     def get_time_otwpower(self, title, *args, **kwargs):
         if self.empty: # pragma: no cover
+            return None
+        if len(self.df) < 30: # pragma: no cover
             return None
 
         axis = kwargs.pop('axis','both')
@@ -4953,6 +4992,10 @@ class rowingdata:
         """
         if self.empty: # pragma: no cover
             return None
+
+        if len(self.df) < 30: # pragma: no cover
+            return None
+
 
         df = self.df
         if self.absolutetimestamps: # pragma: no cover
@@ -5216,6 +5259,8 @@ class rowingdata:
         """
         if self.empty: # pragma: no cover
             return None
+        if len(self.df) < 30: # pragma: no cover
+            return None
 
         df = self.df
         if self.absolutetimestamps: # pragma: no cover
@@ -5276,6 +5321,8 @@ class rowingdata:
 
         """
         if self.empty: # pragma: no cover
+            return None
+        if len(self.df) < 30: # pragma: no cover
             return None
 
         df = self.df
@@ -5420,6 +5467,8 @@ class rowingdata:
 
         """
         if self.empty: # pragma: no cover
+            return None
+        if len(self.df) < 30: # pragma: no cover
             return None
 
         df = self.df
@@ -5588,6 +5637,8 @@ class rowingdata:
         """
         if self.empty: # pragma: no cover
             return None
+        if len(self.df) < 30: # pragma: no cover
+            return None
 
         df = self.df
         if self.absolutetimestamps: # pragma: no cover
@@ -5664,6 +5715,8 @@ class rowingdata:
 
         """
         if self.empty: # pragma: no cover
+            return None
+        if len(self.df) < 30: # pragma: no cover
             return None
 
         df = self.df
@@ -5748,6 +5801,8 @@ class rowingdata:
         """
         if self.empty: # pragma: no cover
             return None
+        if len(self.df) < 30: # pragma: no cover
+            return None
 
         df = self.df
         if self.absolutetimestamps: # pragma: no cover
@@ -5829,6 +5884,8 @@ class rowingdata:
 
         """
         if self.empty: # pragma: no cover
+            return None
+        if len(self.df) < 30: # pragma: no cover
             return None
 
         df = self.df
