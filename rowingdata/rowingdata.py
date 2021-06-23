@@ -1929,6 +1929,8 @@ class rowingdata:
                     sled_df = pd.read_csv(readFile,encoding='utf-8')
                 except IOError: # pragma: no cover
                     sled_df = pd.read_csv(readFile + '.gz',encoding='utf-8')
+                except:
+                    sled_df = pd.DataFrame()
             except IOError: # pragma: no cover
                 try:
                     f = open(readFile)
