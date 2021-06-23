@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.4.1"
+__version__ = "3.4.2"
 
 from collections import Counter
 
@@ -1929,6 +1929,8 @@ class rowingdata:
                     sled_df = pd.read_csv(readFile,encoding='utf-8')
                 except IOError: # pragma: no cover
                     sled_df = pd.read_csv(readFile + '.gz',encoding='utf-8')
+                except:
+                    sled_df = pd.DataFrame()
             except IOError: # pragma: no cover
                 try:
                     f = open(readFile)
