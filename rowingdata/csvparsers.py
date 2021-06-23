@@ -811,7 +811,7 @@ class CSVParser(object):
                 sep=sep, engine=engine, skipfooter=skipfooter,
                 converters=converters, index_col=False,
                 compression='infer',
-                error_bad_lines = False
+                #error_bad_lines = False
             )
 
 
