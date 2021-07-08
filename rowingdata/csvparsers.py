@@ -811,7 +811,7 @@ class CSVParser(object):
                 sep=sep, engine=engine, skipfooter=skipfooter,
                 converters=converters, index_col=False,
                 compression='infer',
-                error_bad_lines = False
+                #error_bad_lines = False
             )
 
 
@@ -881,6 +881,7 @@ class CSVParser(object):
 
         datadict = {name: getcol(self.df, self.columns[name])
                     for name in self.columns}
+
 
         # Create data frame with all necessary data to write to csv
         data = DataFrame(datadict)
@@ -2434,9 +2435,8 @@ class NKLiNKLogbookParser(CSVParser):
             'wash',
             'realWorkPerStroke',
             'positionOfMaxForce',
-            'gpsTotalDistance',
             'impellerInstaSpeed',
-            'impellerTotalDistance'
+            'impellerTotalDistance',
         ]
 
         self.defaultcolumnnames += [
@@ -2447,7 +2447,7 @@ class NKLiNKLogbookParser(CSVParser):
             'wash',
             'driveenergy',
             'peakforceangle',
-            'cum_dist',
+#            'cum_dist',
             'ImpellerSpeed',
             'ImpellerDistance',
         ]
@@ -2456,6 +2456,7 @@ class NKLiNKLogbookParser(CSVParser):
                      for a, b in zip(self.cols, self.defaultcolumnnames)]
 
         self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
+
 
         # do something with impeller stuff
         self.df['GPSSpeed'] = self.df['gpsInstaSpeed']
@@ -2499,6 +2500,10 @@ class NKLiNKLogbookParser(CSVParser):
             self.df[self.columns['driveenergy']] *= corr_factor
         except KeyError: # pragma: no cover
             pass
+
+        res = make_cumvalues(self.df[self.columns[' Horizontal (meters)']])
+        self.df['cumdist'] = res[0]
+        self.df['cum_dist'] = res[0]
 
 
         self.to_standard()

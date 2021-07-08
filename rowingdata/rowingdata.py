@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.4.2"
+__version__ = "3.4.3"
 
 from collections import Counter
 
@@ -1976,7 +1976,8 @@ class rowingdata:
 
         othernames = ['catch','finish','peakforceangle',
                       'wash','slip','index',
-                      'cum_dist','hr_an','hr_at','hr_tr','hr_ut1','hr_ut2',
+                      'cum_dist',
+                      'hr_an','hr_at','hr_tr','hr_ut1','hr_ut2',
                       'lim_an','lim_at','lim_tr','lim_ut1','lim_ut2',
                       'limpw_an','limpw_at','limpw_tr',
                       'limpw_ut1','limpw_ut2',
@@ -2007,6 +2008,7 @@ class rowingdata:
             ' Calories (kCal)',
             ' WorkoutState',
         ]
+
 
         self.defaultnames = othernames+mandatorynames
 
@@ -5334,7 +5336,8 @@ class rowingdata:
 
         # distance increments for bar chart
         dist_increments = -df.loc[:, 'cum_dist'].diff()
-        dist_increments[0] = dist_increments[1]
+        dist_increments.loc[0] = dist_increments.loc[1]
+
 #       dist_increments=abs(dist_increments)+dist_increments
 
         fig1 = plt.figure(figsize=(12, 10))
