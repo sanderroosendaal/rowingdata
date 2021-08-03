@@ -2649,6 +2649,14 @@ class SpeedCoach2Parser(CSVParser):
             except KeyError:
                 pass
 
+        if self.velo_unit != 'ms':
+            if self.velo_unit == 'kph':
+                self.df['GPSSpeed'] = self.df['GPSSpeed'] / 3.6
+                self.df['Speed (IMP)'] = self.df['Speed (IMP)'] / 3.6
+            if self.velo_unit == 'mph':
+                self.df['GPSSpeed'] = self.df['GPSSpeed'] * 0.44704
+                self.df['Speed (IMP)'] = self.df['Speed (IMP)'] * 0.44704
+
         # take Impeller split / speed if available and not zero
         try:
             impspeed = self.df['Speed (IMP)']
