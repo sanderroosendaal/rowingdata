@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.4.4"
+__version__ = "3.4.5"
 
 from collections import Counter
 
@@ -2249,8 +2249,9 @@ class rowingdata:
             otherlapids = other_df[' lapIdx'].unique()
             overlapping = list(set(lapids) & set(otherlapids))
 
-        self_df = self_df.astype('float')
-        other_df = other_df.astype('float')
+        self_df = self_df.select_dtypes(include=['number']).astype('float')
+
+        other_df = other_df.select_dtypes(include=['number']).astype('float')
         self_df = pd.merge(self_df, other_df, how='outer')
         # drop duplicates
         self_df.drop_duplicates(subset='TimeStamp (sec)',
