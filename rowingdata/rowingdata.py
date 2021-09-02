@@ -2249,8 +2249,9 @@ class rowingdata:
             otherlapids = other_df[' lapIdx'].unique()
             overlapping = list(set(lapids) & set(otherlapids))
 
-        self_df = self_df.astype('float')
-        other_df = other_df.astype('float')
+        self_df = self_df.select_dtypes(include=['number']).astype('float')
+
+        other_df = other_df.select_dtypes(include=['number']).astype('float')
         self_df = pd.merge(self_df, other_df, how='outer')
         # drop duplicates
         self_df.drop_duplicates(subset='TimeStamp (sec)',
