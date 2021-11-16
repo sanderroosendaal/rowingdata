@@ -218,10 +218,12 @@ def tcxtodf2(path):
         if extension == '.gz':
             with gzip.open(path,'r') as f:
                 input = f.read()
+                input = input.lstrip()
                 input = strip_control_characters(input)
         else:
             with open(path, 'r') as f:
                 input = f.read()
+                input = input.lstrip()
                 input = strip_control_characters(input)
 
             with open('temp_xml.tcx','w') as f:

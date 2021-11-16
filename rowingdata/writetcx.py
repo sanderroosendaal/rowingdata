@@ -232,7 +232,7 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
             watts = SubElement(tpx,'Watts')
             try:
                 watts.text = '{s}'.format(s=int(power[i]))
-            except ValueError:
+            except (ValueError, OverflowError):
                 watts.text = 'NaN'
 
 
