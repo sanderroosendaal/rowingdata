@@ -20,7 +20,7 @@ bokeh==2.2.3
 boto==2.49.0
 boto3==1.17.45
 botocore==1.20.45
-bottle==0.12.18
+bottle==0.12.19
 braintree==3.55.0
 cairocffi==1.0.2
 celery==4.3.0
