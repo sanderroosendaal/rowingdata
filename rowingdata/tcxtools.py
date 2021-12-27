@@ -14,6 +14,7 @@ import string
 from six import unichr
 
 from lxml import etree
+from lxml.etree import XMLSyntaxError
 from docopt import docopt
 
 ns1 = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
@@ -214,6 +215,7 @@ import os
 
 def tcxtodf2(path):
     extension = path[-3:].lower()
+    p = etree.XMLParser(recover=True)
     try:
         if extension == '.gz':
             with gzip.open(path,'r') as f:
@@ -229,10 +231,10 @@ def tcxtodf2(path):
             with open('temp_xml.tcx','w') as f:
                 f.write(input)
 
-            tree = etree.parse('temp_xml.tcx')
+            tree = etree.parse('temp_xml.tcx',parser=p)
             os.remove('temp_xml.tcx')
-    except TypeError:
-        tree = etree.parse(path)
+    except (TypeError,XMLSyntaxError):
+        tree = etree.parse(path,parser=p)
 
     root = tree.getroot()
 
