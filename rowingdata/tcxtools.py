@@ -241,6 +241,8 @@ def tcxtodf2(path):
     tracks = []
     lapnr = 0
 
+    if root is None:
+        return pd.DataFrame()
     for element in root.iter():
         if element.tag == '{%s}Lap'%ns1:
             lapnr += 1
