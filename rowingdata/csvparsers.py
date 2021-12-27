@@ -303,7 +303,7 @@ def get_file_type(f):
         if extension == '.tcx':
             try:
                 p = etree.XMLParser(recover=True)
-                tree = etree.parse(f)
+                tree = etree.parse(f,parser=p)
                 root = tree.getroot()
                 return 'tcx'
             except: # pragma: no cover
@@ -314,7 +314,8 @@ def get_file_type(f):
                     with open('temp_xml.tcx','w') as fout:
                         fout.write(input)
 
-                    tree = etree.parse('temp_xml.tcx')
+                    p = etree.XMLParser(recover=True)
+                    tree = etree.parse('temp_xml.tcx',parser=p)
                     os.remove('temp_xml.tcx')
                     return 'tcx'
                 except:
@@ -351,7 +352,8 @@ def get_file_type(f):
 
     if extension == '.tcx':
         try:
-            tree = etree.parse(f)
+            p = etree.XMLParser(recover=True)
+            tree = etree.parse(f,parser=p)
             root = tree.getroot()
             return 'tcx'
         except:
@@ -362,7 +364,9 @@ def get_file_type(f):
                 with open('temp_xml.tcx','w') as ftemp:
                     ftemp.write(input)
 
-                tree = etree.parse('temp_xml.tcx')
+                p = etree.XMLParser(recover=True)
+
+                tree = etree.parse('temp_xml.tcx',parser=p)
                 os.remove('temp_xml.tcx')
                 return 'tcx'
             except:

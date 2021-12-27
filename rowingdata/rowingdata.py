@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.4.12"
+__version__ = "3.4.13"
 
 from collections import Counter
 
@@ -2385,32 +2385,33 @@ class rowingdata:
 
     def write_csv(self, writeFile, gzip=False):
         data = self.df.copy()
-        data = data.drop(['index',
-                          'hr_ut2',
-                          'hr_ut1',
-                          'hr_at',
-                          'hr_tr',
-                          'hr_an',
-                          'hr_max',
-                          'lim_ut2',
-                          'lim_ut1',
-                          'lim_at',
-                          'lim_tr',
-                          'lim_an',
-                          'lim_max',
-                          'pw_ut2',
-                          'pw_ut1',
-                          'pw_at',
-                          'pw_tr',
-                          'pw_an',
-                          'pw_max',
-                          'limpw_ut2',
-                          'limpw_ut1',
-                          'limpw_at',
-                          'limpw_tr',
-                          'limpw_an',
-                          'limpw_max',
-                          ], 1, errors='ignore')
+        data = data.drop(labels=[
+            'index',
+            'hr_ut2',
+            'hr_ut1',
+            'hr_at',
+            'hr_tr',
+            'hr_an',
+            'hr_max',
+            'lim_ut2',
+            'lim_ut1',
+            'lim_at',
+            'lim_tr',
+            'lim_an',
+            'lim_max',
+            'pw_ut2',
+            'pw_ut1',
+            'pw_at',
+            'pw_tr',
+            'pw_an',
+            'pw_max',
+            'limpw_ut2',
+            'limpw_ut1',
+            'limpw_at',
+            'limpw_tr',
+            'limpw_an',
+            'limpw_max',
+            ], errors='ignore')
 
         # add time stamp to
         if not self.absolutetimestamps and not self.empty:
