@@ -215,7 +215,8 @@ import os
 
 def tcxtodf2(path):
     extension = path[-3:].lower()
-    p = etree.XMLParser(recover=True)
+    #p = etree.XMLParser(recover=True)
+    p = etree.XMLParser()
     try:
         if extension == '.gz':
             with gzip.open(path,'r') as f:

@@ -302,7 +302,8 @@ def get_file_type(f):
             return 'fit' # pragma: no cover
         if extension == '.tcx':
             try:
-                p = etree.XMLParser(recover=True)
+                #p = etree.XMLParser(recover=True)
+                p = etree.XMLParser()
                 tree = etree.parse(f,parser=p)
                 root = tree.getroot()
                 return 'tcx'
