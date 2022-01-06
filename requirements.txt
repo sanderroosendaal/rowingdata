@@ -23,7 +23,7 @@ botocore==1.20.45
 bottle==0.12.19
 braintree==3.55.0
 cairocffi==1.0.2
-celery==4.3.0
+celery==5.2.2
 certifi==2019.3.9
 cffi==1.14.0
 chardet==3.0.4
