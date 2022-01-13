@@ -16,14 +16,12 @@ backports.zoneinfo==0.2.1
 beautifulsoup4==4.7.1
 billiard==3.6.0.0
 bleach==4.1.0
-bokeh==2.2.3
 boto==2.49.0
 boto3==1.17.45
 botocore==1.20.45
 bottle==0.12.19
 braintree==3.55.0
 cairocffi==1.0.2
-celery==4.3.0
 certifi==2019.3.9
 cffi==1.14.0
 chardet==3.0.4
@@ -48,7 +46,6 @@ django-async-messages==0.3.1
 django-braces==1.13.0
 django-classy-tags==0.8.0
 django-cookie-law==2.0.1
-django-cors-headers==2.5.2
 django-countries==5.3.3
 django-datetime-widget==0.9.3
 django-debug-toolbar==3.2.3
@@ -73,6 +70,7 @@ django-tz-detect==0.2.9
 djangorestframework==3.13.0
 docopt==0.6.2
 docutils==0.14
+dparse==0.5.1
 entrypoints==0.3
 execnet==1.5.0
 factory-boy==2.11.1
@@ -123,7 +121,6 @@ jupyterlab==3.2.5
 jupyterlab-server==2.9.0
 keyring==18.0.0
 kiwisolver==1.0.1
-kombu==4.5.0
 llvmlite==0.36.0
 locket==0.2.1
 lxml==4.7.1
@@ -164,7 +161,7 @@ pbr==5.1.3
 pendulum==2.1.2
 pexpect==4.6.0
 pickleshare==0.7.5
-Pillow==8.4.0
+Pillow==9.0.0
 pip-upgrader==1.4.6
 pluggy==0.9.0
 prometheus-client==0.6.0
@@ -210,6 +207,7 @@ rq==1.8.0
 rules==2.1
 ruptures==1.1.3
 s3transfer==0.3.4
+safety==1.10.3
 scipy==1.5.4
 SecretStorage==3.3.1
 Send2Trash==1.8.0
@@ -228,9 +226,9 @@ terminado==0.12.1
 terminaltables==3.1.0
 testpath==0.4.2
 text-unidecode==1.2
-thrift==0.11.0
 timezonefinder==5.2.0
 tk==0.1.0
+toml==0.10.2
 tomli==1.2.2
 toolz==0.10.0
 tornado==6.1
