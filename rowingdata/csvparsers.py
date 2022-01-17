@@ -855,6 +855,7 @@ class CSVParser(object):
 
     def to_standard(self):
         inverted = {value: key for key, value in six.iteritems(self.columns)}
+        
         self.df.rename(columns=inverted, inplace=True)
         self.columns = {c: c for c in self.defaultcolumnnames}
 
@@ -1936,6 +1937,55 @@ class HeroParser(CSVParser):
         # pace column
 
 
+class SmartRowParser(CSVParser):
+    def __init__(self, *args, **kwargs):
+        super(SmartRowParser, self).__init__(*args, **kwargs)
+
+        self.cols = [
+            'Second (#)',
+            'Distance (m)',
+            'Stroke rate (SPM)',
+            'Heart rate (bpm)',
+            'Actual split (s)',
+            'Actual power (W)',
+            '', # 'DriveLength (meters)',
+            '', #' StrokeDistance (meters)',
+            '', #' DriveTime (ms)',
+            '', #' DragFactor',
+            '', #' StrokeRecoveryTime (ms)',
+            '', #' AverageDriveForce (lbs)',
+            '', #' PeakDriveForce (lbs)',
+            '', #' lapIdx',
+            '', #Second (#)',
+            '', #' latitude',
+            '', #' longitude',
+            ]
+
+        self.cols = [b if a == '' else a
+                     for a,b in zip(self.cols, self.defaultcolumnnames)]
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
+
+        for c in self.cols:
+            try:
+                self.df[c] = pd.to_numeric(self.df[c],errors='coerce')
+                self.df[c] = self.df[c].fillna(method='bfill')
+            except KeyError:
+                pass
+
+        startdatetime = datetime.datetime.utcnow()
+
+        elapsed = self.df[self.columns['TimeStamp (sec)']]
+        elapsed = pd.to_numeric(elapsed,errors='coerce')
+        starttimeunix = arrow.get(startdatetime).timestamp()
+
+        unixtimes = starttimeunix+elapsed
+        unixtimes = unixtimes.fillna(method='bfill')
+
+        self.df[self.columns['TimeStamp (sec)']] = unixtimes
+        self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-starttimeunix
+
+
+        self.to_standard()
 
 
 class speedcoachParser(CSVParser):
