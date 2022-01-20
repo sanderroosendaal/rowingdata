@@ -302,7 +302,8 @@ def get_file_type(f):
             return 'fit' # pragma: no cover
         if extension == '.tcx':
             try:
-                p = etree.XMLParser(recover=True)
+                #p = etree.XMLParser(recover=True)
+                p = etree.XMLParser()
                 tree = etree.parse(f,parser=p)
                 root = tree.getroot()
                 return 'tcx'
@@ -854,6 +855,7 @@ class CSVParser(object):
 
     def to_standard(self):
         inverted = {value: key for key, value in six.iteritems(self.columns)}
+
         self.df.rename(columns=inverted, inplace=True)
         self.columns = {c: c for c in self.defaultcolumnnames}
 
@@ -1935,6 +1937,55 @@ class HeroParser(CSVParser):
         # pace column
 
 
+class SmartRowParser(CSVParser):
+    def __init__(self, *args, **kwargs):
+        super(SmartRowParser, self).__init__(*args, **kwargs)
+
+        self.cols = [
+            'Second (#)',
+            'Distance (m)',
+            'Stroke rate (SPM)',
+            'Heart rate (bpm)',
+            'Actual split (s)',
+            'Actual power (W)',
+            '', # 'DriveLength (meters)',
+            '', #' StrokeDistance (meters)',
+            '', #' DriveTime (ms)',
+            '', #' DragFactor',
+            '', #' StrokeRecoveryTime (ms)',
+            '', #' AverageDriveForce (lbs)',
+            '', #' PeakDriveForce (lbs)',
+            '', #' lapIdx',
+            '', #Second (#)',
+            '', #' latitude',
+            '', #' longitude',
+            ]
+
+        self.cols = [b if a == '' else a
+                     for a,b in zip(self.cols, self.defaultcolumnnames)]
+        self.columns = dict(list(zip(self.defaultcolumnnames, self.cols)))
+
+        for c in self.cols:
+            try:
+                self.df[c] = pd.to_numeric(self.df[c],errors='coerce')
+                self.df[c] = self.df[c].fillna(method='bfill')
+            except KeyError:
+                pass
+
+        startdatetime = datetime.datetime.utcnow()
+
+        elapsed = self.df[self.columns['TimeStamp (sec)']]
+        elapsed = pd.to_numeric(elapsed,errors='coerce')
+        starttimeunix = arrow.get(startdatetime).timestamp()
+
+        unixtimes = starttimeunix+elapsed
+        unixtimes = unixtimes.fillna(method='bfill')
+
+        self.df[self.columns['TimeStamp (sec)']] = unixtimes
+        self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-starttimeunix
+
+
+        self.to_standard()
 
 
 class speedcoachParser(CSVParser):
@@ -2299,40 +2350,7 @@ class RowProParser(CSVParser):
         dt = self.df['Time'].diff()
         therowindex = self.df[dt < 0].index
 
-        if len(footerwork) == 2 * (len(therowindex) + 1):
-            footerwork = self.footer[self.footer['Type'] == 1]
-            self.df.loc[-1, 'Time'] = 0
-            dt = self.df['Time'].diff()
-            therowindex = self.df[dt < 0].index
-            nr = 0
-            for i in footerwork.index:
-                ttime = footerwork.loc[i, 'Time']
-                distance = footerwork.loc[i, 'Distance']
-                self.df.loc[therowindex[nr], 'Time'] = ttime
-                self.df.loc[therowindex[nr], 'Distance'] = distance
-                nr += 1
-
-        if len(footerwork) == len(therowindex) + 1: # pragma: no cover
-            self.df.loc[-1, 'Time'] = 0
-            dt = self.df['Time'].diff()
-            therowindex = self.df[dt < 0].index
-            nr = 0
-            for i in footerwork.index:
-                ttime = footerwork.loc[i, 'Time']
-                distance = footerwork.loc[i, 'Distance']
-                self.df.loc[therowindex[nr], 'Time'] = ttime
-                self.df.loc[therowindex[nr], 'Distance'] = distance
-                nr += 1
-        else:
-            self.df.loc[maxindex, 'Time'] = endvalue
-            for i in footerwork.index:
-                ttime = footerwork.loc[i, 'Time']
-                distance = footerwork.loc[i, 'Distance']
-                diff = self.df['Time'].apply(lambda z: abs(ttime - z))
-                diff.sort_values(inplace=True)
-                theindex = diff.index[0]
-                self.df.loc[theindex, 'Time'] = ttime
-                self.df.loc[theindex, 'Distance'] = distance
+    
 
         dateline = get_file_line(11, csvfile)
         dated = dateline.split(',')[0]
