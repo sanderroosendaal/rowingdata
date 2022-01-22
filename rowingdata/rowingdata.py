@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.0"
+__version__ = "3.5.1"
 
 from collections import Counter
 
@@ -96,7 +96,7 @@ except (ValueError,ImportError): # pragma: no cover
 try:
     from .csvparsers import (
         BoatCoachAdvancedParser, BoatCoachOTWParser,
-        RitmoTimeParser, HumonParser,
+        RitmoTimeParser, HumonParser, SmartRowParser,
         BoatCoachParser, CoxMateParser, CSVParser,
         ErgDataParser, ErgStickParser, KinoMapParser,
         MysteryParser, RowPerfectParser, RowProParser,

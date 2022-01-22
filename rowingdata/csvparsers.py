@@ -176,6 +176,9 @@ def csvtests(s):
     if 'Workout Name' in firstline:
         return 'c2log'
 
+    if 'Stroke (#)' in firstline and 'Work (J)' in firstline:
+        return 'smartrow'
+
     if 'Concept2 Utility' in firstline: # pragma: no cover
         return 'c2log'
 
@@ -2350,7 +2353,7 @@ class RowProParser(CSVParser):
         dt = self.df['Time'].diff()
         therowindex = self.df[dt < 0].index
 
-    
+
 
         dateline = get_file_line(11, csvfile)
         dated = dateline.split(',')[0]
