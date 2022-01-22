@@ -96,7 +96,7 @@ except (ValueError,ImportError): # pragma: no cover
 try:
     from .csvparsers import (
         BoatCoachAdvancedParser, BoatCoachOTWParser,
-        RitmoTimeParser, HumonParser,
+        RitmoTimeParser, HumonParser, SmartRowParser,
         BoatCoachParser, CoxMateParser, CSVParser,
         ErgDataParser, ErgStickParser, KinoMapParser,
         MysteryParser, RowPerfectParser, RowProParser,
