@@ -117,7 +117,7 @@ jupyter==1.0.0
 jupyter-client==6.1.7
 jupyter-console==6.2.0
 jupyter-core==4.7.0
-jupyter-server==1.13.1
+jupyter-server==1.15.4
 jupyterlab==3.2.5
 jupyterlab-server==2.9.0
 keyring==18.0.0
