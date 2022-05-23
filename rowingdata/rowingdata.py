@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.2"
+__version__ = "3.5.3"
 
 from collections import Counter
 
@@ -5831,7 +5831,7 @@ class rowingdata:
             plt.show()
         except ImportError:
             pass
-        
+
         return 1
 
     def get_power_piechart(self, title, *args, **kwargs):
