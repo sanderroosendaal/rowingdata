@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.1"
+__version__ = "3.5.2"
 
 from collections import Counter
 
@@ -2050,7 +2050,7 @@ class rowingdata:
                     try: # pragma: no cover
                         forcen = sled_df[' AverageDriveForce (N)']
                         sled_df[name] = forcen / lbstoN
-                    except KeyError:
+                    except (KeyError, TypeError):
                         pass
                 if name == ' AverageDriveForce (N)':
                     try:
