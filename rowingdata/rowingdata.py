@@ -28,7 +28,7 @@ import shutil
 from scipy.signal import savgol_filter
 
 try:
-    from six.moves.tkinter import Tk
+    from tkinter import Tk
     tkavail = 1
 except ImportError: # pragma: no cover
     tkavail = 0
