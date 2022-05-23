@@ -2050,7 +2050,7 @@ class rowingdata:
                     try: # pragma: no cover
                         forcen = sled_df[' AverageDriveForce (N)']
                         sled_df[name] = forcen / lbstoN
-                    except KeyError:
+                    except (KeyError, TypeError):
                         pass
                 if name == ' AverageDriveForce (N)':
                     try:
