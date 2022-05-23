@@ -4367,7 +4367,10 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
         fig2.subplots_adjust(hspace=0)
 
-        plt.show()
+        try:
+            plt.show()
+        except ImportError:
+            pass
 
 
     def plottime_erg(self):
@@ -5462,7 +5465,10 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
         fig2.subplots_adjust(hspace=0)
 
-        plt.show()
+        try:
+            plt.show()
+        except ImportError:
+            pass
 
     def plottime_otw(self):
         """ Creates two images containing interesting plots
