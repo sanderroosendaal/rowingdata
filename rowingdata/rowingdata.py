@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.2"
+__version__ = "3.5.3"
 
 from collections import Counter
 
@@ -28,7 +28,7 @@ import shutil
 from scipy.signal import savgol_filter
 
 try:
-    from six.moves.tkinter import Tk
+    from tkinter import Tk
     tkavail = 1
 except ImportError: # pragma: no cover
     tkavail = 0
@@ -2627,7 +2627,10 @@ class rowingdata:
 
         df_plot.plot()
 
-        plt.show()
+        try:
+            plt.show()
+        except ImportError:
+            pass
 
     def get_plot_instroke(self,column_name): # pragma: no cover
         df  = self.get_instroke_data(column_name)
@@ -4256,7 +4259,11 @@ class rowingdata:
             cpvalue.append(maxrow['Power'])
 
         ax.scatter(delta, cpvalue)
-        plt.show()
+
+        try:
+            plt.show()
+        except ImportError:
+            pass
 
     def getcp(self): # pragma: no cover
         if self.empty:
@@ -4305,7 +4312,10 @@ class rowingdata:
         ax.set_xlabel('Erg Power (W)')
         ax.set_ylabel('OTW Power (W)')
 
-        plt.show()
+        try:
+            plt.show()
+        except ImportError:
+            pass
 
     def plotmeters_erg(self):
         """ Creates two images containing interesting plots
@@ -4367,7 +4377,10 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
         fig2.subplots_adjust(hspace=0)
 
-        plt.show()
+        try:
+            plt.show()
+        except ImportError:
+            pass
 
 
     def plottime_erg(self):
@@ -4438,7 +4451,10 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
         fig2.subplots_adjust(hspace=0)
 
-        plt.show()
+        try:
+            plt.show()
+        except ImportError:
+            pass
 
         self.piechart()
 
@@ -5254,7 +5270,10 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
         fig2.subplots_adjust(hspace=0)
 
-        plt.show()
+        try:
+            plt.show()
+        except ImportError:
+            pass
 
         self.piechart()
 
@@ -5315,7 +5334,10 @@ class rowingdata:
         ax1.xaxis.set_major_formatter(timeTickFormatter)
 
         grid(True)
-        plt.show()
+        try:
+            plt.show()
+        except ImportError:
+            pass
 
     def plotmeters_otw(self):
         """ Creates two images containing interesting plots
@@ -5462,7 +5484,10 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
         fig2.subplots_adjust(hspace=0)
 
-        plt.show()
+        try:
+            plt.show()
+        except ImportError:
+            pass
 
     def plottime_otw(self):
         """ Creates two images containing interesting plots
@@ -5629,7 +5654,10 @@ class rowingdata:
         plt.subplots_adjust(hspace=0)
         fig2.subplots_adjust(hspace=0)
 
-        plt.show()
+        try:
+            plt.show()
+        except ImportError:
+            pass
 
         self.piechart()
 
@@ -5710,7 +5738,11 @@ class rowingdata:
 
         ax9.set_title(fig_title)
 
-        plt.show()
+        try:
+            plt.show()
+        except ImportError:
+            pass
+
         return 1
 
     def power_piechart(self):
@@ -5795,7 +5827,11 @@ class rowingdata:
 
         ax9.set_title(fig_title)
 
-        plt.show()
+        try:
+            plt.show()
+        except ImportError:
+            pass
+
         return 1
 
     def get_power_piechart(self, title, *args, **kwargs):
