@@ -665,6 +665,7 @@ class TestCurveData:
         cs = row.get_instroke_columns()
         assert_equal(len(cs),2)
         assert_equal(cs[0],'boat accelerator curve')
+        plt = row.get_plot_instroke('boat accelerator curve')
 
 
 class TestFITParser:

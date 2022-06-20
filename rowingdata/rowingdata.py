@@ -2652,6 +2652,7 @@ class rowingdata:
 
         fig1 = figure.Figure(figsize=(12,10))
         ax = fig1.add_subplot(111)
+        ax.set_title(column_name)
         df_plot.plot(ax=ax)
 
         return fig1
