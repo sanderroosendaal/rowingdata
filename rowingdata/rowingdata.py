@@ -2609,23 +2609,39 @@ class rowingdata:
 
     def plot_instroke(self,column_name): # pragma: no cover
         df  = self.get_instroke_data(column_name)
+        df_pos = (df+abs(df))/2.
+        df_min = -(-df+abs(-df))/2.
 
         mean_vals = df.median()
-        min_vals = df.quantile(q=0.05)
-        max_vals = df.quantile(q=0.95)
+        q75 = df_pos.quantile(q=0.75).replace(0,np.nan)
+        q25 = df_pos.quantile(q=0.25).replace(0,np.nan)
+        q75min = df_min.quantile(q=0.75).replace(0,np.nan)
+        q25min = df_min.quantile(q=0.25).replace(0,np.nan)
 
-        q25 = df.quantile(q = 0.25)
-        q75 = df.quantile(q = 0.75)
 
         df_plot = DataFrame({
-            'mean':mean_vals,
-            'max':max_vals,
-            'q75':q75,
-            'q25':q25,
-            'min':min_vals,
+            'median':mean_vals,
+            'high':q75,
+            'low':q75min,
+            'high 2':q25min,
+            'low 2': q25,
             })
 
-        df_plot.plot()
+        df_plot['high'].update(df_plot.pop('high 2'))
+        df_plot['low'].update(df_plot.pop('low 2'))
+        df_plot.interpolate(axis=1,inplace=True)
+        df_plot['x'] = pd.Series(range(len(df_plot)))
+
+        # df_plot.plot()
+        fig1 = plt.figure(figsize=(12,10))
+        ax = fig1.add_subplot(111)
+        ax.set_title(column_name)
+        ax.plot(df_plot['x'],df_plot['median'])
+        ax.fill_between(df_plot['x'],
+                        df_plot['low'],
+                        df_plot['high'],alpha=0.35)
+
+        grid(True)
 
         try:
             plt.show()
@@ -2635,25 +2651,39 @@ class rowingdata:
     def get_plot_instroke(self,column_name): # pragma: no cover
         df  = self.get_instroke_data(column_name)
 
-        mean_vals = df.median()
-        min_vals = df.quantile(q=0.05)
-        max_vals = df.quantile(q=0.95)
+        df_pos = (df+abs(df))/2.
+        df_min = -(-df+abs(-df))/2.
 
-        q25 = df.quantile(q = 0.25)
-        q75 = df.quantile(q = 0.75)
+        mean_vals = df.median()
+        q75 = df_pos.quantile(q=0.75).replace(0,np.nan)
+        q25 = df_pos.quantile(q=0.25).replace(0,np.nan)
+        q75min = df_min.quantile(q=0.75).replace(0,np.nan)
+        q25min = df_min.quantile(q=0.25).replace(0,np.nan)
+
 
         df_plot = DataFrame({
-            'mean':mean_vals,
-            'max':max_vals,
-            'q75':q75,
-            'q25':q25,
-            'min':min_vals,
+            'median':mean_vals,
+            'high':q75,
+            'low':q75min,
+            'high 2':q25min,
+            'low 2': q25,
             })
+
+        df_plot['high'].update(df_plot.pop('high 2'))
+        df_plot['low'].update(df_plot.pop('low 2'))
+        df_plot.interpolate(axis=1,inplace=True)
+        df_plot['x'] = pd.Series(range(len(df_plot)))
 
         fig1 = figure.Figure(figsize=(12,10))
         ax = fig1.add_subplot(111)
         ax.set_title(column_name)
-        df_plot.plot(ax=ax)
+        ax.plot(df_plot['x'],df_plot['median'])
+        ax.fill_between(df_plot['x'],
+                        df_plot['low'],
+                        df_plot['high'],alpha=0.35)
+
+        grid(True)
+
 
         return fig1
 
