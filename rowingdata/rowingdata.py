@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.7"
+__version__ = "3.5.8"
 
 from collections import Counter
 
@@ -2610,7 +2610,7 @@ class rowingdata:
         return df
 
     def plot_instroke(self,column_name,spm_min=0,spm_max=100): # pragma: no cover
-        df  = self.get_instroke_data(column_name,spm_min=0,spm_max=100)
+        df  = self.get_instroke_data(column_name,spm_min=spm_min,spm_max=spm_max)
         df_pos = (df+abs(df))/2.
         df_min = -(-df+abs(-df))/2.
 
@@ -2651,7 +2651,7 @@ class rowingdata:
             pass
 
     def get_plot_instroke(self,column_name,spm_min=0,spm_max=100): # pragma: no cover
-        df  = self.get_instroke_data(column_name,spm_min=0,spm_max=100)
+        df  = self.get_instroke_data(column_name,spm_min=spm_min,spm_max=spm_max)
 
         df_pos = (df+abs(df))/2.
         df_min = -(-df+abs(-df))/2.
