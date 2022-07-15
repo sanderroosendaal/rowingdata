@@ -2601,14 +2601,16 @@ class rowingdata:
             self.add_instroke_diff(str(c))
             self.add_instroke_maxminpos(str(c))
 
-    def get_instroke_data(self,column_name):
-        df = self.df[column_name].str[1:-1].str.split(',',expand=True)
+    def get_instroke_data(self,column_name,spm_min=0,spm_max=100):
+        df = self.df[self.df[' Cadence (stokes/min)']>=spm_min]
+        df = df[df[' Cadence (stokes/min)']<=spm_max]
+        df = df[column_name].str[1:-1].str.split(',',expand=True)
         df = df.apply(pd.to_numeric, errors = 'coerce')
 
         return df
 
-    def plot_instroke(self,column_name): # pragma: no cover
-        df  = self.get_instroke_data(column_name)
+    def plot_instroke(self,column_name,spm_min=0,spm_max=100): # pragma: no cover
+        df  = self.get_instroke_data(column_name,spm_min=0,spm_max=100)
         df_pos = (df+abs(df))/2.
         df_min = -(-df+abs(-df))/2.
 
@@ -2648,8 +2650,8 @@ class rowingdata:
         except ImportError:
             pass
 
-    def get_plot_instroke(self,column_name): # pragma: no cover
-        df  = self.get_instroke_data(column_name)
+    def get_plot_instroke(self,column_name,spm_min=0,spm_max=100): # pragma: no cover
+        df  = self.get_instroke_data(column_name,spm_min=0,spm_max=100)
 
         df_pos = (df+abs(df))/2.
         df_min = -(-df+abs(-df))/2.

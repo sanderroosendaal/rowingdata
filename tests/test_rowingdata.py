@@ -652,7 +652,7 @@ class TestCurveData:
         r = rowingdata.RowPerfectParser(file)
         row = rowingdata.rowingdata(df=r.df)
         df = row.get_instroke_data('curve_data')
-        assert_equal(len(df),468)
+        assert_equal(len(df),467)
         cs = row.get_instroke_columns()
         assert_equal(len(cs),1)
         assert_equal(cs[0],'curve_data')
