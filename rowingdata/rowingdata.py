@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.10"
+__version__ = "3.5.11"
 
 from collections import Counter
 
@@ -2601,9 +2601,16 @@ class rowingdata:
             self.add_instroke_diff(str(c))
             self.add_instroke_maxminpos(str(c))
 
-    def get_instroke_data(self,column_name,spm_min=0,spm_max=100):
+    def get_instroke_data(self,column_name,spm_min=0,spm_max=100,
+                          activeminutesmin=0,activeminutesmax=0):
         df = self.df[self.df[' Cadence (stokes/min)']>=spm_min]
         df = df[df[' Cadence (stokes/min)']<=spm_max]
+        df['TimeStamp (sec)'] -= df.loc[0,'TimeStamp (sec)']
+        if activeminutesmin > 0:
+            df = df[df['TimeStamp (sec)']>=activeminutesmin*60]
+        if activeminutesmax > 0:
+            df = df[df['TimeStamp (sec)']<=activeminutesmax*60]
+
         df = df[column_name].str[1:-1].str.split(',',expand=True)
         df = df.apply(pd.to_numeric, errors = 'coerce')
 
