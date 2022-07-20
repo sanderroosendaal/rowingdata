@@ -3394,6 +3394,208 @@ class rowingdata:
 
         return vals, units, typ
 
+    def updateinterval_range(self, metricname,
+                             valuelow,valuehigh, unit='seconds',
+                             mode='split',
+                             debug=False,
+                             smoothwindow = 60.,
+                             activewindow = []): # pragma: no cover
+
+        if self.empty:
+            return None, None, None
+
+        df = self.df
+
+        if activewindow == []:
+            activewindow = [0, self.duration]
+
+        try:
+            origdist = df['orig_dist']
+            df[' Horizontal (meters)'] = df['orig_dist']
+            df['TimeStamp (sec)'] = df['orig_time']
+            df[' ElapsedTime (sec)'] = df['orig_reltime']
+            df[' LapIdx'] = df['orig_idx']
+            df[' WorkoutState'] = df['orig_state']
+        except KeyError:
+            df['orig_dist'] = df[' Horizontal (meters)']
+            df['orig_time'] = df['TimeStamp (sec)']
+            df['orig_reltime'] = df[' ElapsedTime (sec)']
+            df['orig_idx'] = df[' lapIdx']
+            try:
+                df['orig_state'] = df[' WorkoutState']
+            except KeyError:
+                df['orig_state'] = 1
+
+        timezero = -df.loc[:, 'TimeStamp (sec)'].iloc[0] + \
+            df.loc[:, ' ElapsedTime (sec)'].iloc[0]
+
+        # erase existing lap data
+        df[' lapIdx'] = 0
+        df[' WorkoutState'] = 5
+        df[' ElapsedTime (sec)'] = df['TimeStamp (sec)'] + timezero
+        df[' Horizontal (meters)'] = df['cum_dist']
+
+        df.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+        df[' AverageBoatSpeed (m/s)'] = df[' AverageBoatSpeed (m/s)'].replace(np.nan,0)
+
+        df = df.fillna(method='bfill',axis=0)
+        self.df = df
+
+        values = self.get_smoothed(metricname,smoothwindow)
+
+        inrangetype = 5
+        outrangetype = 3
+
+        mask = (values > valuelow) & (values < valuehigh)
+
+        df.loc[mask, ' WorkoutState'] = inrangetype
+
+        mask = (values <= valuelow) | (values >= valuehigh)
+
+        df.loc[mask, ' WorkoutState'] = outrangetype
+
+        # do rest for begin and end
+        mask = (df[' ElapsedTime (sec)'] < activewindow[0] )
+        df.loc[mask, ' WorkoutState'] = 3
+        mask =  (df[' ElapsedTime (sec)'] > activewindow[1])
+        df.loc[mask, ' WorkoutState'] = 3
+
+        steps = df[' WorkoutState'].diff()
+
+        indices = df.index[steps!=0].tolist()
+        if debug: # pragma: no cover
+            print('indices ',indices)
+            print('----------------------')
+
+        intervalnr = 0
+
+        for i in range(len(indices[1:])):
+            # replacing ix with loc/iloc
+            df.loc[indices[i]:indices[i+1],' lapIdx'] = intervalnr
+            intervalnr += 1
+
+        # replacing ix with loc/iloc
+        df.loc[indices[-1]:,' lapIdx'] = intervalnr
+        df['values'] = (1+df[' lapIdx'])*10 + df[' WorkoutState']
+
+        valuecounts = Counter(df['values'])
+        if debug: # pragma: no cover
+            print(valuecounts)
+            print('----------------------------')
+
+
+        f = df['TimeStamp (sec)'].diff().mean()
+
+        tenstrokes = int(25/f)
+        if debug: # pragma: no cover
+            print('Ten Strokes = ',tenstrokes,' data points')
+
+        for key, value in valuecounts.items():
+            if value < tenstrokes:
+                if debug: # pragma: no cover
+                    print(key,value)
+                mask = df['values'] == key
+                df.loc[mask,' WorkoutState'] = np.nan
+
+        df = df.fillna(method='ffill',axis=0)
+        self.df = df
+
+        df[' lapIdx'] = 0
+
+        steps = df[' WorkoutState'].diff()
+
+        indices = df.index[steps!=0].tolist()
+
+
+        if debug: # pragma: no cover
+            print('indices ',indices)
+            print('----------------------')
+
+        intervalnr = 0
+
+
+        if unit == 'meters':
+            elapsemetric = 'cum_dist'
+        else:
+            elapsemetric = 'TimeStamp (sec)'
+
+
+        previouselapsed = df.loc[indices[0],elapsemetric] # replaced ix with loc
+
+        units = []
+        typ = []
+        vals = []
+
+        for i in indices[1:]:
+            try:
+                startindex = df.index[i-1]
+            except KeyError:
+                startindex = 0
+
+
+            if debug: # pragma: no cover
+                print(df.loc[startindex,'cum_dist']) # replaced ix with loc
+
+            startelapsed = df.loc[startindex,elapsemetric] # replaced ix with loc
+
+            units.append(unit)
+            vals.append(startelapsed-previouselapsed)
+
+            if df.loc[startindex,' WorkoutState'] == 3: # replaced ix with loc
+                tt = 'rest'
+            else:
+                tt = 'work'
+
+            if mode == 'split':
+                tt = 'work'
+
+            typ.append(tt)
+
+            if debug: # pragma: no cover
+                print(startindex,startelapsed-previouselapsed,unit,tt)
+
+            previouselapsed = startelapsed
+
+        # final part
+        startindex = df.index[-1]
+        startelapsed = df.loc[startindex,elapsemetric] # replaced ix with loc
+
+        if debug: # pragma: no cover
+            print(df.loc[startindex,'cum_dist']) # replaced ix with loc
+
+        units.append(unit)
+        vals.append(startelapsed-previouselapsed)
+
+        if df.loc[startindex,' WorkoutState'] == 3: # replaced ix with loc
+            tt = 'rest'
+        else:
+            tt = 'work'
+
+        if mode == 'split':
+            tt = 'work'
+
+        typ.append(tt)
+
+        if debug: # pragma: no cover
+            print(startindex,startelapsed-previouselapsed,unit,tt)
+
+        if debug: # pragma: no cover
+            print('--------------------------------')
+
+        self.df = df
+        self.updateintervaldata(vals,units,typ,debug=debug)
+
+
+        if debug: # pragma: no cover
+            print(vals)
+            print(units)
+            print(typ)
+
+        if mode == 'split':
+            self.df[' WorkoutState'] = 5
+
+        return vals, units, typ
 
 
     def updateinterval_string(self, s, debug=False):
