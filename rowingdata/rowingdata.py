@@ -3396,7 +3396,7 @@ class rowingdata:
 
     def updateinterval_range(self, metricname,
                              valuelow,valuehigh, unit='seconds',
-                             mode='split',
+                             #mode='split',
                              debug=False,
                              smoothwindow = 60.,
                              activewindow = []): # pragma: no cover
@@ -3547,8 +3547,8 @@ class rowingdata:
             else:
                 tt = 'work'
 
-            if mode == 'split':
-                tt = 'work'
+            #if mode == 'split':
+            #    tt = 'work'
 
             typ.append(tt)
 
@@ -3572,8 +3572,8 @@ class rowingdata:
         else:
             tt = 'work'
 
-        if mode == 'split':
-            tt = 'work'
+        #if mode == 'split':
+        #    tt = 'work'
 
         typ.append(tt)
 
@@ -3592,8 +3592,8 @@ class rowingdata:
             print(units)
             print(typ)
 
-        if mode == 'split':
-            self.df[' WorkoutState'] = 5
+        #if mode == 'split':
+        #    self.df[' WorkoutState'] = 5
 
         return vals, units, typ
 
