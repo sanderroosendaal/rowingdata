@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.11"
+__version__ = "3.5.12"
 
 from collections import Counter
 
@@ -2605,7 +2605,7 @@ class rowingdata:
                           activeminutesmin=0,activeminutesmax=0):
         df = self.df[self.df[' Cadence (stokes/min)']>=spm_min]
         df = df[df[' Cadence (stokes/min)']<=spm_max]
-        df['TimeStamp (sec)'] -= df.loc[0,'TimeStamp (sec)']
+        df['TimeStamp (sec)'] -= df.loc[:,'TimeStamp (sec)'].iloc[0]
         if activeminutesmin > 0:
             df = df[df['TimeStamp (sec)']>=activeminutesmin*60]
         if activeminutesmax > 0:
