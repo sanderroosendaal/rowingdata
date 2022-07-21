@@ -127,6 +127,8 @@ def wavg(group, avg_name, weight_name):
     """
     d = group[avg_name]
     w = group[weight_name]
+    if w.sum() == 0:
+        return d.mean()
     try:
         return (d * w).sum() / w.sum()
     except ZeroDivisionError:

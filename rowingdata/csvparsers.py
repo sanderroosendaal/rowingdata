@@ -157,6 +157,9 @@ def csvtests(s):
     except IndexError: # pragma: no cover
         ninthline = ''
 
+    if 'CatchDelay' in thirdline:
+        return 'quiskesummary'
+
     if 'Potential Split' in firstline:
         return 'hero'
 
