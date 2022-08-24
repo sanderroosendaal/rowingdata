@@ -14,6 +14,7 @@ before_install:
   - pip install pycairo==1.18.0
   - pip install --upgrade certifi
   - sudo apt-get install pkg-config
+  - pip install timezonefinder
 install:
   - python setup.py install
 script:
