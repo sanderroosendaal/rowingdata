@@ -9,14 +9,14 @@ def main():
     readFile=argv[1]
 
     try:
-    rowerFile=argv[2]
+        rowerFile=argv[2]
     except IndexError:
-    rowerFile="defaultrower.txt"
+        rowerFile="defaultrower.txt"
 
     try:
-    datestring=argv[3]
+        datestring=argv[3]
     except IndexError:
-    datestring=time.strftime("%c")
+        datestring=time.strftime("%c")
 
     rower=rowingdata.getrower(rowerFile)
 

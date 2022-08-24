@@ -6,9 +6,9 @@ from sys import argv
 
 def main():
     try:
-    boatFile=argv[1]
+        boatFile=argv[1]
     except IndexError:
-    boatFile="my1x.txt"
+        boatFile="my1x.txt"
 
     print((rowingdata.boatedit(boatFile)))
 
