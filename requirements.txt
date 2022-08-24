@@ -98,6 +98,7 @@ humanize==3.3.0
 icalendar==4.0.3
 idna==2.8
 image==1.5.27
+importlib-metadata==4.12.0
 importlib-resources==1.0.2
 ipykernel==5.1.0
 ipython==8.0.1
@@ -132,7 +133,7 @@ matplotlib==3.5.0
 matplotlib-inline==0.1.3
 maxminddb==1.5.4
 MiniMockTest==0.5
-mistune==0.8.4
+mistune==2.0.4
 mock==2.0.0
 more-itertools==6.0.0
 mpld3==0.3
@@ -140,7 +141,7 @@ mypy-extensions==0.4.3
 mysqlclient==1.4.2.post1
 nbclassic==0.3.4
 nbclient==0.6.3
-nbconvert==6.5.0
+nbconvert==7.0.0
 nbformat==5.4.0
 nest-asyncio==1.5.4
 newrelic==5.2.1.129
@@ -257,3 +258,4 @@ xlrd==1.2.0
 xmltodict==0.12.0
 yamjam==0.1.7
 yamllint==1.15.0
+zipp==3.8.1
