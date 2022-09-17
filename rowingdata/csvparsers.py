@@ -253,6 +253,9 @@ def csvtests(s):
     if 'Number' in firstline and 'Cal/Hr' in firstline: # pragma: no cover
         return 'ergdata'
 
+    if 'Cadence (stokes/min)' in firstline:
+        return 'csv'
+
     if ' DriveTime (ms)' in firstline:
         return 'csv'
 
@@ -1563,6 +1566,12 @@ class BoatCoachParser(CSVParser):
         if endhorizontal == 0:
             self.df.drop(self.df.index[-1], inplace=True)
 
+        # check for decreasing dist (fixed distance workout)
+        if self.df[self.columns[' Horizontal (meters)']].is_monotonic_decreasing:
+            dist_decreasing = self.df[self.columns[' Horizontal (meters)']].copy()
+            dist_increasing = dist_decreasing.max()-dist_decreasing
+            self.df[self.columns[' Horizontal (meters)']] = dist_increasing
+
         res = make_cumvalues(self.df[self.columns[' Horizontal (meters)']])
         self.df['cumdist'] = res[0]
         maxdist = self.df['cumdist'].max()
@@ -1796,6 +1805,12 @@ class BoatCoachAdvancedParser(CSVParser):
 
         if endhorizontal == 0:
             self.df.drop(self.df.index[-1], inplace=True)
+
+        # check for decreasing dist (fixed distance workout)
+        if self.df[self.columns[' Horizontal (meters)']].is_monotonic_decreasing:
+            dist_decreasing = self.df[self.columns[' Horizontal (meters)']].copy()
+            dist_increasing = dist_decreasing.max()-dist_decreasing
+            self.df[self.columns[' Horizontal (meters)']] = dist_increasing
 
         res = make_cumvalues(self.df[self.columns[' Horizontal (meters)']])
         self.df['cumdist'] = res[0]
