@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.14"
+__version__ = "3.5.15"
 
 from collections import Counter
 
