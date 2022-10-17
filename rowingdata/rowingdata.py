@@ -2605,6 +2605,9 @@ class rowingdata:
                           activeminutesmin=0,activeminutesmax=0):
         df = self.df[self.df[' Cadence (stokes/min)']>=spm_min]
         df = df[df[' Cadence (stokes/min)']<=spm_max]
+        if df.empty:
+            return df
+
         df['TimeStamp (sec)'] -= df.loc[:,'TimeStamp (sec)'].iloc[0]
         if activeminutesmin > 0:
             df = df[df['TimeStamp (sec)']>=activeminutesmin*60]
