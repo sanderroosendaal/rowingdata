@@ -1119,10 +1119,15 @@ class RitmoTimeParser(CSVParser):
 class QuiskeParser(CSVParser):
     def __init__(self, *args, **kwargs):
         kwargs['skiprows'] = 1
+        kwargs['sep'] = ';'
         if args:
             csvfile = args[0]
         else: # pragma: no cover
             csvfile = kwargs['csvfile']
+
+        firstline = get_file_line(1, csvfile)
+        if ';' not in firstline:
+            kwargs.pop('sep')
 
         super(QuiskeParser, self).__init__(*args, **kwargs)
 
