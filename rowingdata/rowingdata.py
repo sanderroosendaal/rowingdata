@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.22"
+__version__ = "3.5.23"
 
 from collections import Counter
 
@@ -2636,7 +2636,7 @@ class rowingdata:
 
         df = df[df[' Cadence (stokes/min)']>=spm_min]
         df = df[df[' Cadence (stokes/min)']<=spm_max]
-        
+
         if df.empty:
             return df
 
