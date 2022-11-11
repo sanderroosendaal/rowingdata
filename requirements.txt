@@ -119,7 +119,7 @@ jsonschema==3.0.1
 jupyter==1.0.0
 jupyter-client==7.3.1
 jupyter-console==6.2.0
-jupyter-core==4.10.0
+jupyter-core==4.11.2
 jupyter-server==1.17.0
 jupyterlab==3.2.5
 jupyterlab-pygments==0.2.2
