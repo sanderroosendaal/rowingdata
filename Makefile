@@ -223,3 +223,8 @@ dummy:
 	$(SPHINXBUILD) -b dummy $(ALLSPHINXOPTS) $(BUILDDIR)/dummy
 	@echo
 	@echo "Build finished. Dummy builder generates no files."
+
+release:
+	rm dist/* ; \
+	python setup.py sdist; \
+	twine upload -r rowingdata dist/*; \
