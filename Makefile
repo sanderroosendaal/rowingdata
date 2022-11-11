@@ -225,6 +225,7 @@ dummy:
 	@echo "Build finished. Dummy builder generates no files."
 
 release:
+	nosetests ; \
 	rm dist/* ; \
 	python setup.py sdist; \
 	twine upload -r rowingdata dist/*; \

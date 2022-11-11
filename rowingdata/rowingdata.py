@@ -2601,6 +2601,29 @@ class rowingdata:
             self.add_instroke_diff(str(c))
             self.add_instroke_maxminpos(str(c))
 
+    def add_instroke_speed(self,accel='boat accelerator curve'):
+        accel = self.df[accel].str[1:-1].str.split(',',expand=True)
+        accel = accel.apply(pd.to_numeric, errors='coerce')
+        spms = self.df[' Cadence (stokes/min)']
+        velo = []
+        for index, row in accel.iterrows():
+
+            a = row.values
+            v = np.cumsum(a)
+            stroke_rate = spms[index]
+            stroke_time = 60./stroke_rate
+            dt = stroke_time/len(a)
+            
+            v = dt*v
+            vstr = ''
+            for vv in v:
+                vstr += '{a},'.format(a=vv)
+
+            velo.append(vstr)
+
+        self.df['instroke boat speed'] = velo
+
+
     def get_instroke_data(self,column_name,spm_min=0,spm_max=100,
                           activeminutesmin=0,activeminutesmax=0):
         df = self.df[self.df[' Cadence (stokes/min)']>=spm_min]
