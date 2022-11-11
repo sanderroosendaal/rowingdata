@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.20"
+__version__ = "3.5.22"
 
 from collections import Counter
 
@@ -2613,7 +2613,7 @@ class rowingdata:
             stroke_rate = spms[index]
             stroke_time = 60./stroke_rate
             dt = stroke_time/len(a)
-            
+
             v = dt*v
             vstr = ''
             for vv in v:
