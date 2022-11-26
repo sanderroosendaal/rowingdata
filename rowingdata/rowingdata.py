@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.23"
+__version__ = "3.5.24"
 
 from collections import Counter
 
@@ -2621,7 +2621,10 @@ class rowingdata:
 
             velo.append(vstr)
 
+        
+
         self.df['instroke boat speed'] = velo
+        self.df['instroke boat speed'] = self.df['instroke boat speed']-self.df['instroke boat speed'].mean()
 
 
     def get_instroke_data(self,column_name,spm_min=0,spm_max=100,
