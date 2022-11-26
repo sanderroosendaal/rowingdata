@@ -2621,7 +2621,10 @@ class rowingdata:
 
             velo.append(vstr)
 
+        
+
         self.df['instroke boat speed'] = velo
+        self.df['instroke boat speed'] = self.df['instroke boat speed']-self.df['instroke boat speed'].mean()
 
 
     def get_instroke_data(self,column_name,spm_min=0,spm_max=100,
