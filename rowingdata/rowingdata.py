@@ -2635,9 +2635,9 @@ class rowingdata:
         df = self.df.copy()
         df['TimeStamp (sec)'] -= df.loc[:,'TimeStamp (sec)'].iloc[0]
         if activeminutesmin > 0:
-            df = df[df['TimeStamp (sec)']>=activeminutesmin*60]
+            df = df[df['TimeStamp (sec)']>=activeminutesmin*60.]
         if activeminutesmax > 0:
-            df = df[df['TimeStamp (sec)']<=activeminutesmax*60]
+            df = df[df['TimeStamp (sec)']<=activeminutesmax*60.]
 
         df = df[df[' Cadence (stokes/min)']>=spm_min]
         df = df[df[' Cadence (stokes/min)']<=spm_max]
