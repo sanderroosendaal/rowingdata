@@ -225,7 +225,9 @@ dummy:
 	@echo "Build finished. Dummy builder generates no files."
 
 release:
+	git checkout master ; \
 	nosetests ; \
 	rm dist/* ; \
 	python setup.py sdist; \
 	twine upload -r rowingdata dist/*; \
+	git checkout develop ;

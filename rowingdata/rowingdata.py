@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.26"
+__version__ = "3.5.27"
 
 from collections import Counter
 
@@ -2650,6 +2650,7 @@ class rowingdata:
 
         df = df[column_name].str[1:-1].str.split(',',expand=True)
         df = df.apply(pd.to_numeric, errors = 'coerce')
+        df = factor*df
 
         return df
 
