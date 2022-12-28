@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.27"
+__version__ = "3.5.28"
 
 from collections import Counter
 
@@ -2601,7 +2601,7 @@ class rowingdata:
             self.add_instroke_diff(str(c))
             self.add_instroke_maxminpos(str(c))
 
-    def add_instroke_speed(self,accel='boat accelerator curve',factor=10):
+    def add_instroke_speed(self,accel='boat accelerator curve',factor=9.80665):
         accel = self.df[accel].str[1:-1].str.split(',',expand=True)
         accel = accel.apply(pd.to_numeric, errors='coerce')
         spms = self.df[' Cadence (stokes/min)']
