@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.28"
+__version__ = "3.5.29"
 
 from collections import Counter
 
@@ -2615,6 +2615,7 @@ class rowingdata:
             dt = stroke_time/len(a)
 
             v = dt*v
+            v = v - v.mean()
             vstr = ''
             for vv in v:
                 vstr += '{a},'.format(a=vv)
