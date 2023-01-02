@@ -2615,6 +2615,7 @@ class rowingdata:
             dt = stroke_time/len(a)
 
             v = dt*v
+            v = v - v.mean()
             vstr = ''
             for vv in v:
                 vstr += '{a},'.format(a=vv)
