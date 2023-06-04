@@ -548,7 +548,7 @@ def get_empower_firmware(f):
 
 
     try:
-        firmware = np.float(firmware)
+        firmware = float(firmware)
     except ValueError:
         firmware = None
 
@@ -2453,7 +2453,7 @@ class NKLiNKLogbookParser(CSVParser):
 
         if firmware is not None:
             try: # pragma: no cover
-                firmware = np.float(firmware)
+                firmware = float(firmware)
             except ValueError: # pragma: no cover
                 firmware = None
 
