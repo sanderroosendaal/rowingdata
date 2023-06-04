@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.5.29"
+__version__ = "3.6.0"
 
 from collections import Counter
 
@@ -2473,12 +2473,14 @@ class rowingdata:
             lonnew.append(lonz)
             unixtnew.append(unixtz)
 
-        df = df.append(pd.DataFrame({
-            'TimeStamp (sec)':unixtnew,
-            ' ElapsedTime (sec)':tnew,
-            ' latitude': latnew,
-            ' longitude': lonnew,
-        }))
+            df2 = pd.DataFrame({
+                'TimeStamp (sec)':unixtnew,
+                ' ElapsedTime (sec)':tnew,
+                ' latitude': latnew,
+                ' longitude': lonnew,
+            })
+        
+            df = pd.concat([df,df2],ignore_index=True)
 
         df.interpolate(inplace=True)
         df = df.fillna(method='ffill',axis=1)

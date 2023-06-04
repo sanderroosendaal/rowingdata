@@ -200,7 +200,7 @@ class FitSummaryData(object):
         dfgrouped = self.df.groupby('lapid')
         for lapcount,group in dfgrouped:
             intdist = int(
-                self.lapdf[self.lapdf['lapid']==lapcount+1]['total_distance']
+                (self.lapdf[self.lapdf['lapid']==lapcount+1]['total_distance']).iloc[0]
             )
             if np.isnan(intdist): # pragma: no cover
                 intdist = 1
@@ -210,7 +210,7 @@ class FitSummaryData(object):
             inttime = self.lapdf[self.lapdf['lapid']==lapcount+1][
                 'total_elapsed_time'
             ]
-            inttime = float(inttime)
+            inttime = float(inttime.iloc[0])
             try:
                 intpower = int(group['power'].mean())
             except KeyError:
