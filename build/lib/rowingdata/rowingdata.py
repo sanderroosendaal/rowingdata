@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.6.2"
+__version__ = "3.6.3"
 
 from collections import Counter
 
@@ -2487,7 +2487,7 @@ class rowingdata:
             df = pd.concat([df,df2],ignore_index=True)
 
         df.interpolate(inplace=True)
-        df = df.dfill(axis=1)
+        df = df.ffill(axis=1)
         df['index'] = range(len(df))
         df.set_index('index',inplace=True)
 
