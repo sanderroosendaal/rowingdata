@@ -583,7 +583,7 @@ class GPXParser(object): # pragma: no cover
     def write_csv(self, writefile='example.csv', window_size=5, gzip=False):
         data = self.df
         data = data.sort_values(by='TimeStamp (sec)', ascending=True)
-        data = data.fillna(method='ffill')
+        data = data.ffill()
 
         # drop all-zero columns
         for c in data.columns:
@@ -610,7 +610,7 @@ class TCXParser(object):
         if alternative: # pragma: no cover
             self.df = tcxtools.tcxtodf(tcx_file)
         else:
-            self.df = tcxtools.tcxtodf2(tcx_file)
+            self.df = tcxtools.tcxtodf3(tcx_file)
 
         try:
             lat = self.df['latitude'].apply(tofloat).values
@@ -700,7 +700,7 @@ class TCXParser(object):
     def write_csv(self, writefile='example.csv', window_size=5, gzip=False):
         data = self.df
         data = data.sort_values(by='TimeStamp (sec)', ascending=True)
-        data = data.fillna(method='ffill')
+        data = data.ffill()
 
         # drop all-zero columns
         for c in data.columns:

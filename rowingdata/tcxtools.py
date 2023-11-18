@@ -12,15 +12,35 @@ import gzip
 import numpy as np
 import string
 from six import unichr
+from datetime import datetime, timedelta
 
 from lxml import etree
 from lxml.etree import XMLSyntaxError
 from docopt import docopt
+import xml.etree.ElementTree as ET
 
 ns1 = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 ns2 = 'http://www.garmin.com/xmlschemas/ActivityExtension/v2'
 
 import unicodedata
+def clean_string(input):
+    if input:
+        RE_XML_ILLEGAL = u'([\u0000-\u0008\u000b-\u000c\u000e-\u001f\ufffe-\uffff])' + \
+            u'|' + \
+            u'([%s-%s][^%s-%s])|([^%s-%s][%s-%s])|([%s-%s]$)|(^[%s-%s])' % \
+            (unichr(0xd800),unichr(0xdbff),unichr(0xdc00),unichr(0xdfff),
+             unichr(0xd800),unichr(0xdbff),unichr(0xdc00),unichr(0xdfff),
+             unichr(0xd800),unichr(0xdbff),unichr(0xdc00),unichr(0xdfff),
+             )
+        
+        input = re.sub(RE_XML_ILLEGAL, "", input)
+        input = input.replace(RE_XML_ILLEGAL,'').strip()
+    return input
+
+def clean_xml_content(xml_content):
+    # Clean the XML content of potentially problematic characters
+    return ''.join(char for char in xml_content if char.isprintable())
+
 def remove_control_characters(s):
     return "".join(ch for ch in s if unicodedata.category(ch)[0]!="C")
 
@@ -320,3 +340,70 @@ def tcxtodf2(path):
     df.loc[0,'Speed'] = 0
 
     return df
+
+def tcxtodf3(path):
+    try:
+        if path.endswith('.gz'):
+            with gzip.open(path, 'rt', encoding='utf-8', errors='replace') as gz_file:
+                # Parse XML data from the gzipped TCX file
+                xml_content = gz_file.read()
+                cleaned_xml_content = clean_string(xml_content)
+                tree = ET.fromstring(cleaned_xml_content)
+        else:
+            # Parse XML data from the regular TCX file
+            with open(path, 'r', encoding='utf-8', errors='replace') as tcx_file:
+                xml_content = tcx_file.read()
+                cleaned_xml_content = clean_string(xml_content)
+                tree = ET.fromstring(cleaned_xml_content)
+            
+        
+        activity_data = []
+        lap_id = 0
+        for lap_node in tree.findall(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Lap"):
+            lap_id += 1
+            for trackpoint in lap_node.findall(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Trackpoint"):
+                time_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Time")
+                timestamp_str = clean_string(time_node.text)
+                time = parser.parse(timestamp_str)
+                timestamp = arrow.get(time).timestamp()+arrow.get(time).microsecond/1.e6
+                #timestamp = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S%z")
+
+                watts_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Watts")
+                watts = float(clean_string(watts_node.text)) if watts_node is not None else 0
+
+                speed_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Speed")
+                speed = float(clean_string(speed_node.text)) if speed_node is not None else 0
+
+                cadence_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Cadence")
+                cadence = int(clean_string(cadence_node.text)) if cadence_node is not None else 0
+
+
+                hr_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}HeartRateBpm/{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Value")
+                heart_rate = int(clean_string(hr_node.text)) if hr_node is not None else 0
+
+                distance_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}DistanceMeters")
+                distance = float(clean_string(distance_node.text)) if distance_node is not None else 0
+                
+                latitude_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Position/{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}LatitudeDegrees")
+                longitude_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Position/{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}LongitudeDegrees")
+                latitude = float(clean_string(latitude_node.text)) if latitude_node is not None else 0
+                longitude = float(clean_string(longitude_node.text)) if longitude_node is not None else 0
+ 
+                activity_data.append({
+                    'timestamp': timestamp,
+                    'latitude': latitude,
+                    'longitude': longitude,
+                    'HeartRateBpm': heart_rate,
+                    'DistanceMeters': distance,
+                    'Cadence': cadence,
+                    'Watts': watts, 
+                    'lapid': lap_id,
+                    'Speed': speed,
+                })
+
+        # Create a Pandas DataFrame from the activity data
+        df = pd.DataFrame(activity_data)
+        return df
+    except ET.ParseError as e:
+        print(e)
+        return pd.DataFrame()

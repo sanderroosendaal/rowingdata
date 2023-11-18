@@ -730,11 +730,11 @@ def make_cumvalues(xvalues):
     mask = -xvalues.diff() > 0.9 * xvalues
     nrsteps = len(dx.loc[mask])
     lapidx = np.cumsum((-dx + abs(dx)) / (-2 * dx))
-    lapidx = lapidx.fillna(value=0)
+    lapidx = lapidx.replace(to_replace=np.nan,value=0)
     test = len(lapidx.loc[lapidx.diff() < 0])
     if test != 0:
         lapidx = np.cumsum((-dx + abs(dx)) / (-2 * dx))
-        lapidx = lapidx.fillna(method='ffill')
+        lapidx = lapidx.ffill()
         lapidx.loc[0] = 0
     if nrsteps > 0:
         dxpos[mask] = xvalues[mask]
@@ -746,9 +746,9 @@ def make_cumvalues(xvalues):
     newvalues = newvalues.replace([-np.inf, np.inf], np.nan)
 
 
-    newvalues.fillna(method='ffill', inplace=True)
-    newvalues.fillna(method='bfill', inplace=True)
-    lapidx.fillna(method='bfill', inplace=True)
+    newvalues.bfill(inplace=True)
+    newvalues.bfill( inplace=True)
+    lapidx.bfill( inplace=True)
 
     return [newvalues, lapidx]
 
@@ -830,7 +830,7 @@ class CSVParser(object):
             )
 
 
-        self.df = self.df.fillna(method='ffill')
+        self.df = self.df.ffill()
 
         self.defaultcolumnnames = [
             'TimeStamp (sec)',
@@ -903,7 +903,7 @@ class CSVParser(object):
         data = DataFrame(datadict)
 
         data = data.sort_values(by='TimeStamp (sec)', ascending=True)
-        data = data.fillna(method='ffill')
+        data = data.ffill()
 
         # drop all-zero columns
         for c in data.columns:
@@ -1497,7 +1497,7 @@ class BoatCoachParser(CSVParser):
         recoverytime = stroketime - drivetime
         recoverytime.replace(np.inf, np.nan)
         recoverytime.replace(-np.inf, np.nan)
-        recoverytime = recoverytime.fillna(method='bfill')
+        recoverytime = recoverytime.bfill()
 
         self.df[self.columns[' StrokeRecoveryTime (ms)']] = recoverytime
 
@@ -1541,7 +1541,11 @@ class BoatCoachParser(CSVParser):
             timestamps = self.df.loc[mask2, self.columns['TimeStamp (sec)']]
             strokeduration = len(strokes) * timestamps.diff().mean()
             spm = 60. / strokeduration
-            self.df.loc[mask2, self.columns[' Cadence (stokes/min)']] = spm
+            try:
+                self.df[' Cadence (stokes/min)'] = self.df[' Cadence (stokes/min)'].astype(float)
+                self.df.loc[mask2, self.columns[' Cadence (stokes/min)']] = spm
+            except KeyError:
+                pass
 
 
         # get stroke power
@@ -1772,7 +1776,7 @@ class BoatCoachAdvancedParser(CSVParser):
         recoverytime = stroketime - drivetime
         recoverytime.replace(np.inf, np.nan)
         recoverytime.replace(-np.inf, np.nan)
-        recoverytime = recoverytime.fillna(method='bfill')
+        recoverytime = recoverytime.bfill()
         self.df[self.columns[' StrokeRecoveryTime (ms)']] = recoverytime
 
         # Reset Interval Count by StrokeCount
@@ -1994,7 +1998,7 @@ class SmartRowParser(CSVParser):
         for c in self.cols:
             try:
                 self.df[c] = pd.to_numeric(self.df[c],errors='coerce')
-                self.df[c] = self.df[c].fillna(method='bfill')
+                self.df[c] = self.df[c].bfill()
             except KeyError:
                 pass
 
@@ -2005,7 +2009,7 @@ class SmartRowParser(CSVParser):
         starttimeunix = arrow.get(startdatetime).timestamp()
 
         unixtimes = starttimeunix+elapsed
-        unixtimes = unixtimes.fillna(method='bfill')
+        unixtimes = unixtimes.bfill()
 
         self.df[self.columns['TimeStamp (sec)']] = unixtimes
         self.df[self.columns[' ElapsedTime (sec)']] = unixtimes-starttimeunix
@@ -2568,7 +2572,7 @@ class NKLiNKLogbookParser(CSVParser):
 
         nrvalues = len(impspeed)
 
-        impspeed.fillna(inplace=True,value=0)
+        impspeed.replace(to_replace=[np.nan, np.inf],inplace=True,value=0)
         nrvalid = impspeed.astype(bool).sum()
 
         ratio = float(nrvalues-nrvalid)/float(nrvalues)
@@ -2774,7 +2778,7 @@ class SpeedCoach2Parser(CSVParser):
             except KeyError: # pragma: no cover
                 pass
 
-        cum_dist = make_cumvalues_array(dist2.fillna(method='ffill').values)[0]
+        cum_dist = make_cumvalues_array(dist2.ffill().values)[0]
         self.df[self.columns['cum_dist']] = cum_dist
         velo = self.df[self.columns['GPS Speed']]
         if self.velo_unit == 'kph':
@@ -2830,7 +2834,7 @@ class SpeedCoach2Parser(CSVParser):
             lambda x: timestrtosecs2(x, unknown=np.nan)
         )
         seconds = clean_nan(np.array(seconds))
-        seconds = pd.Series(seconds).fillna(method='ffill').values
+        seconds = pd.Series(seconds).ffill().values
         res = make_cumvalues_array(np.array(seconds))
         seconds3 = res[0]
         lapidx = res[1]
@@ -2885,7 +2889,7 @@ class SpeedCoach2Parser(CSVParser):
 
         nrvalues = len(impspeed)
 
-        impspeed.fillna(inplace=True,value=0)
+        impspeed.replace(to_replace=[np.nan, np.inf], inplace=True,value=0)
         nrvalid = impspeed.astype(bool).sum()
 
         ratio = float(nrvalues-nrvalid)/float(nrvalues)
