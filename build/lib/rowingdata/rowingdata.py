@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.6.0"
+__version__ = "3.6.2"
 
 from collections import Counter
 
@@ -834,8 +834,8 @@ def cumcpdata(rows,debug=False):
             print('==================================')
 
 
-        F.fillna(inplace=True,method='ffill',axis=1)
-        F.fillna(inplace=True,value=0)
+        F.ffill(inplace=True,axis=1)
+        F.replace(np.nan, 0, inplace=True)
 
         restime = []
         power = []
@@ -1773,7 +1773,8 @@ def addpowerzones(df, ftp, powerperc):
     except TypeError: # pragma: no cover
         pass
 
-    df = df.fillna(method='ffill')
+    #df = df.fillna(method='ffill')
+    df = df.ffill()
 
     return df
 
@@ -1831,7 +1832,7 @@ def addzones(df, ut2, ut1, at, tr, an, mmax):
 
         df['cum_dist'] = make_cumvalues(df[' Horizontal (meters)'])[0]
 
-    df = df.fillna(method='ffill')
+    df = df.ffill()
 
     return df
 
@@ -2097,9 +2098,9 @@ class rowingdata:
             hrstd = sled_df[' HRCur (bpm)'].std()
 
             if hrmean != 0 and hrstd != 0:
-                sled_df[' HRCur (bpm)'].replace(to_replace=0,
-                                                method='ffill',
+                sled_df[' HRCur (bpm)'].replace(to_replace=0, value=np.nan,
                                                 inplace=True)
+                sled_df[' HRCur (bpm)'].ffill(inplace=True)
 
             self.dragfactor = sled_df[' DragFactor'].mean()
             # do stroke count
@@ -2140,18 +2141,21 @@ class rowingdata:
                 except: # pragma: no cover
                     dt.loc[dt.index[0]] = dt.loc[dt.index[0]]
 
-                dt.fillna(inplace=True, method='ffill')
-                dt.fillna(inplace=True, method='bfill')
+                dt.ffill(inplace=True)
+                dt.ffill(inplace=True)
                 strokenumbers = pd.Series(
                     np.cumsum(dt*sled_df[' Cadence (stokes/min)']/60.)
                 )
                 if strokenumbers.isnull().all(): # pragma: no cover
                     strokenumbers.loc[:] = 0
                 else:
-                    strokenumbers.fillna(inplace=True, method='ffill')
-                    strokenumbers.fillna(inplace=True, method='bfill')
-
-                sled_df[' Stroke Number'] = strokenumbers.astype('int')
+                    strokenumbers.ffill(inplace=True)
+                    strokenumbers.ffill(inplace=True)
+                    strokenumbers.replace(np.nan,0)
+                try:
+                    sled_df[' Stroke Number'] = strokenumbers.astype('int')
+                except:
+                    pass
             except KeyError: # pragma: no cover
                 if debug: # pragma: no cover
                     print("Could not calculate stroke number")
@@ -2257,7 +2261,7 @@ class rowingdata:
         self_df.drop_duplicates(subset='TimeStamp (sec)',
                                 keep='first', inplace=True)
         self_df = self_df.sort_values(by='TimeStamp (sec)', ascending=1)
-        self_df = self_df.fillna(method='ffill')
+        self_df = self_df.ffill()
         self_df.reset_index(drop=True,inplace=True)
 
         # recalc cum_dist
@@ -2483,7 +2487,7 @@ class rowingdata:
             df = pd.concat([df,df2],ignore_index=True)
 
         df.interpolate(inplace=True)
-        df = df.fillna(method='ffill',axis=1)
+        df = df.dfill(axis=1)
         df['index'] = range(len(df))
         df.set_index('index',inplace=True)
 
@@ -3282,7 +3286,7 @@ class rowingdata:
 
         df[' AverageBoatSpeed (m/s)'] = df[' AverageBoatSpeed (m/s)'].replace(np.nan,0)
 
-        df = df.fillna(method='bfill',axis=0)
+        df = df.bfill(axis=0)
         self.df = df
 
         values = self.get_smoothed(metricname,smoothwindow)
@@ -3343,7 +3347,7 @@ class rowingdata:
                 mask = df['values'] == key
                 df.loc[mask,' WorkoutState'] = np.nan
 
-        df = df.fillna(method='ffill',axis=0)
+        df = df.ffill(axis=0)
         self.df = df
 
         df[' lapIdx'] = 0
@@ -3487,7 +3491,7 @@ class rowingdata:
 
         df[' AverageBoatSpeed (m/s)'] = df[' AverageBoatSpeed (m/s)'].replace(np.nan,0)
 
-        df = df.fillna(method='bfill',axis=0)
+        df = df.ffill(axis=0)
         self.df = df
 
         values = self.get_smoothed(metricname,smoothwindow)
@@ -3546,7 +3550,7 @@ class rowingdata:
                 mask = df['values'] == key
                 df.loc[mask,' WorkoutState'] = np.nan
 
-        df = df.fillna(method='ffill',axis=0)
+        df = df.dfill(axis=0)
         self.df = df
 
         df[' lapIdx'] = 0
@@ -3792,7 +3796,7 @@ class rowingdata:
 
         newvalues = pd.Series(newvalues)
         newvalues = newvalues.replace([-np.inf,np.inf],np.nan)
-        newvalues = newvalues.fillna(method='ffill')
+        newvalues = newvalues.ffill()
 
         if metricname == ' Stroke500mPace (sec/500m)':
             newvalues = 500./newvalues
@@ -4128,7 +4132,7 @@ class rowingdata:
 
                 if (i % rows_mod == 0):
 
-                    print('Task %s: working on row %s of %s ' % (counter2,i,nr_of_rows))
+                    #print('Task %s: working on row %s of %s ' % (counter2,i,nr_of_rows))
 
                     tw = tailwind(bearing, vwind,
                                   winddirection, vstream=0)
@@ -4176,6 +4180,7 @@ class rowingdata:
                 df.loc[i, 'averageforce (model)'] = res[2] / lbstoN
                 df.loc[i, ' DriveTime (ms)'] = res[1] * drivetime
                 df.loc[i, ' StrokeRecoveryTime (ms)'] = (1 - res[1]) * drivetime
+                df['drivelength (model)'] = df['drivelength (model)'].astype(float)
                 df.loc[i, 'drivelength (model)'] = r.strokelength
                 df.loc[i, 'nowindpace'] = res[3]
                 df.loc[i, 'equivergpower'] = res[4]
