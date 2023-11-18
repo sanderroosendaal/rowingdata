@@ -1622,7 +1622,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns4="http://www.garm
   </Lap>
 
   <Creator xsi:type="Device_t">
-    <Name>Concept2        </Name>
+    <Name>Concept2</Name>
     <UnitId>431047484</UnitId>
     <ProductID>0</ProductID>
     <Version>
