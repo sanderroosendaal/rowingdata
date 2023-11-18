@@ -2487,7 +2487,7 @@ class rowingdata:
             df = pd.concat([df,df2],ignore_index=True)
 
         df.interpolate(inplace=True)
-        df = df.dfill(axis=1)
+        df = df.ffill(axis=1)
         df['index'] = range(len(df))
         df.set_index('index',inplace=True)
 
