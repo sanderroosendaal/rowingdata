@@ -3550,7 +3550,7 @@ class rowingdata:
                 mask = df['values'] == key
                 df.loc[mask,' WorkoutState'] = np.nan
 
-        df = df.dfill(axis=0)
+        df = df.ffill(axis=0)
         self.df = df
 
         df[' lapIdx'] = 0
