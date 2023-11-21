@@ -216,14 +216,14 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
         ax.text(5,df[barlimits[i]].mean()+1.5,barverbosenames[i],size=8)
 
     if 'ote' in mode and param == ' Stroke500mPace (sec/500m)':
-        yrange = y_axis_range(df.loc[:, param],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, param],
                               ultimate=[85, 160], quantiles=[0, 0.9])
         ax.set_ylabel('(/500m)')
         grid(True)
         majorTickformatter = FuncFormatter(format_pace_tick)
         majorLocator = (5)
     elif param == ' Stroke500mPace (sec/500m)':
-        yrange = y_axis_range(df.loc[:, param],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, param],
                               ultimate=[85, 240], quantiles=[0, 0.9])
         majorTickformatter = FuncFormatter(format_pace_tick)
         majorLocator = (5)
@@ -232,11 +232,11 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
         ax.set_ylabel('SPM')
         ax.set_yticks(list(range(16,40,2)))
     elif param == ' DriveLength (meters)':
-        yrange = y_axis_range(df.loc[:,param],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:,param],
                               ultimate=[1.0,15])
         ax.set_ylabel('Drive Length (m)')
     elif param == ' Power (watts)':
-        yrange = y_axis_range(df.loc[:, param],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, param],
                               ultimate=[0,555],miny=0)
         ax.set_ylabel('Power (Watts)')
 
@@ -375,14 +375,14 @@ def make_pace_plot(ax2,r,df,mode=['distance','ote'],pacerange=[],axis='both',gri
         except KeyError: # pragma: no cover
             pass
     if 'ote' in mode:
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 160], quantiles=[0, 0.9])
     else:
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, 0.9])
 
     if len(pacerange) == 2: # pragma: no cover
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=pacerange,quantiles=[0,0.9])
 
     try:
@@ -444,7 +444,7 @@ def make_drivelength_plot(ax6,r,df,mode=['distance'],axis='both',gridtrue=True):
     end_dist = int(df.loc[:, xcolumn].iloc[df.shape[0] - 1]) # replaced ix with loc/iloc
     ax6.plot(df.loc[:, xcolumn],
              df.loc[:, ' DriveLength (meters)'])
-    yrange = y_axis_range(df.loc[:, ' DriveLength (meters)'],
+    yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' DriveLength (meters)'],
                           ultimate=[1.0, 15])
     ax6.axis([0, end_dist, yrange[0], yrange[1]])
     ax6.set_xticks(list(range(0, end_dist, dist_max)))
@@ -590,7 +590,7 @@ def make_power_plot(ax4,r,df,mode=['distance'],axis='both',gridtrue=True):
 
     end_dist = int(df.loc[df.index[-1], xcolumn])
 
-    yrange = y_axis_range(df.loc[:, ' Power (watts)'],
+    yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' Power (watts)'],
                           ultimate=[0, 555], miny=0)
     ax4.axis([0, end_dist, yrange[0], yrange[1]])
 
@@ -4915,7 +4915,7 @@ class rowingdata:
         ax1.set_xlabel('Time (h:m)')
         ax1.set_ylabel('(/500)')
 
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, .9])
         plt.axis([0, end_time, yrange[1], yrange[0]])
 
@@ -5002,7 +5002,7 @@ class rowingdata:
         ax1.set_xlabel('Time')
         ax1.set_ylabel('Pace (/500)')
 
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0, 0.9])
         plt.axis([0, end_time, yrange[1], yrange[0]])
 
@@ -5435,7 +5435,7 @@ class rowingdata:
         ax4.plot(df.loc[:, 'TimeStamp (sec)'], df.loc[:, ' Power (watts)'])
         # ax4.plot(df.loc[:,'TimeStamp (sec)'],df.loc[:,'equivergpower'])
         ax4.legend(['Power'], prop={'size': 10})
-        yrange = y_axis_range(df.loc[:, ' Power (watts)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' Power (watts)'],
                               ultimate=[0, 555], miny=0)
         ax4.axis([0, end_time, yrange[0], yrange[1]])
         ax4.set_xticks(list(range(0, end_time, 300)))
@@ -5500,7 +5500,7 @@ class rowingdata:
         ax6 = fig2.add_subplot(4, 1, 2)
         ax6.plot(df.loc[:, 'TimeStamp (sec)'],
                  df.loc[:, ' DriveLength (meters)'])
-        yrange = y_axis_range(df.loc[:, ' DriveLength (meters)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' DriveLength (meters)'],
                               ultimate=[1.0, 15])
         ax6.axis([0, end_time, yrange[0], yrange[1]])
         ax6.set_xticks(list(range(0, end_time, 300)))
@@ -5705,7 +5705,7 @@ class rowingdata:
         # Second Panel, Pace
         ax2 = fig1.add_subplot(3, 1, 2)
         ax2.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0.0, 0.9])
 
         ax2.axis([0, end_dist, yrange[1], yrange[0]])
@@ -5741,7 +5741,7 @@ class rowingdata:
         # Top plot is pace
         ax5 = fig2.add_subplot(2, 1, 1)
         ax5.plot(df.loc[:, 'cum_dist'], df.loc[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0.0, 0.9])
         ax5.axis([0, end_dist, yrange[1], yrange[0]])
         ax5.set_xticks(list(range(1000, end_dist, 1000)))
@@ -5758,7 +5758,7 @@ class rowingdata:
         # next we plot the stroke distance
         ax6 = fig2.add_subplot(2, 1, 2)
         ax6.plot(df.loc[:, 'cum_dist'], df.loc[:, ' StrokeDistance (meters)'])
-        yrange = y_axis_range(df.loc[:, ' StrokeDistance (meters)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' StrokeDistance (meters)'],
                               ultimate=[5, 15])
         ax6.axis([0, end_dist, yrange[0], yrange[1]])
         ax6.set_xlabel('Distance (m)')
@@ -5855,7 +5855,7 @@ class rowingdata:
         ax2.plot(df.loc[:, 'TimeStamp (sec)'],
                  df.loc[:, ' Stroke500mPace (sec/500m)'])
         end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0.0, 0.9])
         ax2.axis([0, end_time, yrange[1], yrange[0]])
         ax2.set_xticks(list(range(0, end_time, 300)))
@@ -5902,7 +5902,7 @@ class rowingdata:
         ax5 = fig2.add_subplot(2, 1, 1)
         ax5.plot(df.loc[:, 'TimeStamp (sec)'],
                  df.loc[:, ' Stroke500mPace (sec/500m)'])
-        yrange = y_axis_range(df.loc[:, ' Stroke500mPace (sec/500m)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' Stroke500mPace (sec/500m)'],
                               ultimate=[85, 240], quantiles=[0.0, 0.9])
         end_time = int(df.loc[df.index[-1], 'TimeStamp (sec)'])
         ax5.axis([0, end_time, yrange[1], yrange[0]])
@@ -5922,7 +5922,7 @@ class rowingdata:
         ax6 = fig2.add_subplot(2, 1, 2)
         ax6.plot(df.loc[:, 'TimeStamp (sec)'],
                  df.loc[:, ' StrokeDistance (meters)'])
-        yrange = y_axis_range(df.loc[:, ' StrokeDistance (meters)'],
+        yrange = y_axis_range(df.replace([-np.inf, np.inf],np.nan).ffill().loc[:, ' StrokeDistance (meters)'],
                               ultimate=[5, 15])
 
         ax6.axis([0, end_time, yrange[0], yrange[1]])
