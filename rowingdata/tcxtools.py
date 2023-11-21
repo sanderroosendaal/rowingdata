@@ -361,6 +361,13 @@ def tcxtodf3(path):
         lap_id = 0
         for lap_node in tree.findall(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Lap"):
             lap_id += 1
+            intensity_node = lap_node.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Intensity")
+            workoutstate = 4
+            intensity = clean_string(intensity_node.text) if intensity_node is not None else ""
+            if intensity == "Actve":
+                workoutstate = 4
+            elif intensity == "Resting":
+                workoutstate = 3
             for trackpoint in lap_node.findall(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Trackpoint"):
                 time_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Time")
                 timestamp_str = clean_string(time_node.text)
@@ -399,6 +406,7 @@ def tcxtodf3(path):
                     'Watts': watts, 
                     'lapid': lap_id,
                     'Speed': speed,
+                    ' WorkoutState': workoutstate
                 })
 
         # Create a Pandas DataFrame from the activity data

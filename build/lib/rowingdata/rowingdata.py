@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.6.3"
+__version__ = "3.6.4"
 
 from collections import Counter
 
@@ -3550,7 +3550,7 @@ class rowingdata:
                 mask = df['values'] == key
                 df.loc[mask,' WorkoutState'] = np.nan
 
-        df = df.dfill(axis=0)
+        df = df.ffill(axis=0)
         self.df = df
 
         df[' lapIdx'] = 0
