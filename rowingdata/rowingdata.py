@@ -3036,7 +3036,7 @@ class rowingdata:
                 if lap_start_time is not None and row[' lapIdx'] == lap_id:
                     lap_cadences.append(row[' Cadence (stokes/min)'])
                     lap_paces.append(row[' Stroke500mPace (sec/500m)'])
-                    lap_distances.append(row[' StrokeDistance (meters)'])
+                    lap_distances.append(row['cum_dist'])
                     lap_powers.append(row[' Power (watts)'])
                     lap_heart_rates.append(row[' HRCur (bpm)'])
                     lap_end_time = row['TimeStamp (sec)']
@@ -3048,7 +3048,7 @@ class rowingdata:
                         avg_cadence = sum(lap_cadences) / len(lap_cadences)
                         avg_pace = sum(lap_paces) / len(lap_paces)
                         avg_speed = 500 / avg_pace  # Speed is derived from the reciprocal of pace
-                        total_distance_per_lap = sum(lap_distances)  # Improved calculation of total distance per lap
+                        total_distance_per_lap = max(lap_distances)-min(lap_distances)
                         avg_power = sum(lap_powers) / len(lap_powers)
                         max_heart_rate = max(lap_heart_rates)
                         avg_heart_rate = sum(lap_heart_rates) / len(lap_heart_rates)
@@ -3074,7 +3074,7 @@ class rowingdata:
                     lap_end_time = row['TimeStamp (sec)']
                     lap_cadences = [row[' Cadence (stokes/min)']]
                     lap_paces = [row[' Stroke500mPace (sec/500m)']]
-                    lap_distances = [row[' StrokeDistance (meters)']]
+                    lap_distances = [row['cum_dist']]
                     lap_powers = [row[' Power (watts)']]
                     lap_heart_rates = [row[' HRCur (bpm)']]
                     lap_id = row[' lapIdx']
@@ -3085,7 +3085,7 @@ class rowingdata:
             avg_cadence = sum(lap_cadences) / len(lap_cadences)
             avg_pace = sum(lap_paces) / len(lap_paces)
             avg_speed = 500 / avg_pace  # Speed is derived from the reciprocal of pace
-            total_distance_per_lap = sum(lap_distances)  # Improved calculation of total distance per lap
+            total_distance_per_lap = max(lap_distances)-min(lap_distances)
             avg_power = sum(lap_powers) / len(lap_powers)
             max_heart_rate = max(lap_heart_rates)
             avg_heart_rate = max(lap_heart_rates)
