@@ -2852,6 +2852,335 @@ class rowingdata:
 
         return stri
 
+    def summarize_entire_workout(self):
+        # Ensure the DataFrame is sorted by time
+        df = self.df.sort_values(by='TimeStamp (sec)')
+        df[' Horizontal (meters)'] = df['cum_dist']
+
+        # Convert numeric columns to numeric type, handling non-numeric values
+        numeric_cols = [
+            'TimeStamp (sec)',
+            ' Horizontal (meters)',
+            ' Cadence (stokes/min)',
+            ' HRCur (bpm)',
+            ' Stroke500mPace (sec/500m)',
+            ' Power (watts)',
+            ' DriveLength (meters)',
+            ' StrokeDistance (meters)',
+            ' DriveTime (ms)',
+            ' StrokeRecoveryTime (ms)',
+            ' AverageDriveForce (lbs)',
+            ' PeakDriveForce (lbs)',
+            ' lapIdx',
+            ' ElapsedTime (sec)',
+            ' WorkoutState'
+        ]
+        df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, errors='coerce')
+
+        # Drop rows with NaN values
+        df = df.dropna()
+
+        # Use a mask to filter rows where the workout_state is work strokes or resting strokes
+        work_strokes_mask = df[' WorkoutState'].isin([1, 4, 5, 6, 7, 8, 9])
+        rest_strokes_mask = df[' WorkoutState'] == 3
+
+        # Filter rows for work strokes, resting strokes, and entire workout
+        work_intervals_df = df[work_strokes_mask]
+        rest_intervals_df = df[rest_strokes_mask]
+        
+
+        # Calculate total distance for the entire workout
+        total_distance_workout = (
+            df.groupby(' lapIdx')[' Horizontal (meters)'].max().diff().fillna(
+                df.groupby(' lapIdx')[' Horizontal (meters)'].max()
+            ).sum()
+        )
+
+        # Calculate total distance for work intervals and resting intervals
+        intervals_summary_df = self.summarize_rowing_data()
+        total_distance_work_intervals = 0
+        for _, row in intervals_summary_df.iterrows():
+            total_distance_work_intervals += row['total_distance_per_lap']
+
+        total_distance_rest_intervals = total_distance_workout - total_distance_work_intervals
+        
+        
+        # Get the maximum total time among all laps
+        total_time = df.groupby(' lapIdx')[' ElapsedTime (sec)'].max().max()
+        
+        # Calculate averages for the entire workout
+        avg_cadence_workout = df[' Cadence (stokes/min)'].mean()
+        avg_pace_workout = df[' Stroke500mPace (sec/500m)'].mean()
+        avg_speed_workout = 500 / avg_pace_workout
+        avg_power_workout = df[' Power (watts)'].mean()
+        avg_heart_rate_workout = df[' HRCur (bpm)'].mean()
+        max_heart_rate_workout = df[' HRCur (bpm)'].max()
+        nr_strokes_workout = avg_cadence_workout*total_time/60.
+        avg_dps_workout = total_distance_workout / nr_strokes_workout
+
+        work_durations = (
+            work_intervals_df.groupby(' lapIdx')[' ElapsedTime (sec)'].max() -
+            work_intervals_df.groupby(' lapIdx')[' ElapsedTime (sec)'].min()
+        )
+        rest_durations = (
+            rest_intervals_df.groupby(' lapIdx')[' ElapsedTime (sec)'].max() -
+            rest_intervals_df.groupby(' lapIdx')[' ElapsedTime (sec)'].min()
+        )
+
+        # Calculate sum of work and rest durations
+        sum_work_durations = work_durations.sum()
+        sum_rest_durations = rest_durations.sum()
+        
+        # Calculate averages for work intervals
+        avg_cadence_work = work_intervals_df[' Cadence (stokes/min)'].mean()
+        avg_pace_work = work_intervals_df[' Stroke500mPace (sec/500m)'].mean()
+        avg_speed_work = 500 / avg_pace_work
+        avg_power_work = work_intervals_df[' Power (watts)'].mean()
+        avg_heart_rate_work = work_intervals_df[' HRCur (bpm)'].mean()
+        max_heart_rate_work = work_intervals_df[' HRCur (bpm)'].max()
+        nr_strokes_work = avg_cadence_work*sum_work_durations/60.
+        avg_dps_work = total_distance_work_intervals / nr_strokes_work 
+        
+        # Calculate averages for resting intervals
+        avg_cadence_rest = rest_intervals_df[' Cadence (stokes/min)'].mean()
+        avg_pace_rest = rest_intervals_df[' Stroke500mPace (sec/500m)'].mean()
+        avg_speed_rest = 500 / avg_pace_rest
+        avg_power_rest = rest_intervals_df[' Power (watts)'].mean()
+        avg_heart_rate_rest = rest_intervals_df[' HRCur (bpm)'].mean()
+        max_heart_rate_rest = rest_intervals_df[' HRCur (bpm)'].max()
+        nr_strokes_rest = avg_cadence_rest*sum_rest_durations/60.
+        avg_dps_rest = total_distance_rest_intervals / nr_strokes_rest 
+        
+        # Create a summary dictionary
+        summary_dict = {
+            'total_distance_workout': total_distance_workout,
+            'total_distance_work_intervals': total_distance_work_intervals,
+            'total_distance_rest_intervals': total_distance_rest_intervals,
+            'avg_dps_workout': avg_dps_workout,
+            'avg_dps_work': avg_dps_work,
+            'avg_dps_rest': avg_dps_rest,
+            'sum_work_durations': sum_work_durations,
+            'sum_rest_durations': sum_rest_durations,
+            'total_time': total_time,
+            'avg_cadence_workout': avg_cadence_workout,
+            'avg_pace_workout': avg_pace_workout,
+            'avg_speed_workout': avg_speed_workout,
+            'avg_power_workout': avg_power_workout,
+            'avg_heart_rate_workout': avg_heart_rate_workout,
+            'max_heart_rate_workout': max_heart_rate_workout,
+            'avg_cadence_work': avg_cadence_work,
+            'avg_pace_work': avg_pace_work,
+            'avg_speed_work': avg_speed_work,
+            'avg_power_work': avg_power_work,
+            'avg_heart_rate_work': avg_heart_rate_work,
+            'max_heart_rate_work': max_heart_rate_work,
+            'avg_cadence_rest': avg_cadence_rest,
+            'avg_pace_rest': avg_pace_rest,
+            'avg_speed_rest': avg_speed_rest,
+            'avg_power_rest': avg_power_rest,
+            'avg_heart_rate_rest': avg_heart_rate_rest,
+            'max_heart_rate_rest': max_heart_rate_rest
+        }
+        
+        return summary_dict
+
+
+    def summarize_rowing_data(self):
+        # Ensure the DataFrame is sorted by time
+        df = self.df.sort_values(by='TimeStamp (sec)')
+        df[' Horizontal (meters)'] = df['cum_dist']
+
+        # Convert numeric columns to numeric type, handling non-numeric values
+        numeric_cols = [
+            'TimeStamp (sec)',
+            ' Horizontal (meters)',
+            ' Cadence (stokes/min)',
+            ' HRCur (bpm)',
+            ' Stroke500mPace (sec/500m)',
+            ' Power (watts)',
+            ' DriveLength (meters)',
+            ' StrokeDistance (meters)',
+            ' DriveTime (ms)',
+            ' StrokeRecoveryTime (ms)',
+            ' AverageDriveForce (lbs)',
+            ' PeakDriveForce (lbs)',
+            ' lapIdx',
+            ' ElapsedTime (sec)',
+            ' WorkoutState'
+        ]
+        df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, errors='coerce')
+
+        # Drop rows with NaN values
+        df = df.dropna()
+
+        # Initialize variables to store summarized data
+        lap_summaries = []
+
+        # Initialize variables to track the start time and data for each lap
+        lap_start_time = None
+        lap_end_time = None
+        lap_cadences = []
+        lap_paces = []  # Added lap_paces to store paces for each lap
+        lap_distances = []
+        lap_powers = []
+        lap_heart_rates = []
+        lap_id = None
+
+        # Use a mask to filter rows where the workout_state is work strokes
+        work_strokes_mask = df[' WorkoutState'].isin([1, 4, 5, 6, 7, 8, 9])
+
+        # Iterate through rows in the DataFrame
+        for index, row in df.iterrows():
+            if work_strokes_mask[index]:
+                # If the lap has started or the lap ID changes, append cadence, pace, and heart rate to lap lists
+                if lap_start_time is not None and row[' lapIdx'] == lap_id:
+                    lap_cadences.append(row[' Cadence (stokes/min)'])
+                    lap_paces.append(row[' Stroke500mPace (sec/500m)'])
+                    lap_distances.append(row[' StrokeDistance (meters)'])
+                    lap_powers.append(row[' Power (watts)'])
+                    lap_heart_rates.append(row[' HRCur (bpm)'])
+                    lap_end_time = row['TimeStamp (sec)']
+                else:
+                    # If the lap has not started or the lap ID changes, initialize lap-related variables
+                    if lap_start_time is not None:
+                        # If a lap has ended, calculate lap duration and append averages to summary list
+                        lap_duration = lap_end_time - lap_start_time
+                        avg_cadence = sum(lap_cadences) / len(lap_cadences)
+                        avg_pace = sum(lap_paces) / len(lap_paces)
+                        avg_speed = 500 / avg_pace  # Speed is derived from the reciprocal of pace
+                        total_distance_per_lap = sum(lap_distances)  # Improved calculation of total distance per lap
+                        avg_power = sum(lap_powers) / len(lap_powers)
+                        max_heart_rate = max(lap_heart_rates)
+                        avg_heart_rate = sum(lap_heart_rates) / len(lap_heart_rates)
+                        total_strokes_in_lap = len(lap_cadences)
+                        distance_per_stroke = total_distance_per_lap / total_strokes_in_lap
+
+                        lap_summaries.append({
+                            'lap_id': lap_id,
+                            'lap_duration': lap_duration,
+                            'avg_cadence': avg_cadence,
+                            'avg_pace': avg_pace,
+                            'avg_speed': avg_speed,
+                            'total_distance_per_lap': total_distance_per_lap,
+                            'avg_power': avg_power,
+                            'max_heart_rate': max_heart_rate,
+                            'avg_heart_rate': avg_heart_rate,
+                            'total_strokes_in_lap': total_strokes_in_lap,
+                            'distance_per_stroke': distance_per_stroke
+                        })
+
+                    # Reset lap-related variables
+                    lap_start_time = row['TimeStamp (sec)']
+                    lap_end_time = row['TimeStamp (sec)']
+                    lap_cadences = [row[' Cadence (stokes/min)']]
+                    lap_paces = [row[' Stroke500mPace (sec/500m)']]
+                    lap_distances = [row[' StrokeDistance (meters)']]
+                    lap_powers = [row[' Power (watts)']]
+                    lap_heart_rates = [row[' HRCur (bpm)']]
+                    lap_id = row[' lapIdx']
+
+        # If the last lap is work stroke, add it to the summary
+        if lap_start_time is not None:
+            lap_duration = lap_end_time - lap_start_time
+            avg_cadence = sum(lap_cadences) / len(lap_cadences)
+            avg_pace = sum(lap_paces) / len(lap_paces)
+            avg_speed = 500 / avg_pace  # Speed is derived from the reciprocal of pace
+            total_distance_per_lap = sum(lap_distances)  # Improved calculation of total distance per lap
+            avg_power = sum(lap_powers) / len(lap_powers)
+            max_heart_rate = max(lap_heart_rates)
+            avg_heart_rate = max(lap_heart_rates)
+            total_strokes_in_lap = len(lap_cadences)
+            distance_per_stroke = total_distance_per_lap / total_strokes_in_lap
+
+            lap_summaries.append({
+                'lap_id': lap_id,
+                'lap_duration': lap_duration,
+                'avg_cadence': avg_cadence,
+                'avg_pace': avg_pace,
+                'avg_speed': avg_speed,
+                'total_distance_per_lap': total_distance_per_lap,
+                'avg_power': avg_power,
+                'max_heart_rate': max_heart_rate,
+                'avg_heart_rate': avg_heart_rate,
+                'total_strokes_in_lap': total_strokes_in_lap,
+                'distance_per_stroke': distance_per_stroke
+            })
+
+            # Create a new DataFrame with the summarized data
+            summary_df = pd.DataFrame(lap_summaries)
+
+        return summary_df
+
+    def create_workout_summary_string(self, separator='|'):
+        summary_entire_workout = self.summarize_entire_workout()
+        summary_df = self.summarize_rowing_data()
+        s1 = summarystring(
+            summary_entire_workout['total_distance_workout'],
+            summary_entire_workout['total_time'],
+            summary_entire_workout['avg_pace_workout'],
+            summary_entire_workout['avg_cadence_workout'],
+            summary_entire_workout['avg_heart_rate_workout'],
+            summary_entire_workout['max_heart_rate_workout'],
+            summary_entire_workout['avg_dps_workout'],
+            summary_entire_workout['avg_power_workout'],
+            readFile=self.readFile,
+            separator=separator
+        )
+
+        w = workstring(
+            summary_entire_workout['total_distance_work_intervals'],
+            summary_entire_workout['sum_work_durations'],
+            summary_entire_workout['avg_pace_work'],
+            summary_entire_workout['avg_cadence_work'],
+            summary_entire_workout['avg_heart_rate_work'],
+            summary_entire_workout['max_heart_rate_work'],
+            summary_entire_workout['avg_dps_work'],
+            summary_entire_workout['avg_power_work'],
+            separator="|", symbol='W'
+        )
+
+        r = workstring(
+            summary_entire_workout['total_distance_rest_intervals'],
+            summary_entire_workout['sum_rest_durations'],
+            summary_entire_workout['avg_pace_rest'],
+            summary_entire_workout['avg_cadence_rest'],
+            summary_entire_workout['avg_heart_rate_rest'],
+            summary_entire_workout['max_heart_rate_rest'],
+            summary_entire_workout['avg_dps_rest'],
+            summary_entire_workout['avg_power_rest'],
+            separator="|", symbol='R'
+        )
+
+        stri2 = "Workout Details\n"
+        stri2 += "#-{sep}SDist{sep}-Split-{sep}-SPace-{sep}-Pwr-{sep}SPM-{sep}AvgHR{sep}MaxHR{sep}DPS-\n".format(
+            sep=separator
+        )
+
+        s = s1+w+r+stri2
+
+        for _, row in summary_df.iterrows():
+            lap_distance = int(row['total_distance_per_lap'])
+            split_time = row['lap_duration']
+            split_pace = row['avg_pace']
+            split_power = row['avg_power']
+            split_cadence = row['avg_cadence']
+            avg_heart_rate_split = row['avg_heart_rate']
+            max_heart_rate_split = row['max_heart_rate']
+            dps = row['distance_per_stroke']
+            lap_id = row['lap_id']
+            str = interval_string(lap_id,
+                                  lap_distance,
+                                  split_time,
+                                  split_pace,
+                                  split_cadence,
+                                  avg_heart_rate_split,
+                                  max_heart_rate_split,
+                                  dps,
+                                  split_power,separator=separator)
+            s = s+str
+
+        return s
+
     def intervalstats_values(self,debug=False):
         """ Used to create a nifty text summary, one row for each interval
 
