@@ -2878,7 +2878,7 @@ class rowingdata:
         df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, errors='coerce')
 
         # Drop rows with NaN values
-        df = df.dropna()
+        df = df.ffill().bfill().dropna(axis=1).dropna()
 
         # Use a mask to filter rows where the workout_state is work strokes or resting strokes
         work_strokes_mask = df[' WorkoutState'].isin([1, 4, 5, 6, 7, 8, 9])
@@ -2912,9 +2912,16 @@ class rowingdata:
         avg_cadence_workout = df[' Cadence (stokes/min)'].mean()
         avg_pace_workout = df[' Stroke500mPace (sec/500m)'].mean()
         avg_speed_workout = 500 / avg_pace_workout
-        avg_power_workout = df[' Power (watts)'].mean()
-        avg_heart_rate_workout = df[' HRCur (bpm)'].mean()
-        max_heart_rate_workout = df[' HRCur (bpm)'].max()
+        try:
+            avg_power_workout = df[' Power (watts)'].mean()
+        except KeyError:
+            avg_power_workout = 0
+        try:
+            avg_heart_rate_workout = df[' HRCur (bpm)'].mean()
+            max_heart_rate_workout = df[' HRCur (bpm)'].max()
+        except KeyError:
+            avg_heart_rate_workout = 0
+            max_heart_rate_workout = 0
         nr_strokes_workout = avg_cadence_workout*total_time/60.
         avg_dps_workout = total_distance_workout / nr_strokes_workout
 
@@ -2935,9 +2942,16 @@ class rowingdata:
         avg_cadence_work = work_intervals_df[' Cadence (stokes/min)'].mean()
         avg_pace_work = work_intervals_df[' Stroke500mPace (sec/500m)'].mean()
         avg_speed_work = 500 / avg_pace_work
-        avg_power_work = work_intervals_df[' Power (watts)'].mean()
-        avg_heart_rate_work = work_intervals_df[' HRCur (bpm)'].mean()
-        max_heart_rate_work = work_intervals_df[' HRCur (bpm)'].max()
+        try:
+            avg_power_work = work_intervals_df[' Power (watts)'].mean()
+        except KeyError:
+            avg_power_work = 0
+        try:
+            avg_heart_rate_work = work_intervals_df[' HRCur (bpm)'].mean()
+            max_heart_rate_work = work_intervals_df[' HRCur (bpm)'].max()
+        except KeyError:
+            avg_heart_rate_work = 0
+            max_heart_rate_work = 0
         nr_strokes_work = avg_cadence_work*sum_work_durations/60.
         avg_dps_work = total_distance_work_intervals / nr_strokes_work 
         
@@ -2945,9 +2959,16 @@ class rowingdata:
         avg_cadence_rest = rest_intervals_df[' Cadence (stokes/min)'].mean()
         avg_pace_rest = rest_intervals_df[' Stroke500mPace (sec/500m)'].mean()
         avg_speed_rest = 500 / avg_pace_rest
-        avg_power_rest = rest_intervals_df[' Power (watts)'].mean()
-        avg_heart_rate_rest = rest_intervals_df[' HRCur (bpm)'].mean()
-        max_heart_rate_rest = rest_intervals_df[' HRCur (bpm)'].max()
+        try:
+            avg_power_rest = rest_intervals_df[' Power (watts)'].mean()
+        except KeyError:
+            avg_power_rest = 0
+        try:
+            avg_heart_rate_rest = rest_intervals_df[' HRCur (bpm)'].mean()
+            max_heart_rate_rest = rest_intervals_df[' HRCur (bpm)'].max()
+        except KeyError:
+            avg_heart_rate_rest = 0
+            max_heart_rate_rest = 0
         nr_strokes_rest = avg_cadence_rest*sum_rest_durations/60.
         avg_dps_rest = total_distance_rest_intervals / nr_strokes_rest 
         
@@ -3004,14 +3025,15 @@ class rowingdata:
             ' StrokeRecoveryTime (ms)',
             ' AverageDriveForce (lbs)',
             ' PeakDriveForce (lbs)',
-            ' lapIdx',
+#            ' lapIdx',
             ' ElapsedTime (sec)',
             ' WorkoutState'
         ]
+        summary_df = pd.DataFrame()
         df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, errors='coerce')
 
         # Drop rows with NaN values
-        df = df.dropna()
+        df = df.ffill().bfill().dropna(axis=1).dropna()
 
         # Initialize variables to store summarized data
         lap_summaries = []
@@ -3037,8 +3059,14 @@ class rowingdata:
                     lap_cadences.append(row[' Cadence (stokes/min)'])
                     lap_paces.append(row[' Stroke500mPace (sec/500m)'])
                     lap_distances.append(row['cum_dist'])
-                    lap_powers.append(row[' Power (watts)'])
-                    lap_heart_rates.append(row[' HRCur (bpm)'])
+                    try:
+                        lap_powers.append(row[' Power (watts)'])
+                    except KeyError:
+                        lap_powers.append(0)
+                    try:
+                        lap_heart_rates.append(row[' HRCur (bpm)'])
+                    except KeyError:
+                        lap_heart_rates.append(0)
                     lap_end_time = row['TimeStamp (sec)']
                 else:
                     # If the lap has not started or the lap ID changes, initialize lap-related variables
@@ -3075,8 +3103,14 @@ class rowingdata:
                     lap_cadences = [row[' Cadence (stokes/min)']]
                     lap_paces = [row[' Stroke500mPace (sec/500m)']]
                     lap_distances = [row['cum_dist']]
-                    lap_powers = [row[' Power (watts)']]
-                    lap_heart_rates = [row[' HRCur (bpm)']]
+                    try:
+                        lap_powers = [row[' Power (watts)']]
+                    except KeyError:
+                        lap_powers = [0]
+                    try:
+                        lap_heart_rates = [row[' HRCur (bpm)']]
+                    except KeyError:
+                        lap_heart_rates = [0]
                     lap_id = row[' lapIdx']
 
         # If the last lap is work stroke, add it to the summary
@@ -3114,6 +3148,10 @@ class rowingdata:
     def create_workout_summary_string(self, separator='|'):
         summary_entire_workout = self.summarize_entire_workout()
         summary_df = self.summarize_rowing_data()
+        readFile = self.readFile
+        if not self.readFile:
+            readFile = ''
+        
         s1 = summarystring(
             summary_entire_workout['total_distance_workout'],
             summary_entire_workout['total_time'],
@@ -3123,7 +3161,7 @@ class rowingdata:
             summary_entire_workout['max_heart_rate_workout'],
             summary_entire_workout['avg_dps_workout'],
             summary_entire_workout['avg_power_workout'],
-            readFile=self.readFile,
+            readFile=readFile,
             separator=separator
         )
 

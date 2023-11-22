@@ -394,9 +394,9 @@ Workout Details
        want = """Workout Summary - testdata/summarytest.csv
 --|Total|-Total----|--Avg--|-Avg-|Avg-|-Avg-|-Max-|-Avg
 --|Dist-|-Time-----|-Pace--|-Pwr-|SPM-|-HR--|-HR--|-DPS
---|12745|00:13:15.4|02:24.4|000.0|23.4|000.0|000.0|41.1
+--|12745|00:13:15.4|02:24.3|000.0|23.4|000.0|000.0|41.1
 W-|07382|00:29:39.9|02:01.4|000.0|25.9|000.0|000.0|09.6
-R-|05363|00:27:31.3|02:59.5|000.0|19.6|000.0|000.0|10.0
+R-|05363|00:27:32.9|02:59.2|000.0|19.6|000.0|000.0|09.9
 Workout Details
 #-|SDist|-Split-|-SPace-|-Pwr-|SPM-|AvgHR|MaxHR|DPS-
 01|02575|10:08.9|02:00.4|000.0|26.7|000.0|0.0|09.5
@@ -732,8 +732,10 @@ class TestSequence(unittest.TestCase):
             assert_not_equal(res,0)
         if res != 0:
             for key,value in six.iteritems(res):
-                if key != 'summary':
+                if key not in ['summary']:
                     if expected[key] != 0:
                         assert_equal(value,expected[key])
                 elif key == 'summary':
                     assert_not_equal(value,'')
+
+
