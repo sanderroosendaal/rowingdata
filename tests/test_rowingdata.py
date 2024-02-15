@@ -385,6 +385,28 @@ Workout Details
         assert_equal.__self__.maxDiff = None
         assert_equal(want,got)
 
+    def test_newsummary(self):
+       row = rowingdata.rowingdata(csvfile='testdata/summarytest.csv')
+       summary = row.create_workout_summary_string()
+       emptysummary = len(summary) == 0
+
+       assert_equal(emptysummary,False)
+       want = """Workout Summary - testdata/summarytest.csv
+--|Total|-Total----|--Avg--|-Avg-|Avg-|-Avg-|-Max-|-Avg
+--|Dist-|-Time-----|-Pace--|-Pwr-|SPM-|-HR--|-HR--|-DPS
+--|12745|00:13:15.4|02:24.3|000.0|23.4|000.0|000.0|41.1
+W-|07382|00:29:39.9|02:01.4|000.0|25.9|000.0|000.0|09.6
+R-|05363|00:27:32.9|02:59.2|000.0|19.6|000.0|000.0|09.9
+Workout Details
+#-|SDist|-Split-|-SPace-|-Pwr-|SPM-|AvgHR|MaxHR|DPS-
+01|02575|10:08.9|02:00.4|000.0|26.7|000.0|0.0|09.5
+02|02419|09:43.8|02:00.7|000.0|25.8|000.0|0.0|09.6
+03|02387|09:47.2|02:03.1|000.0|25.0|000.0|0.0|09.7
+"""
+       assert_equal.__self__.maxDiff = None
+       assert_equal(want,summary)
+
+
 class TestCharts:
     @mock.patch("matplotlib.pyplot.figure")
     @mock.patch("matplotlib.figure.Figure")
@@ -710,8 +732,10 @@ class TestSequence(unittest.TestCase):
             assert_not_equal(res,0)
         if res != 0:
             for key,value in six.iteritems(res):
-                if key != 'summary':
+                if key not in ['summary']:
                     if expected[key] != 0:
                         assert_equal(value,expected[key])
                 elif key == 'summary':
                     assert_not_equal(value,'')
+
+

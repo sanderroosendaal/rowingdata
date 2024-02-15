@@ -170,6 +170,11 @@ def checkfile(f2, verbose=False):
     int1time = res[0][0]
     int1dist = res[1][0]
 
+    # alternative
+    summary_df = row.summarize_rowing_data()
+    int1time_new = summary_df['lap_duration'].values[0]
+    int1dst_new = summary_df['total_distance_per_lap'].values[0]
+
     if verbose:
         print(("Interval 1 time ", int1time))
         print(("Interval 1 dist ", int1dist))
@@ -196,6 +201,8 @@ def checkfile(f2, verbose=False):
         'nrintervals': nrintervals,
         'lap 1 time': int(int1time),
         'lap 1 dist': int(int1dist),
+        'lap 1 time new': int(int1time_new),
+        'lap 1 dist new': int(int1dst_new),
         'timezone': tz,
         'summary':summary,
     }
