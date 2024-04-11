@@ -40,7 +40,7 @@ import math
 from math import cos
 
 import pickle
-
+import gzip
 import time
 import warnings
 import sys
@@ -58,6 +58,7 @@ import numpy as np
 from numpy import isinf, isnan
 
 import pandas as pd
+import polars as pl
 from pandas import DataFrame, Series
 
 
@@ -1778,6 +1779,40 @@ def addpowerzones(df, ftp, powerperc):
 
     return df
 
+def addpowerzones_pl(df, ftp, powerperc):
+    percut2, percut1, percat, perctr, percan = np.array(powerperc) / 100.
+
+    ut2, ut1, at, tr, an = ftp * np.array(powerperc) / 100.
+
+    df = df.with_columns([
+        (pl.when(pl.col(" Power (watts)") <= ut2).then(pl.col(" Power (watts)"))
+         .otherwise(pl.lit(0))).alias("pw_ut2"),
+        (pl.when(pl.col(" Power (watts)") > ut2, pl.col(" Power (watts)") <= ut1).then(pl.col(" Power (watts)"))
+         .otherwise(pl.lit(0))).alias("pw_ut1"),
+        (pl.when(pl.col(" Power (watts)") > ut1, pl.col(" Power (watts)") <= at).then(pl.col(" Power (watts)"))
+         .otherwise(pl.lit(0))).alias("pw_at"),
+        (pl.when(pl.col(" Power (watts)") > at, pl.col(" Power (watts)") <= tr).then(pl.col(" Power (watts)")).otherwise(pl.lit(0))).alias("pw_tr"),
+        (pl.when(pl.col(" Power (watts)") > tr, pl.col(" Power (watts)") <= an).then(pl.col(" Power (watts)")).otherwise(pl.lit(0))).alias("pw_an"),
+        (pl.when(pl.col(" Power (watts)") > an, pl.col(" Power (watts)") <= 360).then(pl.col(" Power (watts)")).otherwise(pl.lit(0))).alias("pw_max"),
+    ]
+                         )
+
+    return df
+
+
+def addzones_pl(df, ut2, ut1, at, tr, an, mmax):
+    df = df.with_columns([
+        (pl.when(pl.col(" HRCur (bpm)") <= ut2).then(pl.col(" HRCur (bpm)")).otherwise(pl.lit(0))).alias("hr_ut2"),
+        (pl.when(pl.col(" HRCur (bpm)") > ut2, pl.col(" HRCur (bpm)") <= ut1).then(pl.col(" HRCur (bpm)")).otherwise(pl.lit(0))).alias("hr_ut1"),
+        (pl.when(pl.col(" HRCur (bpm)") > ut1, pl.col(" HRCur (bpm)") <= at).then(pl.col(" HRCur (bpm)")).otherwise(pl.lit(0))).alias("hr_at"),
+        (pl.when(pl.col(" HRCur (bpm)") > at, pl.col(" HRCur (bpm)") <= tr).then(pl.col(" HRCur (bpm)")).otherwise(pl.lit(0))).alias("hr_tr"),
+        (pl.when(pl.col(" HRCur (bpm)") > tr, pl.col(" HRCur (bpm)") <= an).then(pl.col(" HRCur (bpm)")).otherwise(pl.lit(0))).alias("hr_an"),
+        (pl.when(pl.col(" HRCur (bpm)") > an, pl.col(" HRCur (bpm)") <= 360).then(pl.col(" HRCur (bpm)")).otherwise(pl.lit(0))).alias("hr_max"),
+    ]
+                         )
+
+    return df
+
 def addzones(df, ut2, ut1, at, tr, an, mmax):
         # define an additional data frame that will hold the multiple bar plot data and the hr
         # limit data for the plot, it also holds a cumulative distance column
@@ -1867,6 +1902,231 @@ def getaddress(spm,vw,vb):
     k = int((Nvb-1)*vbrel)
 
     return i,j,k
+
+class rowingdata_pl:
+    def __init__(self, *args, **kwargs):
+        if 'debug' in kwargs: # pragma: no cover
+            debug = kwargs['debug']
+        else:
+            debug = False
+
+        self.debug = debug
+
+        readFile = None
+        if 'csvfile' in kwargs:
+            readFile = kwargs['csvfile']
+
+        rwr = kwargs.get('rower', rower())
+
+        rowtype = kwargs.get('rowtype', 'Indoor Rower')
+            
+
+        sled_df = pl.DataFrame()
+        if 'df' in kwargs:
+            sled_df = kwargs['df']
+            readFile = None
+        elif readFile:
+            try:
+                try:
+                    sled_df = pl.read_csv(readFile,encoding='utf-8')
+                except IOError: # pragma: no cover
+                    sled_df = pl.read_csv(readFile + '.gz',encoding='utf-8')
+                except:
+                    sled_df = pl.DataFrame()
+            except IOError: # pragma: no cover
+                try:
+                    f = open(readFile)
+                    sled_df = pl.read_csv(f)
+                    f.close()
+                except IOError:
+                    try:
+                        f = open(readFile + '.gz')
+                        sled_df = pl.read_csv(f)
+                        f.close()
+                    except:
+                        sled_df = pd.DataFrame()
+            except UnicodeEncodeError: # pragma: no cover
+                try:
+                    f = open(readFile)
+                    sled_df = pl.read_csv(f)
+                    f.close()
+                except IOError:
+                    try:
+                        f = open(readFile + '.gz')
+                        sled_df = pl.read_csv(f)
+                        f.close()
+                    except:
+                        sled_df = pl.DataFrame()
+
+        if readFile:
+            try:
+                self.readfilename = readFile.name
+            except AttributeError:
+                self.readfilename = readFile
+        else:
+            self.readfilename = 'rowing dataframe'
+
+        self.readFile = readFile
+        self.rwr = rwr
+        self.rowtype = rowtype
+
+        self.empty = False
+        if sled_df.is_empty():
+            self.empty = True
+
+        othernames = ['catch','finish','peakforceangle',
+                      'wash','slip','index',
+                      'cum_dist',
+                      'hr_an','hr_at','hr_tr','hr_ut1','hr_ut2','hr_max',
+#                      'lim_an','lim_at','lim_tr','lim_ut1','lim_ut2',
+#                      'limpw_an','limpw_at','limpw_tr',
+#                      'limpw_ut1','limpw_ut2',
+                      'pw_an','pw_at','pw_max','pw_tr','pw_ut1','pw_ut2',
+#                      'lim_max','hr_max',
+                      ' latitude',' longitude']
+
+        # check for missing column names
+        mandatorynames = [
+            'TimeStamp (sec)',
+            ' Horizontal (meters)',
+            ' Cadence (stokes/min)',
+            ' HRCur (bpm)',
+            ' Stroke500mPace (sec/500m)',
+            ' Power (watts)',
+            ' DriveLength (meters)',
+            ' StrokeDistance (meters)',
+            ' DriveTime (ms)',
+            ' DragFactor',
+            ' StrokeRecoveryTime (ms)',
+            ' AverageDriveForce (lbs)',
+            ' AverageBoatSpeed (m/s)',
+            ' PeakDriveForce (lbs)',
+            ' AverageDriveForce (N)',
+            ' PeakDriveForce (N)',
+            ' lapIdx',
+            ' ElapsedTime (sec)',
+            ' Calories (kCal)',
+            ' WorkoutState',
+        ]
+
+
+        self.defaultnames = othernames+mandatorynames
+
+        if ' ElapsedTime (sec)' not in sled_df.columns and not sled_df.is_empty():
+            sled_df = sled_df.with_columns((pl.col("TimeStamp (sec)")-sled_df[0, "TimeStamp (sec)"]).alias(" ElapsedTime (sec)"))
+
+        if not sled_df.is_empty():
+            for name in self.defaultnames:
+                if name not in sled_df.columns:
+                    if debug:
+                        print(name + " is not found in data")
+                    sled_df = sled_df.with_columns((pl.lit(0)).alias(name))
+                    if name == "TimeStamp (sec)":
+                        sled_df = sled_df.rename({"TimeStamp (sec utc)" : name})
+                    if name == ' WorkoutState':
+                        sled_df = sled_df.with_columns((pl.lit(4)).alias(name))
+                    if name == ' Calories (kCal)':
+                        sled_df = sled_df.with_columns((pl.lit(1)).alias(name))
+                    if name == ' Stroke500mPace (sec/500m)': # pragma: no cover
+                        dd = sled_df[' Horizontal (meters)'].diff()
+                        dt = sled_df[' ElapsedTime (sec)'].diff()
+                        velo = dd / dt
+                        sled_df = sled_df.with_columns((500. / velo).alias(name))
+                    if name == ' AverageBoatSpeed (m/s)':
+                        try:
+                            velo = 500./sled_df[' Stroke500mPace (sec/500m)']
+                        except (KeyError,ValueError): # pragma: no cover
+                            dd = sled_df[' Horizontal (meters)'].diff()
+                            dt = sled_df[' ElapsedTime (sec)'].diff()
+                            velo = dd / dt
+
+                            sled_df = sled_df.with_columns((velo).alias(name))
+                    if name == ' AverageDriveForce (lbs)':
+                        try: # pragma: no cover
+                            forcen = sled_df[' AverageDriveForce (N)']
+                            sled_df = sled_df.with_columns((pl.col(" AverageDriveForce (lbs)") / lbstoN).alias(name))
+                        except (KeyError, TypeError):
+                            sled_df = sled_df.with_columns((pl.lit(0)).alias(name))
+                    if name == ' AverageDriveForce (N)':
+                        try:
+                            forcelbs = sled_df[' AverageDriveForce (lbs)']
+                            sled_df = sled_df.with_columns((pl.col(" AverageDriveForce (lbs)") * lbstoN).alias(name))
+                        except KeyError: # pragma: no cover
+                            sled_df = sled_df.with_columns((pl.lit(0)).alias(name))
+                    if name == ' PeakDriveForce (lbs)':
+                        try: # pragma: no cover
+                            forcen = sled_df[' PeakDriveForce (N)']
+                            sled_df = sled_df.with_columns((pl.col(" PeakDriveForce (lbs)") / lbstoN).alias(name))
+                        except (KeyError, TypeError):
+                            sled_df = sled_df.with_columns((pl.lit(0)).alias(name))
+                    if name == ' PeakDriveForce (N)':
+                        try:
+                            forcelbs = sled_df[' PeakDriveForce (lbs)']
+                            sled_df = sled_df.with_columns((pl.col(" PeakDriveForce (lbs)") * lbstoN).alias(name))
+                        except KeyError: # pragma: no cover
+                            sled_df = sled_df.with_columns((pl.lit(0)).alias(name))
+
+                    if name == ' Cadence (stokes/min)':
+                        try:
+                            spm = sled_df[' Cadence (strokes/min)']
+                            if debug: # pragma: no cover
+                                print('Cadence found')
+                            sled_df = sled_df.with_columns((spm).alias(name))
+                        except KeyError: # pragma: no cover
+                            pass
+
+        sled_df = sled_df.drop([c for c in sled_df.columns if c not in self.defaultnames])
+
+        # add drive energy
+        sled_df = sled_df.with_columns((pl.col(" Power (watts)")/pl.col(" Cadence (stokes/min)")).alias("driveenergy"))
+
+        self.duration = 0
+        
+        if not sled_df.is_empty():
+            sled_df = addzones_pl(
+                sled_df,
+                self.rwr.ut2,
+                self.rwr.ut1,
+                self.rwr.at,
+                self.rwr.tr,
+                self.rwr.an,
+                self.rwr.max
+            )
+
+            sled_df = sled_df.filter(pl.col(" WorkoutState") != 12)
+            sled_df = sled_df.with_columns(pl.col(" Cadence (stokes/min)").cast(pl.Float64))
+
+            sled_df = addpowerzones_pl(sled_df, self.rwr.ftp, self.rwr.powerperc)
+
+            self.duration = sled_df['TimeStamp (sec)'].max()-sled_df['TimeStamp (sec)'].min()
+            
+        self.df = sled_df
+        self.number_of_rows = self.df.shape[0]
+
+
+    def write_csv(self, writeFile, compressed=False):
+        data = self.df.clone()
+        data = data.drop([
+            'hr_ut2',
+            'hr_ut1',
+            'hr_at',
+            'hr_tr',
+            'hr_an',
+            'hr_max',
+            'pw_ut2',
+            'pw_ut1',
+            'pw_at',
+            'pw_tr',
+            'pw_an',
+            'pw_max',
+        ])
+
+        if compressed:
+            with gzip.open(writeFile + '.gz','wb') as f:
+                return data.write_csv(f)
+
+        return data.write_csv(writeFile)
+            
 
 class rowingdata:
     """ This is the main class. Read the data from the csv file and do all
@@ -2173,7 +2433,8 @@ class rowingdata:
 
         # add HR zone data to dataframe
         if len(sled_df):
-            self.df = addzones(sled_df, self.rwr.ut2,
+            self.df = addzones(sled_df,
+                               self.rwr.ut2,
                                self.rwr.ut1,
                                self.rwr.at,
                                self.rwr.tr,
@@ -2199,7 +2460,7 @@ class rowingdata:
         else:
             self.duration = 0
 
-
+            
     def __add__(self, other):
         self_df = self.df.copy()
         other_df = other.df.copy()
