@@ -2357,11 +2357,6 @@ class rowingdata:
             hrmean = sled_df[' HRCur (bpm)'].mean()
             hrstd = sled_df[' HRCur (bpm)'].std()
 
-            if hrmean != 0 and hrstd != 0:
-                sled_df[' HRCur (bpm)'].replace(to_replace=0, value=np.nan,
-                                                inplace=True)
-                sled_df[' HRCur (bpm)'].ffill(inplace=True)
-
             self.dragfactor = sled_df[' DragFactor'].mean()
             # do stroke count
             dt = sled_df['TimeStamp (sec)'].diff()
@@ -2539,20 +2534,6 @@ class rowingdata:
         self.df[' DragFactor'] = dragfactor
         self.dragfactor = dragfactor
 
-    def get_minutes_averages(self, columnname):
-        """ Returns a list of values, the mean for each minute of the session
-        """
-
-        df = self.df.copy()
-        df['dt'] = df['TimeStamp (sec)'].apply(lambda x: arrow.get(x).datetime)
-        df.set_index('dt',inplace=True)
-
-        try:
-            result = df[columnname].resample('T').mean().values
-        except KeyError:
-            return []
-
-        return result
 
     def getvalues(self, keystring):
         """ Just a tool to get a column of the row data as a numpy array
