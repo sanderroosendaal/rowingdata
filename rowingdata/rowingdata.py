@@ -2020,7 +2020,7 @@ class rowingdata_pl:
             for name in self.defaultnames:
                 if name in sled_df.columns:
                     if sled_df[name].dtype == pl.String:
-                        if name != ' LapIdx':
+                        if name != ' lapIdx':
                             sled_df = sled_df.with_columns(
                                 (pl.col(name).str.strip_chars_start()).cast(pl.Float64).alias(name)
                             )

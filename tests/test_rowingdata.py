@@ -724,6 +724,8 @@ class TestSequence(unittest.TestCase):
         filetype = rowingdata.get_file_type(f2)
         if filetype  not in ['unknown','c2log']:
             assert_not_equal(res,0)
+        if filetype == "csv":
+            row = rowingdata.rowingdata_pl(csvfile=f2, debug=True)
         if res != 0:
             for key,value in six.iteritems(res):
                 if key not in ['summary']:
