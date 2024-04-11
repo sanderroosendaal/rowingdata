@@ -1944,7 +1944,7 @@ class rowingdata_pl:
                         sled_df = pl.read_csv(f)
                         f.close()
                     except:
-                        sled_df = pd.DataFrame()
+                        sled_df = pl.DataFrame()
             except UnicodeEncodeError: # pragma: no cover
                 try:
                     f = open(readFile)
@@ -1958,13 +1958,14 @@ class rowingdata_pl:
                     except:
                         sled_df = pl.DataFrame()
 
+
+        self.readfilename = 'rowing dataframe'
+
         if readFile:
             try:
                 self.readfilename = readFile.name
             except AttributeError:
                 self.readfilename = readFile
-        else:
-            self.readfilename = 'rowing dataframe'
 
         self.readFile = readFile
         self.rwr = rwr
@@ -2017,6 +2018,12 @@ class rowingdata_pl:
 
         if not sled_df.is_empty():
             for name in self.defaultnames:
+                if name in sled_df.columns:
+                    if sled_df[name].dtype == pl.String:
+                        if name != ' LapIdx':
+                            sled_df = sled_df.with_columns(
+                                (pl.col(name).str.strip_chars_start()).cast(pl.Float64).alias(name)
+                            )
                 if name not in sled_df.columns:
                     if debug:
                         print(name + " is not found in data")
@@ -2039,8 +2046,7 @@ class rowingdata_pl:
                             dd = sled_df[' Horizontal (meters)'].diff()
                             dt = sled_df[' ElapsedTime (sec)'].diff()
                             velo = dd / dt
-
-                            sled_df = sled_df.with_columns((velo).alias(name))
+                        sled_df = sled_df.with_columns((velo).alias(name))
                     if name == ' AverageDriveForce (lbs)':
                         try: # pragma: no cover
                             forcen = sled_df[' AverageDriveForce (N)']
@@ -2056,7 +2062,7 @@ class rowingdata_pl:
                     if name == ' PeakDriveForce (lbs)':
                         try: # pragma: no cover
                             forcen = sled_df[' PeakDriveForce (N)']
-                            sled_df = sled_df.with_columns((pl.col(" PeakDriveForce (lbs)") / lbstoN).alias(name))
+                            sled_df = sled_df.with_columns((pl.col(forcen / lbstoN).alias(name)))
                         except (KeyError, TypeError):
                             sled_df = sled_df.with_columns((pl.lit(0)).alias(name))
                     if name == ' PeakDriveForce (N)':
@@ -2065,7 +2071,6 @@ class rowingdata_pl:
                             sled_df = sled_df.with_columns((pl.col(" PeakDriveForce (lbs)") * lbstoN).alias(name))
                         except KeyError: # pragma: no cover
                             sled_df = sled_df.with_columns((pl.lit(0)).alias(name))
-
                     if name == ' Cadence (stokes/min)':
                         try:
                             spm = sled_df[' Cadence (strokes/min)']
