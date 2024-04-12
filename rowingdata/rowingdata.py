@@ -2013,10 +2013,7 @@ class rowingdata_pl:
 
         self.defaultnames = othernames+mandatorynames
 
-        if ' ElapsedTime (sec)' not in sled_df.columns and not sled_df.is_empty():
-            sled_df = sled_df.with_columns((pl.col("TimeStamp (sec)")-sled_df[0, "TimeStamp (sec)"]).alias(" ElapsedTime (sec)"))
-
-        if not sled_df.is_empty():
+        if readFile and not sled_df.is_empty():
             for name in self.defaultnames:
                 if name in sled_df.columns:
                     if sled_df[name].dtype == pl.String:
@@ -2024,6 +2021,13 @@ class rowingdata_pl:
                             sled_df = sled_df.with_columns(
                                 (pl.col(name).str.strip_chars_start()).cast(pl.Float64).alias(name)
                             )
+                
+
+        if ' ElapsedTime (sec)' not in sled_df.columns and not sled_df.is_empty():
+            sled_df = sled_df.with_columns((pl.col("TimeStamp (sec)")-sled_df[0, "TimeStamp (sec)"]).alias(" ElapsedTime (sec)"))
+
+        if not sled_df.is_empty():
+            for name in self.defaultnames:
                 if name not in sled_df.columns:
                     if debug:
                         print(name + " is not found in data")
