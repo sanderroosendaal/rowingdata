@@ -1928,7 +1928,7 @@ class rowingdata_pl:
         elif readFile:
             try:
                 try:
-                    sled_df = pl.read_csv(readFile,encoding='utf-8')
+                    sled_df = pl.read_csv(readFile,encoding='utf-8', infer_schema_length=1000)
                 except IOError: # pragma: no cover
                     sled_df = pl.read_csv(readFile + '.gz',encoding='utf-8')
                 except:
