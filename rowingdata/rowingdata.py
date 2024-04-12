@@ -1903,7 +1903,16 @@ def getaddress(spm,vw,vb):
 
     return i,j,k
 
+
 class rowingdata_pl:
+    """
+    This is used if you want to get a polars DataFrame. This class is much more finicky about
+    the data, and might fail reading a csv file where the class rowingdata succeeds.
+
+    There are no plans to exactly reproduce the pandas version's functionality here.
+
+    The intention is to be strict about the width and data types of the resulting data frame. 
+    """
     def __init__(self, *args, **kwargs):
         if 'debug' in kwargs: # pragma: no cover
             debug = kwargs['debug']
