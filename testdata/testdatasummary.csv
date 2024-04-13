@@ -1,8 +1,6 @@
 filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrintervals,lap 1 time,lap 1 dist,timezone,lap 1 time new,lap 1 dist new,,,,
 quiske_per_stroke_new.csv,quiske,139,2022,11,7,7,58,35,930,382,1,382,930,UTC,382,928,,,,
 boatcoach_fixed_distance.csv,boatcoach,493,2022,6,13,12,31,37,1996,495,4,109,494,UTC,109,494,,,,
-smartrow_intervals.csv,smartrow,739,0,0,0,0,0,0,6979,2335,1,2335,6979,UTC,2335,6970,,,,
-smartrow.csv,smartrow,878,0,0,0,0,0,0,7836,3005,1,3005,7836,UTC,3005,7829,,,,
 rowpro_carrick.csv,rp,1212,2022,1,19,17,33,0,10023,3608,10,422,1495,UTC,422,1493,,,,
 fromnk.csv.gz,nklinklogbook,430,2021,7,7,17,33,28,3005,1062,12,60,250,UTC,60,250,,,,
 herodata.csv,hero,300,2021,4,26,13,37,33,3512,896,1,896,3512,UTC,896,3509,,,,

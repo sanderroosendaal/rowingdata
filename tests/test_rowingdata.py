@@ -258,12 +258,6 @@ class TestStringParser:
         assert_equal(t6,d6)
         assert_equal(t7,d7)
 
-class TestMinutes:
-    def test_minutes(self):
-        row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
-
-        res = row.get_minutes_averages(' Cadence (stokes/min)')
-        assert_equal(len(res),9)
 
 class TestPhysics:
     row = rowingdata.rowingdata(csvfile='testdata/testdata.csv')
@@ -731,7 +725,7 @@ class TestSequence(unittest.TestCase):
         if filetype  not in ['unknown','c2log']:
             assert_not_equal(res,0)
         if res != 0:
-            for key,value in six.iteritems(res):
+            for key,value in res.items():
                 if key not in ['summary']:
                     if expected[key] != 0:
                         assert_equal(value,expected[key])

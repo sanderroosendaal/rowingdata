@@ -1969,10 +1969,18 @@ class HeroParser(CSVParser):
 
 class SmartRowParser(CSVParser):
     def __init__(self, *args, **kwargs):
+        if args:
+            csvfile = args[0]
+        else: # pragma: no cover
+            csvfile = kwargs['csvfile']
+
+        separator = get_separator(5, csvfile)
+        kwargs['sep'] = separator
+
         super(SmartRowParser, self).__init__(*args, **kwargs)
 
         self.cols = [
-            'Second (#)',
+            'Timestamp (UTC)',
             'Distance (m)',
             'Stroke rate (SPM)',
             'Heart rate (bpm)',
@@ -1986,7 +1994,7 @@ class SmartRowParser(CSVParser):
             '', #' AverageDriveForce (lbs)',
             '', #' PeakDriveForce (lbs)',
             '', #' lapIdx',
-            '', #Second (#)',
+            'Second (#)',
             '', #' latitude',
             '', #' longitude',
             ]

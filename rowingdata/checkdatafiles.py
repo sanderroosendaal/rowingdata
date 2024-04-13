@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import print_function
+import polars as pl
 
 try:
     from . import rowingdata
@@ -150,6 +151,11 @@ def checkfile(f2, verbose=False):
 
     else:
         row = rowingdata.rowingdata(csvfile=f2)
+
+    row.write_csv(f2+'pl.csv')
+    row2 = rowingdata.rowingdata_pl(csvfile=f2 + 'pl.csv')
+    os.remove(f2 + 'pl.csv')
+    row2 = rowingdata.rowingdata_pl(df=pl.from_pandas(row.df))
 
     nr_of_rows = row.number_of_rows
     distmax = row.df['cum_dist'].max()
