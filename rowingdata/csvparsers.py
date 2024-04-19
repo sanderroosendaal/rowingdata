@@ -718,6 +718,7 @@ def make_cumvalues_array(xvalues,doequal=False):
 
     return [newvalues, abs(lapidx)]
 
+
 def make_cumvalues(xvalues):
     """ Takes a Pandas dataframe with one column as input value.
     Tries to create a cumulative series.
