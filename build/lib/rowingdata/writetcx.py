@@ -91,7 +91,7 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
         totalseconds=int(df['TimeStamp (sec)'].max()-df['TimeStamp (sec)'].min())
     except ValueError:
         totalseconds = 0
-        
+
     try:
         totalmeters=int(df['cum_dist'].max())
     except ValueError:
@@ -147,10 +147,10 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
     s="2000-01-01"
     tt=ps.parse(s)
 
-    timezero=arrow.get(tt).timestamp
+    timezero=arrow.get(tt).timestamp()
     if seconds[0]<timezero:
         dateobj=ps.parse(row_date)
-        unixtimes=seconds+arrow.get(dateobj).timestamp #time.mktime(dateobj.timetuple())
+        unixtimes=seconds+arrow.get(dateobj).timestamp() #time.mktime(dateobj.timetuple())
 
     top = Element('TrainingCenterDatabase')
     top.attrib['xmlns'] = "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"
@@ -232,7 +232,7 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
             watts = SubElement(tpx,'Watts')
             try:
                 watts.text = '{s}'.format(s=int(power[i]))
-            except ValueError:
+            except (ValueError, OverflowError):
                 watts.text = 'NaN'
 
 
@@ -299,19 +299,13 @@ def write_tcx(tcxFile,df,row_date="2016-01-01",notes="Exported by rowingdata",
                 schema=etree.XMLSchema(file=xsd_filename)
                 parser=objectify.makeparser(schema=schema)
                 objectify.fromstring(some_xml_string, parser)
-                # print("YEAH!, your xml file has validated")
             except XMLSyntaxError:
-
-                print("Oh NO!, your xml file does not validate")
                 pass
         except:
-            print("Oh NO!, your xml file does not validate")
             pass
 
     except six.moves.urllib.error.URLError:
-        print("cannot download TCX schema")
-        print("your TCX file is unvalidated. Good luck")
-
+        pass
 
 
 
