@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.6.7"
+__version__ = "3.6.8"
 
 from collections import Counter
 
@@ -2096,7 +2096,7 @@ class rowingdata_pl:
         sled_df = sled_df.drop([c for c in sled_df.columns if c not in self.defaultnames])
 
         # add drive energy
-        sled_df = sled_df.with_columns((pl.col(" Power (watts)")/pl.col(" Cadence (stokes/min)")).alias("driveenergy"))
+        sled_df = sled_df.with_columns((60.*pl.col(" Power (watts)")/pl.col(" Cadence (stokes/min)")).alias("driveenergy"))
 
         self.duration = 0
         
