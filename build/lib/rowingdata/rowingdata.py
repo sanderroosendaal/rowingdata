@@ -59,6 +59,7 @@ from numpy import isinf, isnan
 
 import pandas as pd
 import polars as pl
+from polars.exceptions import ComputeError
 from pandas import DataFrame, Series
 
 
@@ -1819,19 +1820,19 @@ def addzones(df, ut2, ut1, at, tr, an, mmax):
 
     number_of_rows = df.shape[0]
 
-    df['hr_ut2'] = np.zeros(number_of_rows)
-    df['hr_ut1'] = np.zeros(number_of_rows)
-    df['hr_at'] = np.zeros(number_of_rows)
-    df['hr_tr'] = np.zeros(number_of_rows)
-    df['hr_an'] = np.zeros(number_of_rows)
-    df['hr_max'] = np.zeros(number_of_rows)
+    df.loc[:,'hr_ut2'] = np.zeros(number_of_rows)
+    df.loc[:,'hr_ut1'] = np.zeros(number_of_rows)
+    df.loc[:,'hr_at'] = np.zeros(number_of_rows)
+    df.loc[:,'hr_tr'] = np.zeros(number_of_rows)
+    df.loc[:,'hr_an'] = np.zeros(number_of_rows)
+    df.loc[:,'hr_max'] = np.zeros(number_of_rows)
 
-    df['lim_ut2'] = ut2
-    df['lim_ut1'] = ut1
-    df['lim_at'] = at
-    df['lim_tr'] = tr
-    df['lim_an'] = an
-    df['lim_max'] = mmax
+    df.loc[:,'lim_ut2'] = ut2
+    df.loc[:,'lim_ut1'] = ut1
+    df.loc[:,'lim_at'] = at
+    df.loc[:,'lim_tr'] = tr
+    df.loc[:,'lim_an'] = an
+    df.loc[:,'lim_max'] = mmax
 
     # create the columns containing the data for the colored bar chart
     # attempt to do this in a way that doesn't generate dubious copy warnings
@@ -2096,7 +2097,11 @@ class rowingdata_pl:
         sled_df = sled_df.drop([c for c in sled_df.columns if c not in self.defaultnames])
 
         # add drive energy
-        sled_df = sled_df.with_columns((60.*pl.col(" Power (watts)")/pl.col(" Cadence (stokes/min)")).alias("driveenergy"))
+        try:
+            sled_df = sled_df.with_columns((60.*pl.col(" Power (watts)")/pl.col(" Cadence (stokes/min)")).alias("driveenergy"))
+        except ComputeError:
+            sled_df = sled_df.with_columns((pl.lit(100)).alias("driveenergy"))
+            
 
         self.duration = 0
         
