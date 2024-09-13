@@ -382,11 +382,17 @@ def tcxtodf3(path):
                 speed = float(clean_string(speed_node.text)) if speed_node is not None else 0
 
                 cadence_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Cadence")
-                cadence = int(clean_string(cadence_node.text)) if cadence_node is not None else 0
+                try:
+                    cadence = int(clean_string(cadence_node.text)) if cadence_node is not None else 0
+                except ValueError:
+                    cadence = float(clean_string(cadence_node.text)) if cadence_node is not None else 0
 
 
                 hr_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}HeartRateBpm/{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Value")
-                heart_rate = int(clean_string(hr_node.text)) if hr_node is not None else 0
+                try:
+                    heart_rate = int(clean_string(hr_node.text)) if hr_node is not None else 0
+                except ValueError:
+                    heart_rate = float(clean_string(hr_node.text)) if hr_node is not None else 0
 
                 distance_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}DistanceMeters")
                 distance = float(clean_string(distance_node.text)) if distance_node is not None else 0
