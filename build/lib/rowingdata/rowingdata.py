@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.6.8"
+__version__ = "3.6.11"
 
 from collections import Counter
 
@@ -1785,18 +1785,21 @@ def addpowerzones_pl(df, ftp, powerperc):
 
     ut2, ut1, at, tr, an = ftp * np.array(powerperc) / 100.
 
-    df = df.with_columns([
-        (pl.when(pl.col(" Power (watts)") <= ut2).then(pl.col(" Power (watts)"))
-         .otherwise(pl.lit(0))).alias("pw_ut2"),
-        (pl.when(pl.col(" Power (watts)") > ut2, pl.col(" Power (watts)") <= ut1).then(pl.col(" Power (watts)"))
-         .otherwise(pl.lit(0))).alias("pw_ut1"),
-        (pl.when(pl.col(" Power (watts)") > ut1, pl.col(" Power (watts)") <= at).then(pl.col(" Power (watts)"))
-         .otherwise(pl.lit(0))).alias("pw_at"),
-        (pl.when(pl.col(" Power (watts)") > at, pl.col(" Power (watts)") <= tr).then(pl.col(" Power (watts)")).otherwise(pl.lit(0))).alias("pw_tr"),
-        (pl.when(pl.col(" Power (watts)") > tr, pl.col(" Power (watts)") <= an).then(pl.col(" Power (watts)")).otherwise(pl.lit(0))).alias("pw_an"),
-        (pl.when(pl.col(" Power (watts)") > an, pl.col(" Power (watts)") <= 360).then(pl.col(" Power (watts)")).otherwise(pl.lit(0))).alias("pw_max"),
-    ]
-                         )
+    try:
+        df = df.with_columns([
+            (pl.when(pl.col(" Power (watts)") <= ut2).then(pl.col(" Power (watts)"))
+             .otherwise(pl.lit(0))).alias("pw_ut2"),
+            (pl.when(pl.col(" Power (watts)") > ut2, pl.col(" Power (watts)") <= ut1).then(pl.col(" Power (watts)"))
+             .otherwise(pl.lit(0))).alias("pw_ut1"),
+            (pl.when(pl.col(" Power (watts)") > ut1, pl.col(" Power (watts)") <= at).then(pl.col(" Power (watts)"))
+             .otherwise(pl.lit(0))).alias("pw_at"),
+            (pl.when(pl.col(" Power (watts)") > at, pl.col(" Power (watts)") <= tr).then(pl.col(" Power (watts)")).otherwise(pl.lit(0))).alias("pw_tr"),
+            (pl.when(pl.col(" Power (watts)") > tr, pl.col(" Power (watts)") <= an).then(pl.col(" Power (watts)")).otherwise(pl.lit(0))).alias("pw_an"),
+            (pl.when(pl.col(" Power (watts)") > an, pl.col(" Power (watts)") <= 360).then(pl.col(" Power (watts)")).otherwise(pl.lit(0))).alias("pw_max"),
+        ]
+                             )
+    except ComputeError:
+        pass
 
     return df
 
