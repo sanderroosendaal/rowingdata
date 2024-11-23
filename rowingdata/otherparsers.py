@@ -471,6 +471,11 @@ class FITParser(object):
         self.df[' Stroke500mPace (sec/500m)'] = pace
         self.df[' ElapsedTime (sec)'] = elapsed_time
 
+        try:
+            self.df['cadence'] = self.df['cadence'] + self.df['fractional_cadence']
+        except KeyError: # pragma: no cover
+            pass
+
         hrname = 'heart_rate'
         spmname = 'cadence'
 
