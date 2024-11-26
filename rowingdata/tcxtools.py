@@ -381,6 +381,13 @@ def tcxtodf3(path):
                 speed_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Speed")
                 speed = float(clean_string(speed_node.text)) if speed_node is not None else 0
 
+                check_factor = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Check")
+                try:
+                    check_factor = float(clean_string(check_factor.text)) if check_factor is not None else 0
+                except ValueError:
+                    check_factor = 0
+                    
+
                 cadence_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Cadence")
                 try:
                     cadence = int(clean_string(cadence_node.text)) if cadence_node is not None else 0
@@ -412,6 +419,7 @@ def tcxtodf3(path):
                     'Watts': watts, 
                     'lapid': lap_id,
                     'Speed': speed,
+                    'check_factor': check_factor,
                     ' WorkoutState': workoutstate
                 })
 
@@ -419,5 +427,4 @@ def tcxtodf3(path):
         df = pd.DataFrame(activity_data)
         return df
     except ET.ParseError as e:
-        print(e)
         return pd.DataFrame()
