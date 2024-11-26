@@ -427,5 +427,4 @@ def tcxtodf3(path):
         df = pd.DataFrame(activity_data)
         return df
     except ET.ParseError as e:
-        print(e)
         return pd.DataFrame()
