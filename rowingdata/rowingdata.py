@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.6.13"
+__version__ = "3.6.14"
 
 from collections import Counter
 
@@ -1997,7 +1997,7 @@ class rowingdata_pl:
 #                      'limpw_ut1','limpw_ut2',
                       'pw_an','pw_at','pw_max','pw_tr','pw_ut1','pw_ut2',
 #                      'lim_max','hr_max',
-                      ' latitude',' longitude']
+                      ' latitude',' longitude','check_factor']
 
         # check for missing column names
         mandatorynames = [
