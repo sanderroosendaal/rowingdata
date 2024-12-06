@@ -25,6 +25,9 @@ from datetime import datetime
 from six.moves import range
 import json
 
+# import io
+import io
+
 NAMESPACE = 'http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2'
 
 def strip_non_ascii(string):
@@ -359,19 +362,32 @@ class FitSummaryData(object):
 
         self.summarytext += summarystring
 
+
 class FITParser(object):
 
-    def __init__(self, readfile):
-        extension = readfile[-3:].lower()
-        if extension == '.gz':
-            newfile = readfile[-3:]
-            with gzip.open(readfile,'rb') as f_in, open(newfile,'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
-            self.readfile = newfile
-        else:
-            self.readfile = readfile
+    # change below so readfile can be a bytes stream
+    def __init__(self, source):
+        if isinstance(source, str):
+            readfile = source
 
-        self.fitfile = FitFile(self.readfile, check_crc=False)
+            extension = readfile[-3:].lower()
+            if extension == '.gz':
+                newfile = readfile[-3:]
+                with gzip.open(readfile,'rb') as f_in, open(newfile,'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+                    self.readfile = newfile
+            else:
+                self.readfile = readfile
+
+            with open(self.readfile,'rb') as f:
+                self.stream = io.BytesIO(f.read())
+
+        elif isinstance(source, io.BytesIO):
+            self.stream = source
+            self.readfile = ''
+
+
+        self.fitfile = FitFile(self.stream, check_crc=False)
 
         self.records = self.fitfile.messages
 

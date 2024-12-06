@@ -10,10 +10,21 @@ import unittest
 from pytz import utc
 import six
 import os
+import io
 import warnings
 #warnings.filterwarnings("error")
 
 from unittest import mock
+
+class TestFit:
+    def test_read_fit(self):
+        f = rowingdata.FITParser('testdata/3x250m.fit')
+
+    def test_read_fit_stream(self):
+        # read the file in stream mode
+        with open('testdata/3x250m.fit', 'rb') as f:
+            stream = io.BytesIO(f.read())
+        f = rowingdata.FITParser(stream)
 
 class TestEmpty:
 
