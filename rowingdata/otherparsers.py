@@ -165,12 +165,23 @@ def fitsummarydata(*args, **kwargs): # pragma: no cover
     warn("fitsummarydata was renamed to FitSummaryData")
     return FitSummaryData(*args, **kwargs)
 
+
 class FitSummaryData(object):
+
     def __init__(self, readfile):
         self.readfile = readfile
         self.fitfile = FitFile(readfile, check_crc=False)
         self.records = self.fitfile.messages
 
+        self.FIT_SPORT_MAP = {
+            "rowing": "water",
+            "running": "Run",
+            "cycling": "bike",
+            "swimming": "Swim",
+            "other": "other",
+        }
+
+        
         recorddicts = []
         lapdict = []
         lapcounter = 0
@@ -184,6 +195,18 @@ class FitSummaryData(object):
                 values = record.get_values()
                 values['lapid'] = lapcounter
                 lapdict.append(values)
+            if record.name == 'file_id':
+                values = record.get_values()
+                try:
+                    self.product_name = values['product_name']
+                except KeyError: # pragma: no cover
+                    self.product_name = 'Unknown'
+            if record.name == 'sport':
+                values = record.get_values()
+                try:
+                    self.sport = self.FIT_SPORT_MAP[values['sport']]
+                except KeyError:
+                    self.sport = 'water'
 
         self.df = pd.DataFrame(recorddicts)
         self.lapdf = pd.DataFrame(lapdict)
@@ -202,18 +225,30 @@ class FitSummaryData(object):
 
         dfgrouped = self.df.groupby('lapid')
         for lapcount,group in dfgrouped:
-            intdist = int(
-                (self.lapdf[self.lapdf['lapid']==lapcount+1]['total_distance']).iloc[0]
-            )
+            try:
+                intdist = int(
+                    (self.lapdf[self.lapdf['lapid']==lapcount+1]['total_distance']).iloc[0]
+                )
+            except IndexError: # pragma: no cover
+                intdist = 1
             if np.isnan(intdist): # pragma: no cover
                 intdist = 1
             else:
                 intdist = int(intdist)
             timestamps = group['timestamp'].apply(totimestamp)
-            inttime = self.lapdf[self.lapdf['lapid']==lapcount+1][
-                'total_elapsed_time'
-            ]
-            inttime = float(inttime.iloc[0])
+            try:
+                inttime = self.lapdf[self.lapdf['lapid']==lapcount+1][
+                    'total_elapsed_time'
+                ]
+            except KeyError:
+                # calculate inttime from total_timer_time
+                inttime = self.lapdf[self.lapdf['lapid']==lapcount+1][
+                    'total_timer_time'
+                ]
+            try:
+                inttime = float(inttime.iloc[0])
+            except IndexError: # pragma: no cover
+                inttime = 0
             try:
                 intpower = int(group['power'].mean())
             except KeyError:
@@ -228,8 +263,12 @@ class FitSummaryData(object):
                     intvelo = group['speed'].mean()
                     intpace = 500./intvelo
                 except KeyError:
-                    intvelo = 0
-                    intpace = 0
+                    try:
+                        intvelo = group['enhanced_avg_speed'].mean()
+                        intpace = 500./intvelo
+                    except KeyError: # pragma: no cover
+                        intvelo = 0
+                        intpace = 0
 
             pacemin = int(intpace/60)
             pacesec = int(10*(intpace-pacemin*60.))/10.
