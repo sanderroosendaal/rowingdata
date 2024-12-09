@@ -444,6 +444,8 @@ class FITParser(object):
 
 
         self.df = pd.DataFrame(recorddicts)
+        if self.df.empty:
+            raise ValueError("No records found in FIT file")
 
         # columns to lowercase - this should be easier
         self.df.columns = [strip_non_ascii(x) for x in self.df.columns]
