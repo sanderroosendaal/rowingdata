@@ -16,6 +16,30 @@ import warnings
 
 from unittest import mock
 
+# test TCX reading, should have coordinates, power, cadence, speed, heartrate
+class TestTCX:
+    def test_read_tcx(self):
+        f = rowingdata.TCXParser('testdata/2x2km.tcx',alternative=False)
+        row = rowingdata.rowingdata(df=f.df)
+        # check of f.df power average is not 0
+        assert_equal(row.df[' Power (watts)'].mean()>0,True)
+        # check if the heartrate is not 0
+        assert_equal(row.df[' HRCur (bpm)'].mean()>0,True)
+        # check latitude and longitude not zero
+        assert_equal(row.df[' latitude'].mean()>0,True)
+        assert_equal(row.df[' longitude'].mean()>0,True)
+
+    def test_read_tcx_alternative(self):
+        f = rowingdata.TCXParser('testdata/2x2km.tcx',alternative=True)
+        row = rowingdata.rowingdata(df=f.df)
+        # check of f.df power average is not 0
+        assert_equal(row.df[' Power (watts)'].mean()>0,True)
+        # check if the heartrate is not 0
+        assert_equal(row.df[' HRCur (bpm)'].mean()>0,True)
+        # check latitude and longitude not zero
+        assert_equal(row.df[' latitude'].mean()>0,True)
+        assert_equal(row.df[' longitude'].mean()>0,True)
+
 class TestFit:
     def test_read_fit(self):
         f = rowingdata.FITParser('testdata/3x250m.fit')
