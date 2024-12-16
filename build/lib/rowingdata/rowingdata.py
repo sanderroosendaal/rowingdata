@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.6.20"
+__version__ = "3.6.21"
 
 from collections import Counter
 
@@ -110,6 +110,7 @@ try:
         skip_variable_header, speedcoachParser, timestrtosecs,
         timestrtosecs2, totimestamp, empower_bug_correction,
         get_empower_firmware, NKLiNKLogbookParser, HeroParser,
+        make_cumvalues,
     )
 
     from .otherparsers import TCXParser as TCXParserNoHR
@@ -3030,7 +3031,9 @@ class rowingdata:
                     sport="Other"):
         if not self.empty:
             df = self.df
-
+            res = make_cumvalues(df[' Horizontal (meters)'])
+            df[' Horizontal (meters)'] = res[0]
+            
             writetcx.write_tcx(
                 fileName,
                 df,

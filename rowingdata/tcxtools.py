@@ -375,8 +375,13 @@ def tcxtodf3(path):
                 timestamp = arrow.get(time).timestamp()+arrow.get(time).microsecond/1.e6
                 #timestamp = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S%z")
 
-                watts_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Watts")
-                watts = float(clean_string(watts_node.text)) if watts_node is not None else 0
+                watts = 0
+                extensions_element = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Extensions")
+                if extensions_element is not None:
+                    # print child elements of extensions_element
+                    watts_node = extensions_element.find(".//{http://www.garmin.com/xmlschemas/ActivityExtension/v2}TPX/{http://www.garmin.com/xmlschemas/ActivityExtension/v2}Watts")
+                    
+                    watts = float(clean_string(watts_node.text)) if watts_node is not None else 0
 
                 speed_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Speed")
                 speed = float(clean_string(speed_node.text)) if speed_node is not None else 0
