@@ -236,8 +236,8 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
                 watts.text = 'NaN'
 
 
-    notes = SubElement(activity,'Notes')
-    notes.text = '{n}'.format(n=notes)
+    notes_element = SubElement(activity,'Notes')
+    notes_element.text = '{n}'.format(n=notes)
 
     creator = SubElement(top,'Creator')
     name = SubElement(creator,'Name')

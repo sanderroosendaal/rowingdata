@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.6.22"
+__version__ = "3.6.23"
 
 from collections import Counter
 
@@ -3033,6 +3033,7 @@ class rowingdata:
             df = self.df
             res = make_cumvalues(df[' Horizontal (meters)'])
             df[' Horizontal (meters)'] = res[0]
+            df['cum_dist'] = res[0]
             
             writetcx.write_tcx(
                 fileName,
