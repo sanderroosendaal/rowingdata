@@ -376,6 +376,7 @@ def tcxtodf3(path):
                 #timestamp = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S%z")
 
                 watts = 0
+                check_factor = 0
                 extensions_element = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Extensions")
                 if extensions_element is not None:
                     # print child elements of extensions_element
@@ -383,14 +384,15 @@ def tcxtodf3(path):
                     
                     watts = float(clean_string(watts_node.text)) if watts_node is not None else 0
 
+                    check_factor = extensions_element.find(".//{http://www.garmin.com/xmlschemas/ActivityExtension/v2}TPX/{http://www.garmin.com/xmlschemas/ActivityExtension/v2}Check")
+                    try:
+                        check_factor = float(clean_string(check_factor.text)) if check_factor is not None else 0
+                    except ValueError:
+                        check_factor = 0
+
                 speed_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Speed")
                 speed = float(clean_string(speed_node.text)) if speed_node is not None else 0
 
-                check_factor = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Check")
-                try:
-                    check_factor = float(clean_string(check_factor.text)) if check_factor is not None else 0
-                except ValueError:
-                    check_factor = 0
                     
 
                 cadence_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Cadence")
