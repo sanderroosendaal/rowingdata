@@ -160,7 +160,8 @@ def create_tcx(df,row_date="2016-01-01", notes="Exported by rowingdata",
 
     activities = SubElement(top,'Activities')
     activity = SubElement(activities,'Activity')
-    activity.attrib['Sport'] = sport
+    if sport:
+        activity.attrib['Sport'] = sport
     id = SubElement(activity,'Id')
     id.text = row_date
 
