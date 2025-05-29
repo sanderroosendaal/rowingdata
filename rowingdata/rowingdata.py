@@ -5,7 +5,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.6.25"
+__version__ = "3.6.26"
 
 from collections import Counter
 
@@ -3084,8 +3084,9 @@ class rowingdata:
             tdwork[' ElapsedTime (sec)'] = tdwork[' ElapsedTime (sec)'] - tdwork[' ElapsedTime (sec)'].min()
             tdwork['cum_dist'] = tdwork['cum_dist'] - tdwork['cum_dist'].min()
 
-            new_row = rowingdata(df=tdwork)
-            results.append(new_row)
+            if not tdwork.empty:
+                new_row = rowingdata(df=tdwork)
+                results.append(new_row)
 
         return results
 
