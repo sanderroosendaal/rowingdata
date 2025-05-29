@@ -3061,6 +3061,34 @@ class rowingdata:
             with open(fileName,'wb+') as f_out:
                 f_out.write(bytes)
 
+    def split_by_intervals(self):
+        """ Returns the work intervals as separate rowingdata objects"""
+        if self.empty:
+            return None
+
+        df = self.df
+        workoutstateswork = [1, 4, 5, 8, 9, 6, 7]
+        workoutstatesrest = [3]
+        workoutstatetransition = [0, 2, 10, 11, 12, 13]
+
+        intervalnrs = pd.unique(df[' lapIdx'])
+        results = []
+        for idx in intervalnrs:
+            mask = df[' lapIdx'] == idx
+            td = df[mask]
+            mask = ~td[' WorkoutState'].isin(workoutstatesrest)
+            tdwork = td[mask]
+            tdwork['TimeStamp (sec)'] = tdwork['TimeStamp (sec)'] + self.rowdatetime.timestamp()
+            tdwork[' Horizontal (meters)'] = tdwork[' Horizontal (meters)'] - tdwork[' Horizontal (meters)'].min()
+            tdwork['orig_dist'] = tdwork['orig_dist'] - tdwork['orig_dist'].min()
+            tdwork[' ElapsedTime (sec)'] = tdwork[' ElapsedTime (sec)'] - tdwork[' ElapsedTime (sec)'].min()
+            tdwork['cum_dist'] = tdwork['cum_dist'] - tdwork['cum_dist'].min()
+
+            new_row = rowingdata(df=tdwork)
+            results.append(new_row)
+
+        return results
+
     def intervalstats(self, separator='|'):
         """ Used to create a nifty text summary, one row for each interval
 
