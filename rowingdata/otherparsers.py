@@ -437,7 +437,45 @@ class FITParser(object):
             if record.name == 'record':
                 values = record.get_values()
                 values['lapid'] = lapcounter
+                values['recordtype'] = record.name
                 recorddicts.append(values)
+            if record.name == 'obdii_data':
+                values = record.get_values()
+                values['lapid'] = lapcounter
+                values['recordtype'] = record.name
+                # if 'oarlock_stacked_per_degree_force' in values, convert from decimal to hex
+                if 'oarlock_stacked_per_degree_force' in values:
+                    hex_raw = hex(values['oarlock_stacked_per_degree_force'])
+                    # hex_raw is 4 stacked bytes, need to convert to 4 separate bytes
+                    byte1 = int(hex_raw[2:4],16)
+                    byte2 = int(hex_raw[4:6],16)
+                    byte3 = int(hex_raw[6:8],16)
+                    byte4 = int(hex_raw[8:10],16)
+                    # create a list of the 4 bytes, converted to int
+                    values['oarlock_stacked_per_degree_force'] = [byte1,byte2,byte3,byte4]
+                    # if oarlock_hand = 76, append 'L_' to each field name in the record
+                    if 'oarlock_hand' in values:
+                        if values['oarlock_hand'] == 76:
+                            new_values = {}
+                            for key in values:
+                                if key != 'oarlock_hand':
+                                    new_values['L_'+key] = values[key]
+                                else:
+                                    new_values[key] = values[key]
+                            values = new_values
+                        elif values['oarlock_hand'] == 82:
+                            new_values = {}
+                            for key in values:
+                                if key != 'oarlock_hand':
+                                    new_values['R_'+key] = values[key]
+                                else:
+                                    new_values[key] = values[key]
+                            values = new_values
+                    # merge with last record of name 'record' in recorddicts
+                    if recorddicts:
+                        if recorddicts[-1]['recordtype'] == 'record':
+                            recorddicts[-1].update(values)
+                            continue
             if record.name == 'lap':
                 lapcounter += 1
 
