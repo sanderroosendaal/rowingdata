@@ -443,39 +443,45 @@ class FITParser(object):
                 values = record.get_values()
                 values['lapid'] = lapcounter
                 values['recordtype'] = record.name
-                # if 'oarlock_stacked_per_degree_force' in values, convert from decimal to hex
-                if 'oarlock_stacked_per_degree_force' in values:
-                    hex_raw = hex(values['oarlock_stacked_per_degree_force'])
-                    # hex_raw is 4 stacked bytes, need to convert to 4 separate bytes
-                    byte1 = int(hex_raw[2:4],16)
-                    byte2 = int(hex_raw[4:6],16)
-                    byte3 = int(hex_raw[6:8],16)
-                    byte4 = int(hex_raw[8:10],16)
-                    # create a list of the 4 bytes, converted to int
-                    values['oarlock_stacked_per_degree_force'] = [byte1,byte2,byte3,byte4]
-                    # if oarlock_hand = 76, append 'L_' to each field name in the record
-                    if 'oarlock_hand' in values:
-                        if values['oarlock_hand'] == 76:
-                            new_values = {}
-                            for key in values:
-                                if key != 'oarlock_hand':
-                                    new_values['L_'+key] = values[key]
-                                else:
-                                    new_values[key] = values[key]
-                            values = new_values
-                        elif values['oarlock_hand'] == 82:
-                            new_values = {}
-                            for key in values:
-                                if key != 'oarlock_hand':
-                                    new_values['R_'+key] = values[key]
-                                else:
-                                    new_values[key] = values[key]
-                            values = new_values
-                    # merge with last record of name 'record' in recorddicts
-                    if recorddicts:
-                        if recorddicts[-1]['recordtype'] == 'record':
-                            recorddicts[-1].update(values)
-                            continue
+                all_forces = []
+
+                # Collect all oarlock_stacked_per_degree_force fields (there should be 33)
+                for field_name in values.keys():
+                    if field_name.startswith('oarlock_stacked_per_degree_force'):
+                        raw_64bit = values[field_name]
+                        # Unpack 64-bit into 4x16-bit values
+                        force1 = (raw_64bit >> 0) & 0xFFFF # bits 0-15
+                        force2 = (raw_64bit >> 16) & 0xFFFF # bits 16-31
+                        force3 = (raw_64bit >> 32) & 0xFFFF # bits 32-47
+                        force4 = (raw_64bit >> 48) & 0xFFFF # bits 48-63
+
+                        # Scale by 2 (as per the doc)
+                        forces = [f/2 for f in [force1, force2, force3, force4]]
+                        all_forces.extend(forces)
+
+                # Now, all_forces contains 132 values (33 fields x 4, last one unused)
+                if len(all_forces) == 132:
+                    all_forces = all_forces[:131]
+
+                # Store the forces in the values dict for further processing
+                values['oarlock_forces_per_degree'] = all_forces
+
+                # Prefix field names with 'L_' or 'R_'
+                if 'oarlock_hand' in values:
+                    prefix = 'L_' if values['oarlock_hand'] == 76 else 'R_' if values['oarlock_hand'] == 82 else ''
+                    if prefix:
+                        new_values = {}
+                        for key in values:
+                            if key != 'oarlock_hand':
+                                new_values[f"{prefix}{key}"] = values[key]
+                            else:
+                                new_values[key] = values[key]
+                        values = new_values
+
+                # Merge with last 'record' in recorddicts
+                if recorddicts and recorddicts[-1]['recordtype'] == 'record':
+                    recorddicts[-1].update(values)
+                    continue
             if record.name == 'lap':
                 lapcounter += 1
 
