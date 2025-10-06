@@ -380,15 +380,34 @@ def tcxtodf3(path):
                 extensions_element = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Extensions")
                 if extensions_element is not None:
                     # print child elements of extensions_element
-                    watts_node = extensions_element.find(".//{http://www.garmin.com/xmlschemas/ActivityExtension/v2}TPX/{http://www.garmin.com/xmlschemas/ActivityExtension/v2}Watts")
+                    # looks like so
+                    #<ns0:Extensions xmlns:ns0="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2" xmlns:ns1="http://www.garmin.com/xmlschemas/ActivityExtension/v2">
+                    #<ns1:ActivityTrackpointExtension>
+                    #  <ns0:Extensions>
+                    #    <ns0:Check>29</ns0:Check>
+                    #    <ns0:Bounce>1</ns0:Bounce>
+                    #    <ns0:Speed>0.23</ns0:Speed>
+                    #    <ns0:AvgSpeed>2.29</ns0:AvgSpeed>
+                    #    <ns0:Mps>0.00</ns0:Mps>
+                    #  </ns0:Extensions>
+                    #</ns1:ActivityTrackpointExtension>
+                    #</ns0:Extensions>
+                    # extract Check and Watts from the extensions
+                    watts_node = extensions_element.find(".//{http://www.garmin.com/xmlschemas/ActivityExtension/v2}ActivityTrackpointExtension/{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Extensions/{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Watts")
+                    check_factor = extensions_element.find(".//{http://www.garmin.com/xmlschemas/ActivityExtension/v2}ActivityTrackpointExtension/{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Extensions/{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Check")
+
+                    if watts_node is None:
+                        watts_node = extensions_element.find(".//{http://www.garmin.com/xmlschemas/ActivityExtension/v2}TPX/{http://www.garmin.com/xmlschemas/ActivityExtension/v2}Watts")
                     
                     watts = float(clean_string(watts_node.text)) if watts_node is not None else 0
 
-                    check_factor = extensions_element.find(".//{http://www.garmin.com/xmlschemas/ActivityExtension/v2}TPX/{http://www.garmin.com/xmlschemas/ActivityExtension/v2}Check")
+                    #check_factor = extensions_element.find(".//{http://www.garmin.com/xmlschemas/ActivityExtension/v2}TPX/{http://www.garmin.com/xmlschemas/ActivityExtension/v2}Check")
                     try:
                         check_factor = float(clean_string(check_factor.text)) if check_factor is not None else 0
                     except ValueError:
                         check_factor = 0
+
+
 
                 speed_node = trackpoint.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Speed")
                 speed = float(clean_string(speed_node.text)) if speed_node is not None else 0
