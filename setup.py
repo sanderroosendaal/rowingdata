@@ -32,7 +32,7 @@ setup(name='rowingdata',
 
       long_description=readme(),
 
-      url='',
+      url='https://github.com/sanderroosendaal/rowingdata',
 
       author='Sander Roosendaal',
 
