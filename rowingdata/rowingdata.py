@@ -83,10 +83,12 @@ try:
     from . import gpxwrite
     from . import trainingparser
     from . import writetcx
+    from . import fitwrite
 except (ValueError,ImportError): # pragma: no cover
     import rowingdata.gpxwrite
     import rowingdata.trainingparser
     import rowingdata.writetcx
+    import rowingdata.fitwrite
 
 import requests
 
@@ -3060,6 +3062,36 @@ class rowingdata:
             bytes = emptygpx.encode(encoding='UTF-8')
             with open(fileName,'wb+') as f_out:
                 f_out.write(bytes)
+
+    def exporttofit(self, fileName, notes="Exported by Rowingdata",
+                    sport="rowing", use_developer_fields=True):
+        """Export rowingdata to FIT format for Intervals.icu and other platforms.
+
+        Parameters
+        ----------
+        fileName : str
+            Output file path (e.g. 'activity.fit')
+        notes : str
+            Activity notes
+        sport : str
+            Sport type: 'rowing', 'indoor_rowing', 'water', 'other'
+        use_developer_fields : bool
+            If True, include rowing-specific columns (DriveLength, StrokeDistance,
+            etc.) when present. Requires fit-tool and Intervals.icu importer support.
+        """
+        if not self.empty:
+            df = self.df.copy()
+            res = make_cumvalues(df[' Horizontal (meters)'])
+            df[' Horizontal (meters)'] = res[0]
+            df['cum_dist'] = res[0]
+            fitwrite.write_fit(
+                fileName, df,
+                row_date=self.rowdatetime.isoformat(),
+                notes=notes, sport=sport,
+                use_developer_fields=use_developer_fields
+            )
+        else:  # pragma: no cover
+            raise ValueError("Cannot export empty rowingdata session to FIT")
 
     def split_by_intervals(self):
         """ Returns the work intervals as separate rowingdata objects"""

@@ -741,6 +741,65 @@ class TestFITParser:
         r.setsummary()
         assert_equal(r.summarytext[72:75],'250')
 
+    def test_exporttofit(self):
+        """Export FIT -> rowingdata -> FIT roundtrip."""
+        fitfile = 'testdata/3x250m.fit'
+        outfile = os.path.join(os.getcwd(), 'test_export.fit')
+        try:
+            r = rowingdata.FITParser(fitfile)
+            row = rowingdata.rowingdata(df=r.df)
+            row.exporttofit(outfile, sport='rowing')
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            # Verify re-read
+            r2 = rowingdata.FITParser(outfile)
+            assert_equal(len(r2.df), len(r.df))
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
+    def test_exporttofit_csv(self):
+        """Export from CSV source to FIT."""
+        csvfile = 'testdata/testdata.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_csv.fit')
+        try:
+            row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing')
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            r = rowingdata.FITParser(outfile)
+            assert_equal(r.df[' Horizontal (meters)'].max() > 0, True)
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
+    def test_fitwrite_developer_fields_readable(self):
+        """Verify developer fields written by fitwrite.py can be read via FITParser (fitparse)."""
+        csvfile = 'testdata/testdata.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_dev_fields.fit')
+        try:
+            row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing')
+            r = rowingdata.FITParser(outfile)
+            # FITParser lowercases column names; developer fields become strokedistance, drivelength, etc.
+            dev_cols = ['strokedistance', 'drivelength', 'drivetime']
+            found = [c for c in dev_cols if c in r.df.columns]
+            assert found, (
+                'Expected at least one developer field (strokedistance, drivelength, drivetime) '
+                'in parsed FIT columns; got: %s' % list(r.df.columns)
+            )
+            for col in found:
+                vals = r.df[col].dropna()
+                assert len(vals) > 0, 'Developer field %s has no non-null values' % col
+                assert vals.max() > 0, 'Developer field %s has no positive values' % col
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
 class TestSequence(unittest.TestCase):
     list=pd.read_csv('testdata/testdatasummary.csv')
     lijst=[]
