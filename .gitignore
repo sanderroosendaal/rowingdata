@@ -27,3 +27,4 @@
 
 # password
 .pypirc
+.aider*

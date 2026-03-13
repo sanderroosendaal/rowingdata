@@ -166,7 +166,7 @@ def main(): # pragma: no cover
 def my_autopct(pct, cutoff=5): # pragma: no cover
     return ('%4.1f%%' % pct) if pct > cutoff else ''
 
-def nanstozero(nr):
+def nanstozero(nr: float) -> float:
     if isnan(nr) or isinf(nr):
         return 0
     else:
@@ -187,7 +187,7 @@ def post_progress(secret,progressurl,progress): # pragma: no cover
 
 
 # toekomstmuziek - nog niet gebruikt
-def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None): # pragma: no cover
+def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None,barlimits=None,barverbosenames=None): # pragma: no cover
     if 'distance' in mode:
         xcolumn = 'cum_dist'
         dist_max = 1000
@@ -207,9 +207,12 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
         if barlimits is None:
             barlimits = ['lim_ut2','lim_ut1','lim_at','lim_tr','lim_an','lim_max']
         if barverbosenames is None:
-            barverbosenames = list(self.rwr.hrzones)
+            barverbosenames = list(r.rwr.hrzones)
 
     colors = ['gray','y','g','blue','violet','r']
+
+    dist_increments = df.loc[:, xcolumn].diff()
+    dist_increments[0] = dist_increments[1]
 
     for i in range(len(bars)):
         ax.bar(df.loc[:,xcolumn],df.loc[:,barnames[i]],
@@ -259,11 +262,12 @@ def make_subplot(ax,r,df,param,mode=['distance','ote'],bars=None,barnames=None):
             majorLocator = (1000)
 
 
+    majorTickFormatter = FuncFormatter(format_pace_tick)
     ax.yaxis.set_major_formatter(majorTickFormatter)
     if 'time' in mode:
         ax.set_xlabel('Time (sec)')
     else:
-        ax.set_axlabel('Distance (m)')
+        ax.set_xlabel('Distance (m)')
 
     if end_dist < dist_max:
         ax.set_xticks(list(range(dist_tick, end_dist, dist_tick)))
@@ -1228,7 +1232,7 @@ class summarydata: # pragma: no cover
                 totmin = totmin + 1
 
             stri2 += "{nr:0>2}{sep}{td:0>5}{sep} {inttime:0>5} {sep}".format(
-                nr=i + 1,
+                nr=index + 1,
                 sep=separator,
                 td=td,
                 inttime=inttime
@@ -1676,7 +1680,7 @@ def boatedit(fileName="my1x.txt"): # pragma: no cover
         ))
         if (strin != ""):
             try:
-                rg.spread = float(spread)
+                rg.spread = float(strin)
             except ValueError:
                 print("Not a valid number. Keeping original value")
     else:
@@ -1688,7 +1692,7 @@ def boatedit(fileName="my1x.txt"): # pragma: no cover
         ))
         if (strin != ""):
             try:
-                rg.span = float(span)
+                rg.span = float(strin)
             except ValueError:
                 print("Not a valid number. Keeping original value")
 
@@ -2178,6 +2182,67 @@ class rowingdata:
     """
 
     def __init__(self, *args, **kwargs):
+        """Initialize a rowingdata object from a CSV file or pandas DataFrame.
+        
+        This is the main class for reading and analyzing rowing workout data.
+        It parses CSV files from various rowing ergometer and on-the-water 
+        rowing systems, performs data validation and enrichment, and provides
+        methods for analysis, visualization, and export.
+        
+        Parameters
+        ----------
+        csvfile : str, optional
+            Path to the CSV file containing rowing data. Can be gzipped (.gz).
+            If not provided, a DataFrame must be passed via the 'df' parameter.
+        df : pandas.DataFrame, optional
+            A pre-loaded DataFrame containing rowing data. If provided, csvfile
+            is ignored.
+        rower : rowingdata.rower, optional
+            A rower object containing personal data (HR thresholds, FTP, etc.).
+            Defaults to a new rower() instance with default values.
+        rowtype : str, optional
+            Type of rowing data ('Indoor Rower', 'OTW', etc.). 
+            Defaults to 'Indoor Rower'.
+        absolutetimestamps : bool, optional
+            If True, timestamps are kept as Unix time (seconds since 1970).
+            If False (default), timestamps are relative to workout start.
+        debug : bool, optional
+            If True, enables debug output. Defaults to False.
+        
+        Attributes
+        ----------
+        df : pandas.DataFrame
+            The main data frame containing all rowing metrics.
+        readfilename : str
+            Name of the source file or 'rowing dataframe' if created from df.
+        rwr : rowingdata.rower
+            The rower object with personal training zones.
+        rowtype : str
+            Type of rowing data.
+        empty : bool
+            True if the DataFrame is empty.
+        duration : float
+            Total workout duration in seconds.
+        dragfactor : float
+            Drag factor from the rowing data (for ergometer data).
+        stroke_count : int
+            Total number of strokes in the workout.
+        
+        Examples
+        --------
+        >>> # Load from CSV file
+        >>> row = rowingdata(csvfile="workout.csv")
+        >>> row.summary()
+        
+        >>> # Load from DataFrame
+        >>> import pandas as pd
+        >>> df = pd.read_csv("workout.csv")
+        >>> row = rowingdata(df=df)
+        
+        >>> # With custom rower data
+        >>> my_rower = rower(hrut2=140, hrmax=190, ftp=250)
+        >>> row = rowingdata(csvfile="workout.csv", rower=my_rower)
+        """
 
         if 'debug' in kwargs: # pragma: no cover
             debug = kwargs['debug']
