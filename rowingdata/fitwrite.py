@@ -125,9 +125,10 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     else:
         unixtimes = seconds
 
-    # FIT timestamps in milliseconds (fit-tool convention)
+    # FIT timestamps in milliseconds (fit-tool convention for timestamp fields)
     start_time_ms = int(unixtimes[0] * 1000)
     total_elapsed_ms = int((unixtimes[-1] - unixtimes[0]) * 1000) if nr_rows > 1 else 0
+    total_elapsed_s = (unixtimes[-1] - unixtimes[0]) if nr_rows > 1 else 0.0  # seconds, for Activity/Session/Lap
 
     # Arrays for record messages
     try:
@@ -204,7 +205,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     # Activity message
     activity = ActivityMessage()
     activity.timestamp = start_time_ms
-    activity.total_timer_time = total_elapsed_ms
+    activity.total_timer_time = total_elapsed_s  # seconds; fit-tool applies scale 1000
     activity.num_sessions = 1
     activity.type = Activity.MANUAL
     activity.event = Event.TIMER
@@ -234,9 +235,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     session.message_index = 0
     session.timestamp = start_time_ms
     session.start_time = start_time_ms
-    session.total_elapsed_time = total_elapsed_ms
-    session.total_timer_time = total_elapsed_ms
-    session.total_distance = int(total_dist * 100)  # scale 100
+    session.total_elapsed_time = total_elapsed_s  # seconds; fit-tool applies scale 1000
+    session.total_timer_time = total_elapsed_s
+    session.total_distance = int(round(total_dist))  # fit-tool applies scale 100
     session.total_calories = total_calories
     session.sport = _sport_to_fit(sport)
     session.sub_sport = SubSport.GENERIC
@@ -255,9 +256,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     lap.message_index = 0
     lap.timestamp = int(unixtimes[-1] * 1000) if nr_rows > 0 else start_time_ms
     lap.start_time = start_time_ms
-    lap.total_elapsed_time = total_elapsed_ms
-    lap.total_timer_time = total_elapsed_ms
-    lap.total_distance = int(total_dist * 100)
+    lap.total_elapsed_time = total_elapsed_s  # seconds; fit-tool applies scale 1000
+    lap.total_timer_time = total_elapsed_s
+    lap.total_distance = int(round(total_dist))  # fit-tool applies scale 100
     lap.total_calories = total_calories
     lap.sport = _sport_to_fit(sport)
     lap.sub_sport = SubSport.GENERIC
@@ -303,6 +304,8 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 arr = dev_arrays[field_id]
                 val = float(arr[i])
                 if val != 0 or field_id == 9:  # WorkoutState can be 0
+                    # Pass display value; fit-tool encodes as raw = (value + offset) * scale.
+                    # FieldDescription has same scale so readers decode: display = raw/scale.
                     dev = DeveloperField(
                         developer_data_index=DEV_DATA_IDX,
                         field_id=field_id,
@@ -317,11 +320,12 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                     dev_fields.append(dev)
         rec = RecordMessage(developer_fields=dev_fields) if dev_fields else RecordMessage()
         rec.timestamp = int(unixtimes[i] * 1000)
-        rec.distance = int(distance_m[i] * 100)  # scale 100
+        rec.distance = float(distance_m[i])  # fit-tool applies scale 100
         rec.heart_rate = heart_rate[i] if heart_rate[i] > 0 else None
         rec.cadence = cadence[i] if cadence[i] > 0 else None
         rec.power = power[i] if power[i] > 0 else None
-        rec.enhanced_speed = int(enhanced_speed[i] * 1000) if enhanced_speed[i] > 0 else None  # scale 1000
+        # fit-tool expects display value (m/s); it applies scale 1000 internally
+        rec.enhanced_speed = float(enhanced_speed[i]) if enhanced_speed[i] > 0 else None
 
         if not (np.isnan(lat[i]) or lat[i] == 0) and not (np.isnan(lon[i]) or lon[i] == 0):
             rec.position_lat = float(lat[i])

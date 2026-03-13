@@ -11,6 +11,7 @@ from pytz import utc
 import six
 import os
 import io
+import shutil
 import warnings
 #warnings.filterwarnings("error")
 
@@ -799,6 +800,16 @@ class TestFITParser:
                 os.remove(outfile)
             except FileNotFoundError:
                 pass
+
+    def test_exporttofit_cottwich(self):
+        """Export cottwich.csv to FIT and verify roundtrip. Creates cottwich.fit in project root."""
+        csvfile = 'testdata/cottwich.csv'
+        outfile = os.path.join(os.getcwd(), 'cottwich.fit')
+        row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
+        row.exporttofit(outfile, sport='rowing')
+        assert_equal(rowingdata.get_file_type(outfile), 'fit')
+        r = rowingdata.FITParser(outfile)
+        assert_equal(r.df[' Horizontal (meters)'].max() > 0, True)
 
 class TestSequence(unittest.TestCase):
     list=pd.read_csv('testdata/testdatasummary.csv')
