@@ -56,4 +56,5 @@ tzdata==2024.1
 urllib3==2.2.1
 wcwidth==0.2.13
 xmltodict==0.13.0
+fit-tool>=0.9.14
 zipp==3.18.1
