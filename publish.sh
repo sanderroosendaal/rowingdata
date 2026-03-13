@@ -1,5 +1,7 @@
 #!/bin/sh
-python setup.py develop install
+# Run: pip install -r requirements-publish.txt  (twine, sphinx) before first publish
+set -e
+pip install -e .
 python setup.py sdist
-twine upload --skip-existing dist/*.gz
-python setup.py build_sphinx -E
+twine upload --skip-existing dist/*
+python setup.py build_sphinx -E 2>/dev/null || true
