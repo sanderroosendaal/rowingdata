@@ -9,6 +9,12 @@ def readme():
     with open('README.rst') as f:
         return f.read()
 
+try:
+    from sphinx.setup_command import BuildDoc
+    cmdclass = {'build_sphinx': BuildDoc}
+except ImportError:
+    cmdclass = {}
+
 setup(name='rowingdata',
       version=re.search(
           '^__version__\s*=\s*"(.*)"',
@@ -65,6 +71,7 @@ setup(name='rowingdata',
 
       zip_safe=False,
       include_package_data=True,
+      cmdclass=cmdclass,
       # relative to the rowingdata directory
       package_data={
           'testdata':[
