@@ -54,7 +54,7 @@ ROWING_DEV_FIELDS = [
 ]
 
 # Oarlock scalar fields (field_id, [possible_df_columns], name, base_type, size, scale, units).
-# Cottwich: catch, finish, slip, wash, peakforceangle, effectiveLength. NK: catchAngle, finishAngle.
+# NK Logbook (Oarlock): catch, finish, slip, wash, peakforceangle, effectiveLength; catchAngle, finishAngle.
 OARLOCK_DEV_FIELDS = [
     (11, ['catch', ' catch', 'catchAngle'], 'Catch', BaseType.SINT16, 2, 10, 'deg'),
     (12, ['finish', ' finish', 'finishAngle'], 'Finish', BaseType.SINT16, 2, 10, 'deg'),

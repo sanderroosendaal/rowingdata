@@ -801,10 +801,10 @@ class TestFITParser:
             except FileNotFoundError:
                 pass
 
-    def test_exporttofit_cottwich(self):
-        """Export cottwich.csv to FIT and verify roundtrip. Creates cottwich.fit in project root."""
-        csvfile = 'testdata/cottwich.csv'
-        outfile = os.path.join(os.getcwd(), 'cottwich.fit')
+    def test_exporttofit_nk_oarlock(self):
+        """Export NK Logbook data (Oarlock/SpeedCoach format) to FIT and verify roundtrip."""
+        csvfile = 'testdata/cottwich.csv'  # NK Logbook format
+        outfile = os.path.join(os.getcwd(), 'test_export_nk_oarlock.fit')
         row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
         row.exporttofit(outfile, sport='rowing')
         assert_equal(rowingdata.get_file_type(outfile), 'fit')
@@ -839,9 +839,9 @@ class TestFITParser:
             except FileNotFoundError:
                 pass
 
-    def test_exporttofit_cottwich_oarlock_scalars(self):
-        """Export cottwich.csv to FIT; verify oarlock developer fields (catch, finish, slip, wash, peakforceangle, effectiveLength)."""
-        csvfile = 'testdata/cottwich.csv'
+    def test_exporttofit_nk_oarlock_scalars(self):
+        """Export NK Logbook data to FIT; verify oarlock developer fields (catch, finish, slip, wash, peakforceangle, effectiveLength)."""
+        csvfile = 'testdata/cottwich.csv'  # NK Logbook format
         outfile = os.path.join(os.getcwd(), 'test_export_oarlock.fit')
         try:
             row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)

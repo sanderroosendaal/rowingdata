@@ -26,8 +26,9 @@ We export native fields for standard metrics plus developer fields for rowing-sp
 ## Naming and field choices
 
 - **StrokeDriveTime** – drive phase time (ms). Named for symmetry with StrokeRecoveryTime.
-- **DriveLength** – handle distance (meters). Per README: distance traveled by the handle along the longitudinal axis of the boat or erg. For OTW rowing, this is the projection of the handle trajectory on the longitudinal axis (not the full path the hands travel). For indoor rowing, typically handle travel catch-to-finish.
-- **StrokeDistance** – distance traveled during the stroke cycle (meters). Per README: the distance the boat/erg travels during one stroke cycle. Distinct from DriveLength (handle distance). Developer field used because Garmin native cycle_length maxes at 2.55 m, too small for rowing (7–12 m typical).
+- **DriveLength** – handle distance (meters). Per README: distance traveled by the handle along the longitudinal axis of the boat or erg. For OTW rowing, this is the projection of the handle trajectory on the longitudinal axis (not the full path the hands travel). For indoor rowing, typically handle travel catch-to-finish. Typical range: 1.2–1.5 m. This is a *stroke output* metric.
+- **StrokeDistance** – distance traveled during the stroke cycle (meters). Per README: the distance the boat/erg travels during one stroke cycle. Distinct from DriveLength (handle distance). Typical range: 7–12 m for OTW. Developer field used because Garmin native cycle_length maxes at 2.55 m, too small for rowing.
+- **DriveLength vs EffectiveLength** – Not duplicates. **DriveLength** is the actual distance the handle traveled during the stroke (~1.2–1.5 m). **EffectiveLength** is an oarlock/rigging metric: the effective lever length (horizontal component from pin to handle, often in cm). It describes rigging geometry, varies slightly stroke-to-stroke, and comes from NK Logbook (Oarlock). Both can appear in the same dataset.
 - **Stroke Number** – stored in the native **total_cycles** field (Garmin/ANT+ cycles). Rowing machines report it via ANT+ to Garmin watches; we write it per record since data is per stroke.
 
 ## Developer fields exported
@@ -52,7 +53,7 @@ We export native fields for standard metrics plus developer fields for rowing-sp
 | peakforceangle | PeakForceAngle | SINT16 | 10 | deg |
 | effectiveLength | EffectiveLength | UINT16 | 100 | m |
 
-Oarlock scalars (catch, finish, slip, wash, peakforceangle, effectiveLength) are exported when present. Cottwich and NK Logbook use these columns.
+Oarlock scalars (catch, finish, slip, wash, peakforceangle, effectiveLength) are exported when present. NK Logbook (Oarlock) uses these columns. See README *Oarlock scalars (OTW rigging)* for definitions. **EffectiveLength** is distinct from **DriveLength**: the former is rigging geometry (effective lever length); the latter is actual handle travel distance.
 
 These have no native equivalents. Apps like Intervals.icu can import them when the developer field descriptions are present.
 
