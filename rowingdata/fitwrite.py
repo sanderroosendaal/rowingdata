@@ -32,11 +32,13 @@ except ImportError:
     FIT_TOOL_AVAILABLE = False
 
 # Developer field definitions for rowing-specific columns (no native FIT equivalent).
-# StrokeDistance is here: native cycle_length is uint8/scale100 (max 2.55m), wrong for rowing (7–12m typical).
+# Per README spec: DriveLength = handle distance (projection on longitudinal axis);
+# StrokeDistance = distance traveled during stroke cycle (boat/erg travel).
+# Native cycle_length is uint8/scale100 (max 2.55m), wrong for rowing (7–12m typical).
 # (field_id, df_column, name, base_type, size, scale, units)
 ROWING_DEV_FIELDS = [
     (0, ' DriveLength (meters)', 'DriveLength', BaseType.UINT16, 2, 100, 'm'),
-    (1, ' DriveTime (ms)', 'DriveTime', BaseType.UINT16, 2, 1, 'ms'),
+    (1, ' DriveTime (ms)', 'StrokeDriveTime', BaseType.UINT16, 2, 1, 'ms'),
     (2, ' DragFactor', 'DragFactor', BaseType.UINT16, 2, 1, ''),
     (3, ' StrokeRecoveryTime (ms)', 'StrokeRecoveryTime', BaseType.UINT16, 2, 1, 'ms'),
     (4, ' AverageDriveForce (lbs)', 'AverageDriveForceLbs', BaseType.UINT16, 2, 10, 'lbs'),
@@ -168,6 +170,15 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     except KeyError:
         lat = np.zeros(nr_rows)
         lon = np.zeros(nr_rows)
+
+    # Stroke number for native total_cycles field (data is per-stroke, one record per stroke)
+    try:
+        stroke_number = df[' Stroke Number'].values.astype(int)
+    except KeyError:
+        try:
+            stroke_number = df['sessionStrokeIndex'].values.astype(int) + 1  # 1-based
+        except KeyError:
+            stroke_number = np.arange(1, nr_rows + 1, dtype=int)  # 1-based row index
 
     # Developer fields: which columns exist and their arrays
     use_dev = use_developer_fields and FIT_TOOL_AVAILABLE
@@ -326,6 +337,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         rec.power = power[i] if power[i] > 0 else None
         # fit-tool expects display value (m/s); it applies scale 1000 internally
         rec.enhanced_speed = float(enhanced_speed[i]) if enhanced_speed[i] > 0 else None
+        # Native total_cycles = stroke number (Garmin field; data is per-stroke)
+        if hasattr(rec, 'total_cycles'):
+            rec.total_cycles = int(stroke_number[i])
 
         if not (np.isnan(lat[i]) or lat[i] == 0) and not (np.isnan(lon[i]) or lon[i] == 0):
             rec.position_lat = float(lat[i])

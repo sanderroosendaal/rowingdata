@@ -784,11 +784,11 @@ class TestFITParser:
             row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
             row.exporttofit(outfile, sport='rowing')
             r = rowingdata.FITParser(outfile)
-            # FITParser lowercases column names; developer fields become strokedistance, drivelength, etc.
-            dev_cols = ['strokedistance', 'drivelength', 'drivetime']
+            # FITParser lowercases column names; developer fields become strokedistance, drivelength, strokedrivetime.
+            dev_cols = ['strokedistance', 'drivelength', 'strokedrivetime']
             found = [c for c in dev_cols if c in r.df.columns]
             assert found, (
-                'Expected at least one developer field (strokedistance, drivelength, drivetime) '
+                'Expected at least one developer field (strokedistance, drivelength, strokedrivetime) '
                 'in parsed FIT columns; got: %s' % list(r.df.columns)
             )
             for col in found:
