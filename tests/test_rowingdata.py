@@ -862,10 +862,11 @@ class TestFITParser:
 
     def test_exporttofit_instroke_off_default(self):
         """Instroke export defaults to 'off' – no curve export, backward compatible."""
-        csvfile = 'testdata/quiske_per_stroke_left.csv'
+        csvfile = 'testdata/rp3intervals2.csv'
         outfile = os.path.join(os.getcwd(), 'test_export_instroke_off.fit')
         try:
-            row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
+            r = rowingdata.RowPerfectParser(csvfile)
+            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
             row.exporttofit(outfile, sport='rowing', instroke_export='off')
             assert_equal(rowingdata.get_file_type(outfile), 'fit')
             assert_false(os.path.exists(os.path.splitext(outfile)[0] + '.instroke.json'))
@@ -877,29 +878,21 @@ class TestFITParser:
 
     def test_exporttofit_instroke_companion(self):
         """Instroke companion export writes .instroke.json sidecar."""
-        csvfile = 'testdata/quiske_per_stroke_left.csv'
+        csvfile = 'testdata/rp3intervals2.csv'
         outfile = os.path.join(os.getcwd(), 'test_export_instroke_companion.fit')
         companion = os.path.splitext(outfile)[0] + '.instroke.json'
         try:
-            row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
+            r = rowingdata.RowPerfectParser(csvfile)
+            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
             row.exporttofit(outfile, sport='rowing', instroke_export='companion')
             assert_equal(rowingdata.get_file_type(outfile), 'fit')
-            # Quiske may or may not create companion depending on curve column detection
-            # Try RP3 which has curve_data
-            csvfile2 = 'testdata/rp3intervals2.csv'
-            outfile2 = os.path.join(os.getcwd(), 'test_export_rp3_companion.fit')
-            companion2 = os.path.splitext(outfile2)[0] + '.instroke.json'
-            r = rowingdata.RowPerfectParser(csvfile2)
-            row2 = rowingdata.rowingdata(df=r.df)
-            row2.exporttofit(outfile2, sport='rowing', instroke_export='companion')
-            if os.path.exists(companion2):
-                import json
-                with open(companion2) as f:
-                    data = json.load(f)
-                assert 'HandleForceCurve' in data or len(data) >= 1
+            assert os.path.exists(companion), 'Companion .instroke.json should exist for RP3 curve_data'
+            import json
+            with open(companion) as f:
+                data = json.load(f)
+            assert 'HandleForceCurve' in data or len(data) >= 1
         finally:
-            for p in [outfile, companion, os.path.join(os.getcwd(), 'test_export_rp3_companion.fit'),
-                      os.path.join(os.getcwd(), 'test_export_rp3_companion.instroke.json')]:
+            for p in [outfile, companion]:
                 try:
                     os.remove(p)
                 except FileNotFoundError:

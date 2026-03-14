@@ -494,9 +494,11 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 field_id = base_id
                 name = '%s_%s' % (canonical, metric)
                 arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
-                arr = np.clip(arr, 0, 65535)  # UINT16 for summary metrics
+                # UINT16: encoded = value * scale, must be <= 65535. Scale 1 => max display 65535
+                scale = 1
+                arr = np.clip(arr, 0, 65535.0 / max(scale, 1))
                 dev_arrays[field_id] = arr
-                dev_specs.append((field_id, col, name, BaseType.UINT16, 2, 1000, ''))
+                dev_specs.append((field_id, col, name, BaseType.UINT16, 2, scale, ''))
                 instroke_summary_arrays.setdefault(col, {})[metric] = field_id
                 base_id += 1
             base_id = (base_id // 10 + 1) * 10

@@ -504,7 +504,7 @@ Data Fields
 
 The available data fields are
 
-* 'Timestamp (sec)'
+* 'TimeStamp (sec)'
 * ' Horizontal (meters)'
 * ' Cadence (stokes/min'
 * ' HRCur (bpm)'
@@ -541,7 +541,7 @@ Field Names (Columns)
 
 The standard field names are:
 
-* 'Timestamp (sec)'
+* 'TimeStamp (sec)'
 * ' Horizontal (meters)'
 * ' Cadence (stokes/min'
 * ' HRCur (bpm)'
