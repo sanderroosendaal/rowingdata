@@ -7,7 +7,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import datetime
+import json
+import os
 import numpy as np
+import pandas as pd
 from dateutil import parser as ps
 import arrow
 
@@ -49,6 +52,112 @@ ROWING_DEV_FIELDS = [
     (9, ' WorkoutState', 'WorkoutState', BaseType.UINT8, 1, 1, ''),
     (10, ' StrokeDistance (meters)', 'StrokeDistance', BaseType.UINT16, 2, 100, 'm'),
 ]
+
+# Oarlock scalar fields (field_id, [possible_df_columns], name, base_type, size, scale, units).
+# Cottwich: catch, finish, slip, wash, peakforceangle, effectiveLength. NK: catchAngle, finishAngle.
+OARLOCK_DEV_FIELDS = [
+    (11, ['catch', ' catch', 'catchAngle'], 'Catch', BaseType.SINT16, 2, 10, 'deg'),
+    (12, ['finish', ' finish', 'finishAngle'], 'Finish', BaseType.SINT16, 2, 10, 'deg'),
+    (13, ['slip', ' slip'], 'Slip', BaseType.SINT16, 2, 10, 'deg'),
+    (14, ['wash', ' wash'], 'Wash', BaseType.SINT16, 2, 10, 'deg'),
+    (15, ['peakforceangle', ' peakforceangle'], 'PeakForceAngle', BaseType.SINT16, 2, 10, 'deg'),
+    (16, ['effectiveLength', ' effectiveLength', 'effective length'], 'EffectiveLength', BaseType.UINT16, 2, 100, 'm'),
+]
+
+# Canonical mapping: df column name -> FIT curve type name (RP3/Quiske)
+INSTROKE_COLUMN_MAP = {
+    'curve_data': 'HandleForceCurve',
+    'boat accelerator curve': 'BoatAcceleratorCurve',
+    'oar angle velocity curve': 'OarAngleVelocityCurve',
+    'seat curve': 'SeatCurve',
+}
+
+def _parse_instroke_curve(df, col):
+    """Parse curve column to DataFrame of numeric values. Same format as rowingdata get_instroke_data."""
+    d = df[col].astype(str).str[1:-1].str.split(',', expand=True)
+    return d.apply(pd.to_numeric, errors='coerce')
+
+
+def _compute_instroke_summary(df, col):
+    """
+    Compute per-stroke summary metrics for a curve column (q1..q4, diff, maxpos, minpos).
+    Mirrors add_instroke_metrics, add_instroke_diff, add_instroke_maxminpos from rowingdata.
+    Returns dict with keys q1,q2,q3,q4,diff,maxpos,minpos (each a 1D array of length len(df)).
+    """
+    curve = _parse_instroke_curve(df, col)
+    dfnorm = curve.copy().abs()
+    row_max = dfnorm.T.max()
+    row_max = row_max.replace(0, np.nan)
+    dfnorm = dfnorm.T / row_max.values
+    dfnorm = dfnorm.T
+    dfnorm = dfnorm.fillna(0)
+
+    ncol = len(dfnorm.columns)
+    markers = (np.arange(5) * ncol / 4).astype(int)
+    q1 = dfnorm.iloc[:, markers[0]:markers[1]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
+    q2 = dfnorm.iloc[:, markers[1]:markers[2]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
+    q3 = dfnorm.iloc[:, markers[2]:markers[3]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
+    q4 = dfnorm.iloc[:, markers[3]:markers[4]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
+
+    diff_mat = dfnorm.diff(axis=0).fillna(0) ** 2
+    diff_arr = (diff_mat.sum(axis=1) / float(ncol)).fillna(0).values
+
+    min_idxs = dfnorm.idxmin(axis=1)
+    max_idxs = dfnorm.idxmax(axis=1)
+    maxpos = (max_idxs.astype(float) / ncol).fillna(0).values
+    minpos = (min_idxs.astype(float) / ncol).fillna(0).values
+
+    return {'q1': q1, 'q2': q2, 'q3': q3, 'q4': q4, 'diff': diff_arr, 'maxpos': maxpos, 'minpos': minpos}
+
+
+def _downsample_instroke_curve(df, col, n_points):
+    """Downsample each row's curve to n_points. Returns list of arrays, one per row."""
+    curve = _parse_instroke_curve(df, col)
+    result = []
+    for i in range(len(curve)):
+        row = curve.iloc[i].dropna().values
+        row = row[np.isfinite(row)]
+        if len(row) < 2:
+            result.append(np.zeros(n_points))
+            continue
+        if len(row) <= n_points:
+            padded = np.zeros(n_points)
+            padded[:len(row)] = row
+            result.append(padded)
+            continue
+        indices = np.linspace(0, len(row) - 1, n_points, dtype=int)
+        result.append(row[indices].astype(float))
+    return result
+
+
+def _detect_instroke_columns(df):
+    """
+    Detect columns containing comma-separated numeric curve data (in-stroke).
+    Returns list of column names where str[1:-1].split(',') yields at least 2 numeric values.
+    Matches rowingdata get_instroke_columns logic.
+    """
+    cols = []
+    for c in df.columns:
+        try:
+            d = df[c].astype(str).str[1:-1].str.split(',', expand=True)
+            if d.shape[1] < 2:
+                continue
+            # Check first non-null row has at least 2 numeric values
+            row0 = d.iloc[0]
+            numeric_count = 0
+            for v in row0[:5]:
+                try:
+                    x = pd.to_numeric(v, errors='coerce')
+                    if pd.notna(x) and not (isinstance(x, float) and np.isnan(x)):
+                        numeric_count += 1
+                except (TypeError, ValueError):
+                    pass
+            if numeric_count >= 2:
+                cols.append(c)
+        except (IndexError, KeyError, AttributeError, TypeError, ValueError):
+            pass
+    return cols
+
 
 # Sport string to FIT enum mapping
 SPORT_MAP = {
@@ -160,8 +269,62 @@ def _compute_interval_summaries(df, lap_col, unixtimes, distance_m, heart_rate, 
     return summaries
 
 
+def _parse_instroke_curve(df, col):
+    """Parse curve column to DataFrame of numeric values (matches get_instroke_data format)."""
+    d = df[col].astype(str).str[1:-1].str.split(',', expand=True)
+    return d.apply(pd.to_numeric, errors='coerce')
+
+
+def _compute_instroke_summary(df, col):
+    """
+    Compute per-stroke summary metrics for in-stroke curve (q1,q2,q3,q4,diff,maxpos,minpos).
+    Matches add_instroke_metrics, add_instroke_diff, add_instroke_maxminpos logic.
+    """
+    curve_df = _parse_instroke_curve(df, col)
+    curve_df = curve_df.fillna(0)
+    if curve_df.empty or curve_df.shape[1] < 2:
+        return None
+    dfnorm = curve_df.abs()
+    row_max = dfnorm.max(axis=1).replace(0, 1)
+    dfnorm = dfnorm.div(row_max, axis=0)
+    ncol = len(curve_df.columns)
+    markers = (np.arange(5) * ncol / 4).astype(int)
+    q1 = dfnorm.iloc[:, markers[0]:markers[1]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
+    q2 = dfnorm.iloc[:, markers[1]:markers[2]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
+    q3 = dfnorm.iloc[:, markers[2]:markers[3]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
+    q4 = dfnorm.iloc[:, markers[3]:markers[4]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
+    diff = (curve_df.diff().fillna(0) ** 2).sum(axis=1) / ncol
+    minpos = curve_df.idxmin(axis=1).astype(float) / ncol
+    maxpos = curve_df.idxmax(axis=1).astype(float) / ncol
+    return {
+        'q1': q1, 'q2': q2, 'q3': q3, 'q4': q4,
+        'diff': diff.values, 'maxpos': maxpos.values, 'minpos': minpos.values,
+    }
+
+
+def _downsample_curve_series(series, n_points):
+    """Downsample comma-separated curve to n_points. Returns list of floats per row."""
+    curves = []
+    for val in series:
+        s = str(val).strip().strip('"')
+        inner = s[1:-1] if len(s) > 2 else s
+        parts = [float(x) for x in inner.split(',') if x.strip()]
+        if len(parts) < 2:
+            curves.append([0.0] * n_points)
+            continue
+        if len(parts) <= n_points:
+            pad = [0.0] * (n_points - len(parts))
+            curves.append(parts + pad)
+        else:
+            idx = np.linspace(0, len(parts) - 1, n_points, dtype=int)
+            curves.append([float(parts[i]) for i in idx])
+    return curves
+
+
 def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdata",
-              sport="rowing", use_developer_fields=True):
+              sport="rowing", use_developer_fields=True,
+              instroke_export='off', instroke_columns=None, instroke_column_map=None,
+              instroke_downsample_points=16):
     """
     Write rowingdata DataFrame to a FIT activity file.
 
@@ -181,6 +344,18 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         If True, include rowing-specific columns as developer fields when present.
         If False, export only standard FIT fields (timestamp, distance, cadence,
         heart_rate, power, speed, position).
+    instroke_export : str
+        'off' (default): no in-stroke curve export.
+        'summary': export q1,q2,q3,q4,diff,maxpos,minpos per curve as developer fields.
+        'downsampled': export fixed-length downsampled curve (SINT16 array) per stroke.
+        'companion': write curve data to .instroke.json sidecar file.
+    instroke_columns : list, optional
+        Curve columns to export. If None, auto-detect via _detect_instroke_columns.
+    instroke_column_map : dict, optional
+        Override mapping from df column name to canonical FIT curve type name.
+        Default: curve_data->HandleForceCurve, boat accelerator curve->BoatAcceleratorCurve, etc.
+    instroke_downsample_points : int
+        Number of points for downsampled export (default 16).
     """
     if not FIT_TOOL_AVAILABLE:
         raise ImportError("fit-tool is required for FIT export. Install with: pip install fit-tool")
@@ -277,8 +452,67 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 elif base_type == BaseType.UINT16:
                     max_display = 65535.0 / scale if scale else 65535.0
                     arr = np.clip(arr, 0, max_display)
+                elif base_type == BaseType.SINT16:
+                    max_display = 32767.0 / scale if scale else 32767.0
+                    min_display = -32768.0 / scale if scale else -32768.0
+                    arr = np.clip(arr, min_display, max_display)
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, base_type, size, scale, units))
+        for fd in OARLOCK_DEV_FIELDS:
+            field_id, possible_cols, name, base_type, size, scale, units = fd
+            col = next((c for c in possible_cols if c in df.columns), None)
+            if col is not None:
+                arr = df[col].values
+                arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
+                if base_type == BaseType.SINT16:
+                    max_display = 32767.0 / scale if scale else 32767.0
+                    min_display = -32768.0 / scale if scale else -32768.0
+                    arr = np.clip(arr, min_display, max_display)
+                elif base_type == BaseType.UINT16:
+                    max_display = 65535.0 / scale if scale else 65535.0
+                    arr = np.clip(arr, 0, max_display)
+                dev_arrays[field_id] = arr
+                dev_specs.append((field_id, col, name, base_type, size, scale, units))
+
+    # In-stroke curve export (summary, downsampled, or companion)
+    instroke_curve_cols = []
+    instroke_summary_arrays = {}
+    instroke_downsampled_arrays = {}
+    col_map = instroke_column_map if instroke_column_map is not None else INSTROKE_COLUMN_MAP
+    if instroke_export in ('summary', 'downsampled', 'companion'):
+        curve_cols = instroke_columns if instroke_columns is not None else _detect_instroke_columns(df)
+        instroke_curve_cols = [c for c in curve_cols if c in df.columns]
+    if instroke_export == 'summary' and instroke_curve_cols and use_dev:
+        base_id = 20
+        for col in instroke_curve_cols:
+            canonical = col_map.get(col, col)
+            try:
+                summ = _compute_instroke_summary(df, col)
+            except (ValueError, KeyError, TypeError):
+                continue
+            for metric, arr in summ.items():
+                field_id = base_id
+                name = '%s_%s' % (canonical, metric)
+                arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
+                arr = np.clip(arr, 0, 65535)  # UINT16 for summary metrics
+                dev_arrays[field_id] = arr
+                dev_specs.append((field_id, col, name, BaseType.UINT16, 2, 1000, ''))
+                instroke_summary_arrays.setdefault(col, {})[metric] = field_id
+                base_id += 1
+            base_id = (base_id // 10 + 1) * 10
+    elif instroke_export == 'downsampled' and instroke_curve_cols and use_dev:
+        base_id = 60
+        for col in instroke_curve_cols:
+            canonical = col_map.get(col, col)
+            try:
+                downsampled = _downsample_instroke_curve(df, col, instroke_downsample_points)
+            except (ValueError, KeyError, TypeError):
+                continue
+            arr_2d = np.array(downsampled, dtype=np.float64)
+            size = instroke_downsample_points * 2
+            dev_arrays[base_id] = arr_2d
+            dev_specs.append((base_id, col, canonical, BaseType.SINT16, size, 1, ''))
+            base_id += 1
 
     # Build FIT file
     min_str = 50 if dev_specs else 8
@@ -384,21 +618,43 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         dev_fields = []
         if dev_specs:
             for field_id, col, name, base_type, size, scale, units in dev_specs:
+                if field_id not in dev_arrays:
+                    continue
                 arr = dev_arrays[field_id]
-                val = float(arr[i])
-                if val != 0 or field_id == 9:  # WorkoutState can be 0
-                    dev = DeveloperField(
-                        developer_data_index=DEV_DATA_IDX,
-                        field_id=field_id,
-                        size=size,
-                        name=name,
-                        base_type=base_type,
-                        scale=scale,
-                        offset=0,
-                        units=units
-                    )
-                    dev.set_value(0, val)
-                    dev_fields.append(dev)
+                is_array_field = (base_type == BaseType.SINT16 and size > 2)
+                if is_array_field and arr.ndim == 2:
+                    row = arr[i]
+                    vals = np.clip(row, -32768, 32767).astype(np.int32)
+                    has_data = np.any(vals != 0)
+                    if has_data:
+                        dev = DeveloperField(
+                            developer_data_index=DEV_DATA_IDX,
+                            field_id=field_id,
+                            size=size,
+                            name=name,
+                            base_type=base_type,
+                            scale=1,
+                            offset=0,
+                            units=units
+                        )
+                        for j, v in enumerate(vals):
+                            dev.set_value(j, int(v))
+                        dev_fields.append(dev)
+                else:
+                    val = float(arr[i])
+                    if val != 0 or field_id == 9:  # WorkoutState can be 0
+                        dev = DeveloperField(
+                            developer_data_index=DEV_DATA_IDX,
+                            field_id=field_id,
+                            size=size,
+                            name=name,
+                            base_type=base_type,
+                            scale=scale,
+                            offset=0,
+                            units=units
+                        )
+                        dev.set_value(0, val)
+                        dev_fields.append(dev)
         rec = RecordMessage(developer_fields=dev_fields) if dev_fields else RecordMessage()
         rec.timestamp = int(unixtimes[i] * 1000)
         rec.distance = float(distance_m[i])
@@ -478,3 +734,26 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
 
     fit_file = builder.build()
     fit_file.to_file(file_name)
+
+    # Companion export: write .instroke.json sidecar when instroke_export='companion'
+    if instroke_export == 'companion' and instroke_curve_cols:
+        col_map = instroke_column_map if instroke_column_map is not None else INSTROKE_COLUMN_MAP
+        base, _ = os.path.splitext(file_name)
+        companion_path = base + '.instroke.json'
+        curves = {}
+        for col in instroke_curve_cols:
+            canonical = col_map.get(col, col)
+            try:
+                parsed = _parse_instroke_curve(df, col)
+                # Per-stroke: list of curve values (as list for JSON)
+                strokes = []
+                for i in range(len(parsed)):
+                    row = parsed.iloc[i].dropna().values
+                    row = [float(x) for x in row if np.isfinite(x)]
+                    strokes.append(row)
+                curves[canonical] = strokes
+            except (ValueError, KeyError, TypeError):
+                pass
+        if curves:
+            with open(companion_path, 'w') as f:
+                json.dump(curves, f)

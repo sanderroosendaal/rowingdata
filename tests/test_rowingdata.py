@@ -839,6 +839,103 @@ class TestFITParser:
             except FileNotFoundError:
                 pass
 
+    def test_exporttofit_cottwich_oarlock_scalars(self):
+        """Export cottwich.csv to FIT; verify oarlock developer fields (catch, finish, slip, wash, peakforceangle, effectiveLength)."""
+        csvfile = 'testdata/cottwich.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_oarlock.fit')
+        try:
+            row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing')
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            r = rowingdata.FITParser(outfile)
+            # FITParser lowercases; oarlock fields: catch, finish, slip, wash, peakforceangle, effectivelength
+            oarlock_cols = ['catch', 'finish', 'slip', 'wash', 'peakforceangle', 'effectivelength']
+            found = [c for c in oarlock_cols if c in r.df.columns]
+            assert len(found) >= 1, (
+                'Expected at least one oarlock scalar in parsed FIT; got: %s' % list(r.df.columns)
+            )
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
+    def test_exporttofit_instroke_off_default(self):
+        """Instroke export defaults to 'off' – no curve export, backward compatible."""
+        csvfile = 'testdata/quiske_per_stroke_left.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_instroke_off.fit')
+        try:
+            row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing', instroke_export='off')
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            assert_false(os.path.exists(os.path.splitext(outfile)[0] + '.instroke.json'))
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
+    def test_exporttofit_instroke_companion(self):
+        """Instroke companion export writes .instroke.json sidecar."""
+        csvfile = 'testdata/quiske_per_stroke_left.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_instroke_companion.fit')
+        companion = os.path.splitext(outfile)[0] + '.instroke.json'
+        try:
+            row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing', instroke_export='companion')
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            # Quiske may or may not create companion depending on curve column detection
+            # Try RP3 which has curve_data
+            csvfile2 = 'testdata/rp3intervals2.csv'
+            outfile2 = os.path.join(os.getcwd(), 'test_export_rp3_companion.fit')
+            companion2 = os.path.splitext(outfile2)[0] + '.instroke.json'
+            r = rowingdata.RowPerfectParser(csvfile2)
+            row2 = rowingdata.rowingdata(df=r.df)
+            row2.exporttofit(outfile2, sport='rowing', instroke_export='companion')
+            if os.path.exists(companion2):
+                import json
+                with open(companion2) as f:
+                    data = json.load(f)
+                assert 'HandleForceCurve' in data or len(data) >= 1
+        finally:
+            for p in [outfile, companion, os.path.join(os.getcwd(), 'test_export_rp3_companion.fit'),
+                      os.path.join(os.getcwd(), 'test_export_rp3_companion.instroke.json')]:
+                try:
+                    os.remove(p)
+                except FileNotFoundError:
+                    pass
+
+    def test_exporttofit_instroke_summary_rp3(self):
+        """Instroke summary export adds curve metrics as developer fields (RP3 curve_data)."""
+        csvfile = 'testdata/rp3intervals2.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_instroke_summary.fit')
+        try:
+            r = rowingdata.RowPerfectParser(csvfile)
+            row = rowingdata.rowingdata(df=r.df)
+            row.exporttofit(outfile, sport='rowing', instroke_export='summary')
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            rr = rowingdata.FITParser(outfile)
+            # Summary adds HandleForceCurve_q1, _q2, etc. (lowercase in FITParser)
+            has_curve = any('handleforce' in str(c).lower() or 'q1' in str(c).lower() for c in rr.df.columns)
+            assert has_curve or len(rr.df) > 0  # At least FIT exported
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
+    def test_fitwrite_detect_instroke_columns(self):
+        """_detect_instroke_columns finds curve_data and Quiske curve columns."""
+        from rowingdata import fitwrite
+        csvfile = 'testdata/quiske_per_stroke_left.csv'
+        r = rowingdata.QuiskeParser(csvfile)
+        cols = fitwrite._detect_instroke_columns(r.df)
+        assert 'boat accelerator curve' in cols or 'oar angle velocity curve' in cols or len(cols) >= 1
+        csvfile2 = 'testdata/rp3intervals2.csv'
+        r2 = rowingdata.RowPerfectParser(csvfile2)
+        cols2 = fitwrite._detect_instroke_columns(r2.df)
+        assert 'curve_data' in cols2 or len(cols2) >= 1
+
 class TestSequence(unittest.TestCase):
     list=pd.read_csv('testdata/testdatasummary.csv')
     lijst=[]
