@@ -32,11 +32,13 @@ except ImportError:
     FIT_TOOL_AVAILABLE = False
 
 # Developer field definitions for rowing-specific columns (no native FIT equivalent).
-# StrokeDistance is here: native cycle_length is uint8/scale100 (max 2.55m), wrong for rowing (7–12m typical).
+# Per README spec: DriveLength = handle distance (projection on longitudinal axis);
+# StrokeDistance = distance traveled during stroke cycle (boat/erg travel).
+# Native cycle_length is uint8/scale100 (max 2.55m), wrong for rowing (7–12m typical).
 # (field_id, df_column, name, base_type, size, scale, units)
 ROWING_DEV_FIELDS = [
     (0, ' DriveLength (meters)', 'DriveLength', BaseType.UINT16, 2, 100, 'm'),
-    (1, ' DriveTime (ms)', 'DriveTime', BaseType.UINT16, 2, 1, 'ms'),
+    (1, ' DriveTime (ms)', 'StrokeDriveTime', BaseType.UINT16, 2, 1, 'ms'),
     (2, ' DragFactor', 'DragFactor', BaseType.UINT16, 2, 1, ''),
     (3, ' StrokeRecoveryTime (ms)', 'StrokeRecoveryTime', BaseType.UINT16, 2, 1, 'ms'),
     (4, ' AverageDriveForce (lbs)', 'AverageDriveForceLbs', BaseType.UINT16, 2, 10, 'lbs'),
@@ -76,6 +78,86 @@ def _sport_to_fit(sport_str):
         return Sport.ROWING
     key = str(sport_str).lower().strip()
     return SPORT_MAP.get(key, Sport.ROWING)
+
+
+# Work stroke WorkoutState values (1,4,5,6,7,8,9 = work; 3 = rest per Garmin/rowing convention)
+WORKOUT_STATES_WORK = [1, 4, 5, 6, 7, 8, 9]
+
+
+def _compute_interval_summaries(df, lap_col, unixtimes, distance_m, heart_rate, cadence,
+                                power, work_mask=None):
+    """
+    Compute per-interval summary stats for Lap messages.
+    Returns list of dicts with keys: start_time_ms, total_elapsed_s, total_distance,
+    total_calories, avg_heart_rate, max_heart_rate, avg_cadence, avg_power, indices.
+    Uses work strokes only for avg HR, cadence, power (matches intervalstats).
+    """
+    try:
+        calories_arr = df[' Calories (kCal)'].values
+    except KeyError:
+        calories_arr = None
+
+    if work_mask is None:
+        work_mask = np.ones(len(df), dtype=bool)
+
+    summaries = []
+    prev_max_dist = 0.0
+    prev_max_cal = 0.0
+
+    # Preserve order of first appearance (chronological)
+    _, idx = np.unique(df[lap_col].values, return_index=True)
+    interval_nrs = df[lap_col].values[np.sort(idx)]
+
+    for lap_val in interval_nrs:
+        mask = (df[lap_col].values == lap_val)
+        indices = np.where(mask)[0]
+        if len(indices) == 0:
+            continue
+
+        start_time_ms = int(unixtimes[indices[0]] * 1000)
+        end_time_ms = int(unixtimes[indices[-1]] * 1000)
+        total_elapsed_s = (unixtimes[indices[-1]] - unixtimes[indices[0]]) if len(indices) > 1 else 0.0
+
+        interval_dist = float(distance_m[indices[-1]]) - prev_max_dist
+        if interval_dist < 0:
+            interval_dist = 0
+        prev_max_dist = float(distance_m[indices[-1]])
+
+        total_cal = 0
+        if calories_arr is not None:
+            cal_max = np.nanmax(calories_arr[indices])
+            total_cal = max(0, int(cal_max - prev_max_cal))
+            prev_max_cal = cal_max
+
+        work_in_interval = mask & work_mask
+        work_idx = np.where(work_in_interval)[0]
+
+        hr_vals = heart_rate[work_idx]
+        hr_vals = hr_vals[hr_vals > 0]
+        avg_hr = int(np.mean(hr_vals)) if len(hr_vals) > 0 else 0
+        max_hr = int(np.max(heart_rate[indices])) if len(indices) > 0 else 0
+
+        cad_vals = cadence[work_idx]
+        cad_vals = cad_vals[cad_vals > 0]
+        avg_cad = int(np.mean(cad_vals)) if len(cad_vals) > 0 else 0
+
+        pw_vals = power[work_idx]
+        pw_vals = pw_vals[pw_vals > 0]
+        avg_pw = int(np.mean(pw_vals)) if len(pw_vals) > 0 else 0
+
+        summaries.append({
+            'start_time_ms': start_time_ms,
+            'total_elapsed_s': total_elapsed_s,
+            'total_distance': interval_dist,
+            'total_calories': total_cal,
+            'avg_heart_rate': avg_hr,
+            'max_heart_rate': max_hr,
+            'avg_cadence': avg_cad,
+            'avg_power': avg_pw,
+            'indices': indices,
+        })
+
+    return summaries
 
 
 def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdata",
@@ -169,6 +251,15 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         lat = np.zeros(nr_rows)
         lon = np.zeros(nr_rows)
 
+    # Stroke number for native total_cycles field (data is per-stroke, one record per stroke)
+    try:
+        stroke_number = df[' Stroke Number'].values.astype(int)
+    except KeyError:
+        try:
+            stroke_number = df['sessionStrokeIndex'].values.astype(int) + 1  # 1-based
+        except KeyError:
+            stroke_number = np.arange(1, nr_rows + 1, dtype=int)  # 1-based row index
+
     # Developer fields: which columns exist and their arrays
     use_dev = use_developer_fields and FIT_TOOL_AVAILABLE
     dev_arrays = {}
@@ -251,33 +342,6 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         session.avg_power = avg_power
     builder.add(session)
 
-    # Lap message (one lap for the whole session for now)
-    lap = LapMessage()
-    lap.message_index = 0
-    lap.timestamp = int(unixtimes[-1] * 1000) if nr_rows > 0 else start_time_ms
-    lap.start_time = start_time_ms
-    lap.total_elapsed_time = total_elapsed_s  # seconds; fit-tool applies scale 1000
-    lap.total_timer_time = total_elapsed_s
-    lap.total_distance = int(round(total_dist))  # fit-tool applies scale 100
-    lap.total_calories = total_calories
-    lap.sport = _sport_to_fit(sport)
-    lap.sub_sport = SubSport.GENERIC
-    if avg_hr > 0:
-        lap.avg_heart_rate = avg_hr
-    if max_hr > 0:
-        lap.max_heart_rate = max_hr
-    if avg_cadence > 0:
-        lap.avg_cadence = avg_cadence
-    if avg_power > 0:
-        lap.avg_power = avg_power
-    # fit-tool expects position in degrees (it applies semicircle conversion internally)
-    if _valid_position(lat[0], lon[0]) and _valid_position(lat[-1], lon[-1]):
-        lap.start_position_lat = float(lat[0])
-        lap.start_position_long = float(lon[0])
-        lap.end_position_lat = float(lat[-1])
-        lap.end_position_long = float(lon[-1])
-    builder.add(lap)
-
     # Developer data (ID + field descriptions) when we have developer fields
     DEV_DATA_IDX = 0
     if dev_specs:
@@ -296,16 +360,33 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             fd_msg.units = units
             builder.add(fd_msg)
 
-    # Record messages
-    for i in range(nr_rows):
+    # Lap column: rowingdata uses ' lapIdx'; some CSVs use 'lapIdx'
+    lap_col = ' lapIdx' if ' lapIdx' in df.columns else ('lapIdx' if 'lapIdx' in df.columns else None)
+    work_mask = None
+    if lap_col is not None:
+        try:
+            ws = df[' WorkoutState'].values if ' WorkoutState' in df.columns else df['WorkoutState'].values
+            work_mask = np.isin(ws.astype(int), WORKOUT_STATES_WORK)
+        except (KeyError, TypeError):
+            work_mask = np.ones(nr_rows, dtype=bool)
+
+    # Determine if we have multiple intervals (per-interval Lap messages)
+    interval_summaries = None
+    if lap_col is not None:
+        unique_laps = np.unique(df[lap_col].values)
+        if len(unique_laps) > 1:
+            interval_summaries = _compute_interval_summaries(
+                df, lap_col, unixtimes, distance_m, heart_rate, cadence, power, work_mask
+            )
+
+    def _emit_record(i):
+        """Emit a single Record message for row index i."""
         dev_fields = []
         if dev_specs:
             for field_id, col, name, base_type, size, scale, units in dev_specs:
                 arr = dev_arrays[field_id]
                 val = float(arr[i])
                 if val != 0 or field_id == 9:  # WorkoutState can be 0
-                    # Pass display value; fit-tool encodes as raw = (value + offset) * scale.
-                    # FieldDescription has same scale so readers decode: display = raw/scale.
                     dev = DeveloperField(
                         developer_data_index=DEV_DATA_IDX,
                         field_id=field_id,
@@ -320,18 +401,73 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                     dev_fields.append(dev)
         rec = RecordMessage(developer_fields=dev_fields) if dev_fields else RecordMessage()
         rec.timestamp = int(unixtimes[i] * 1000)
-        rec.distance = float(distance_m[i])  # fit-tool applies scale 100
+        rec.distance = float(distance_m[i])
         rec.heart_rate = heart_rate[i] if heart_rate[i] > 0 else None
         rec.cadence = cadence[i] if cadence[i] > 0 else None
         rec.power = power[i] if power[i] > 0 else None
-        # fit-tool expects display value (m/s); it applies scale 1000 internally
         rec.enhanced_speed = float(enhanced_speed[i]) if enhanced_speed[i] > 0 else None
-
+        if hasattr(rec, 'total_cycles'):
+            rec.total_cycles = int(stroke_number[i])
         if not (np.isnan(lat[i]) or lat[i] == 0) and not (np.isnan(lon[i]) or lon[i] == 0):
             rec.position_lat = float(lat[i])
             rec.position_long = float(lon[i])
-
         builder.add(rec)
+
+    if interval_summaries is not None and len(interval_summaries) > 0:
+        # Multi-interval: Event(lap start), Lap, Records per interval
+        for lap_idx, summ in enumerate(interval_summaries):
+            ev = EventMessage()
+            ev.event = Event.LAP
+            ev.event_type = EventType.START
+            ev.timestamp = summ['start_time_ms']
+            builder.add(ev)
+
+            lap = LapMessage()
+            lap.message_index = lap_idx
+            lap.timestamp = summ['start_time_ms']
+            lap.start_time = summ['start_time_ms']
+            lap.total_elapsed_time = summ['total_elapsed_s']
+            lap.total_timer_time = summ['total_elapsed_s']
+            lap.total_distance = int(round(summ['total_distance']))
+            lap.total_calories = summ['total_calories']
+            lap.sport = _sport_to_fit(sport)
+            lap.sub_sport = SubSport.GENERIC
+            if summ['avg_heart_rate'] > 0:
+                lap.avg_heart_rate = summ['avg_heart_rate']
+            if summ['max_heart_rate'] > 0:
+                lap.max_heart_rate = summ['max_heart_rate']
+            if summ['avg_cadence'] > 0:
+                lap.avg_cadence = summ['avg_cadence']
+            if summ['avg_power'] > 0:
+                lap.avg_power = summ['avg_power']
+            builder.add(lap)
+
+            for i in summ['indices']:
+                _emit_record(i)
+    else:
+        # Single lap: one Lap for whole session, then all Records
+        lap = LapMessage()
+        lap.message_index = 0
+        lap.timestamp = start_time_ms
+        lap.start_time = start_time_ms
+        lap.total_elapsed_time = total_elapsed_s
+        lap.total_timer_time = total_elapsed_s
+        lap.total_distance = int(round(total_dist))
+        lap.total_calories = total_calories
+        lap.sport = _sport_to_fit(sport)
+        lap.sub_sport = SubSport.GENERIC
+        if avg_hr > 0:
+            lap.avg_heart_rate = avg_hr
+        if max_hr > 0:
+            lap.max_heart_rate = max_hr
+        if avg_cadence > 0:
+            lap.avg_cadence = avg_cadence
+        if avg_power > 0:
+            lap.avg_power = avg_power
+        builder.add(lap)
+
+        for i in range(nr_rows):
+            _emit_record(i)
 
     # Timer stop event
     event_stop = EventMessage()

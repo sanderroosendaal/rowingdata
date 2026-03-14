@@ -784,11 +784,11 @@ class TestFITParser:
             row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
             row.exporttofit(outfile, sport='rowing')
             r = rowingdata.FITParser(outfile)
-            # FITParser lowercases column names; developer fields become strokedistance, drivelength, etc.
-            dev_cols = ['strokedistance', 'drivelength', 'drivetime']
+            # FITParser lowercases column names; developer fields become strokedistance, drivelength, strokedrivetime.
+            dev_cols = ['strokedistance', 'drivelength', 'strokedrivetime']
             found = [c for c in dev_cols if c in r.df.columns]
             assert found, (
-                'Expected at least one developer field (strokedistance, drivelength, drivetime) '
+                'Expected at least one developer field (strokedistance, drivelength, strokedrivetime) '
                 'in parsed FIT columns; got: %s' % list(r.df.columns)
             )
             for col in found:
@@ -810,6 +810,34 @@ class TestFITParser:
         assert_equal(rowingdata.get_file_type(outfile), 'fit')
         r = rowingdata.FITParser(outfile)
         assert_equal(r.df[' Horizontal (meters)'].max() > 0, True)
+
+    def test_exporttofit_multi_interval(self):
+        """Export interval workout (RP_interval) to FIT; verify multiple Lap messages and per-interval summaries."""
+        csvfile = 'testdata/RP_interval.csv_o.CSV'
+        outfile = os.path.join(os.getcwd(), 'test_export_interval.fit')
+        try:
+            row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing')
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            # Count Lap messages via fitparse
+            from fitparse import FitFile
+            with open(outfile, 'rb') as f:
+                fitfile = FitFile(f, check_crc=False)
+                laps = list(fitfile.get_messages('lap'))
+            assert len(laps) > 1, (
+                'Expected multiple Lap messages for interval workout; got %d' % len(laps)
+            )
+            # Verify each lap has total_distance and total_elapsed_time
+            for i, lap in enumerate(laps):
+                vals = lap.get_values()
+                assert 'total_distance' in vals or 'total_elapsed_time' in vals, (
+                    'Lap %d missing summary fields: %s' % (i, list(vals.keys()))
+                )
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
 
 class TestSequence(unittest.TestCase):
     list=pd.read_csv('testdata/testdatasummary.csv')
