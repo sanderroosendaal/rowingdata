@@ -3129,7 +3129,9 @@ class rowingdata:
                 f_out.write(bytes)
 
     def exporttofit(self, fileName, notes="Exported by Rowingdata",
-                    sport="rowing", use_developer_fields=True):
+                    sport="rowing", use_developer_fields=True,
+                    instroke_export='off', instroke_columns=None, instroke_column_map=None,
+                    instroke_downsample_points=16):
         """Export rowingdata to FIT format for Intervals.icu and other platforms.
 
         Parameters
@@ -3143,6 +3145,17 @@ class rowingdata:
         use_developer_fields : bool
             If True, include rowing-specific columns (DriveLength, StrokeDistance,
             etc.) when present. Requires fit-tool and Intervals.icu importer support.
+        instroke_export : str
+            'off' (default): no in-stroke curve export.
+            'summary': export q1,q2,q3,q4,diff,maxpos,minpos per curve as developer fields.
+            'downsampled': export fixed-length downsampled curve (SINT16 array) per stroke.
+            'companion': write curve data to .instroke.json sidecar file.
+        instroke_columns : list, optional
+            Curve columns to export. If None, auto-detect.
+        instroke_column_map : dict, optional
+            Override mapping from df column name to canonical FIT curve type name.
+        instroke_downsample_points : int
+            Number of points for downsampled export (default 16).
         """
         if not self.empty:
             df = self.df.copy()
@@ -3153,7 +3166,11 @@ class rowingdata:
                 fileName, df,
                 row_date=self.rowdatetime.isoformat(),
                 notes=notes, sport=sport,
-                use_developer_fields=use_developer_fields
+                use_developer_fields=use_developer_fields,
+                instroke_export=instroke_export,
+                instroke_columns=instroke_columns,
+                instroke_column_map=instroke_column_map,
+                instroke_downsample_points=instroke_downsample_points
             )
         else:  # pragma: no cover
             raise ValueError("Cannot export empty rowingdata session to FIT")

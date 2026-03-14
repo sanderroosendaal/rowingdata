@@ -13,7 +13,7 @@ row = rowingdata.rowingdata(csvfile="workout.csv")
 row.exporttofit("workout.fit", sport="rowing", notes="My workout")
 ```
 
-Parameters: **fileName** (output path), **notes** (default: "Exported by Rowingdata"), **sport** (e.g. rowing, indoor_rowing), **use_developer_fields** (default: True – include rowing-specific fields when present).
+Parameters: **fileName** (output path), **notes** (default: "Exported by Rowingdata"), **sport** (e.g. rowing, indoor_rowing), **use_developer_fields** (default: True – include rowing-specific fields when present), **instroke_export** (default: 'off' – see In-stroke curve export below), **instroke_columns** (optional list of curve columns), **instroke_column_map** (optional override mapping), **instroke_downsample_points** (default: 16 for downsampled export).
 
 ## Native vs developer fields
 
@@ -45,6 +45,14 @@ We export native fields for standard metrics plus developer fields for rowing-sp
 | AverageBoatSpeed (m/s) | AverageBoatSpeed | UINT16 | 100 | m/s |
 | WorkoutState | WorkoutState | UINT8 | 1 |  |
 | StrokeDistance (meters) | StrokeDistance | UINT16 | 100 | m |
+| catch, catchAngle | Catch | SINT16 | 10 | deg |
+| finish, finishAngle | Finish | SINT16 | 10 | deg |
+| slip | Slip | SINT16 | 10 | deg |
+| wash | Wash | SINT16 | 10 | deg |
+| peakforceangle | PeakForceAngle | SINT16 | 10 | deg |
+| effectiveLength | EffectiveLength | UINT16 | 100 | m |
+
+Oarlock scalars (catch, finish, slip, wash, peakforceangle, effectiveLength) are exported when present. Cottwich and NK Logbook use these columns.
 
 These have no native equivalents. Apps like Intervals.icu can import them when the developer field descriptions are present.
 
@@ -79,6 +87,19 @@ pip install fit-tool
 - Relative timestamps (below year 2000) are combined with row_date.
 - FIT timestamps: milliseconds since Garmin epoch (1989-12-31 UTC).
 - File structure: File ID, Activity, Event (start), Session, Developer data (if any), then for each interval: Event (lap start), Lap, Record messages for that interval, then Event (stop). If there is only one interval: one Lap, then all Records.
+
+## In-stroke curve export
+
+When `instroke_export` is not `'off'`, comma-separated curve columns (RP3 `curve_data`, Quiske `boat accelerator curve`, `oar angle velocity curve`, `seat curve`) can be exported:
+
+| instroke_export | Behavior |
+|-----------------|----------|
+| `'off'` (default) | No curve export; backward compatible. |
+| `'summary'` | Per-stroke metrics (q1, q2, q3, q4, diff, maxpos, minpos) as developer fields, e.g. `HandleForceCurve_q1`. |
+| `'downsampled'` | Fixed-length curve (default 16 points) per stroke as SINT16 array developer field. |
+| `'companion'` | Sidecar `.instroke.json` file with full curve data per stroke. |
+
+**Column mapping**: `curve_data` → HandleForceCurve, `boat accelerator curve` → BoatAcceleratorCurve, `oar angle velocity curve` → OarAngleVelocityCurve, `seat curve` → SeatCurve. Override via `instroke_column_map`. Columns are auto-detected when `instroke_columns` is None. Use `instroke_downsample_points` to set the number of points for downsampled export (default 16).
 
 ## Missing columns
 
