@@ -27,7 +27,7 @@ We export native fields for standard metrics plus developer fields for rowing-sp
 
 - **StrokeDriveTime** – drive phase time (ms). Named for symmetry with StrokeRecoveryTime.
 - **DriveLength** – handle distance (meters). Per README: distance traveled by the handle along the longitudinal axis of the boat or erg. For OTW rowing, this is the projection of the handle trajectory on the longitudinal axis (not the full path the hands travel). For indoor rowing, typically handle travel catch-to-finish. Typical range: 1.2–1.5 m. This is a *stroke output* metric.
-- **StrokeDistance** – distance traveled during the stroke cycle (meters). Per README: the distance the boat/erg travels during one stroke cycle. Distinct from DriveLength (handle distance). Typical range: 7–12 m for OTW. Developer field used because Garmin native cycle_length maxes at 2.55 m, too small for rowing.
+- **StrokeDistance** – distance traveled during the stroke cycle (meters). Per README: the distance the boat/erg travels during one stroke cycle. Distinct from DriveLength (handle distance). Typical range: 7–12 m for OTW. Uses native FIT field **cycle_length16** (UINT16, scale 100, max 655 m) for interoperability with Garmin Connect, Intervals.icu, and other FIT parsers.
 - **DriveLength vs EffectiveLength** – Not duplicates. **DriveLength** is the actual distance the handle traveled during the stroke (~1.2–1.5 m). **EffectiveLength** is an oarlock/rigging metric: the effective lever length (horizontal component from pin to handle, often in cm). It describes rigging geometry, varies slightly stroke-to-stroke, and comes from NK Logbook (Oarlock). Both can appear in the same dataset.
 - **Stroke Number** – stored in the native **total_cycles** field (Garmin/ANT+ cycles). Rowing machines report it via ANT+ to Garmin watches; we write it per record since data is per stroke.
 
@@ -45,7 +45,6 @@ We export native fields for standard metrics plus developer fields for rowing-sp
 | PeakDriveForce (N) | PeakDriveForceN | UINT16 | 10 | N |
 | AverageBoatSpeed (m/s) | AverageBoatSpeed | UINT16 | 100 | m/s |
 | WorkoutState | WorkoutState | UINT8 | 1 |  |
-| StrokeDistance (meters) | StrokeDistance | UINT16 | 100 | m |
 | catch, catchAngle | Catch | SINT16 | 10 | deg |
 | finish, finishAngle | Finish | SINT16 | 10 | deg |
 | slip | Slip | SINT16 | 10 | deg |
@@ -70,6 +69,7 @@ These have no native equivalents. Apps like Intervals.icu can import them when t
 | latitude | position_lat | Degrees; omitted if invalid |
 | longitude | position_long | Degrees; omitted if invalid |
 | Stroke Number or row index | total_cycles | Stroke number (data is per-stroke) |
+| StrokeDistance (meters) | cycle_length16 | Native UINT16, scale 100, max 655 m |
 
 ## Session, Lap, and Event messages
 

@@ -37,7 +37,7 @@ except ImportError:
 # Developer field definitions for rowing-specific columns (no native FIT equivalent).
 # Per README spec: DriveLength = handle distance (projection on longitudinal axis);
 # StrokeDistance = distance traveled during stroke cycle (boat/erg travel).
-# Native cycle_length is uint8/scale100 (max 2.55m), wrong for rowing (7–12m typical).
+# StrokeDistance uses native cycle_length16 (UINT16, max 655 m) instead of developer field.
 # (field_id, df_column, name, base_type, size, scale, units)
 ROWING_DEV_FIELDS = [
     (0, ' DriveLength (meters)', 'DriveLength', BaseType.UINT16, 2, 100, 'm'),
@@ -50,7 +50,6 @@ ROWING_DEV_FIELDS = [
     (7, ' PeakDriveForce (N)', 'PeakDriveForceN', BaseType.UINT16, 2, 10, 'N'),
     (8, ' AverageBoatSpeed (m/s)', 'AverageBoatSpeed', BaseType.UINT16, 2, 100, 'm/s'),
     (9, ' WorkoutState', 'WorkoutState', BaseType.UINT8, 1, 1, ''),
-    (10, ' StrokeDistance (meters)', 'StrokeDistance', BaseType.UINT16, 2, 100, 'm'),
 ]
 
 # Oarlock scalar fields (field_id, [possible_df_columns], name, base_type, size, scale, units).
@@ -455,6 +454,12 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         for i in range(nr_rows)
     ) if nr_rows > 0 else False
 
+    # Stroke distance for native cycle_length16 field (UINT16, scale 100, max 655 m)
+    stroke_distance = None
+    if ' StrokeDistance (meters)' in df.columns:
+        stroke_distance = np.nan_to_num(df[' StrokeDistance (meters)'].values, nan=0.0, posinf=0.0, neginf=0.0)
+        stroke_distance = np.clip(stroke_distance, 0, 655.35)  # uint16 scale 100 max
+
     # Stroke number for native total_cycles field (data is per-stroke, one record per stroke)
     try:
         stroke_number = df[' Stroke Number'].values.astype(int)
@@ -695,6 +700,8 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         rec.enhanced_speed = float(enhanced_speed[i]) if enhanced_speed[i] > 0 else None
         if hasattr(rec, 'total_cycles'):
             rec.total_cycles = int(stroke_number[i])
+        if stroke_distance is not None and hasattr(rec, 'cycle_length16'):
+            rec.cycle_length16 = int(round(float(stroke_distance[i]) * 100))  # scale 100, cm precision
         if not (np.isnan(lat[i]) or lat[i] == 0) and not (np.isnan(lon[i]) or lon[i] == 0):
             rec.position_lat = float(lat[i])
             rec.position_long = float(lon[i])
