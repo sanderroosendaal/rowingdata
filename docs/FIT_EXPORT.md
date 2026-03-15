@@ -89,6 +89,17 @@ pip install fit-tool
 - FIT timestamps: milliseconds since Garmin epoch (1989-12-31 UTC).
 - File structure: File ID, Activity, Event (start), Session, Developer data (if any), then for each interval: Event (lap start), Lap, Record messages for that interval, then Event (stop). If there is only one interval: one Lap, then all Records.
 
+## Intervals.icu compatibility
+
+We structure the FIT file for compatibility with [Intervals.icu](https://intervals.icu):
+
+- **Lap-first ordering per interval**: Each Lap message immediately precedes the Record messages it summarizes (Summary First style per interval). Lap `timestamp` and `start_time` both use the lap start time.
+- **No Split messages**: We do not emit Garmin Split messages. Garmin's Split and Lap messages are disconnected in FIT; parsers can misalign them. Using only Lap messages avoids this parsing issue.
+- **sub_sport**: For rowing activities we infer from data when possible:
+  - If `sport` is explicitly `indoor_rowing` or `indoor rowing` → `indoorRowing` (indoor/erg)
+  - If `sport` is explicitly `water` → generic (on-water)
+  - If `sport` is `rowing` or default → GPS present → generic (on-water OTW); no GPS → `indoorRowing`
+
 ## In-stroke curve export
 
 When `instroke_export` is not `'off'`, comma-separated curve columns (RP3 `curve_data`, Quiske `boat accelerator curve`, `oar angle velocity curve`, `seat curve`) can be exported:

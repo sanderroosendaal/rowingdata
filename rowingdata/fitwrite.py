@@ -189,6 +189,30 @@ def _sport_to_fit(sport_str):
     return SPORT_MAP.get(key, Sport.ROWING)
 
 
+def _sub_sport_for_sport(sport_str, has_gps=None):
+    """
+    Return sub_sport for rowing activities.
+    - Explicit 'indoor_rowing'/'indoor rowing' -> INDOOR_ROWING
+    - Explicit 'water' -> GENERIC (on-water)
+    - 'rowing' or default -> infer from has_gps: GPS present -> GENERIC (OTW), else INDOOR_ROWING
+    - Non-rowing sports -> GENERIC
+    """
+    if sport_str is None:
+        key = 'rowing'
+    else:
+        key = str(sport_str).lower().strip()
+    if key not in ('rowing', 'water', 'indoor_rowing', 'indoor rowing'):
+        return SubSport.GENERIC
+    if key in ('indoor_rowing', 'indoor rowing'):
+        return SubSport.INDOOR_ROWING
+    if key == 'water':
+        return SubSport.GENERIC  # on-water
+    # key == 'rowing' (default): infer from GPS
+    if has_gps:
+        return SubSport.GENERIC  # on-water (OTW)
+    return SubSport.INDOOR_ROWING  # indoor/erg
+
+
 # Work stroke WorkoutState values (1,4,5,6,7,8,9 = work; 3 = rest per Garmin/rowing convention)
 WORKOUT_STATES_WORK = [1, 4, 5, 6, 7, 8, 9]
 
@@ -426,6 +450,11 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         lat = np.zeros(nr_rows)
         lon = np.zeros(nr_rows)
 
+    has_gps = any(
+        _valid_position(float(lat[i]), float(lon[i]))
+        for i in range(nr_rows)
+    ) if nr_rows > 0 else False
+
     # Stroke number for native total_cycles field (data is per-stroke, one record per stroke)
     try:
         stroke_number = df[' Stroke Number'].values.astype(int)
@@ -567,7 +596,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     session.total_distance = int(round(total_dist))  # fit-tool applies scale 100
     session.total_calories = total_calories
     session.sport = _sport_to_fit(sport)
-    session.sub_sport = SubSport.GENERIC
+    session.sub_sport = _sub_sport_for_sport(sport, has_gps)
     if avg_hr > 0:
         session.avg_heart_rate = avg_hr
     if max_hr > 0:
@@ -689,7 +718,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             lap.total_distance = int(round(summ['total_distance']))
             lap.total_calories = summ['total_calories']
             lap.sport = _sport_to_fit(sport)
-            lap.sub_sport = SubSport.GENERIC
+            lap.sub_sport = _sub_sport_for_sport(sport, has_gps)
             if summ['avg_heart_rate'] > 0:
                 lap.avg_heart_rate = summ['avg_heart_rate']
             if summ['max_heart_rate'] > 0:
@@ -713,7 +742,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         lap.total_distance = int(round(total_dist))
         lap.total_calories = total_calories
         lap.sport = _sport_to_fit(sport)
-        lap.sub_sport = SubSport.GENERIC
+        lap.sub_sport = _sub_sport_for_sport(sport, has_gps)
         if avg_hr > 0:
             lap.avg_heart_rate = avg_hr
         if max_hr > 0:
