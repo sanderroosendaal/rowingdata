@@ -1,3 +1,4 @@
+
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
 from __future__ import absolute_import
@@ -5,7 +6,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.7.2"
+__version__ = "3.7.3"
 
 from collections import Counter
 
