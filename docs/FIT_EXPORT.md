@@ -13,7 +13,12 @@ row = rowingdata.rowingdata(csvfile="workout.csv")
 row.exporttofit("workout.fit", sport="rowing", notes="My workout")
 ```
 
-Parameters: **fileName** (output path), **notes** (default: "Exported by Rowingdata"), **sport** (e.g. rowing, indoor_rowing), **use_developer_fields** (default: True – include rowing-specific fields when present), **instroke_export** (default: 'off' – see In-stroke curve export below), **instroke_columns** (optional list of curve columns), **instroke_column_map** (optional override mapping), **instroke_downsample_points** (default: 16 for downsampled export).
+Parameters: **fileName** (output path), **notes** (default: "Exported by Rowingdata"), **sport** (e.g. rowing, indoor_rowing), **use_developer_fields** (default: True – include rowing-specific fields when present), **instroke_export** (default: 'off' – see In-stroke curve export below), **instroke_columns** (optional list of curve columns), **instroke_column_map** (optional override mapping), **instroke_downsample_points** (default: 16 for downsampled export), **overwrite** (default: True – set False to raise `FileExistsError` if the target file or companion already exists).
+
+**Return value**: `None` in the normal case. When notable conditions occur, returns a dict:
+- `instroke_columns_available`: list of column names when in-stroke data is detected but `instroke_export='off'` (allows you to decide whether to re-export with `instroke_export='summary'` or `'companion'`)
+- `suggestion`: hint to re-export with instroke_export enabled
+- `companion_file`: path to the `.instroke.json` sidecar when `instroke_export='companion'` writes one
 
 ## Native vs developer fields
 

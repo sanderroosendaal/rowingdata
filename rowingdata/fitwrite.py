@@ -347,7 +347,7 @@ def _downsample_curve_series(series, n_points):
 def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdata",
               sport="rowing", use_developer_fields=True,
               instroke_export='off', instroke_columns=None, instroke_column_map=None,
-              instroke_downsample_points=16):
+              instroke_downsample_points=16, overwrite=True):
     """
     Write rowingdata DataFrame to a FIT activity file.
 
@@ -379,9 +379,46 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         Default: curve_data->HandleForceCurve, boat accelerator curve->BoatAcceleratorCurve, etc.
     instroke_downsample_points : int
         Number of points for downsampled export (default 16).
+    overwrite : bool
+        If True (default), overwrite existing files. If False, raise FileExistsError
+        when the target FIT file (or companion .instroke.json) already exists.
+
+    Returns
+    -------
+    dict or None
+        None in the normal case. When notable conditions occur, returns a dict:
+        - ``instroke_columns_available``: list of column names (when in-stroke data is
+          detected but instroke_export='off')
+        - ``suggestion``: hint to re-export with instroke_export enabled
+        - ``companion_file``: path to .instroke.json (when instroke_export='companion')
     """
     if not FIT_TOOL_AVAILABLE:
         raise ImportError("fit-tool is required for FIT export. Install with: pip install fit-tool")
+
+    # Detect in-stroke columns early (for return value and overwrite check)
+    detected_instroke_cols = _detect_instroke_columns(df)
+    curve_cols_for_export = (
+        instroke_columns if instroke_columns is not None else detected_instroke_cols
+    )
+    instroke_would_write_companion = (
+        instroke_export == 'companion' and
+        [c for c in curve_cols_for_export if c in df.columns]
+    )
+    companion_path = None
+    if instroke_would_write_companion:
+        base, _ = os.path.splitext(file_name)
+        companion_path = base + '.instroke.json'
+
+    # Overwrite check: raise if overwrite=False and target(s) exist
+    if not overwrite:
+        if os.path.exists(file_name):
+            raise FileExistsError(
+                "FIT file already exists: %s. Set overwrite=True to replace." % file_name
+            )
+        if companion_path is not None and os.path.exists(companion_path):
+            raise FileExistsError(
+                "Companion file already exists: %s. Set overwrite=True to replace." % companion_path
+            )
 
     # Get or compute cum_dist
     if 'cum_dist' not in df.columns and ' Horizontal (meters)' in df.columns:
@@ -774,6 +811,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     fit_file.to_file(file_name)
 
     # Companion export: write .instroke.json sidecar when instroke_export='companion'
+    companion_written_path = None
     if instroke_export == 'companion' and instroke_curve_cols:
         col_map = instroke_column_map if instroke_column_map is not None else INSTROKE_COLUMN_MAP
         base, _ = os.path.splitext(file_name)
@@ -795,3 +833,18 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         if curves:
             with open(companion_path, 'w') as f:
                 json.dump(curves, f)
+            companion_written_path = companion_path
+
+    # Build return value for notable conditions
+    result = None
+    if instroke_export == 'off' and detected_instroke_cols:
+        result = {
+            'instroke_columns_available': detected_instroke_cols,
+            'suggestion': 'Re-export with instroke_export="summary" or "companion" to include curve data.'
+        }
+    if companion_written_path is not None:
+        if result is None:
+            result = {}
+        result['companion_file'] = companion_written_path
+
+    return result
