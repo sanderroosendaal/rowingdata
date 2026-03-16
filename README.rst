@@ -504,7 +504,7 @@ Data Fields
 
 The available data fields are
 
-* 'Timestamp (sec)'
+* 'TimeStamp (sec)'
 * ' Horizontal (meters)'
 * ' Cadence (stokes/min'
 * ' HRCur (bpm)'
@@ -517,6 +517,9 @@ The available data fields are
 * ' AverageDriveForce (lbs)'
 * ' PeakDriveForce (lbs)'
 * 'cum_dist'
+
+Oarlock parsers (NK Logbook) may add: ``catch``, ``finish``,
+``slip``, ``wash``, ``peakforceangle``, ``effectiveLength``.
 
 If imported from TCX, Rowpro, or other tools, some data fields may not contain
 useful information. 
@@ -538,7 +541,7 @@ Field Names (Columns)
 
 The standard field names are:
 
-* 'Timestamp (sec)'
+* 'TimeStamp (sec)'
 * ' Horizontal (meters)'
 * ' Cadence (stokes/min'
 * ' HRCur (bpm)'
@@ -553,7 +556,10 @@ The standard field names are:
 * ' lapIdx'
 * ' ElapsedTime (sec)'
 
-The CSV file adhers to the US conventions, with fields
+Optional (Oarlock/NK Logbook): ``catch``/``catchAngle``, ``finish``/``finishAngle``,
+``slip``, ``wash``, ``peakforceangle``, ``effectiveLength``.
+
+The CSV file adheres to the US conventions, with fields
 separated by a comma (',')
 and using the dot '.' as the decimal symbol. 
 
@@ -706,21 +712,28 @@ Field name: ' DriveLength (meters)'
 
 Unit: meter
 
-The distance traveled by the handle along the longitudal
+The distance traveled by the handle along the longitudinal
 axis of the boat or erg.
 
 For OTW rowing, where the oar or scull rotates around the pin, this
 is not equal to the length trajectory traveled by the hands. It
-is the projection of that trajectory on the longitudal axis. 
+is the projection of that trajectory on the longitudinal axis.
 
-Stroke Distance 
-------------------------
+Typical range: 1.2–1.5 m for rowing. This is a *stroke output* metric:
+how far the handle actually moved during the drive phase.
+
+Stroke Distance
+---------------
 
 Field name: ' StrokeDistance (meters)'
 
 Unit: meter
 
-The distance traveled during the stroke cycle. 
+The distance traveled during the stroke cycle. This is the distance
+the boat or erg travels during one complete stroke (catch to catch),
+i.e. the boat's displacement, not the handle travel. Distinct from
+Drive Length (handle distance) and from Effective Length (rigging).
+Typical range: 7–12 m for OTW rowing. 
 
 Drive Time
 -------------
@@ -781,7 +794,31 @@ Field name: ' PeakDriveForce (lbs)' or ' PeakDriveForce (N)'
 
 Unit: lbs (currently) or N (supported in the future)
 
-See discusison about measuring forces under Average Drive Force.
+See discussion about measuring forces under Average Drive Force.
+
+Oarlock scalars (OTW rigging)
+-----------------------------
+
+Field names: 'catch' / 'catchAngle', 'finish' / 'finishAngle', 'slip',
+'wash', 'peakforceangle', 'effectiveLength'
+
+Units: degrees for angles; meter for effectiveLength (scale may vary by
+source: NK Logbook uses these columns).
+
+These fields come from NK Logbook (Oarlock) and similar OTW
+measurement systems. They describe rigging geometry and blade angles:
+
+* **catch**, **finish** – oar angles at catch and finish (degrees).
+  NK uses catchAngle, finishAngle.
+* **slip** – blade slip angle.
+* **wash** – wash/backwash angle.
+* **peakforceangle** – oar angle at peak force.
+* **effectiveLength** – effective lever length (rigging geometry). *Not*
+  the same as Drive Length: Effective Length is the horizontal component
+  from pin to handle (a rigging/setup measure, often in cm), whereas
+  Drive Length is the *actual distance the handle traveled* during the
+  stroke (typically 1.2–1.5 m). Both may appear in the same dataset;
+  they serve different purposes.
 
 Lap Identifier
 -------------------

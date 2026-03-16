@@ -1,6 +1,8 @@
-# FIT Export
+# FIT Export – rowingdata support for Intervals.icu
 
-The rowingdata library can export rowing sessions to Garmin FIT format for use with [Intervals.icu](https://intervals.icu) and other platforms that support FIT files.
+The rowingdata library exports rowing sessions to Garmin FIT format for use with [Intervals.icu](https://intervals.icu) and other platforms. Here's what we export and how it maps.
+
+Per the [Garmin FIT SDK Activity structure](https://developer.garmin.com/fit/file-types/activity/), FIT files use Activity, Session, Lap, and Record messages. We emit summary data at session level (whole workout), split/interval level (per lapIdx), and record level (per stroke).
 
 ## Usage
 
@@ -11,120 +13,111 @@ row = rowingdata.rowingdata(csvfile="workout.csv")
 row.exporttofit("workout.fit", sport="rowing", notes="My workout")
 ```
 
-### Parameters
+Parameters: **fileName** (output path), **notes** (default: "Exported by Rowingdata"), **sport** (e.g. rowing, indoor_rowing), **use_developer_fields** (default: True – include rowing-specific fields when present), **instroke_export** (default: 'off' – see In-stroke curve export below), **instroke_columns** (optional list of curve columns), **instroke_column_map** (optional override mapping), **instroke_downsample_points** (default: 16 for downsampled export), **overwrite** (default: True – set False to raise `FileExistsError` if the target file or companion already exists).
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `fileName` | — | Output file path (e.g. `activity.fit`) |
-| `notes` | `"Exported by Rowingdata"` | Activity notes |
-| `sport` | `"rowing"` | Sport type (see [Supported sports](#supported-sports)) |
-| `use_developer_fields` | `True` | Include rowing-specific developer fields when present |
+**Return value**: `None` in the normal case. When notable conditions occur, returns a dict:
+- `instroke_columns_available`: list of column names when in-stroke data is detected but `instroke_export='off'` (allows you to decide whether to re-export with `instroke_export='summary'` or `'companion'`)
+- `suggestion`: hint to re-export with instroke_export enabled
+- `companion_file`: path to the `.instroke.json` sidecar when `instroke_export='companion'` writes one
 
 ## Native vs developer fields
 
-FIT distinguishes between two kinds of fields:
+**Native fields** are part of the Garmin FIT SDK (timestamp, distance, heart_rate, position_lat, cycle_length, etc.). Every FIT-capable app understands them.
 
-**Native fields** (also called *profile fields*) are part of the official Garmin FIT SDK. They are defined in the standard profile (e.g. `timestamp`, `distance`, `heart_rate`, `position_lat`, `cycle_length`). Every FIT-capable app understands these; they map directly to built-in streams in platforms like Intervals.icu.
+**Developer fields** are custom fields defined in the FIT file. They need extra metadata; apps may ignore them unless they explicitly support rowingdata's fields.
 
-**Developer fields** are custom fields defined by a manufacturer or developer. They require extra Developer Data ID and Field Description messages in the FIT file to declare their meaning, units, and scale. Consumer apps may ignore them unless they explicitly support that developer's fields.
+We export native fields for standard metrics plus developer fields for rowing-specific columns when use_developer_fields=True and the column exists.
 
-**Current export:** rowingdata exports **native fields** for all standard metrics, plus **developer fields** for rowing-specific columns when `use_developer_fields=True` (default) and the column is present in the data.
+## Naming and field choices
 
-### Developer fields exported
+- **StrokeDriveTime** – drive phase time (ms). Named for symmetry with StrokeRecoveryTime.
+- **DriveLength** – handle distance (meters). Per README: distance traveled by the handle along the longitudinal axis of the boat or erg. For OTW rowing, this is the projection of the handle trajectory on the longitudinal axis (not the full path the hands travel). For indoor rowing, typically handle travel catch-to-finish. Typical range: 1.2–1.5 m. This is a *stroke output* metric.
+- **StrokeDistance** – distance traveled during the stroke cycle (meters). Per README: the distance the boat/erg travels during one stroke cycle. Distinct from DriveLength (handle distance). Typical range: 7–12 m for OTW. Uses native FIT field **cycle_length16** (UINT16, scale 100, max 655 m) for interoperability with Garmin Connect, Intervals.icu, and other FIT parsers.
+- **DriveLength vs EffectiveLength** – Not duplicates. **DriveLength** is the actual distance the handle traveled during the stroke (~1.2–1.5 m). **EffectiveLength** is an oarlock/rigging metric: the effective lever length (horizontal component from pin to handle, often in cm). It describes rigging geometry, varies slightly stroke-to-stroke, and comes from NK Logbook (Oarlock). Both can appear in the same dataset.
+- **Stroke Number** – stored in the native **total_cycles** field (Garmin/ANT+ cycles). Rowing machines report it via ANT+ to Garmin watches; we write it per record since data is per stroke.
 
-When `use_developer_fields=True`, the following rowing-specific columns are written as developer fields (in Record messages) when the column exists in the data:
+## Developer fields exported
 
-| rowingdata column | Developer field name | Base type | Scale | Units |
-|-------------------|----------------------|-----------|-------|-------|
-| ` DriveLength (meters)` | DriveLength | UINT16 | 1000 | m |
-| ` DriveTime (ms)` | DriveTime | UINT16 | 1 | ms |
-| ` DragFactor` | DragFactor | UINT16 | 1 |  |
-| ` StrokeRecoveryTime (ms)` | StrokeRecoveryTime | UINT16 | 1 | ms |
-| ` AverageDriveForce (lbs)` | AverageDriveForceLbs | UINT16 | 10 | lbs |
-| ` PeakDriveForce (lbs)` | PeakDriveForceLbs | UINT16 | 10 | lbs |
-| ` AverageDriveForce (N)` | AverageDriveForceN | UINT16 | 10 | N |
-| ` PeakDriveForce (N)` | PeakDriveForceN | UINT16 | 10 | N |
-| ` AverageBoatSpeed (m/s)` | AverageBoatSpeed | UINT16 | 1000 | m/s |
-| ` WorkoutState` | WorkoutState | UINT8 | 1 |  |
+| rowingdata column | FIT field name | Base type | Scale | Units |
+|-------------------|----------------|-----------|-------|-------|
+| DriveLength (meters) | DriveLength | UINT16 | 100 | m |
+| DriveTime (ms) | StrokeDriveTime | UINT16 | 1 | ms |
+| DragFactor | DragFactor | UINT16 | 1 |  |
+| StrokeRecoveryTime (ms) | StrokeRecoveryTime | UINT16 | 1 | ms |
+| AverageDriveForce (lbs) | AverageDriveForceLbs | UINT16 | 10 | lbs |
+| PeakDriveForce (lbs) | PeakDriveForceLbs | UINT16 | 10 | lbs |
+| AverageDriveForce (N) | AverageDriveForceN | UINT16 | 10 | N |
+| PeakDriveForce (N) | PeakDriveForceN | UINT16 | 10 | N |
+| AverageBoatSpeed (m/s) | AverageBoatSpeed | UINT16 | 100 | m/s |
+| WorkoutState | WorkoutState | UINT8 | 1 |  |
+| catch, catchAngle | Catch | SINT16 | 10 | deg |
+| finish, finishAngle | Finish | SINT16 | 10 | deg |
+| slip | Slip | SINT16 | 10 | deg |
+| wash | Wash | SINT16 | 10 | deg |
+| peakforceangle | PeakForceAngle | SINT16 | 10 | deg |
+| effectiveLength | EffectiveLength | UINT16 | 100 | m |
 
-These have no native FIT equivalents. Apps that support custom streams (e.g. Intervals.icu) may import them when the developer field descriptions are present in the FIT file.
+Oarlock scalars (catch, finish, slip, wash, peakforceangle, effectiveLength) are exported when present. NK Logbook (Oarlock) uses these columns. See README *Oarlock scalars (OTW rigging)* for definitions. **EffectiveLength** is distinct from **DriveLength**: the former is rigging geometry (effective lever length); the latter is actual handle travel distance.
+
+These have no native equivalents. Apps like Intervals.icu can import them when the developer field descriptions are present.
+
+## Record message mapping (native fields)
+
+| rowingdata column | FIT field | Notes |
+|-------------------|-----------|-------|
+| TimeStamp (sec) | timestamp | UTC; relative timestamps combined with row_date |
+| cum_dist or Horizontal (meters) | distance | Cumulative meters (FIT scale 100) |
+| Cadence (stokes/min) | cadence | Strokes/min; omitted if zero |
+| HRCur (bpm) | heart_rate | Clamped 0–255 |
+| Power (watts) | power | Clamped 0–65535 |
+| Stroke500mPace (sec/500m) | enhanced_speed | Converted to m/s via 500/pace |
+| latitude | position_lat | Degrees; omitted if invalid |
+| longitude | position_long | Degrees; omitted if invalid |
+| Stroke Number or row index | total_cycles | Stroke number (data is per-stroke) |
+| StrokeDistance (meters) | cycle_length16 | Native UINT16, scale 100, max 655 m |
+
+## Session, Lap, and Event messages
+
+- **Session** – One message for the whole workout (total_distance, total_calories, avg_heart_rate, max_heart_rate, avg_cadence, avg_power). Start/end position in degrees when valid.
+- **Lap** – One Lap message per interval when the data has multiple unique `lapIdx` values (supports both ` lapIdx` and `lapIdx` column names). Each Lap has per-interval distance, elapsed time, total_calories, avg HR, max HR, avg cadence, avg power. Per-interval avg HR, cadence, and power use **work strokes only** (WorkoutState 1,4,5,6,7,8,9); rest strokes (WorkoutState 3) are excluded from those averages. If `lapIdx` is missing or all values are the same, one Lap for the whole session.
+- **Event** – Lap boundaries are marked with Event messages (Event.LAP, EventType.START) before each lap's records. Timer start/stop events bracket the activity.
 
 ## Dependencies
-
-FIT export requires the [fit-tool](https://pypi.org/project/fit-tool/) package:
 
 ```bash
 pip install fit-tool
 ```
 
-## Field mapping
+## Timestamps and structure
 
-The following table describes how rowingdata columns are mapped to FIT messages and fields. All fields listed are **native** unless otherwise noted.
+- Relative timestamps (below year 2000) are combined with row_date.
+- FIT timestamps: milliseconds since Garmin epoch (1989-12-31 UTC).
+- File structure: File ID, Activity, Event (start), Session, Developer data (if any), then for each interval: Event (lap start), Lap, Record messages for that interval, then Event (stop). If there is only one interval: one Lap, then all Records.
 
-### Record messages (per-sample data)
+## Intervals.icu compatibility
 
-| rowingdata column | FIT field | Type | Notes |
-|-------------------|-----------|------|-------|
-| `TimeStamp (sec)` | `timestamp` | Native | Seconds since 1970-01-01 UTC; relative timestamps are combined with `row_date` |
-| `cum_dist` or ` Horizontal (meters)` | `distance` | Native | Cumulative distance in meters (FIT scale 100) |
-| ` Cadence (stokes/min)` | `cadence` | Native | Stroke rate in strokes/min; omitted if zero |
-| ` HRCur (bpm)` | `heart_rate` | Native | Clamped to 0–255 (FIT uint8) |
-| ` Power (watts)` | `power` | Native | Clamped to 0–65535 (FIT uint16) |
-| ` Stroke500mPace (sec/500m)` | `enhanced_speed` | Native | Converted to m/s via 500/pace; FIT scale 1000 |
-| ` latitude` | `position_lat` | Native | Degrees; omitted if missing or invalid |
-| ` longitude` | `position_long` | Native | Degrees; omitted if missing or invalid |
+We structure the FIT file for compatibility with [Intervals.icu](https://intervals.icu):
 
-### Session and lap summary fields
+- **Lap-first ordering per interval**: Each Lap message immediately precedes the Record messages it summarizes (Summary First style per interval). Lap `timestamp` and `start_time` both use the lap start time.
+- **No Split messages**: We do not emit Garmin Split messages. Garmin's Split and Lap messages are disconnected in FIT; parsers can misalign them. Using only Lap messages avoids this parsing issue.
+- **sub_sport**: For rowing activities we infer from data when possible:
+  - If `sport` is explicitly `indoor_rowing` or `indoor rowing` → `indoorRowing` (indoor/erg)
+  - If `sport` is explicitly `water` → generic (on-water)
+  - If `sport` is `rowing` or default → GPS present → generic (on-water OTW); no GPS → `indoorRowing`
 
-All session and lap fields are **native**.
+## In-stroke curve export
 
-| Source | FIT message | Fields |
-|--------|-------------|--------|
-| Session totals | `SessionMessage` | `total_distance`, `total_calories`, `avg_heart_rate`, `max_heart_rate`, `avg_cadence`, `avg_power` |
-| Lap boundaries | `LapMessage` | Same as session; currently one lap for the whole workout |
-| Position | `LapMessage` | `start_position_lat/long`, `end_position_lat/long` (degrees) when valid |
+When `instroke_export` is not `'off'`, comma-separated curve columns (RP3 `curve_data`, Quiske `boat accelerator curve`, `oar angle velocity curve`, `seat curve`) can be exported:
 
-### Position handling
+| instroke_export | Behavior |
+|-----------------|----------|
+| `'off'` (default) | No curve export; backward compatible. |
+| `'summary'` | Per-stroke metrics (q1, q2, q3, q4, diff, maxpos, minpos) as developer fields, e.g. `HandleForceCurve_q1`. |
+| `'downsampled'` | Fixed-length curve (default 16 points) per stroke as SINT16 array developer field. |
+| `'companion'` | Sidecar `.instroke.json` file with full curve data per stroke. |
 
-- Latitude and longitude are expected in **degrees** (WGS84).
-- Position values must be in the range lat ∈ [-90, 90], lon ∈ [-180, 180].
-- Values at 0,0 or NaN are treated as invalid and omitted.
-- FIT uses semicircles internally; the export passes degrees and the library performs conversion.
+**Column mapping**: `curve_data` → HandleForceCurve, `boat accelerator curve` → BoatAcceleratorCurve, `oar angle velocity curve` → OarAngleVelocityCurve, `seat curve` → SeatCurve. Override via `instroke_column_map`. Columns are auto-detected when `instroke_columns` is None. Use `instroke_downsample_points` to set the number of points for downsampled export (default 16).
 
-### Cycle length (stroke distance)
+## Missing columns
 
-- FIT `cycle_length` uses scale 100 and a uint8 base type, so the maximum representable value is 2.55 m.
-- Values above 2.55 m are capped; values above 10 m in the source are pre-clipped.
-
-## Supported sports
-
-| sport string | FIT Sport enum |
-|-------------|----------------|
-| `rowing`, `water`, `indoor_rowing`, `indoor rowing` | ROWING |
-| `run`, `running` | RUNNING |
-| `bike`, `cycling` | CYCLING |
-| `swim`, `swimming` | SWIMMING |
-| `other` | GENERIC |
-
-## Timestamps
-
-- If `TimeStamp (sec)` values are below the year-2000 epoch (e.g. relative seconds from workout start), they are combined with `row_date` from the rowingdata session.
-- FIT timestamps are stored in milliseconds since 1989-12-31 00:00:00 UTC (Garmin epoch).
-
-## FIT file structure
-
-Exported files include:
-
-1. **File ID** – Activity type, manufacturer (Garmin), creation time
-2. **Activity** – Timer start metadata
-3. **Event** – Timer start
-4. **Session** – Summary (distance, calories, HR, cadence, power)
-5. **Lap** – One lap spanning the full session (with optional start/end position)
-6. **Record** – One record per row (timestamp, distance, cadence, HR, power, speed, position, cycle_length)
-7. **Event** – Timer stop
-
-## Missing or optional columns
-
-- If a column is missing, the corresponding FIT field is omitted or set to zero.
-- `cum_dist` is computed from ` Horizontal (meters)` when not present.
-- When `use_developer_fields=True`, developer fields are included only for columns that exist in the data.
+If a column is missing, the corresponding FIT field is omitted or zeroed. cum_dist is computed from Horizontal (meters) when absent. Developer fields are only written when the column exists.

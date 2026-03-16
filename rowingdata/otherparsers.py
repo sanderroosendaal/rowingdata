@@ -549,7 +549,9 @@ class FITParser(object):
             'position_lat': ' latitude',
             spmname: ' Cadence (stokes/min)',
             'lapid': ' lapIdx',
-            'distance': ' Horizontal (meters)'
+            'distance': ' Horizontal (meters)',
+            'total_cycles': ' Stroke Number',
+            'cycle_length16': ' StrokeDistance (meters)',  # native FIT field for stroke distance
             }
 
         self.df.rename(columns=newcolnames,inplace=True)

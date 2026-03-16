@@ -1,3 +1,4 @@
+
 # pylint: disable=C0103, C0303, C0325, C0413, W0403, W0611
 
 from __future__ import absolute_import
@@ -5,7 +6,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.7.2"
+__version__ = "3.7.3"
 
 from collections import Counter
 
@@ -3129,7 +3130,9 @@ class rowingdata:
                 f_out.write(bytes)
 
     def exporttofit(self, fileName, notes="Exported by Rowingdata",
-                    sport="rowing", use_developer_fields=True):
+                    sport="rowing", use_developer_fields=True,
+                    instroke_export='off', instroke_columns=None, instroke_column_map=None,
+                    instroke_downsample_points=16, overwrite=True):
         """Export rowingdata to FIT format for Intervals.icu and other platforms.
 
         Parameters
@@ -3143,17 +3146,45 @@ class rowingdata:
         use_developer_fields : bool
             If True, include rowing-specific columns (DriveLength, StrokeDistance,
             etc.) when present. Requires fit-tool and Intervals.icu importer support.
+        instroke_export : str
+            'off' (default): no in-stroke curve export.
+            'summary': export q1,q2,q3,q4,diff,maxpos,minpos per curve as developer fields.
+            'downsampled': export fixed-length downsampled curve (SINT16 array) per stroke.
+            'companion': write curve data to .instroke.json sidecar file.
+        instroke_columns : list, optional
+            Curve columns to export. If None, auto-detect.
+        instroke_column_map : dict, optional
+            Override mapping from df column name to canonical FIT curve type name.
+        instroke_downsample_points : int
+            Number of points for downsampled export (default 16).
+        overwrite : bool
+            If True (default), overwrite existing files. If False, raise FileExistsError
+            when the target FIT file (or companion .instroke.json) already exists.
+
+        Returns
+        -------
+        dict or None
+            None in the normal case. When notable conditions occur, returns a dict:
+            - ``instroke_columns_available``: list of column names (when in-stroke data is
+              detected but instroke_export='off')
+            - ``suggestion``: hint to re-export with instroke_export enabled
+            - ``companion_file``: path to .instroke.json (when instroke_export='companion')
         """
         if not self.empty:
             df = self.df.copy()
             res = make_cumvalues(df[' Horizontal (meters)'])
             df[' Horizontal (meters)'] = res[0]
             df['cum_dist'] = res[0]
-            fitwrite.write_fit(
+            return fitwrite.write_fit(
                 fileName, df,
                 row_date=self.rowdatetime.isoformat(),
                 notes=notes, sport=sport,
-                use_developer_fields=use_developer_fields
+                use_developer_fields=use_developer_fields,
+                instroke_export=instroke_export,
+                instroke_columns=instroke_columns,
+                instroke_column_map=instroke_column_map,
+                instroke_downsample_points=instroke_downsample_points,
+                overwrite=overwrite
             )
         else:  # pragma: no cover
             raise ValueError("Cannot export empty rowingdata session to FIT")
