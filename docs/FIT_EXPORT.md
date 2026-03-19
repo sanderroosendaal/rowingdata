@@ -98,8 +98,8 @@ pip install fit-tool
 
 We structure the FIT file for compatibility with [Intervals.icu](https://intervals.icu):
 
-- **Lap-first ordering per interval**: Each Lap message immediately precedes the Record messages it summarizes (Summary First style per interval). Lap `timestamp` and `start_time` both use the lap start time.
-- **No Split messages**: We do not emit Garmin Split messages. Garmin's Split and Lap messages are disconnected in FIT; parsers can misalign them. Using only Lap messages avoids this parsing issue.
+- **Lap messages only (no Split)**: We emit Lap messages for intervals (one per `lapIdx`). We do not emit Garmin Split messages. The column `lapIdx` is a rowingdata and Concept2-derived convention for interval indexing (not a Garmin FIT field). In Garmin's native indoor rowing recordings, Splits typically map 1:1 to workout steps (intervals). OpenRowingMonitor and others use Splits as intervals with good Garmin compatibility. We use Lap-only for current export compatibility; Split support may be added when ecosystem support for Split–Lap linkage improves. See [issue #63](https://github.com/sanderroosendaal/rowingdata/issues/63).
+- **Summary First ordering**: Each Lap message precedes the Record messages it summarizes. Garmin and OpenRowingMonitor use Summary Last (Records before Lap); we use Summary First for compatibility with Intervals.icu. **We need to confirm with Intervals.icu** whether they support Summary Last and whether switching would improve interoperability. See [issue #61](https://github.com/sanderroosendaal/rowingdata/issues/61).
 - **sub_sport**: For rowing activities we infer from data when possible:
   - If `sport` is explicitly `indoor_rowing` or `indoor rowing` → `indoorRowing` (indoor/erg)
   - If `sport` is explicitly `water` → generic (on-water)
