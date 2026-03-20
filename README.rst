@@ -559,6 +559,13 @@ The standard field names are:
 Optional (Oarlock/NK Logbook): ``catch``/``catchAngle``, ``finish``/``finishAngle``,
 ``slip``, ``wash``, ``peakforceangle``, ``effectiveLength``.
 
+Planned for dual oarlock (port/starboard symmetry): ``catch_port``, ``catch_starboard``,
+``finish_port``, ``finish_starboard``, ``slip_port``, ``slip_starboard``, ``wash_port``,
+``wash_starboard``, ``peakforceangle_port``, ``peakforceangle_starboard``,
+``effectiveLength_port``, ``effectiveLength_starboard``. See ``docs/FIT_EXPORT.md``
+(section *Symmetry with two oarlocks*). **Note:** rowingdata does not yet
+implement parsing or export for these per-side columns.
+
 The CSV file adheres to the US conventions, with fields
 separated by a comma (',')
 and using the dot '.' as the decimal symbol. 
@@ -819,6 +826,16 @@ measurement systems. They describe rigging geometry and blade angles:
   Drive Length is the *actual distance the handle traveled* during the
   stroke (typically 1.2–1.5 m). Both may appear in the same dataset;
   they serve different purposes.
+
+Dual oarlock (port/starboard)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a rower uses two smart oarlocks, oarlock metrics can be reported per side:
+port (left) and starboard (right). The CSV standard defines per-side columns
+(e.g. ``catch_port``, ``catch_starboard``) and summary columns (``catch``) as
+the average when both sides exist. See ``docs/FIT_EXPORT.md`` (section *Symmetry
+with two oarlocks*) for the full spec. **Note:** rowingdata does not yet
+implement parsing or FIT export for these per-side columns.
 
 Lap Identifier
 -------------------

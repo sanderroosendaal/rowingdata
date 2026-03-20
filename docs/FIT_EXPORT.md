@@ -61,6 +61,41 @@ Oarlock scalars (catch, finish, slip, wash, peakforceangle, effectiveLength) are
 
 These have no native equivalents. Apps like Intervals.icu can import them when the developer field descriptions are present.
 
+## Symmetry with two oarlocks
+
+When a rower uses two smart oarlocks (e.g. dual EmPower or Quiske per-side data), oarlock metrics can be reported per side: **port** (left) and **starboard** (right). We export per-side developer fields when both sides are present, and always export summary fields so partial implementations still get useful data.
+
+### Per-side developer fields
+
+| rowingdata column | FIT field name | Base type | Scale | Units |
+|-------------------|----------------|-----------|-------|-------|
+| catch_port, catchAngle_port | CatchPort | SINT16 | 10 | deg |
+| catch_starboard, catchAngle_starboard | CatchStarboard | SINT16 | 10 | deg |
+| finish_port, finishAngle_port | FinishPort | SINT16 | 10 | deg |
+| finish_starboard, finishAngle_starboard | FinishStarboard | SINT16 | 10 | deg |
+| slip_port | SlipPort | SINT16 | 10 | deg |
+| slip_starboard | SlipStarboard | SINT16 | 10 | deg |
+| wash_port | WashPort | SINT16 | 10 | deg |
+| wash_starboard | WashStarboard | SINT16 | 10 | deg |
+| peakforceangle_port | PeakForceAnglePort | SINT16 | 10 | deg |
+| peakforceangle_starboard | PeakForceAngleStarboard | SINT16 | 10 | deg |
+| effectiveLength_port | EffectiveLengthPort | UINT16 | 100 | m |
+| effectiveLength_starboard | EffectiveLengthStarboard | UINT16 | 100 | m |
+
+Per-side fields are exported only when both port and starboard columns exist for that metric.
+
+### Summary fields (Catch, Finish, etc.)
+
+The non-suffixed fields (Catch, Finish, Slip, Wash, PeakForceAngle, EffectiveLength) serve as summary values so developers who implement only the partial standard still get meaningful data:
+
+| Scenario | Catch (and other oarlock scalars) |
+|----------|-----------------------------------|
+| Single oarlock (port or starboard) | That side's value |
+| Dual oarlock (both present) | Average of Port and Starboard |
+| Dual oarlock (one side missing) | The side that is present |
+
+This keeps backward compatibility and gives partial implementers a representative per-stroke value. Full implementers can use the per-side fields for symmetry analysis (e.g. catch angle imbalance).
+
 ## Record message mapping (native fields)
 
 | rowingdata column | FIT field | Notes |
