@@ -63,6 +63,9 @@ OARLOCK_DEV_FIELDS = [
     (16, ['effectiveLength', ' effectiveLength', 'effective length'], 'EffectiveLength', BaseType.UINT16, 2, 100, 'm'),
 ]
 
+# FIT developer field size limit: 255 bytes. SINT16 = 2 bytes => max 127 points.
+INSTROKE_MAX_POINTS = 127
+
 # Canonical mapping: df column name -> FIT curve type name (RP3/Quiske)
 INSTROKE_COLUMN_MAP = {
     'curve_data': 'HandleForceCurve',
@@ -127,6 +130,32 @@ def _downsample_instroke_curve(df, col, n_points):
         indices = np.linspace(0, len(row) - 1, n_points, dtype=int)
         result.append(row[indices].astype(float))
     return result
+
+
+def _get_instroke_curve_for_export(df, col, mode, downsample_points):
+    """
+    Get in-stroke curve array for FIT export.
+    mode: 'downsampled' or 'full'
+    downsample_points: for 'downsampled', the desired number of points; ignored for 'full'.
+
+    Returns (list of arrays per row, n_points). n_points is in range 2..INSTROKE_MAX_POINTS.
+    """
+    curve = _parse_instroke_curve(df, col)
+    if curve.empty or len(curve) == 0:
+        return [], 0
+
+    if mode == 'full':
+        max_in_col = 0
+        for i in range(len(curve)):
+            row = curve.iloc[i].dropna().values
+            row = row[np.isfinite(row)]
+            max_in_col = max(max_in_col, len(row))
+        n_points = min(max(2, max_in_col), INSTROKE_MAX_POINTS)
+    else:
+        n_points = max(2, min(downsample_points, INSTROKE_MAX_POINTS))
+
+    result = _downsample_instroke_curve(df, col, n_points)
+    return result, n_points
 
 
 def _detect_instroke_columns(df):
@@ -371,6 +400,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         'off' (default): no in-stroke curve export.
         'summary': export q1,q2,q3,q4,diff,maxpos,minpos per curve as developer fields.
         'downsampled': export fixed-length downsampled curve (SINT16 array) per stroke.
+        'full': export full-resolution curve up to 127 points per stroke (FIT size limit).
         'companion': write curve data to .instroke.json sidecar file.
     instroke_columns : list, optional
         Curve columns to export. If None, auto-detect via _detect_instroke_columns.
@@ -378,7 +408,8 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         Override mapping from df column name to canonical FIT curve type name.
         Default: curve_data->HandleForceCurve, boat accelerator curve->BoatAcceleratorCurve, etc.
     instroke_downsample_points : int
-        Number of points for downsampled export (default 16).
+        For 'downsampled': number of points per stroke (default 16, range 2-127).
+        Ignored for 'full' and other modes.
     overwrite : bool
         If True (default), overwrite existing files. If False, raise FileExistsError
         when the target FIT file (or companion .instroke.json) already exists.
@@ -550,7 +581,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     instroke_summary_arrays = {}
     instroke_downsampled_arrays = {}
     col_map = instroke_column_map if instroke_column_map is not None else INSTROKE_COLUMN_MAP
-    if instroke_export in ('summary', 'downsampled', 'companion'):
+    if instroke_export in ('summary', 'downsampled', 'full', 'companion'):
         curve_cols = instroke_columns if instroke_columns is not None else _detect_instroke_columns(df)
         instroke_curve_cols = [c for c in curve_cols if c in df.columns]
     if instroke_export == 'summary' and instroke_curve_cols and use_dev:
@@ -573,16 +604,20 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 instroke_summary_arrays.setdefault(col, {})[metric] = field_id
                 base_id += 1
             base_id = (base_id // 10 + 1) * 10
-    elif instroke_export == 'downsampled' and instroke_curve_cols and use_dev:
+    elif instroke_export in ('downsampled', 'full') and instroke_curve_cols and use_dev:
         base_id = 60
         for col in instroke_curve_cols:
             canonical = col_map.get(col, col)
             try:
-                downsampled = _downsample_instroke_curve(df, col, instroke_downsample_points)
+                curves_list, n_points = _get_instroke_curve_for_export(
+                    df, col, instroke_export, instroke_downsample_points
+                )
             except (ValueError, KeyError, TypeError):
                 continue
-            arr_2d = np.array(downsampled, dtype=np.float64)
-            size = instroke_downsample_points * 2
+            if n_points < 2:
+                continue
+            arr_2d = np.array(curves_list, dtype=np.float64)
+            size = n_points * 2
             dev_arrays[base_id] = arr_2d
             dev_specs.append((base_id, col, canonical, BaseType.SINT16, size, 1, ''))
             base_id += 1
@@ -840,7 +875,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     if instroke_export == 'off' and detected_instroke_cols:
         result = {
             'instroke_columns_available': detected_instroke_cols,
-            'suggestion': 'Re-export with instroke_export="summary" or "companion" to include curve data.'
+            'suggestion': 'Re-export with instroke_export="summary", "downsampled", "full", or "companion" to include curve data.'
         }
     if companion_written_path is not None:
         if result is None:

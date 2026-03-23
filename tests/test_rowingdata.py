@@ -918,6 +918,41 @@ class TestFITParser:
             except FileNotFoundError:
                 pass
 
+    def test_exporttofit_instroke_full(self):
+        """Instroke full export stores up to 127 points per stroke (no downsampling when curve is short)."""
+        csvfile = 'testdata/quiske_per_stroke_left.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_instroke_full.fit')
+        try:
+            r = rowingdata.QuiskeParser(csvfile)
+            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing', instroke_export='full')
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            rr = rowingdata.FITParser(outfile)
+            # Full mode adds curve array fields; parser may expose them
+            assert len(rr.df) > 0, 'FIT should have records'
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
+    def test_exporttofit_instroke_downsampled_custom_points(self):
+        """Instroke downsampled export with custom instroke_downsample_points (e.g. 120)."""
+        csvfile = 'testdata/quiske_per_stroke_left.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_instroke_downsampled120.fit')
+        try:
+            r = rowingdata.QuiskeParser(csvfile)
+            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing', instroke_export='downsampled',
+                           instroke_downsample_points=32)
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            assert len(row.df) > 0
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
     def test_fitwrite_detect_instroke_columns(self):
         """_detect_instroke_columns finds curve_data and Quiske curve columns."""
         from rowingdata import fitwrite

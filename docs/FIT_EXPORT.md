@@ -13,7 +13,7 @@ row = rowingdata.rowingdata(csvfile="workout.csv")
 row.exporttofit("workout.fit", sport="rowing", notes="My workout")
 ```
 
-Parameters: **fileName** (output path), **notes** (default: "Exported by Rowingdata"), **sport** (e.g. rowing, indoor_rowing), **use_developer_fields** (default: True – include rowing-specific fields when present), **instroke_export** (default: 'off' – see In-stroke curve export below), **instroke_columns** (optional list of curve columns), **instroke_column_map** (optional override mapping), **instroke_downsample_points** (default: 16 for downsampled export), **overwrite** (default: True – set False to raise `FileExistsError` if the target file or companion already exists).
+Parameters: **fileName** (output path), **notes** (default: "Exported by Rowingdata"), **sport** (e.g. rowing, indoor_rowing), **use_developer_fields** (default: True – include rowing-specific fields when present), **instroke_export** (default: 'off' – see In-stroke curve export below), **instroke_columns** (optional list of curve columns), **instroke_column_map** (optional override mapping), **instroke_downsample_points** (default: 16 for downsampled export; range 2–127), **overwrite** (default: True – set False to raise `FileExistsError` if the target file or companion already exists).
 
 **Return value**: `None` in the normal case. When notable conditions occur, returns a dict:
 - `instroke_columns_available`: list of column names when in-stroke data is detected but `instroke_export='off'` (allows you to decide whether to re-export with `instroke_export='summary'` or `'companion'`)
@@ -148,10 +148,23 @@ When `instroke_export` is not `'off'`, comma-separated curve columns (RP3 `curve
 |-----------------|----------|
 | `'off'` (default) | No curve export; backward compatible. |
 | `'summary'` | Per-stroke metrics (q1, q2, q3, q4, diff, maxpos, minpos) as developer fields, e.g. `HandleForceCurve_q1`. |
-| `'downsampled'` | Fixed-length curve (default 16 points) per stroke as SINT16 array developer field. |
-| `'companion'` | Sidecar `.instroke.json` file with full curve data per stroke. |
+| `'downsampled'` | Fixed-length curve per stroke as SINT16 array. Use `instroke_downsample_points` (default 16, range 2–127). |
+| `'full'` | Full-resolution curve up to 127 points per stroke. Curves with ≤127 points are stored as-is (padded if shorter); longer curves are downsampled to 127. FIT developer fields have a 255-byte limit, so SINT16 (2 bytes) allows max 127 points. |
+| `'companion'` | Sidecar `.instroke.json` file with full curve data per stroke (no FIT size limit). |
 
-**Column mapping**: `curve_data` → HandleForceCurve, `boat accelerator curve` → BoatAcceleratorCurve, `oar angle velocity curve` → OarAngleVelocityCurve, `seat curve` → SeatCurve. Override via `instroke_column_map`. Columns are auto-detected when `instroke_columns` is None. Use `instroke_downsample_points` to set the number of points for downsampled export (default 16).
+**Column mapping**: `curve_data` → HandleForceCurve, `boat accelerator curve` → BoatAcceleratorCurve, `oar angle velocity curve` → OarAngleVelocityCurve, `seat curve` → SeatCurve. Override via `instroke_column_map`. Columns are auto-detected when `instroke_columns` is None.
+
+**instroke_downsample_points**: For `'downsampled'` mode, the number of points per stroke (default 16). Valid range 2–127. For `'full'` mode this parameter is ignored.
+
+### In-FIT curve size limit (255 bytes)
+
+The FIT protocol encodes developer field size in one byte, so each field is limited to 255 bytes. For SINT16 arrays that yields at most 127 points. We support `'full'` mode (up to 127 points) and configurable `'downsampled'` (2–127 points). For longer curves or lossless storage, use `'companion'`.
+
+### Alternative approaches (not implemented)
+
+**Option C – Two-part split**: Curves with >127 points could be split into two developer fields (e.g. `HandleForceCurve_Part0`, `HandleForceCurve_Part1`), each ≤127 points, giving up to 254 points total. Consumers would need to concatenate parts. This adds complexity to both export and parsing.
+
+**Option E – UINT8/BYTE**: Using 1 byte per value would allow up to 255 points in a single field, but with lower precision (8-bit vs 16-bit). Scale/offset would map float curves to 0–255. Not implemented due to precision loss.
 
 ## Missing columns
 

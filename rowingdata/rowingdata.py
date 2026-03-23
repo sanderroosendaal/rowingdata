@@ -3150,13 +3150,15 @@ class rowingdata:
             'off' (default): no in-stroke curve export.
             'summary': export q1,q2,q3,q4,diff,maxpos,minpos per curve as developer fields.
             'downsampled': export fixed-length downsampled curve (SINT16 array) per stroke.
+            'full': export full-resolution curve up to 127 points per stroke (FIT size limit).
             'companion': write curve data to .instroke.json sidecar file.
         instroke_columns : list, optional
             Curve columns to export. If None, auto-detect.
         instroke_column_map : dict, optional
             Override mapping from df column name to canonical FIT curve type name.
         instroke_downsample_points : int
-            Number of points for downsampled export (default 16).
+            For 'downsampled': number of points per stroke (default 16, range 2-127).
+            Ignored for 'full' and other modes.
         overwrite : bool
             If True (default), overwrite existing files. If False, raise FileExistsError
             when the target FIT file (or companion .instroke.json) already exists.
