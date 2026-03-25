@@ -133,8 +133,22 @@ pip install fit-tool
 
 We structure the FIT file for compatibility with [Intervals.icu](https://intervals.icu):
 
-- **Lap messages only (no Split)**: We emit Lap messages for intervals (one per `lapIdx`). We do not emit Garmin Split messages. The column `lapIdx` is a rowingdata and Concept2-derived convention for interval indexing (not a Garmin FIT field). In Garmin's native indoor rowing recordings, Splits typically map 1:1 to workout steps (intervals). OpenRowingMonitor and others use Splits as intervals with good Garmin compatibility. We use Lap-only for current export compatibility; Split support may be added when ecosystem support for Split–Lap linkage improves. See [issue #63](https://github.com/sanderroosendaal/rowingdata/issues/63).
+- **Lap messages only (no Split)**: We emit Lap messages for intervals (one per `lapIdx`). We do not emit Garmin Split messages. The column `lapIdx` is a rowingdata and Concept2-derived convention for interval indexing (not a Garmin FIT field). We stay Lap-only for current Intervals.icu import behaviour; see **Splits vs Laps** below and [issue #63](https://github.com/sanderroosendaal/rowingdata/issues/63).
 - **Summary First ordering**: Each Lap message precedes the Record messages it summarizes. Garmin and OpenRowingMonitor use Summary Last (Records before Lap); we use Summary First for compatibility with Intervals.icu. **We need to confirm with Intervals.icu** whether they support Summary Last and whether switching would improve interoperability. See [issue #61](https://github.com/sanderroosendaal/rowingdata/issues/61).
+
+### Splits vs Laps (Garmin practice and linkage)
+
+Community analysis of Garmin native indoor rowing FIT files (see [issue #63](https://github.com/sanderroosendaal/rowingdata/issues/63), including feedback from OpenRowingMonitor) indicates:
+
+- **Splits as intervals**: Garmin **Split** messages usually correspond 1:1 to **workout steps** (i.e. the logical intervals in the workout). Tools such as OpenRowingMonitor emit splits on that model because Garmin’s toolchain handles it well.
+
+- **Split–Lap linkage is not absent in the wild**: Splits are summary messages and can be tied to laps. Observers report bidirectional linkage via native (sometimes undocumented) fields—for example a split field indicating **which lap the split starts on** (described in discussion as a “first lap index” style field) and lap fields such as a **workout step index** pointing back to the workout step (and thus the split, when steps and splits align 1:1). Exact field names and SDK exposure vary; rowingdata does not emit these yet.
+
+- **Splits without full linkage**: A split message can still function as a **standalone per-interval summary**; consumers can parse and display interval totals from splits alone without recomputing from underlying Records. That can be preferable for some pipelines (e.g. where post-processing of stroke-level rowing data is weak).
+
+- **Related lap fields**: Discussion of undocumented lap fields that make lap summaries closer to split-style summaries appears in [markw65/fit-file-writer#14](https://github.com/markw65/fit-file-writer/issues/14).
+
+**Rowingdata today**: Lap-only export + Summary First for Intervals.icu. Adding Split messages, Summary Last, or documented linkage fields is a plausible future change once consumer behaviour (Intervals.icu, Garmin Connect, etc.) is validated or contributed.
 - **sub_sport**: For rowing activities we infer from data when possible:
   - If `sport` is explicitly `indoor_rowing` or `indoor rowing` → `indoorRowing` (indoor/erg)
   - If `sport` is explicitly `water` → generic (on-water)
