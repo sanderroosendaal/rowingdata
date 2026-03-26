@@ -20,6 +20,10 @@ Parameters: **fileName** (output path), **notes** (default: "Exported by Rowingd
 - `suggestion`: hint to re-export with instroke_export enabled
 - `companion_file`: path to the `.instroke.json` sidecar when `instroke_export='companion'` writes one
 
+## Authoritative developer field list (machine-readable)
+
+FIT **developer field IDs**, FIT names, base types, scales, DataFrame column mappings, in-stroke dynamic ID ranges (`summary_start`, `curve_start`), abscissa enum, and related metadata are defined in **`rowingdata/data/fit_export_spec.json`** (shipped with the package). `rowingdata/fitwrite_spec.py` loads and validates it; `rowingdata/fitwrite.py` uses the loaded tuples. Prose tables in this document should stay aligned with that JSON when the standard changes.
+
 ## Native vs developer fields
 
 **Native fields** are part of the Garmin FIT SDK (timestamp, distance, heart_rate, position_lat, cycle_length, etc.). Every FIT-capable app understands them.
@@ -77,20 +81,22 @@ When a rower uses two smart oarlocks (e.g. dual EmPower or Quiske per-side data)
 
 ### Per-side developer fields
 
-| rowingdata column | FIT field name | Base type | Scale | Units |
-|-------------------|----------------|-----------|-------|-------|
-| catch_port, catchAngle_port | CatchPort | SINT16 | 10 | deg |
-| catch_starboard, catchAngle_starboard | CatchStarboard | SINT16 | 10 | deg |
-| finish_port, finishAngle_port | FinishPort | SINT16 | 10 | deg |
-| finish_starboard, finishAngle_starboard | FinishStarboard | SINT16 | 10 | deg |
-| slip_port | SlipPort | SINT16 | 10 | deg |
-| slip_starboard | SlipStarboard | SINT16 | 10 | deg |
-| wash_port | WashPort | SINT16 | 10 | deg |
-| wash_starboard | WashStarboard | SINT16 | 10 | deg |
-| peakforceangle_port | PeakForceAnglePort | SINT16 | 10 | deg |
-| peakforceangle_starboard | PeakForceAngleStarboard | SINT16 | 10 | deg |
-| effectiveLength_port | EffectiveLengthPort | UINT16 | 100 | m |
-| effectiveLength_starboard | EffectiveLengthStarboard | UINT16 | 100 | m |
+Developer field IDs **200–211** (see `rowingdata/data/fit_export_spec.json`, group `oarlock_dual`).
+
+| rowingdata column | FIT field name | Dev field ID | Base type | Scale | Units |
+|-------------------|----------------|--------------|-----------|-------|-------|
+| catch_port, catchAngle_port | CatchPort | 200 | SINT16 | 10 | deg |
+| catch_starboard, catchAngle_starboard | CatchStarboard | 201 | SINT16 | 10 | deg |
+| finish_port, finishAngle_port | FinishPort | 202 | SINT16 | 10 | deg |
+| finish_starboard, finishAngle_starboard | FinishStarboard | 203 | SINT16 | 10 | deg |
+| slip_port | SlipPort | 204 | SINT16 | 10 | deg |
+| slip_starboard | SlipStarboard | 205 | SINT16 | 10 | deg |
+| wash_port | WashPort | 206 | SINT16 | 10 | deg |
+| wash_starboard | WashStarboard | 207 | SINT16 | 10 | deg |
+| peakforceangle_port | PeakForceAnglePort | 208 | SINT16 | 10 | deg |
+| peakforceangle_starboard | PeakForceAngleStarboard | 209 | SINT16 | 10 | deg |
+| effectiveLength_port | EffectiveLengthPort | 210 | UINT16 | 100 | m |
+| effectiveLength_starboard | EffectiveLengthStarboard | 211 | UINT16 | 100 | m |
 
 Per-side fields are exported only when both port and starboard columns exist for that metric.
 

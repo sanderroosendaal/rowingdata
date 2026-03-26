@@ -1000,6 +1000,25 @@ class TestFITParser:
             except FileNotFoundError:
                 pass
 
+    def test_fit_export_spec_loads(self):
+        """fit_export_spec.json loads; field IDs and names match exporter expectations."""
+        from rowingdata import fitwrite_spec
+        raw = fitwrite_spec.load_fit_spec_raw()
+        assert raw['version'] == 1
+        assert raw['instroke_dynamic']['summary_start'] == 20
+        assert raw['instroke_dynamic']['curve_start'] == 60
+        ids = [r['field_id'] for r in raw['developer_fields']]
+        assert sorted(ids) == sorted(set(ids)), 'duplicate field_id in spec'
+        assert 0 in ids and 17 in ids and 90 in ids
+        spec = fitwrite_spec.load_fit_spec()
+        assert len(spec['ROWING_DEV_FIELDS']) == 10
+        assert len(spec['OARLOCK_DEV_FIELDS']) == 6
+        assert len(spec['OARLOCK_DUAL_PAIRS']) == 6
+        assert spec['OARLOCK_DUAL_PAIRS'][0][1][0] == 200
+        assert len(spec['PEAK_POSITION_DEV_FIELDS']) == 2
+        assert spec['PEAK_POSITION_DEV_FIELDS'][0][7] == 'peak_norm'
+        assert len(spec['INSTROKE_AXIS_DEV_FIELDS']) == 3
+
     def test_fitwrite_detect_instroke_columns(self):
         """_detect_instroke_columns finds curve_data and Quiske curve columns."""
         from rowingdata import fitwrite

@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "_comment": "Authoritative FIT developer field definitions for rowingdata fitwrite. Edit this file to change IDs/names/types; keep docs/FIT_EXPORT.md in sync.",
+  "instroke_dynamic": {
+    "summary_start": 20,
+    "summary_id_padding": "ceil_to_10",
+    "curve_start": 60
+  },
+  "abscissa_enum": {
+    "UNKNOWN": 0,
+    "TIME_UNIFORM_MS": 1,
+    "HANDLE_DISTANCE_UNIFORM_M": 2,
+    "OAR_ANGLE_UNIFORM_DEG": 3,
+    "NORMALIZED_DRIVE_0_1": 4
+  },
+  "instroke_axis_field_ids": [90, 91, 92],
+  "always_emit_field_ids": [9, 90, 91, 92],
+  "instroke_column_map": {
+    "curve_data": "HandleForceCurve",
+    "boat accelerator curve": "BoatAcceleratorCurve",
+    "oar angle velocity curve": "OarAngleVelocityCurve",
+    "seat curve": "SeatCurve"
+  },
+  "developer_fields": [
+    {"field_id": 0, "group": "rowing", "fit_name": "DriveLength", "base_type": "UINT16", "size": 2, "scale": 100, "units": "m", "df_columns": [" DriveLength (meters)"]},
+    {"field_id": 1, "group": "rowing", "fit_name": "StrokeDriveTime", "base_type": "UINT16", "size": 2, "scale": 1, "units": "ms", "df_columns": [" DriveTime (ms)"]},
+    {"field_id": 2, "group": "rowing", "fit_name": "DragFactor", "base_type": "UINT16", "size": 2, "scale": 1, "units": "", "df_columns": [" DragFactor"]},
+    {"field_id": 3, "group": "rowing", "fit_name": "StrokeRecoveryTime", "base_type": "UINT16", "size": 2, "scale": 1, "units": "ms", "df_columns": [" StrokeRecoveryTime (ms)"]},
+    {"field_id": 4, "group": "rowing", "fit_name": "AverageDriveForceLbs", "base_type": "UINT16", "size": 2, "scale": 10, "units": "lbs", "df_columns": [" AverageDriveForce (lbs)"]},
+    {"field_id": 5, "group": "rowing", "fit_name": "PeakDriveForceLbs", "base_type": "UINT16", "size": 2, "scale": 10, "units": "lbs", "df_columns": [" PeakDriveForce (lbs)"]},
+    {"field_id": 6, "group": "rowing", "fit_name": "AverageDriveForceN", "base_type": "UINT16", "size": 2, "scale": 10, "units": "N", "df_columns": [" AverageDriveForce (N)"]},
+    {"field_id": 7, "group": "rowing", "fit_name": "PeakDriveForceN", "base_type": "UINT16", "size": 2, "scale": 10, "units": "N", "df_columns": [" PeakDriveForce (N)"]},
+    {"field_id": 8, "group": "rowing", "fit_name": "AverageBoatSpeed", "base_type": "UINT16", "size": 2, "scale": 100, "units": "m/s", "df_columns": [" AverageBoatSpeed (m/s)"]},
+    {"field_id": 9, "group": "rowing", "fit_name": "WorkoutState", "base_type": "UINT8", "size": 1, "scale": 1, "units": "", "df_columns": [" WorkoutState"]},
+
+    {"field_id": 11, "group": "oarlock", "fit_name": "Catch", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["catch", " catch", "catchAngle"]},
+    {"field_id": 12, "group": "oarlock", "fit_name": "Finish", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["finish", " finish", "finishAngle"]},
+    {"field_id": 13, "group": "oarlock", "fit_name": "Slip", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["slip", " slip"]},
+    {"field_id": 14, "group": "oarlock", "fit_name": "Wash", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["wash", " wash"]},
+    {"field_id": 15, "group": "oarlock", "fit_name": "PeakForceAngle", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["peakforceangle", " peakforceangle"]},
+    {"field_id": 16, "group": "oarlock", "fit_name": "EffectiveLength", "base_type": "UINT16", "size": 2, "scale": 100, "units": "m", "df_columns": ["effectiveLength", " effectiveLength", "effective length"]},
+
+    {"field_id": 200, "group": "oarlock_dual", "dual_pair": "catch", "side": "port", "fit_name": "CatchPort", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["catch_port", "catchAngle_port"]},
+    {"field_id": 201, "group": "oarlock_dual", "dual_pair": "catch", "side": "starboard", "fit_name": "CatchStarboard", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["catch_starboard", "catchAngle_starboard"]},
+    {"field_id": 202, "group": "oarlock_dual", "dual_pair": "finish", "side": "port", "fit_name": "FinishPort", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["finish_port", "finishAngle_port"]},
+    {"field_id": 203, "group": "oarlock_dual", "dual_pair": "finish", "side": "starboard", "fit_name": "FinishStarboard", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["finish_starboard", "finishAngle_starboard"]},
+    {"field_id": 204, "group": "oarlock_dual", "dual_pair": "slip", "side": "port", "fit_name": "SlipPort", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["slip_port"]},
+    {"field_id": 205, "group": "oarlock_dual", "dual_pair": "slip", "side": "starboard", "fit_name": "SlipStarboard", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["slip_starboard"]},
+    {"field_id": 206, "group": "oarlock_dual", "dual_pair": "wash", "side": "port", "fit_name": "WashPort", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["wash_port"]},
+    {"field_id": 207, "group": "oarlock_dual", "dual_pair": "wash", "side": "starboard", "fit_name": "WashStarboard", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["wash_starboard"]},
+    {"field_id": 208, "group": "oarlock_dual", "dual_pair": "peakforceangle", "side": "port", "fit_name": "PeakForceAnglePort", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["peakforceangle_port"]},
+    {"field_id": 209, "group": "oarlock_dual", "dual_pair": "peakforceangle", "side": "starboard", "fit_name": "PeakForceAngleStarboard", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["peakforceangle_starboard"]},
+    {"field_id": 210, "group": "oarlock_dual", "dual_pair": "effectiveLength", "side": "port", "fit_name": "EffectiveLengthPort", "base_type": "UINT16", "size": 2, "scale": 100, "units": "m", "df_columns": ["effectiveLength_port"]},
+    {"field_id": 211, "group": "oarlock_dual", "dual_pair": "effectiveLength", "side": "starboard", "fit_name": "EffectiveLengthStarboard", "base_type": "UINT16", "size": 2, "scale": 100, "units": "m", "df_columns": ["effectiveLength_starboard"]},
+
+    {"field_id": 17, "group": "peak_position", "fit_name": "PeakForcePositionNorm", "base_type": "UINT16", "size": 2, "scale": 1, "units": "", "df_columns": ["rel_peak_force_pos", "PeakForcePositionNorm", "% of Stroke Complete When Peak Force Is Reached"], "transformer": "peak_norm", "clip_uint16_max": 10000},
+    {"field_id": 18, "group": "peak_position", "fit_name": "PeakForcePositionAbs", "base_type": "UINT16", "size": 2, "scale": 100, "units": "m", "df_columns": ["peak_force_pos", "PeakForcePositionAbs"], "transformer": "peak_abs"},
+
+    {"field_id": 90, "group": "instroke_axis", "fit_name": "InstrokeAbscissaType", "base_type": "UINT8", "size": 1, "scale": 1, "units": "", "df_columns": []},
+    {"field_id": 91, "group": "instroke_axis", "fit_name": "InstrokeSampleInterval", "base_type": "UINT16", "size": 2, "scale": 1, "units": "", "df_columns": []},
+    {"field_id": 92, "group": "instroke_axis", "fit_name": "InstrokePointCount", "base_type": "UINT8", "size": 1, "scale": 1, "units": "", "df_columns": []}
+  ]
+}

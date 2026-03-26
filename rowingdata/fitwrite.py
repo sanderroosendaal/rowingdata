@@ -14,6 +14,8 @@ import pandas as pd
 from dateutil import parser as ps
 import arrow
 
+from . import fitwrite_spec
+
 try:
     from fit_tool.base_type import BaseType
     from fit_tool.developer_field import DeveloperField
@@ -34,74 +36,25 @@ try:
 except ImportError:
     FIT_TOOL_AVAILABLE = False
 
-# Developer field definitions for rowing-specific columns (no native FIT equivalent).
-# Per README spec: DriveLength = handle distance (projection on longitudinal axis);
-# StrokeDistance = distance traveled during stroke cycle (boat/erg travel).
-# StrokeDistance uses native cycle_length16 (UINT16, max 655 m) instead of developer field.
-# (field_id, df_column, name, base_type, size, scale, units)
-ROWING_DEV_FIELDS = [
-    (0, ' DriveLength (meters)', 'DriveLength', BaseType.UINT16, 2, 100, 'm'),
-    (1, ' DriveTime (ms)', 'StrokeDriveTime', BaseType.UINT16, 2, 1, 'ms'),
-    (2, ' DragFactor', 'DragFactor', BaseType.UINT16, 2, 1, ''),
-    (3, ' StrokeRecoveryTime (ms)', 'StrokeRecoveryTime', BaseType.UINT16, 2, 1, 'ms'),
-    (4, ' AverageDriveForce (lbs)', 'AverageDriveForceLbs', BaseType.UINT16, 2, 10, 'lbs'),
-    (5, ' PeakDriveForce (lbs)', 'PeakDriveForceLbs', BaseType.UINT16, 2, 10, 'lbs'),
-    (6, ' AverageDriveForce (N)', 'AverageDriveForceN', BaseType.UINT16, 2, 10, 'N'),
-    (7, ' PeakDriveForce (N)', 'PeakDriveForceN', BaseType.UINT16, 2, 10, 'N'),
-    (8, ' AverageBoatSpeed (m/s)', 'AverageBoatSpeed', BaseType.UINT16, 2, 100, 'm/s'),
-    (9, ' WorkoutState', 'WorkoutState', BaseType.UINT8, 1, 1, ''),
-]
+# FIT developer field definitions: authoritative list in rowingdata/data/fit_export_spec.json
+_FIT_EXPORT_RAW = fitwrite_spec.load_fit_spec_raw()
+_ae = _FIT_EXPORT_RAW['abscissa_enum']
+INSTROKE_ABSCISSA_UNKNOWN = _ae['UNKNOWN']
+INSTROKE_ABSCISSA_TIME_UNIFORM_MS = _ae['TIME_UNIFORM_MS']
+INSTROKE_ABSCISSA_HANDLE_DISTANCE_UNIFORM_M = _ae['HANDLE_DISTANCE_UNIFORM_M']
+INSTROKE_ABSCISSA_OAR_ANGLE_UNIFORM_DEG = _ae['OAR_ANGLE_UNIFORM_DEG']
+INSTROKE_ABSCISSA_NORMALIZED_DRIVE_0_1 = _ae['NORMALIZED_DRIVE_0_1']
 
-# Oarlock scalar fields (field_id, [possible_df_columns], name, base_type, size, scale, units).
-# NK Logbook (Oarlock): catch, finish, slip, wash, peakforceangle, effectiveLength; catchAngle, finishAngle.
-OARLOCK_DEV_FIELDS = [
-    (11, ['catch', ' catch', 'catchAngle'], 'Catch', BaseType.SINT16, 2, 10, 'deg'),
-    (12, ['finish', ' finish', 'finishAngle'], 'Finish', BaseType.SINT16, 2, 10, 'deg'),
-    (13, ['slip', ' slip'], 'Slip', BaseType.SINT16, 2, 10, 'deg'),
-    (14, ['wash', ' wash'], 'Wash', BaseType.SINT16, 2, 10, 'deg'),
-    (15, ['peakforceangle', ' peakforceangle'], 'PeakForceAngle', BaseType.SINT16, 2, 10, 'deg'),
-    (16, ['effectiveLength', ' effectiveLength', 'effective length'], 'EffectiveLength', BaseType.UINT16, 2, 100, 'm'),
-]
-
-# Peak force position along drive (distinct from PeakForceAngle = oar angle at peak).
-# (field_id, [possible_df_columns], FIT name, base_type, size, scale, units)
-PEAK_POSITION_DEV_FIELDS = [
-    # Norm: UINT16 0-10000 = ten-thousandths of unity (0=catch, 10000=end drive); FIT scale must be <=255.
-    (17, ['rel_peak_force_pos', 'PeakForcePositionNorm',
-          '% of Stroke Complete When Peak Force Is Reached'], 'PeakForcePositionNorm',
-     BaseType.UINT16, 2, 1, ''),
-    (18, ['peak_force_pos', 'PeakForcePositionAbs'], 'PeakForcePositionAbs',
-     BaseType.UINT16, 2, 100, 'm'),
-]
-
-# In-stroke curve abscissa (X-axis) semantics — developer fields 90–92 (per Record when curves exported).
-INSTROKE_ABSCISSA_UNKNOWN = 0
-INSTROKE_ABSCISSA_TIME_UNIFORM_MS = 1
-INSTROKE_ABSCISSA_HANDLE_DISTANCE_UNIFORM_M = 2
-INSTROKE_ABSCISSA_OAR_ANGLE_UNIFORM_DEG = 3
-INSTROKE_ABSCISSA_NORMALIZED_DRIVE_0_1 = 4
-
-INSTROKE_AXIS_FIELD_IDS = (90, 91, 92)
-# (field_id, name, base_type, size, scale, units) — column key is synthetic
-INSTROKE_AXIS_DEV_FIELDS = [
-    (90, 'InstrokeAbscissaType', BaseType.UINT8, 1, 1, ''),
-    (91, 'InstrokeSampleInterval', BaseType.UINT16, 2, 1, ''),  # meaning depends on InstrokeAbscissaType
-    (92, 'InstrokePointCount', BaseType.UINT8, 1, 1, ''),
-]
+INSTROKE_AXIS_FIELD_IDS = tuple(_FIT_EXPORT_RAW['instroke_axis_field_ids'])
 
 # FIT developer field size limit: 255 bytes. SINT16 = 2 bytes => max 127 points.
 INSTROKE_MAX_POINTS = 127
 
 # Developer fields that must be emitted even when value is 0 (semantic zero / unknown).
-ALWAYS_EMIT_DEV_FIELD_IDS = frozenset({9}.union(INSTROKE_AXIS_FIELD_IDS))
+ALWAYS_EMIT_DEV_FIELD_IDS = frozenset(_FIT_EXPORT_RAW['always_emit_field_ids'])
 
-# Canonical mapping: df column name -> FIT curve type name (RP3/Quiske)
-INSTROKE_COLUMN_MAP = {
-    'curve_data': 'HandleForceCurve',
-    'boat accelerator curve': 'BoatAcceleratorCurve',
-    'oar angle velocity curve': 'OarAngleVelocityCurve',
-    'seat curve': 'SeatCurve',
-}
+# Canonical mapping: df column name -> FIT curve type name (RP3/Quiske); from fit_export_spec.json
+INSTROKE_COLUMN_MAP = dict(_FIT_EXPORT_RAW['instroke_column_map'])
 
 def _parse_instroke_curve(df, col):
     """Parse curve column to DataFrame of numeric values. Same format as rowingdata get_instroke_data."""
@@ -601,12 +554,17 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         except KeyError:
             stroke_number = np.arange(1, nr_rows + 1, dtype=int)  # 1-based row index
 
-    # Developer fields: which columns exist and their arrays
+    # Developer fields: which columns exist and their arrays (definitions from fit_export_spec.json)
     use_dev = use_developer_fields and FIT_TOOL_AVAILABLE
     dev_arrays = {}
     dev_specs = []
     DEV_DATA_IDX = 0
     if use_dev:
+        _spec = fitwrite_spec.load_fit_spec()
+        ROWING_DEV_FIELDS = _spec['ROWING_DEV_FIELDS']
+        OARLOCK_DEV_FIELDS = _spec['OARLOCK_DEV_FIELDS']
+        OARLOCK_DUAL_PAIRS = _spec['OARLOCK_DUAL_PAIRS']
+        PEAK_POSITION_DEV_FIELDS = _spec['PEAK_POSITION_DEV_FIELDS']
         for fd in ROWING_DEV_FIELDS:
             field_id, col, name, base_type, size, scale, units = fd
             if col in df.columns:
@@ -639,21 +597,43 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                     arr = np.clip(arr, 0, max_display)
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, base_type, size, scale, units))
+        for _pair_key, port_fd, starboard_fd in OARLOCK_DUAL_PAIRS:
+            cols_p = port_fd[1]
+            cols_s = starboard_fd[1]
+            col_p = next((c for c in cols_p if c in df.columns), None)
+            col_s = next((c for c in cols_s if c in df.columns), None)
+            if col_p is None or col_s is None:
+                continue
+            for fd, col in ((port_fd, col_p), (starboard_fd, col_s)):
+                field_id, possible_cols, name, base_type, size, scale, units = fd
+                arr = df[col].values
+                arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
+                if base_type == BaseType.SINT16:
+                    max_display = 32767.0 / scale if scale else 32767.0
+                    min_display = -32768.0 / scale if scale else -32768.0
+                    arr = np.clip(arr, min_display, max_display)
+                elif base_type == BaseType.UINT16:
+                    max_display = 65535.0 / scale if scale else 65535.0
+                    arr = np.clip(arr, 0, max_display)
+                dev_arrays[field_id] = arr
+                dev_specs.append((field_id, col, name, base_type, size, scale, units))
         for fd in PEAK_POSITION_DEV_FIELDS:
-            field_id, possible_cols, name, base_type, size, scale, units = fd
+            field_id, possible_cols, name, base_type, size, scale, units, transformer, clip_max = fd
             col = next((c for c in possible_cols if c in df.columns), None)
             if col is None:
                 continue
-            if field_id == 17:
+            if transformer == 'peak_norm':
                 arr = _series_to_peak_force_position_norm(df[col])
-            else:
+            elif transformer == 'peak_abs':
                 arr = _series_to_peak_force_position_abs_m(df[col])
+            else:
+                continue
             arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
             if base_type == BaseType.UINT16:
                 max_display = 65535.0 / scale if scale else 65535.0
                 arr = np.clip(arr, 0, max_display)
-                if field_id == 17:
-                    arr = np.clip(arr, 0, 10000.0)
+                if clip_max is not None:
+                    arr = np.clip(arr, 0, float(clip_max))
             dev_arrays[field_id] = arr
             dev_specs.append((field_id, col, name, base_type, size, scale, units))
 
@@ -666,7 +646,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         curve_cols = instroke_columns if instroke_columns is not None else _detect_instroke_columns(df)
         instroke_curve_cols = [c for c in curve_cols if c in df.columns]
     if instroke_export == 'summary' and instroke_curve_cols and use_dev:
-        base_id = 20
+        base_id = _FIT_EXPORT_RAW['instroke_dynamic']['summary_start']
         for col in instroke_curve_cols:
             canonical = col_map.get(col, col)
             try:
@@ -686,7 +666,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 base_id += 1
             base_id = (base_id // 10 + 1) * 10
     elif instroke_export in ('downsampled', 'full') and instroke_curve_cols and use_dev:
-        base_id = 60
+        base_id = _FIT_EXPORT_RAW['instroke_dynamic']['curve_start']
         for col in instroke_curve_cols:
             canonical = col_map.get(col, col)
             try:
@@ -719,8 +699,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             if axis_tuples is not None:
                 ta, interval, pc = axis_tuples
                 axis_arrays = [ta, interval, pc]
-                for spec, arr in zip(INSTROKE_AXIS_DEV_FIELDS, axis_arrays):
-                    fid, name, bt, size, scale, units = spec
+                for axis_row, arr in zip(
+                        fitwrite_spec.load_fit_spec()['INSTROKE_AXIS_DEV_FIELDS'], axis_arrays):
+                    fid, name, bt, size, scale, units = axis_row
                     arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
                     if bt == BaseType.UINT8:
                         arr = np.clip(arr, 0, 255)
