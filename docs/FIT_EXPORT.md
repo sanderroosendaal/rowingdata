@@ -42,26 +42,28 @@ We export native fields for standard metrics plus developer fields for rowing-sp
 
 ## Developer fields exported
 
-| rowingdata column | FIT field name | Base type | Scale | Units |
-|-------------------|----------------|-----------|-------|-------|
-| DriveLength (meters) | DriveLength | UINT16 | 100 | m |
-| DriveTime (ms) | StrokeDriveTime | UINT16 | 1 | ms |
-| DragFactor | DragFactor | UINT16 | 1 |  |
-| StrokeRecoveryTime (ms) | StrokeRecoveryTime | UINT16 | 1 | ms |
-| AverageDriveForce (lbs) | AverageDriveForceLbs | UINT16 | 10 | lbs |
-| PeakDriveForce (lbs) | PeakDriveForceLbs | UINT16 | 10 | lbs |
-| AverageDriveForce (N) | AverageDriveForceN | UINT16 | 10 | N |
-| PeakDriveForce (N) | PeakDriveForceN | UINT16 | 10 | N |
-| AverageBoatSpeed (m/s) | AverageBoatSpeed | UINT16 | 100 | m/s |
-| WorkoutState | WorkoutState | UINT8 | 1 |  |
-| catch, catchAngle | Catch | SINT16 | 10 | deg |
-| finish, finishAngle | Finish | SINT16 | 10 | deg |
-| slip | Slip | SINT16 | 10 | deg |
-| wash | Wash | SINT16 | 10 | deg |
-| peakforceangle | PeakForceAngle | SINT16 | 10 | deg |
-| effectiveLength | EffectiveLength | UINT16 | 100 | m |
-| rel_peak_force_pos, PeakForcePositionNorm, `% of Stroke Complete When Peak Force Is Reached` | PeakForcePositionNorm | UINT16 | 1 | (see below) |
-| peak_force_pos, PeakForcePositionAbs | PeakForcePositionAbs | UINT16 | 100 | m |
+Field definition numbers (**Dev field ID**) match `rowingdata/data/fit_export_spec.json`. In-stroke curve summary and array fields use dynamic IDs from **`instroke_dynamic`** in that file (default summary from **20**, curve arrays from **60**); in-stroke axis metadata uses **90–92** (see [In-stroke abscissa](#in-stroke-abscissa-x-axis) below).
+
+| rowingdata column | FIT field name | Dev field ID | Base type | Scale | Units |
+|-------------------|----------------|--------------|-----------|-------|-------|
+| DriveLength (meters) | DriveLength | 0 | UINT16 | 100 | m |
+| DriveTime (ms) | StrokeDriveTime | 1 | UINT16 | 1 | ms |
+| DragFactor | DragFactor | 2 | UINT16 | 1 |  |
+| StrokeRecoveryTime (ms) | StrokeRecoveryTime | 3 | UINT16 | 1 | ms |
+| AverageDriveForce (lbs) | AverageDriveForceLbs | 4 | UINT16 | 10 | lbs |
+| PeakDriveForce (lbs) | PeakDriveForceLbs | 5 | UINT16 | 10 | lbs |
+| AverageDriveForce (N) | AverageDriveForceN | 6 | UINT16 | 10 | N |
+| PeakDriveForce (N) | PeakDriveForceN | 7 | UINT16 | 10 | N |
+| AverageBoatSpeed (m/s) | AverageBoatSpeed | 8 | UINT16 | 100 | m/s |
+| WorkoutState | WorkoutState | 9 | UINT8 | 1 |  |
+| catch, catchAngle | Catch | 11 | SINT16 | 10 | deg |
+| finish, finishAngle | Finish | 12 | SINT16 | 10 | deg |
+| slip | Slip | 13 | SINT16 | 10 | deg |
+| wash | Wash | 14 | SINT16 | 10 | deg |
+| peakforceangle | PeakForceAngle | 15 | SINT16 | 10 | deg |
+| effectiveLength | EffectiveLength | 16 | UINT16 | 100 | m |
+| rel_peak_force_pos, PeakForcePositionNorm, `% of Stroke Complete When Peak Force Is Reached` | PeakForcePositionNorm | 17 | UINT16 | 1 | (see below) |
+| peak_force_pos, PeakForcePositionAbs | PeakForcePositionAbs | 18 | UINT16 | 100 | m |
 
 **PeakForceAngle** is the oar angle (degrees) at peak force (water / oarlock). **PeakForcePositionNorm** and **PeakForcePositionAbs** describe where along the drive the force maximum occurs (indoor / RP3-style metrics). Do not confuse angle with position along the drive.
 
