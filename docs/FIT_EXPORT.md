@@ -13,7 +13,7 @@ row = rowingdata.rowingdata(csvfile="workout.csv")
 row.exporttofit("workout.fit", sport="rowing", notes="My workout")
 ```
 
-Parameters: **fileName** (output path), **notes** (default: "Exported by Rowingdata"), **sport** (e.g. rowing, indoor_rowing), **use_developer_fields** (default: True – include rowing-specific fields when present), **instroke_export** (default: 'off' – see In-stroke curve export below), **instroke_columns** (optional list of curve columns), **instroke_column_map** (optional override mapping), **instroke_downsample_points** (default: 16 for downsampled export; range 2–127), **overwrite** (default: True – set False to raise `FileExistsError` if the target file or companion already exists).
+Parameters: **fileName** (output path), **notes** (default: "Exported by Rowingdata"), **sport** (e.g. rowing, indoor_rowing), **use_developer_fields** (default: True – include rowing-specific fields when present), **instroke_export** (default: 'off' – see In-stroke curve export below), **instroke_columns** (optional list of curve columns), **instroke_column_map** (optional override mapping), **instroke_downsample_points** (default: 16 for downsampled export; range 2–127), **instroke_abscissa_type** (optional; X-axis semantics for in-stroke curves – see In-stroke abscissa below; `None` = auto), **instroke_sample_interval_ms** (optional override for sample spacing; meaning depends on `instroke_abscissa_type`), **overwrite** (default: True – set False to raise `FileExistsError` if the target file or companion already exists).
 
 **Return value**: `None` in the normal case. When notable conditions occur, returns a dict:
 - `instroke_columns_available`: list of column names when in-stroke data is detected but `instroke_export='off'` (allows you to decide whether to re-export with `instroke_export='summary'` or `'companion'`)
@@ -56,6 +56,16 @@ We export native fields for standard metrics plus developer fields for rowing-sp
 | wash | Wash | SINT16 | 10 | deg |
 | peakforceangle | PeakForceAngle | SINT16 | 10 | deg |
 | effectiveLength | EffectiveLength | UINT16 | 100 | m |
+| rel_peak_force_pos, PeakForcePositionNorm, `% of Stroke Complete When Peak Force Is Reached` | PeakForcePositionNorm | UINT16 | 1 | (see below) |
+| peak_force_pos, PeakForcePositionAbs | PeakForcePositionAbs | UINT16 | 100 | m |
+
+**PeakForceAngle** is the oar angle (degrees) at peak force (water / oarlock). **PeakForcePositionNorm** and **PeakForcePositionAbs** describe where along the drive the force maximum occurs (indoor / RP3-style metrics). Do not confuse angle with position along the drive.
+
+- **PeakForcePositionNorm** – UINT16 **0–10000**: ten-thousandths of unity along the drive phase (0 = catch, 10000 = end of drive). FIT `scale` is 1 (Garmin field descriptions allow scale 0–255 only). Source mapping:
+  - **rel_peak_force_pos** (RowPerfect / RP3): relative position; values in 0–100 are treated as percent and converted; values in 0–1 are treated as fractions.
+  - **PeakForcePositionNorm**: explicit column in the same units (0–1 or 0–100).
+  - **`% of Stroke Complete When Peak Force Is Reached`** (ETH export): percent of stroke at peak force.
+- **PeakForcePositionAbs** – handle travel from catch to peak force in **meters** (scale 100). **peak_force_pos** from RP3 is often in **centimetres**; values **> 2.5** are divided by 100 to obtain metres; smaller values are assumed already in metres.
 
 Oarlock scalars (catch, finish, slip, wash, peakforceangle, effectiveLength) are exported when present. NK Logbook (Oarlock) uses these columns. See README *Oarlock scalars (OTW rigging)* for definitions. **EffectiveLength** is distinct from **DriveLength**: the former is rigging geometry (effective lever length); the latter is actual handle travel distance.
 
@@ -154,6 +164,32 @@ Community analysis of Garmin native indoor rowing FIT files (see [issue #63](htt
   - If `sport` is explicitly `water` → generic (on-water)
   - If `sport` is `rowing` or default → GPS present → generic (on-water OTW); no GPS → `indoorRowing`
 
+## In-stroke abscissa (X-axis)
+
+Y-only curve arrays are ambiguous (time vs handle distance vs oar angle). When **`instroke_export`** is **`'downsampled'`** or **`'full'`**, we add three per-Record **developer fields** (IDs 90–92) whenever curve data is written into the FIT file:
+
+| FIT field name | Base type | Meaning |
+|----------------|-----------|---------|
+| InstrokeAbscissaType | UINT8 | Enum (see below). |
+| InstrokeSampleInterval | UINT16 | Spacing between samples; **interpretation depends on InstrokeAbscissaType** (see below). |
+| InstrokePointCount | UINT8 | Number of points in each exported curve array for that record (≤127). |
+
+**InstrokeAbscissaType** values (module constants in `rowingdata.fitwrite`: `INSTROKE_ABSCISSA_*`):
+
+| Value | Constant | Meaning |
+|-------|----------|---------|
+| 0 | UNKNOWN | Abscissa not specified. |
+| 1 | TIME_UNIFORM_MS | Uniform time sampling; **InstrokeSampleInterval** = milliseconds between samples. Default when ` DriveTime (ms)` is present: `drive_ms / (point_count - 1)` rounded. |
+| 2 | HANDLE_DISTANCE_UNIFORM_M | Uniform spacing along handle travel (metres); **InstrokeSampleInterval** uses scale documented in field (0.01 m steps if using integer ms-style storage—consumers should follow exporter notes). |
+| 3 | OAR_ANGLE_UNIFORM_DEG | Uniform oar angle spacing; **InstrokeSampleInterval** in 0.1° if documented with scale. |
+| 4 | NORMALIZED_DRIVE_0_1 | Dimensionless 0–1 along drive; interval is step size in 1/10000 if using integer storage. |
+
+**Parameters:** `instroke_abscissa_type=None` selects type **1** when stroke drive time exists, else **0**. `instroke_sample_interval_ms` overrides the per-stroke interval array (scalar broadcast or one value per stroke).
+
+**Companion JSON** (see below) includes a **`_rowingdata_instroke`** object with `version`, `instroke_abscissa_type`, `instroke_point_count`, and `instroke_sample_interval_ms` (per-stroke list, milliseconds when type is time-based).
+
+Non-uniform abscissas are not stored in FIT (255-byte field limit); resample to uniform spacing or use the companion file and optional future `x` arrays in JSON.
+
 ## In-stroke curve export
 
 When `instroke_export` is not `'off'`, comma-separated curve columns (RP3 `curve_data`, Quiske `boat accelerator curve`, `oar angle velocity curve`, `seat curve`) can be exported:
@@ -168,6 +204,8 @@ When `instroke_export` is not `'off'`, comma-separated curve columns (RP3 `curve
 
 **Column mapping**: `curve_data` → HandleForceCurve, `boat accelerator curve` → BoatAcceleratorCurve, `oar angle velocity curve` → OarAngleVelocityCurve, `seat curve` → SeatCurve. Override via `instroke_column_map`. Columns are auto-detected when `instroke_columns` is None.
 
+**Companion file format:** JSON object whose keys are canonical curve names (e.g. `HandleForceCurve`) mapping to a list of strokes, each stroke a list of numeric samples. A **`_rowingdata_instroke`** key (if present) holds metadata: `version`, `instroke_abscissa_type`, `instroke_point_count`, and `instroke_sample_interval_ms` (per-stroke list). Existing consumers that only read curve arrays remain compatible if they ignore unknown keys.
+
 **instroke_downsample_points**: For `'downsampled'` mode, the number of points per stroke (default 16). Valid range 2–127. For `'full'` mode this parameter is ignored.
 
 ### In-FIT curve size limit (255 bytes)
@@ -179,6 +217,10 @@ The FIT protocol encodes developer field size in one byte, so each field is limi
 **Option C – Two-part split**: Curves with >127 points could be split into two developer fields (e.g. `HandleForceCurve_Part0`, `HandleForceCurve_Part1`), each ≤127 points, giving up to 254 points total. Consumers would need to concatenate parts. This adds complexity to both export and parsing.
 
 **Option E – UINT8/BYTE**: Using 1 byte per value would allow up to 255 points in a single field, but with lower precision (8-bit vs 16-bit). Scale/offset would map float curves to 0–255. Not implemented due to precision loss.
+
+## Ecosystem and field stability
+
+Field names and enums in this document are the **rowingdata** convention for FIT developer data (`application_id` `rowingdata`). Downstream tools (e.g. [Intervals.icu](https://intervals.icu)) can import these when they read developer field descriptions. If you maintain a consumer, coordinate renames or enum additions with this repo or file an issue before relying on new IDs in production.
 
 ## Missing columns
 

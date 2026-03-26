@@ -63,8 +63,37 @@ OARLOCK_DEV_FIELDS = [
     (16, ['effectiveLength', ' effectiveLength', 'effective length'], 'EffectiveLength', BaseType.UINT16, 2, 100, 'm'),
 ]
 
+# Peak force position along drive (distinct from PeakForceAngle = oar angle at peak).
+# (field_id, [possible_df_columns], FIT name, base_type, size, scale, units)
+PEAK_POSITION_DEV_FIELDS = [
+    # Norm: UINT16 0-10000 = ten-thousandths of unity (0=catch, 10000=end drive); FIT scale must be <=255.
+    (17, ['rel_peak_force_pos', 'PeakForcePositionNorm',
+          '% of Stroke Complete When Peak Force Is Reached'], 'PeakForcePositionNorm',
+     BaseType.UINT16, 2, 1, ''),
+    (18, ['peak_force_pos', 'PeakForcePositionAbs'], 'PeakForcePositionAbs',
+     BaseType.UINT16, 2, 100, 'm'),
+]
+
+# In-stroke curve abscissa (X-axis) semantics — developer fields 90–92 (per Record when curves exported).
+INSTROKE_ABSCISSA_UNKNOWN = 0
+INSTROKE_ABSCISSA_TIME_UNIFORM_MS = 1
+INSTROKE_ABSCISSA_HANDLE_DISTANCE_UNIFORM_M = 2
+INSTROKE_ABSCISSA_OAR_ANGLE_UNIFORM_DEG = 3
+INSTROKE_ABSCISSA_NORMALIZED_DRIVE_0_1 = 4
+
+INSTROKE_AXIS_FIELD_IDS = (90, 91, 92)
+# (field_id, name, base_type, size, scale, units) — column key is synthetic
+INSTROKE_AXIS_DEV_FIELDS = [
+    (90, 'InstrokeAbscissaType', BaseType.UINT8, 1, 1, ''),
+    (91, 'InstrokeSampleInterval', BaseType.UINT16, 2, 1, ''),  # meaning depends on InstrokeAbscissaType
+    (92, 'InstrokePointCount', BaseType.UINT8, 1, 1, ''),
+]
+
 # FIT developer field size limit: 255 bytes. SINT16 = 2 bytes => max 127 points.
 INSTROKE_MAX_POINTS = 127
+
+# Developer fields that must be emitted even when value is 0 (semantic zero / unknown).
+ALWAYS_EMIT_DEV_FIELD_IDS = frozenset({9}.union(INSTROKE_AXIS_FIELD_IDS))
 
 # Canonical mapping: df column name -> FIT curve type name (RP3/Quiske)
 INSTROKE_COLUMN_MAP = {
@@ -185,6 +214,66 @@ def _detect_instroke_columns(df):
         except (IndexError, KeyError, AttributeError, TypeError, ValueError):
             pass
     return cols
+
+
+def _series_to_peak_force_position_norm(values):
+    """Map source columns to UINT16 0-10000 (ten-thousandths of unity) for PeakForcePositionNorm."""
+    v = pd.to_numeric(values, errors='coerce').values
+    out = np.zeros(len(v), dtype=np.float64)
+    for i, x in enumerate(v):
+        if not np.isfinite(x):
+            continue
+        if x > 1.5:
+            frac = min(1.0, x / 100.0)
+        else:
+            frac = min(1.0, max(0.0, float(x)))
+        out[i] = round(frac * 10000.0)
+    return out
+
+
+def _series_to_peak_force_position_abs_m(values):
+    """Map peak_force_pos (often RP3 cm) to meters for PeakForcePositionAbs (scale 100)."""
+    v = pd.to_numeric(values, errors='coerce').values
+    out = np.zeros(len(v), dtype=np.float64)
+    for i, x in enumerate(v):
+        if not np.isfinite(x) or x <= 0:
+            continue
+        if x > 2.5:
+            m = x / 100.0
+        else:
+            m = float(x)
+        out[i] = min(m, 3.0)
+    return out
+
+
+def _compute_instroke_axis_arrays(df, n_points, instroke_abscissa_type, instroke_sample_interval_ms):
+    """
+    Per-record arrays for InstrokeAbscissaType (90), InstrokeSampleInterval (91), InstrokePointCount (92).
+    Returns None if n_points < 2.
+    """
+    nr = len(df)
+    if n_points < 2:
+        return None
+    if instroke_abscissa_type is not None:
+        atype = int(instroke_abscissa_type)
+    else:
+        atype = (INSTROKE_ABSCISSA_TIME_UNIFORM_MS if ' DriveTime (ms)' in df.columns
+                 else INSTROKE_ABSCISSA_UNKNOWN)
+    if instroke_sample_interval_ms is not None:
+        if np.isscalar(instroke_sample_interval_ms):
+            interval = np.full(nr, float(instroke_sample_interval_ms))
+        else:
+            arr = np.asarray(instroke_sample_interval_ms, dtype=np.float64).reshape(-1)
+            interval = arr if len(arr) == nr else np.zeros(nr)
+    elif atype == INSTROKE_ABSCISSA_TIME_UNIFORM_MS and ' DriveTime (ms)' in df.columns:
+        drive_ms = np.nan_to_num(df[' DriveTime (ms)'].values, nan=0.0, posinf=0.0, neginf=0.0)
+        interval = np.round(drive_ms / np.maximum(n_points - 1, 1))
+        interval = np.clip(interval, 0, 65535)
+    else:
+        interval = np.zeros(nr)
+    pc = np.full(nr, float(min(int(n_points), 127)))
+    ta = np.full(nr, float(atype))
+    return ta, interval, pc
 
 
 # Sport string to FIT enum mapping
@@ -321,39 +410,6 @@ def _compute_interval_summaries(df, lap_col, unixtimes, distance_m, heart_rate, 
     return summaries
 
 
-def _parse_instroke_curve(df, col):
-    """Parse curve column to DataFrame of numeric values (matches get_instroke_data format)."""
-    d = df[col].astype(str).str[1:-1].str.split(',', expand=True)
-    return d.apply(pd.to_numeric, errors='coerce')
-
-
-def _compute_instroke_summary(df, col):
-    """
-    Compute per-stroke summary metrics for in-stroke curve (q1,q2,q3,q4,diff,maxpos,minpos).
-    Matches add_instroke_metrics, add_instroke_diff, add_instroke_maxminpos logic.
-    """
-    curve_df = _parse_instroke_curve(df, col)
-    curve_df = curve_df.fillna(0)
-    if curve_df.empty or curve_df.shape[1] < 2:
-        return None
-    dfnorm = curve_df.abs()
-    row_max = dfnorm.max(axis=1).replace(0, 1)
-    dfnorm = dfnorm.div(row_max, axis=0)
-    ncol = len(curve_df.columns)
-    markers = (np.arange(5) * ncol / 4).astype(int)
-    q1 = dfnorm.iloc[:, markers[0]:markers[1]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
-    q2 = dfnorm.iloc[:, markers[1]:markers[2]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
-    q3 = dfnorm.iloc[:, markers[2]:markers[3]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
-    q4 = dfnorm.iloc[:, markers[3]:markers[4]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
-    diff = (curve_df.diff().fillna(0) ** 2).sum(axis=1) / ncol
-    minpos = curve_df.idxmin(axis=1).astype(float) / ncol
-    maxpos = curve_df.idxmax(axis=1).astype(float) / ncol
-    return {
-        'q1': q1, 'q2': q2, 'q3': q3, 'q4': q4,
-        'diff': diff.values, 'maxpos': maxpos.values, 'minpos': minpos.values,
-    }
-
-
 def _downsample_curve_series(series, n_points):
     """Downsample comma-separated curve to n_points. Returns list of floats per row."""
     curves = []
@@ -376,7 +432,8 @@ def _downsample_curve_series(series, n_points):
 def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdata",
               sport="rowing", use_developer_fields=True,
               instroke_export='off', instroke_columns=None, instroke_column_map=None,
-              instroke_downsample_points=16, overwrite=True):
+              instroke_downsample_points=16, overwrite=True,
+              instroke_abscissa_type=None, instroke_sample_interval_ms=None):
     """
     Write rowingdata DataFrame to a FIT activity file.
 
@@ -410,6 +467,13 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     instroke_downsample_points : int
         For 'downsampled': number of points per stroke (default 16, range 2-127).
         Ignored for 'full' and other modes.
+    instroke_abscissa_type : int or None
+        X-axis semantics for in-stroke curves (developer fields 90-92). Use constants
+        INSTROKE_ABSCISSA_* (0=unknown, 1=time uniform ms, ...). None = auto (time-based
+        when `` DriveTime (ms)`` exists, else unknown).
+    instroke_sample_interval_ms : float, array-like, or None
+        Override per-stroke sample spacing for InstrokeSampleInterval (field 91); meaning
+        depends on ``instroke_abscissa_type``. None = derive from drive time / point count.
     overwrite : bool
         If True (default), overwrite existing files. If False, raise FileExistsError
         when the target FIT file (or companion .instroke.json) already exists.
@@ -575,6 +639,23 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                     arr = np.clip(arr, 0, max_display)
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, base_type, size, scale, units))
+        for fd in PEAK_POSITION_DEV_FIELDS:
+            field_id, possible_cols, name, base_type, size, scale, units = fd
+            col = next((c for c in possible_cols if c in df.columns), None)
+            if col is None:
+                continue
+            if field_id == 17:
+                arr = _series_to_peak_force_position_norm(df[col])
+            else:
+                arr = _series_to_peak_force_position_abs_m(df[col])
+            arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
+            if base_type == BaseType.UINT16:
+                max_display = 65535.0 / scale if scale else 65535.0
+                arr = np.clip(arr, 0, max_display)
+                if field_id == 17:
+                    arr = np.clip(arr, 0, 10000.0)
+            dev_arrays[field_id] = arr
+            dev_specs.append((field_id, col, name, base_type, size, scale, units))
 
     # In-stroke curve export (summary, downsampled, or companion)
     instroke_curve_cols = []
@@ -621,6 +702,32 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             dev_arrays[base_id] = arr_2d
             dev_specs.append((base_id, col, canonical, BaseType.SINT16, size, 1, ''))
             base_id += 1
+
+    if instroke_export in ('downsampled', 'full') and instroke_curve_cols and use_dev:
+        nmax = 0
+        for col in instroke_curve_cols:
+            try:
+                _, np_ = _get_instroke_curve_for_export(
+                    df, col, instroke_export, instroke_downsample_points
+                )
+                nmax = max(nmax, np_)
+            except (ValueError, KeyError, TypeError):
+                pass
+        if nmax >= 2:
+            axis_tuples = _compute_instroke_axis_arrays(
+                df, nmax, instroke_abscissa_type, instroke_sample_interval_ms)
+            if axis_tuples is not None:
+                ta, interval, pc = axis_tuples
+                axis_arrays = [ta, interval, pc]
+                for spec, arr in zip(INSTROKE_AXIS_DEV_FIELDS, axis_arrays):
+                    fid, name, bt, size, scale, units = spec
+                    arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
+                    if bt == BaseType.UINT8:
+                        arr = np.clip(arr, 0, 255)
+                    elif bt == BaseType.UINT16:
+                        arr = np.clip(arr, 0, 65535)
+                    dev_arrays[fid] = arr
+                    dev_specs.append((fid, '_instroke_axis', name, bt, size, scale, units))
 
     # Build FIT file
     min_str = 50 if dev_specs else 8
@@ -750,7 +857,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                         dev_fields.append(dev)
                 else:
                     val = float(arr[i])
-                    if val != 0 or field_id == 9:  # WorkoutState can be 0
+                    if base_type == BaseType.UINT8:
+                        val = int(np.clip(round(val), 0, 255))
+                    if val != 0 or field_id in ALWAYS_EMIT_DEV_FIELD_IDS:
                         dev = DeveloperField(
                             developer_data_index=DEV_DATA_IDX,
                             field_id=field_id,
@@ -866,8 +975,28 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             except (ValueError, KeyError, TypeError):
                 pass
         if curves:
+            max_pts = 0
+            for strokes in curves.values():
+                for row in strokes:
+                    max_pts = max(max_pts, len(row))
+            max_pts = max(max_pts, 2)
+            axis_tuples = _compute_instroke_axis_arrays(
+                df, max_pts, instroke_abscissa_type, instroke_sample_interval_ms)
+            meta = {
+                'version': 1,
+                'instroke_abscissa_type': (
+                    int(axis_tuples[0][0]) if axis_tuples is not None
+                    else INSTROKE_ABSCISSA_UNKNOWN
+                ),
+                'instroke_point_count': int(max_pts),
+            }
+            if axis_tuples is not None:
+                _, interval, _ = axis_tuples
+                meta['instroke_sample_interval_ms'] = [float(x) for x in interval]
+            out = dict(curves)
+            out['_rowingdata_instroke'] = meta
             with open(companion_path, 'w') as f:
-                json.dump(curves, f)
+                json.dump(out, f)
             companion_written_path = companion_path
 
     # Build return value for notable conditions

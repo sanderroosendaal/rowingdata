@@ -892,12 +892,59 @@ class TestFITParser:
             with open(companion) as f:
                 data = json.load(f)
             assert 'HandleForceCurve' in data or len(data) >= 1
+            assert '_rowingdata_instroke' in data, 'Companion should include axis metadata'
+            meta = data['_rowingdata_instroke']
+            assert meta.get('version') == 1
+            assert 'instroke_abscissa_type' in meta
+            assert 'instroke_point_count' in meta
+            assert 'instroke_sample_interval_ms' in meta
         finally:
             for p in [outfile, companion]:
                 try:
                     os.remove(p)
                 except FileNotFoundError:
                     pass
+
+    def test_exporttofit_peak_force_position_rp3(self):
+        """RP3 rel_peak_force_pos / peak_force_pos export as PeakForcePosition* developer fields."""
+        csvfile = 'testdata/rp3intervals2.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_peak_force_pos.fit')
+        try:
+            r = rowingdata.RowPerfectParser(csvfile)
+            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing', instroke_export='off')
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            rr = rowingdata.FITParser(outfile)
+            cols = [str(c).lower() for c in rr.df.columns]
+            assert any('peakforceposition' in c for c in cols), (
+                'Expected PeakForcePositionNorm/Abs in parsed FIT: %s' % rr.df.columns.tolist()
+            )
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
+    def test_exporttofit_instroke_axis_downsampled(self):
+        """Downsampled in-stroke export includes InstrokeAbscissaType / SampleInterval / PointCount."""
+        csvfile = 'testdata/rp3intervals2.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_instroke_axis.fit')
+        try:
+            r = rowingdata.RowPerfectParser(csvfile)
+            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing', instroke_export='downsampled',
+                           instroke_downsample_points=16)
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            rr = rowingdata.FITParser(outfile)
+            cols = [str(c).lower() for c in rr.df.columns]
+            assert any('instrokeabscissatype' in c for c in cols), (
+                'Expected instroke axis fields: %s' % rr.df.columns.tolist()
+            )
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
 
     def test_exporttofit_instroke_summary_rp3(self):
         """Instroke summary export adds curve metrics as developer fields (RP3 curve_data)."""

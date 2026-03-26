@@ -3132,7 +3132,8 @@ class rowingdata:
     def exporttofit(self, fileName, notes="Exported by Rowingdata",
                     sport="rowing", use_developer_fields=True,
                     instroke_export='off', instroke_columns=None, instroke_column_map=None,
-                    instroke_downsample_points=16, overwrite=True):
+                    instroke_downsample_points=16, overwrite=True,
+                    instroke_abscissa_type=None, instroke_sample_interval_ms=None):
         """Export rowingdata to FIT format for Intervals.icu and other platforms.
 
         Parameters
@@ -3159,6 +3160,12 @@ class rowingdata:
         instroke_downsample_points : int
             For 'downsampled': number of points per stroke (default 16, range 2-127).
             Ignored for 'full' and other modes.
+        instroke_abscissa_type : int or None
+            In-stroke curve X-axis (see ``rowingdata.fitwrite`` INSTROKE_ABSCISSA_* constants).
+            None selects automatically (time-based when drive time is present).
+        instroke_sample_interval_ms : float, array-like, or None
+            Override sample spacing for InstrokeSampleInterval (field 91); meaning depends
+            on ``instroke_abscissa_type``.
         overwrite : bool
             If True (default), overwrite existing files. If False, raise FileExistsError
             when the target FIT file (or companion .instroke.json) already exists.
@@ -3186,7 +3193,9 @@ class rowingdata:
                 instroke_columns=instroke_columns,
                 instroke_column_map=instroke_column_map,
                 instroke_downsample_points=instroke_downsample_points,
-                overwrite=overwrite
+                overwrite=overwrite,
+                instroke_abscissa_type=instroke_abscissa_type,
+                instroke_sample_interval_ms=instroke_sample_interval_ms,
             )
         else:  # pragma: no cover
             raise ValueError("Cannot export empty rowingdata session to FIT")
