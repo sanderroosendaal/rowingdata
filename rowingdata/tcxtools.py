@@ -364,7 +364,7 @@ def tcxtodf3(path):
             intensity_node = lap_node.find(".//{http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2}Intensity")
             workoutstate = 4
             intensity = clean_string(intensity_node.text) if intensity_node is not None else ""
-            if intensity == "Actve":
+            if intensity == "Active":
                 workoutstate = 4
             elif intensity == "Resting":
                 workoutstate = 3
