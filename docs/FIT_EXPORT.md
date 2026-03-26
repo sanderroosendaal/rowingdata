@@ -184,6 +184,12 @@ Y-only curve arrays are ambiguous (time vs handle distance vs oar angle). When *
 | 3 | OAR_ANGLE_UNIFORM_DEG | Uniform oar angle spacing; **InstrokeSampleInterval** in 0.1° if documented with scale. |
 | 4 | NORMALIZED_DRIVE_0_1 | Dimensionless 0–1 along drive; interval is step size in 1/10000 if using integer storage. |
 
+**Oar angle and Catch / Finish.** For on-water curves sampled uniformly in **oar angle**, the meaningful domain is **[θ_catch, θ_finish]** in the same angular convention as the stroke scalars **Catch** and **Finish** (developer fields on the same Record). Conceptually, sample index `k` maps to θ_k = θ_catch + k × Δθ with Δθ derived from (θ_finish − θ_catch) and **InstrokePointCount**, or equivalently from **InstrokeSampleInterval** if that is how spacing is defined. Exporters should take θ_catch / θ_finish from those fields when present.
+
+**Missing Catch / Finish and UNKNOWN.** If **Catch** or **Finish** is missing (or cannot be aligned with the curve), treat the abscissa as unspecified: use **InstrokeAbscissaType = UNKNOWN (0)** and interpret the curve as **shape-only**—useful for relative shape, clustering, or normalization, not for plotting against absolute oar angle without additional metadata (e.g. companion `x[]` or future start/end fields).
+
+**Consistency (not enforced).** In angle-based or time-based modes, **InstrokeSampleInterval**, **InstrokePointCount**, and **InstrokeAbscissaType** are **expected** to be mutually consistent with **Catch**, **Finish**, and drive timing when those scalars exist. **rowingdata does not validate** that relationship; consumers may perform their own checks if strict consistency is required.
+
 **Parameters:** `instroke_abscissa_type=None` selects type **1** when stroke drive time exists, else **0**. `instroke_sample_interval_ms` overrides the per-stroke interval array (scalar broadcast or one value per stroke).
 
 **Companion JSON** (see below) includes a **`_rowingdata_instroke`** object with `version`, `instroke_abscissa_type`, `instroke_point_count`, and `instroke_sample_interval_ms` (per-stroke list, milliseconds when type is time-based).
