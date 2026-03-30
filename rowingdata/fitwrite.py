@@ -449,6 +449,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         If True, include rowing-specific columns as developer fields when present.
         If False, export only standard FIT fields (timestamp, distance, cadence,
         heart_rate, power, speed, position).
+        For drive/peak force, **Newton** columns (`` AverageDriveForce (N)``,
+        `` PeakDriveForce (N)``) are preferred; **lb** fields are still emitted when
+        ``...(lbs)`` columns exist for backward compatibility (see ``fit_export_spec.json``).
     instroke_export : str
         'off' (default): no in-stroke curve export.
         'summary': export q1,q2,q3,q4,diff,maxpos,minpos per curve as developer fields.

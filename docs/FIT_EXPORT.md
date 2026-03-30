@@ -48,16 +48,18 @@ We export native fields for standard metrics plus developer fields for rowing-sp
 
 Field definition numbers (**Dev field ID**) match `rowingdata/data/fit_export_spec.json`. In-stroke curve summary and array fields use dynamic IDs from **`instroke_dynamic`** in that file (default summary from **20**, curve arrays from **60**); in-stroke axis metadata uses **90–92** (see [In-stroke abscissa](#in-stroke-abscissa-x-axis) below).
 
+**Drive and peak force (IDs 4–7):** **Newtons** are preferred for new code and documentation: **` AverageDriveForce (N)`** / **` PeakDriveForce (N)`** → **AverageDriveForceN** / **PeakDriveForceN** (IDs **6** and **7**). **Pounds** (**AverageDriveForceLbs** / **PeakDriveForceLbs**, IDs **4** and **5**) are still written when the corresponding **`...(lbs)`** columns exist—**backward compatibility** only; avoid new pipelines that depend on lbs unless required for legacy tools.
+
 | rowingdata column | FIT field name | Dev field ID | Base type | Scale | Units |
 |-------------------|----------------|--------------|-----------|-------|-------|
 | DriveLength (meters) | DriveLength | 0 | UINT16 | 100 | m |
 | DriveTime (ms) | StrokeDriveTime | 1 | UINT16 | 1 | ms |
 | DragFactor | DragFactor | 2 | UINT16 | 1 |  |
 | StrokeRecoveryTime (ms) | StrokeRecoveryTime | 3 | UINT16 | 1 | ms |
-| AverageDriveForce (lbs) | AverageDriveForceLbs | 4 | UINT16 | 10 | lbs |
-| PeakDriveForce (lbs) | PeakDriveForceLbs | 5 | UINT16 | 10 | lbs |
 | AverageDriveForce (N) | AverageDriveForceN | 6 | UINT16 | 10 | N |
 | PeakDriveForce (N) | PeakDriveForceN | 7 | UINT16 | 10 | N |
+| AverageDriveForce (lbs) | AverageDriveForceLbs | 4 | UINT16 | 10 | lbs |
+| PeakDriveForce (lbs) | PeakDriveForceLbs | 5 | UINT16 | 10 | lbs |
 | AverageBoatSpeed (m/s) | AverageBoatSpeed | 8 | UINT16 | 100 | m/s |
 | WorkoutState | WorkoutState | 9 | UINT8 | 1 |  |
 | catch, catchAngle | Catch | 11 | SINT16 | 10 | deg |

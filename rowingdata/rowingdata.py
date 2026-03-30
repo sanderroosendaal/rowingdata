@@ -3148,6 +3148,9 @@ class rowingdata:
         use_developer_fields : bool
             If True, include rowing-specific columns (DriveLength, StrokeDistance,
             etc.) when present. Requires fit-tool and Intervals.icu importer support.
+            For drive/peak force, prefer **Newton** columns; **lb** fields are still
+            emitted when ``...(lbs)`` columns exist (backward compatibility; see
+            ``docs/FIT_EXPORT.md``).
         instroke_export : str
             'off' (default): no in-stroke curve export.
             'summary': export q1,q2,q3,q4,diff,maxpos,minpos per curve as developer fields.

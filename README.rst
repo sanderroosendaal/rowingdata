@@ -514,8 +514,10 @@ The available data fields are
 * ' StrokeDistance (meters)'
 * ' DriveTime (ms)'
 * ' StrokeRecoveryTime (ms)'
-* ' AverageDriveForce (lbs)'
-* ' PeakDriveForce (lbs)'
+* ' AverageDriveForce (N)' (preferred; SI units)
+* ' PeakDriveForce (N)' (preferred; SI units)
+* ' AverageDriveForce (lbs)' (legacy; still supported)
+* ' PeakDriveForce (lbs)' (legacy; still supported)
 * 'cum_dist'
 
 Oarlock parsers (NK Logbook) may add: ``catch``, ``finish``,
@@ -551,8 +553,10 @@ The standard field names are:
 * ' StrokeDistance (meters)'
 * ' DriveTime (ms)'
 * ' StrokeRecoveryTime (ms)'
-* ' AverageDriveForce (lbs)'
-* ' PeakDriveForce (lbs)'
+* ' AverageDriveForce (N)' (preferred; SI units)
+* ' PeakDriveForce (N)' (preferred; SI units)
+* ' AverageDriveForce (lbs)' (legacy; still supported)
+* ' PeakDriveForce (lbs)' (legacy; still supported)
 * ' lapIdx'
 * ' ElapsedTime (sec)'
 
@@ -767,14 +771,12 @@ The duration of the recovery part. See Drive Time for the definition. Drive Time
 Average Drive Force
 --------------------
 
-Field name: ' AverageDriveForce (lbs)' / ' AverageDriveForce (N)'
+Field name: ' AverageDriveForce (N)' (preferred) or ' AverageDriveForce (lbs)' (legacy)
 
-Unit: lbs - or N, see below
+Unit: newtons (N), or pounds (lb) for older files and tools
 
-Currently implemented is only the field name and value in lbs. In the future,
-we will implement ' AverageDriveForce (N)' so we can report in SI units.
-
-This should be the part of the handle force that does actual work.
+Use **Newtons** for new data and integrations. **Pounds** remain supported for
+backward compatibility. This should be the part of the handle force that does actual work.
 
 For dynamic ergs and OTW rowing this is not sufficient to describe the
 complete stroke dynamics, so additional fields can be defined, for example
@@ -797,9 +799,9 @@ as opposed to an average over time or oar angles.
 Peak Drive Force
 ------------------
 
-Field name: ' PeakDriveForce (lbs)' or ' PeakDriveForce (N)'
+Field name: ' PeakDriveForce (N)' (preferred) or ' PeakDriveForce (lbs)' (legacy)
 
-Unit: lbs (currently) or N (supported in the future)
+Unit: newtons (N), or pounds (lb) for older files and tools
 
 See discussion about measuring forces under Average Drive Force.
 
