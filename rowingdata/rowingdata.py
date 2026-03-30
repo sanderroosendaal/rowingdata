@@ -3133,7 +3133,8 @@ class rowingdata:
                     sport="rowing", use_developer_fields=True,
                     instroke_export='off', instroke_columns=None, instroke_column_map=None,
                     instroke_downsample_points=16, overwrite=True,
-                    instroke_abscissa_type=None, instroke_sample_interval_ms=None):
+                    instroke_abscissa_type=None, instroke_sample_interval_ms=None,
+                    garmin_parity_source_fit=None):
         """Export rowingdata to FIT format for Intervals.icu and other platforms.
 
         Parameters
@@ -3166,6 +3167,9 @@ class rowingdata:
         instroke_sample_interval_ms : float, array-like, or None
             Override sample spacing for InstrokeSampleInterval (field 91); meaning depends
             on ``instroke_abscissa_type``.
+        garmin_parity_source_fit : str or None
+            If set, re-emit native Workout, WorkoutStep, Split, and SplitSummary messages
+            from this FIT after the Session message (see ``fitwrite.write_fit``).
         overwrite : bool
             If True (default), overwrite existing files. If False, raise FileExistsError
             when the target FIT file (or companion .instroke.json) already exists.
@@ -3196,6 +3200,7 @@ class rowingdata:
                 overwrite=overwrite,
                 instroke_abscissa_type=instroke_abscissa_type,
                 instroke_sample_interval_ms=instroke_sample_interval_ms,
+                garmin_parity_source_fit=garmin_parity_source_fit,
             )
         else:  # pragma: no cover
             raise ValueError("Cannot export empty rowingdata session to FIT")

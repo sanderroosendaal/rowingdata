@@ -1030,6 +1030,13 @@ class TestFITParser:
         r2 = rowingdata.RowPerfectParser(csvfile2)
         cols2 = fitwrite._detect_instroke_columns(r2.df)
         assert 'curve_data' in cols2 or len(cols2) >= 1
+        # Garmin/ORM FIT: first strokes often have no force curve; detection must scan past row 0
+        df_late_curve = pd.DataFrame({
+            'curve_data': [np.nan, np.nan, '(28,44,63,86,111)'],
+            'x': [1, 2, 3],
+        })
+        cols3 = fitwrite._detect_instroke_columns(df_late_curve)
+        assert 'curve_data' in cols3
 
     def test_exporttofit_return_instroke_detected(self):
         """When instroke_export='off' but data has curve columns, return dict with instroke_columns_available."""

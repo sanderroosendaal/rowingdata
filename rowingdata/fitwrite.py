@@ -15,6 +15,7 @@ from dateutil import parser as ps
 import arrow
 
 from . import fitwrite_spec
+from . import fit_garmin_bridge
 
 try:
     from fit_tool.base_type import BaseType
@@ -143,26 +144,43 @@ def _get_instroke_curve_for_export(df, col, mode, downsample_points):
 def _detect_instroke_columns(df):
     """
     Detect columns containing comma-separated numeric curve data (in-stroke).
-    Returns list of column names where str[1:-1].split(',') yields at least 2 numeric values.
-    Matches rowingdata get_instroke_columns logic.
+    Returns list of column names where some row parses to at least 2 numeric samples.
+
+    We scan multiple leading rows (not only row 0). Garmin/ORM FIT files often omit
+    HandleForceCurve on the first records; only checking row 0 would miss ``curve_data``.
     """
     cols = []
+    max_scan = min(len(df), 500)
     for c in df.columns:
         try:
-            d = df[c].astype(str).str[1:-1].str.split(',', expand=True)
-            if d.shape[1] < 2:
-                continue
-            # Check first non-null row has at least 2 numeric values
-            row0 = d.iloc[0]
-            numeric_count = 0
-            for v in row0[:5]:
-                try:
-                    x = pd.to_numeric(v, errors='coerce')
-                    if pd.notna(x) and not (isinstance(x, float) and np.isnan(x)):
-                        numeric_count += 1
-                except (TypeError, ValueError):
-                    pass
-            if numeric_count >= 2:
+            ser = df[c]
+            found = False
+            for i in range(max_scan):
+                raw = ser.iloc[i]
+                if pd.isna(raw):
+                    continue
+                st = str(raw).strip()
+                if st in ('', 'nan', 'None'):
+                    continue
+                if len(st) >= 2 and st[0] == '(' and st[-1] == ')':
+                    inner = st[1:-1]
+                else:
+                    inner = st
+                parts = [p.strip() for p in inner.split(',') if p.strip()]
+                if len(parts) < 2:
+                    continue
+                numeric_count = 0
+                for v in parts[:32]:
+                    try:
+                        x = pd.to_numeric(v, errors='coerce')
+                        if pd.notna(x) and not (isinstance(x, float) and np.isnan(x)):
+                            numeric_count += 1
+                    except (TypeError, ValueError):
+                        pass
+                if numeric_count >= 2:
+                    found = True
+                    break
+            if found:
                 cols.append(c)
         except (IndexError, KeyError, AttributeError, TypeError, ValueError):
             pass
@@ -386,7 +404,8 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
               sport="rowing", use_developer_fields=True,
               instroke_export='off', instroke_columns=None, instroke_column_map=None,
               instroke_downsample_points=16, overwrite=True,
-              instroke_abscissa_type=None, instroke_sample_interval_ms=None):
+              instroke_abscissa_type=None, instroke_sample_interval_ms=None,
+              garmin_parity_source_fit=None):
     """
     Write rowingdata DataFrame to a FIT activity file.
 
@@ -430,6 +449,11 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     overwrite : bool
         If True (default), overwrite existing files. If False, raise FileExistsError
         when the target FIT file (or companion .instroke.json) already exists.
+    garmin_parity_source_fit : str or None
+        If set, path to a source FIT (e.g. Garmin / OpenRowingMonitor). After the Session
+        message, native Workout, WorkoutStep, SplitSummary (mesg 313), and Split (mesg 312)
+        data messages are re-emitted from that file via :mod:`rowingdata.fit_garmin_bridge`.
+        Per-stroke data still comes from ``df`` and rowingdata developer field definitions.
 
     Returns
     -------
@@ -771,6 +795,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     if avg_power > 0:
         session.avg_power = avg_power
     builder.add(session)
+
+    if garmin_parity_source_fit:
+        fit_garmin_bridge.add_preserved_messages_to_builder(builder, garmin_parity_source_fit)
 
     # Developer data (ID + field descriptions) when we have developer fields
     DEV_DATA_IDX = 0
