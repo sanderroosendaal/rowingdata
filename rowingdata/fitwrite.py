@@ -304,6 +304,10 @@ def _sub_sport_for_sport(sport_str, has_gps=None):
 # Work stroke WorkoutState values (1,4,5,6,7,8,9 = work; 3 = rest per Garmin/rowing convention)
 WORKOUT_STATES_WORK = [1, 4, 5, 6, 7, 8, 9]
 
+# Minimum Lap total_elapsed_time / total_timer_time (seconds). FIT uses ms scale in file; true
+# zero is rejected by some viewers when a lap has only one Record (first-to-last stroke span is 0).
+MIN_FIT_LAP_ELAPSED_S = 1e-3
+
 
 def _compute_interval_summaries(df, lap_col, unixtimes, distance_m, heart_rate, cadence,
                                 power, work_mask=None):
@@ -312,6 +316,12 @@ def _compute_interval_summaries(df, lap_col, unixtimes, distance_m, heart_rate, 
     Returns list of dicts with keys: start_time_ms, total_elapsed_s, total_distance,
     total_calories, avg_heart_rate, max_heart_rate, avg_cadence, avg_power, indices.
     Uses work strokes only for avg HR, cadence, power (matches intervalstats).
+
+    Per Garmin FIT semantics, Lap **total_elapsed_time** / **total_timer_time** use **wall-clock**
+    duration from the **first** stroke of the lap to the **first** stroke of the **next** lap
+    (or last stroke of the session for the final lap), not only last-minus-first stroke *within*
+    the lap. Single-stroke laps therefore still get a positive elapsed when the next lap starts
+    later; this matches native Garmin exports and avoids invalid / zero-duration laps in viewers.
     """
     try:
         calories_arr = df[' Calories (kCal)'].values
@@ -329,15 +339,27 @@ def _compute_interval_summaries(df, lap_col, unixtimes, distance_m, heart_rate, 
     _, idx = np.unique(df[lap_col].values, return_index=True)
     interval_nrs = df[lap_col].values[np.sort(idx)]
 
-    for lap_val in interval_nrs:
+    for j, lap_val in enumerate(interval_nrs):
         mask = (df[lap_col].values == lap_val)
         indices = np.where(mask)[0]
         if len(indices) == 0:
             continue
 
         start_time_ms = int(unixtimes[indices[0]] * 1000)
-        end_time_ms = int(unixtimes[indices[-1]] * 1000)
-        total_elapsed_s = (unixtimes[indices[-1]] - unixtimes[indices[0]]) if len(indices) > 1 else 0.0
+        first_t = float(unixtimes[indices[0]])
+        last_t = float(unixtimes[indices[-1]])
+        if j + 1 < len(interval_nrs):
+            next_lap_val = interval_nrs[j + 1]
+            nmask = (df[lap_col].values == next_lap_val)
+            nidx = np.where(nmask)[0]
+            if len(nidx) > 0:
+                total_elapsed_s = float(unixtimes[nidx[0]] - first_t)
+            else:
+                total_elapsed_s = float(last_t - first_t)
+        else:
+            total_elapsed_s = float(last_t - first_t)
+        if total_elapsed_s < MIN_FIT_LAP_ELAPSED_S:
+            total_elapsed_s = MIN_FIT_LAP_ELAPSED_S
 
         interval_dist = float(distance_m[indices[-1]]) - prev_max_dist
         if interval_dist < 0:
@@ -356,7 +378,9 @@ def _compute_interval_summaries(df, lap_col, unixtimes, distance_m, heart_rate, 
         hr_vals = heart_rate[work_idx]
         hr_vals = hr_vals[hr_vals > 0]
         avg_hr = int(np.mean(hr_vals)) if len(hr_vals) > 0 else 0
-        max_hr = int(np.max(heart_rate[indices])) if len(indices) > 0 else 0
+        hr_seg = np.asarray(heart_rate[indices], dtype=float)
+        hr_seg = hr_seg[np.isfinite(hr_seg)]
+        max_hr = int(np.max(hr_seg)) if len(hr_seg) > 0 else 0
 
         cad_vals = cadence[work_idx]
         cad_vals = cad_vals[cad_vals > 0]

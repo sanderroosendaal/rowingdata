@@ -44,12 +44,21 @@ class TestTCX:
 class TestFit:
     def test_read_fit(self):
         f = rowingdata.FITParser('testdata/3x250m.fit')
+        df = f.df
+        assert ' lapIdx' in df.columns
+        # 3x250m fixture: three laps → distinct lap indices 0, 1, 2 (time-based, not message order)
+        assert_equal(df[' lapIdx'].nunique(), 3)
+        assert_equal(int(df[' lapIdx'].min()), 0)
+        assert_equal(int(df[' lapIdx'].max()), 2)
 
     def test_read_fit_stream(self):
         # read the file in stream mode
         with open('testdata/3x250m.fit', 'rb') as f:
             stream = io.BytesIO(f.read())
         f = rowingdata.FITParser(stream)
+        df = f.df
+        assert ' lapIdx' in df.columns
+        assert_equal(df[' lapIdx'].nunique(), 3)
 
 class TestEmpty:
 
@@ -839,6 +848,25 @@ class TestFITParser:
                 os.remove(outfile)
             except FileNotFoundError:
                 pass
+
+    def test_fitwrite_lap_wall_clock_elapsed(self):
+        """Lap total_elapsed uses wall time to next lap (Garmin semantics); single-stroke laps stay positive."""
+        from rowingdata.fitwrite import _compute_interval_summaries
+
+        df = pd.DataFrame({
+            ' lapIdx': [0, 0, 1, 2, 2],
+            ' Calories (kCal)': [0.0, 1.0, 2.0, 3.0, 4.0],
+        })
+        unixtimes = np.array([0.0, 1.0, 10.0, 20.0, 21.0], dtype=float)
+        dist = np.array([0.0, 10.0, 20.0, 30.0, 40.0], dtype=float)
+        hr = np.array([100, 100, 100, 100, 100])
+        cad = np.array([20, 20, 20, 20, 20])
+        pw = np.array([100, 100, 100, 100, 100])
+        summ = _compute_interval_summaries(df, ' lapIdx', unixtimes, dist, hr, cad, pw, None)
+        assert_equal(len(summ), 3)
+        assert abs(summ[0]['total_elapsed_s'] - 10.0) < 1e-6
+        assert abs(summ[1]['total_elapsed_s'] - 10.0) < 1e-6
+        assert abs(summ[2]['total_elapsed_s'] - 1.0) < 1e-6
 
     def test_exporttofit_nk_oarlock_scalars(self):
         """Export NK Logbook data to FIT; verify oarlock developer fields (catch, finish, slip, wash, peakforceangle, effectiveLength)."""

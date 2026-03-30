@@ -2,8 +2,10 @@
 """
 Transcode Garmin / OpenRowingMonitor-style FIT files into rowingdata FIT exports.
 
-Reads per-stroke records with ORM-style developer field names and maps them to
-rowingdata DataFrame columns for :func:`rowingdata.fitwrite.write_fit`.
+Uses :class:`rowingdata.otherparsers.FITParser` for the base DataFrame (including
+`` lapIdx`` from lap message timestamps) and maps ORM-style developer field names
+to rowingdata columns for :func:`rowingdata.fitwrite.write_fit`.
+
 Optional ``garmin_parity_source_fit`` preserves native Workout, WorkoutStep,
 Split (mesg 312), and SplitSummary (mesg 313) messages from the source file.
 """
@@ -27,88 +29,57 @@ _GARMIN_DEV_TO_ROWINGDATA = {
 }
 
 
+def _norm_col_key(name):
+    return ''.join(str(name).strip().lower().split())
+
+
 def data_frame_from_garmin_fit(fit_path):
     """
     Build a rowingdata-compatible DataFrame from a Garmin/ORM FIT with per-stroke records.
 
-    Expects ``record`` messages with power, cadence, distance, and optional developer
-    fields matching the ORM naming convention. In-stroke curve is stored as
-    ``curve_data`` in comma-separated list form (same as RP3).
+    Uses :class:`rowingdata.otherparsers.FITParser` so `` lapIdx`` is derived from
+    Lap ``start_time`` / ``timestamp`` (not message order). Maps ORM developer field
+    names to rowingdata columns. In-stroke curve is stored as ``curve_data`` in
+    comma-separated list form (same as RP3).
     """
-    from fitparse import FitFile
+    from .otherparsers import FITParser
 
-    f = FitFile(fit_path)
-    rows = []
-    for m in f.get_messages('record'):
-        d = {}
-        for field in m.fields:
-            name = field.name
-            val = field.value
-            if name == 'timestamp' and val is not None:
-                # fitparse datetime -> seconds since epoch
-                d['_ts'] = val
-                continue
-            if name in ('distance', 'heart_rate', 'cadence', 'power', 'enhanced_speed',
-                         'speed', 'total_cycles', 'accumulated_power', 'resistance'):
-                d[name] = val
-                if name == 'total_cycles' and val is not None:
-                    d[' Stroke Number'] = int(val) + 1  # FIT total_cycles 0-based -> 1-based
-                continue
-            if name in _GARMIN_DEV_TO_ROWINGDATA:
-                rd = _GARMIN_DEV_TO_ROWINGDATA[name]
-                if name == 'HandleForceCurve':
-                    # tuple of ints -> comma-separated string for curve_data
-                    if isinstance(val, (list, tuple)):
-                        d[rd] = '(' + ','.join(str(int(x)) for x in val) + ')'
-                    else:
-                        d[rd] = val
-                elif name == 'PeakForceNormPosition':
-                    # ORM uint8 percent 0–100 -> PeakForcePositionNorm ten-thousandths 0–10000
-                    v = float(val) if val is not None else 0.0
-                    d[rd] = v * 100.0 if v <= 100.0 else v
-                else:
-                    d[rd] = val
-        rows.append(d)
+    p = FITParser(fit_path)
+    df = p.df.copy()
 
-    if not rows:
-        raise ValueError('No record messages in FIT: %s' % fit_path)
+    # Rename ORM / Garmin developer columns to rowingdata names (case-insensitive)
+    rename = {}
+    for c in list(df.columns):
+        ck = _norm_col_key(c)
+        for garmin_key, rd_col in _GARMIN_DEV_TO_ROWINGDATA.items():
+            if ck == _norm_col_key(garmin_key):
+                if c != rd_col:
+                    rename[c] = rd_col
+                break
+    if rename:
+        df = df.rename(columns=rename)
 
-    df = pd.DataFrame(rows)
-    # timestamps
-    if '_ts' in df.columns:
-        base = df['_ts'].iloc[0]
-        if hasattr(base, 'timestamp'):
-            df['TimeStamp (sec)'] = df['_ts'].apply(lambda t: t.timestamp() if hasattr(t, 'timestamp') else float(t))
-        else:
-            df['TimeStamp (sec)'] = df['_ts'].astype(float)
-        df = df.drop(columns=['_ts'], errors='ignore')
+    if 'PeakForcePositionNorm' in df.columns:
+        def _peak_norm(v):
+            if v is None or (isinstance(v, float) and np.isnan(v)):
+                return v
+            try:
+                x = float(v)
+            except (TypeError, ValueError):
+                return v
+            return x * 100.0 if x <= 100.0 else x
 
-    # cum_dist / horizontal
-    if 'distance' in df.columns:
-        df['cum_dist'] = pd.to_numeric(df['distance'], errors='coerce').fillna(0)
-        df[' Horizontal (meters)'] = df['cum_dist']
+        df['PeakForcePositionNorm'] = df['PeakForcePositionNorm'].apply(_peak_norm)
 
-    if 'cadence' in df.columns:
-        df[' Cadence (stokes/min)'] = pd.to_numeric(df['cadence'], errors='coerce').fillna(0)
-    if 'heart_rate' in df.columns:
-        df[' HRCur (bpm)'] = pd.to_numeric(df['heart_rate'], errors='coerce').fillna(0)
-    if 'power' in df.columns:
-        df[' Power (watts)'] = pd.to_numeric(df['power'], errors='coerce').fillna(0)
-    if 'enhanced_speed' in df.columns:
-        df['Stroke500mPace (sec/500m)'] = np.where(
-            df['enhanced_speed'].astype(float) > 0,
-            500.0 / df['enhanced_speed'].astype(float),
-            0.0,
-        )
+    if 'curve_data' in df.columns:
+        def _fmt_curve(v):
+            if isinstance(v, (list, tuple)):
+                return '(' + ','.join(str(int(x)) for x in v) + ')'
+            return v
 
-    # Drop native columns we mapped
-    for c in ('distance', 'cadence', 'heart_rate', 'power', 'enhanced_speed', 'speed',
-              'total_cycles', 'accumulated_power', 'resistance', 'activity_type'):
-        if c in df.columns:
-            df = df.drop(columns=[c])
+        df['curve_data'] = df['curve_data'].apply(_fmt_curve)
 
-    # Drop ORM-only helper columns not used by rowingdata FIT spec
-    df = df.drop(columns=[c for c in df.columns if c.startswith('_orm_')], errors='ignore')
+    df = df.drop(columns=[c for c in df.columns if str(c).startswith('_orm_')], errors='ignore')
     return df
 
 

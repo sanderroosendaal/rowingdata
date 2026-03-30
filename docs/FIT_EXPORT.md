@@ -132,7 +132,7 @@ This keeps backward compatibility and gives partial implementers a representativ
 ## Session, Lap, and Event messages
 
 - **Session** – One message for the whole workout (total_distance, total_calories, avg_heart_rate, max_heart_rate, avg_cadence, avg_power). Start/end position in degrees when valid.
-- **Lap** – One Lap message per interval when the data has multiple unique `lapIdx` values (supports both ` lapIdx` and `lapIdx` column names). Each Lap has per-interval distance, elapsed time, total_calories, avg HR, max HR, avg cadence, avg power. Per-interval avg HR, cadence, and power use **work strokes only** (WorkoutState 1,4,5,6,7,8,9); rest strokes (WorkoutState 3) are excluded from those averages. If `lapIdx` is missing or all values are the same, one Lap for the whole session.
+- **Lap** – One Lap message per interval when the data has multiple unique `lapIdx` values (supports both ` lapIdx` and `lapIdx` column names). Each Lap has per-interval distance, elapsed time, total_calories, avg HR, max HR, avg cadence, avg power. **Elapsed and timer time** use **wall-clock** duration from the **first** stroke of the interval to the **first** stroke of the **next** interval (or the **last** stroke of the session for the final interval), matching typical Garmin FIT Lap semantics and avoiding zero-duration laps when an interval contains only one stroke. Per-interval avg HR, cadence, and power use **work strokes only** (WorkoutState 1,4,5,6,7,8,9); rest strokes (WorkoutState 3) are excluded from those averages. If `lapIdx` is missing or all values are the same, one Lap for the whole session.
 - **Event** – Lap boundaries are marked with Event messages (Event.LAP, EventType.START) before each lap's records. Timer start/stop events bracket the activity.
 
 ## Dependencies
@@ -146,6 +146,10 @@ pip install fit-tool
 - Relative timestamps (below year 2000) are combined with row_date.
 - FIT timestamps: milliseconds since Garmin epoch (1989-12-31 UTC).
 - File structure: File ID, Activity, Event (start), Session, Developer data (if any), then for each interval: Event (lap start), Lap, Record messages for that interval, then Event (stop). If there is only one interval: one Lap, then all Records.
+
+## FIT import (`FITParser`)
+
+[`rowingdata.FITParser`](rowingdata/otherparsers.py) reads **Record** messages into a DataFrame. **` lapIdx`** is derived from **Lap** messages: each lap contributes **start_time** (or **timestamp** if **start_time** is absent), laps are sorted by time (then **message_index** when present), and each stroke gets the index of the **last** lap whose start is ≤ the record timestamp (0-based). Strokes before the first lap start use index **0**; there is no reliance on global message order, so laps listed before the first **Record** still bracket strokes correctly. If no lap times can be parsed, **` lapIdx`** is all zeros. **`rowingdata.fit_transcode.data_frame_from_garmin_fit`** uses **`FITParser`** internally so Garmin/ORM transcoding keeps the same **` lapIdx`** semantics.
 
 ## Intervals.icu compatibility
 

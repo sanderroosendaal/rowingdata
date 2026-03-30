@@ -402,6 +402,55 @@ class FitSummaryData(object):
         self.summarytext += summarystring
 
 
+def _fit_collect_sorted_lap_start_seconds(messages):
+    """
+    From fitparse messages in file order, collect Lap message start times (seconds since epoch).
+    Uses start_time, else timestamp. Returns None if no valid lap times (caller uses all lapIdx 0).
+    """
+    lap_entries = []
+    for msg in messages:
+        if msg.name != 'lap':
+            continue
+        v = msg.get_values()
+        st = v.get('start_time')
+        if st is None:
+            st = v.get('timestamp')
+        if st is None:
+            continue
+        mi = v.get('message_index')
+        if mi is None:
+            mi = len(lap_entries)
+        try:
+            sec = totimestamp(st)
+        except (TypeError, AttributeError, ValueError, OverflowError):
+            continue
+        lap_entries.append((sec, mi))
+    if not lap_entries:
+        return None
+    lap_entries.sort(key=lambda x: (x[0], x[1]))
+    return np.array([x[0] for x in lap_entries], dtype=np.float64)
+
+
+def _fit_lap_index_from_record_times(record_times_sec, lap_starts_sec):
+    """
+    Assign lap index = last lap index whose start time <= record time (0 = first lap).
+    lap_starts_sec must be sorted ascending non-empty.
+    """
+    n = len(record_times_sec)
+    out = np.zeros(n, dtype=np.int32)
+    if lap_starts_sec is None or len(lap_starts_sec) == 0:
+        return out
+    rt = np.asarray(record_times_sec, dtype=np.float64)
+    # NaN times: leave lapIdx 0
+    valid = np.isfinite(rt)
+    if not valid.any():
+        return out
+    idx = np.searchsorted(lap_starts_sec, rt, side='right') - 1
+    idx = np.clip(idx, 0, len(lap_starts_sec) - 1)
+    idx = np.where(valid, idx, 0)
+    return idx
+
+
 class FITParser(object):
 
     # change below so readfile can be a bytes stream
@@ -431,17 +480,25 @@ class FITParser(object):
         self.records = self.fitfile.messages
 
         recorddicts = []
-        lapcounter = 0
-
         for record in self.records:
             if record.name == 'record':
-                values = record.get_values()
-                values['lapid'] = lapcounter
-                recorddicts.append(values)
-            if record.name == 'lap':
-                lapcounter += 1
+                recorddicts.append(record.get_values())
 
-
+        lap_starts = _fit_collect_sorted_lap_start_seconds(self.records)
+        if lap_starts is not None and len(lap_starts) > 0:
+            ts_list = []
+            for v in recorddicts:
+                ts = v.get('timestamp')
+                try:
+                    ts_list.append(totimestamp(ts))
+                except (TypeError, AttributeError, ValueError, OverflowError):
+                    ts_list.append(np.nan)
+            lap_ids = _fit_lap_index_from_record_times(np.array(ts_list, dtype=np.float64), lap_starts)
+            for i, v in enumerate(recorddicts):
+                v['lapid'] = int(lap_ids[i])
+        else:
+            for v in recorddicts:
+                v['lapid'] = 0
 
         self.df = pd.DataFrame(recorddicts)
         if self.df.empty:
