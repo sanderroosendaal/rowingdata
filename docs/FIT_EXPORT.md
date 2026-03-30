@@ -20,6 +20,10 @@ Parameters: **fileName** (output path), **notes** (default: "Exported by Rowingd
 - `suggestion`: hint to re-export with instroke_export enabled
 - `companion_file`: path to the `.instroke.json` sidecar when `instroke_export='companion'` writes one
 
+## Reference example FIT
+
+The repository includes **`testdata/rowingdata_standard_example.fit`**: a full activity file (multi-lap, rowing developer fields, downsampled in-stroke curve + axis metadata) built from `testdata/rp3intervals2.csv`. See **`testdata/README_rowingdata_standard_example_fit.md`** for how it was produced and how to regenerate it after spec changes (`python tools/build_example_standard_fit.py`).
+
 ## Authoritative developer field list (machine-readable)
 
 FIT **developer field IDs**, FIT names, base types, scales, DataFrame column mappings, in-stroke dynamic ID ranges (`summary_start`, `curve_start`), abscissa enum, and related metadata are defined in **`rowingdata/data/fit_export_spec.json`** (shipped with the package). `rowingdata/fitwrite_spec.py` loads and validates it; `rowingdata/fitwrite.py` uses the loaded tuples. Prose tables in this document should stay aligned with that JSON when the standard changes.

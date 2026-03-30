@@ -60,6 +60,16 @@ class TestFit:
         assert ' lapIdx' in df.columns
         assert_equal(df[' lapIdx'].nunique(), 3)
 
+    def test_read_rowingdata_standard_example_fit(self):
+        """Reference FIT (spec example): multi-lap, developer + instroke fields; see testdata/README."""
+        path = 'testdata/rowingdata_standard_example.fit'
+        f = rowingdata.FITParser(path)
+        assert len(f.df) > 100, 'example FIT should have many stroke records'
+        assert ' lapIdx' in f.df.columns
+        assert_equal(f.df[' lapIdx'].nunique(), 5)
+        cols = [str(c).lower() for c in f.df.columns]
+        assert any('instroke' in c for c in cols), 'expected instroke axis developer fields in columns'
+
 class TestEmpty:
 
     def test_write_tcx(self):
