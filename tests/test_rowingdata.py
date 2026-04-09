@@ -815,6 +815,28 @@ class TestFITParser:
                 vals = r.df[col].dropna()
                 assert len(vals) > 0, 'Developer field %s has no non-null values' % col
                 assert vals.max() > 0, 'Developer field %s has no positive values' % col
+            # StrokeWork (id 19) is omitted per-record when value is 0 (testdata has zero joules).
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
+    def test_fitwrite_strokework_roundtrip(self):
+        """StrokeWork (FIT id 19) exports from WorkPerStroke / driveenergy and parses as strokework."""
+        csvfile = 'testdata/correctedpainsled.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_strokework.fit')
+        try:
+            row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
+            assert ' WorkPerStroke (joules)' in row.df.columns
+            src = row.df[' WorkPerStroke (joules)'].replace([np.inf, -np.inf], np.nan).dropna()
+            assert src.max() > 100
+            row.exporttofit(outfile, sport='rowing')
+            r = rowingdata.FITParser(outfile)
+            assert 'strokework' in r.df.columns
+            out = r.df['strokework'].replace([np.inf, -np.inf], np.nan).dropna()
+            assert len(out) > 0
+            assert out.max() > 100
         finally:
             try:
                 os.remove(outfile)
@@ -1047,9 +1069,9 @@ class TestFITParser:
         assert raw['instroke_dynamic']['curve_start'] == 60
         ids = [r['field_id'] for r in raw['developer_fields']]
         assert sorted(ids) == sorted(set(ids)), 'duplicate field_id in spec'
-        assert 0 in ids and 17 in ids and 90 in ids
+        assert 0 in ids and 17 in ids and 19 in ids and 90 in ids
         spec = fitwrite_spec.load_fit_spec()
-        assert len(spec['ROWING_DEV_FIELDS']) == 10
+        assert len(spec['ROWING_DEV_FIELDS']) == 11
         assert len(spec['OARLOCK_DEV_FIELDS']) == 6
         assert len(spec['OARLOCK_DUAL_PAIRS']) == 6
         assert spec['OARLOCK_DUAL_PAIRS'][0][1][0] == 200

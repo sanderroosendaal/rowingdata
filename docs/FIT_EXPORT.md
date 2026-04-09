@@ -44,6 +44,8 @@ We export native fields for standard metrics plus developer fields for rowing-sp
 - **DriveLength vs EffectiveLength** – Not duplicates. **DriveLength** is the actual distance the handle traveled during the stroke (~1.2–1.5 m). **EffectiveLength** is an oarlock/rigging metric: the effective lever length (horizontal component from pin to handle, often in cm). It describes rigging geometry, varies slightly stroke-to-stroke, and comes from NK Logbook (Oarlock). Both can appear in the same dataset.
 - **Stroke Number** – stored in the native **total_cycles** field (Garmin/ANT+ cycles). Rowing machines report it via ANT+ to Garmin watches; we write it per record since data is per stroke.
 
+**StrokeWork (J)** – work done over one **full stroke cycle** (joules), not drive-phase-only work. The exporter maps the first present DataFrame column among ` WorkPerStroke (joules)` and `driveenergy`. Those names describe the same physical quantity in most pipelines: device-reported joules per stroke, or derived **average power × stroke period** (e.g. `60 * Power / Cadence`). The internal name **`driveenergy`** is historical and can be misread as “drive phase only”; **StrokeWork** is the preferred FIT label for this full-cycle metric.
+
 ## Developer fields exported
 
 Field definition numbers (**Dev field ID**) match `rowingdata/data/fit_export_spec.json`. In-stroke curve summary and array fields use dynamic IDs from **`instroke_dynamic`** in that file (default summary from **20**, curve arrays from **60**); in-stroke axis metadata uses **90–92** (see [In-stroke abscissa](#in-stroke-abscissa-x-axis) below).
@@ -62,6 +64,7 @@ Field definition numbers (**Dev field ID**) match `rowingdata/data/fit_export_sp
 | PeakDriveForce (lbs) | PeakDriveForceLbs | 5 | UINT16 | 10 | lbs |
 | AverageBoatSpeed (m/s) | AverageBoatSpeed | 8 | UINT16 | 100 | m/s |
 | WorkoutState | WorkoutState | 9 | UINT8 | 1 |  |
+| ` WorkPerStroke (joules)` (first match) or `driveenergy` | StrokeWork | 19 | UINT16 | 1 | J |
 | catch, catchAngle | Catch | 11 | SINT16 | 10 | deg |
 | finish, finishAngle | Finish | 12 | SINT16 | 10 | deg |
 | slip | Slip | 13 | SINT16 | 10 | deg |

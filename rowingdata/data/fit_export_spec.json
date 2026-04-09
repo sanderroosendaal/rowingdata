@@ -32,6 +32,7 @@
     {"field_id": 7, "group": "rowing", "fit_name": "PeakDriveForceN", "base_type": "UINT16", "size": 2, "scale": 10, "units": "N", "df_columns": [" PeakDriveForce (N)"]},
     {"field_id": 8, "group": "rowing", "fit_name": "AverageBoatSpeed", "base_type": "UINT16", "size": 2, "scale": 100, "units": "m/s", "df_columns": [" AverageBoatSpeed (m/s)"]},
     {"field_id": 9, "group": "rowing", "fit_name": "WorkoutState", "base_type": "UINT8", "size": 1, "scale": 1, "units": "", "df_columns": [" WorkoutState"]},
+    {"field_id": 19, "group": "rowing", "fit_name": "StrokeWork", "base_type": "UINT16", "size": 2, "scale": 1, "units": "J", "df_columns": [" WorkPerStroke (joules)", "driveenergy"]},
 
     {"field_id": 11, "group": "oarlock", "fit_name": "Catch", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["catch", " catch", "catchAngle"]},
     {"field_id": 12, "group": "oarlock", "fit_name": "Finish", "base_type": "SINT16", "size": 2, "scale": 10, "units": "deg", "df_columns": ["finish", " finish", "finishAngle"]},

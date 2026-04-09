@@ -117,9 +117,9 @@ def _materialize_dev_field_tuples(raw):
         cols = row.get('df_columns') or []
 
         if group == 'rowing':
-            if len(cols) != 1:
-                raise ValueError('rowing group requires exactly one df_column (field_id=%s)' % fid)
-            rowing.append((fid, cols[0], name, bt, size, scale, units))
+            if len(cols) < 1:
+                raise ValueError('rowing group requires at least one df_column (field_id=%s)' % fid)
+            rowing.append((fid, list(cols), name, bt, size, scale, units))
         elif group == 'oarlock':
             oarlock.append((fid, list(cols), name, bt, size, scale, units))
         elif group == 'oarlock_dual':

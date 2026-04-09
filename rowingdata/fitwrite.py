@@ -617,8 +617,11 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         OARLOCK_DUAL_PAIRS = _spec['OARLOCK_DUAL_PAIRS']
         PEAK_POSITION_DEV_FIELDS = _spec['PEAK_POSITION_DEV_FIELDS']
         for fd in ROWING_DEV_FIELDS:
-            field_id, col, name, base_type, size, scale, units = fd
-            if col in df.columns:
+            field_id, possible_cols, name, base_type, size, scale, units = fd
+            if not isinstance(possible_cols, (list, tuple)):
+                possible_cols = [possible_cols]
+            col = next((c for c in possible_cols if c in df.columns), None)
+            if col is not None:
                 arr = df[col].values
                 arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
                 # Clip to avoid overflow: encoded = value * scale must fit in base_type
