@@ -64,6 +64,7 @@ Field definition numbers (**Dev field ID**) match `rowingdata/data/fit_export_sp
 | PeakDriveForce (lbs) | PeakDriveForceLbs | 5 | UINT16 | 10 | lbs |
 | AverageBoatSpeed (m/s) | AverageBoatSpeed | 8 | UINT16 | 100 | m/s |
 | WorkoutState | WorkoutState | 9 | UINT8 | 1 |  |
+| (metadata, see Record message frequency) | RecordingStrategy | 10 | UINT8 | 1 |  |
 | ` WorkPerStroke (joules)` (first match) or `driveenergy` | StrokeWork | 19 | UINT16 | 1 | J |
 | catch, catchAngle | Catch | 11 | SINT16 | 10 | deg |
 | finish, finishAngle | Finish | 12 | SINT16 | 10 | deg |
@@ -135,8 +136,42 @@ This keeps backward compatibility and gives partial implementers a representativ
 | Stroke500mPace (sec/500m) | enhanced_speed | Converted to m/s via 500/pace |
 | latitude | position_lat | Degrees; omitted if invalid |
 | longitude | position_long | Degrees; omitted if invalid |
-| Stroke Number or row index | total_cycles | Stroke number (data is per-stroke) |
+| Stroke Number or row index | total_cycles | Cumulative stroke count; may repeat across records in GPS-update mode |
 | StrokeDistance (meters) | cycle_length16 | Native UINT16, scale 100, max 655 m |
+
+## Record message frequency
+
+Different vendors generate FIT Record messages at different frequencies, and **consumers MUST be agnostic** about this distinction:
+
+- **Stroke-boundary records** (rowingdata, rowing-specific devices): One Record message per stroke cycle. Each Record represents a complete stroke. Stroke-specific metrics (cadence, stroke distance, drive time, etc.) describe that specific stroke. GPS position may be interpolated or repeated across strokes. **Required when in-stroke curve data is present** (InstrokeAbscissaType fields 90-92).
+
+- **GPS-update records** (Garmin watches, multi-sport devices): Records generated when GPS position updates are available (typically roughly once per second, but not at fixed intervals). Stroke metrics may be averaged, interpolated, or represent the most recent completed stroke. GPS position is precisely measured at each record time. **Cannot include in-stroke curve data** since curves require stroke boundaries.
+
+### Consumer requirements
+
+To correctly handle both approaches, consumers MUST:
+
+- **Not assume** a 1:1 correspondence between Record messages and strokes
+- **Not interpolate** stroke-specific developer fields (DriveLength, StrokeDriveTime, Catch, Finish, oarlock angles, etc.) between records—these describe discrete stroke events, not continuous phenomena
+- **Detect stroke occurrences** by monitoring changes in `total_cycles`, not by counting records. When `total_cycles` changes between consecutive records, at least one stroke completed in that interval. If the change is >1, multiple strokes occurred but per-stroke data for intermediate strokes is unavailable.
+- **Calculate stroke rate** from the native `cadence` field (strokes/min), not from record message frequency
+- **Understand GPS-update limitations**: When records are generated at GPS updates rather than stroke boundaries, stroke timing is approximate (occurred sometime between records), and fast rowing may cause `total_cycles` to skip values
+
+### Recording strategy metadata (optional)
+
+To help consumers optimize parsing and provide explicit documentation of producer intent, the **RecordingStrategy** developer field (ID 10, UINT8) indicates the recording approach:
+
+| Value | Constant | Meaning |
+|-------|----------|---------|
+| 0 | Unknown | Recording strategy unspecified (default for backward compatibility; consumers must handle both approaches) |
+| 1 | StrokeBoundary | One Record per stroke cycle (rowingdata default; required for in-stroke curve data) |
+| 2 | GPSUpdate | Records generated at GPS position updates (event-driven, roughly ~1 Hz but irregular) |
+
+This field is **optional**. When omitted or zero, consumers must not assume any particular strategy and should monitor changes in `total_cycles` to detect when strokes occur. When present, it allows consumers to optimize (e.g., in stroke-boundary files, each record is exactly one stroke) but is not required for correct parsing.
+
+**Constraint**: In-stroke curve data (developer fields 90-92 for axis metadata, 60+ for curve arrays) can only appear when RecordingStrategy is StrokeBoundary (1) or Unknown (0 with stroke-boundary semantics), since curves are inherently per-stroke.
+
+**Rationale**: Different devices have legitimate reasons for each approach. Stroke-boundary recording is ideal for rowing-specific devices that detect stroke events in real-time, providing precise per-stroke metrics and enabling in-stroke curve export. GPS-update recording is standard for multi-sport watches that maintain accurate GPS positioning and cannot always detect sport-specific events in real-time. Requiring consumer agnosticism ensures the rowing data ecosystem remains interoperable across diverse hardware.
 
 ## Session, Lap, and Event messages
 

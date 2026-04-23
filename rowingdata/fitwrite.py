@@ -51,6 +51,11 @@ INSTROKE_AXIS_FIELD_IDS = tuple(_FIT_EXPORT_RAW['instroke_axis_field_ids'])
 # FIT developer field size limit: 255 bytes. SINT16 = 2 bytes => max 127 points.
 INSTROKE_MAX_POINTS = 127
 
+# RecordingStrategy field values (field ID 10)
+RECORDING_STRATEGY_UNKNOWN = 0
+RECORDING_STRATEGY_STROKE_BOUNDARY = 1
+RECORDING_STRATEGY_GPS_UPDATE = 2
+
 # Developer fields that must be emitted even when value is 0 (semantic zero / unknown).
 ALWAYS_EMIT_DEV_FIELD_IDS = frozenset(_FIT_EXPORT_RAW['always_emit_field_ids'])
 
@@ -429,7 +434,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
               instroke_export='off', instroke_columns=None, instroke_column_map=None,
               instroke_downsample_points=16, overwrite=True,
               instroke_abscissa_type=None, instroke_sample_interval_ms=None,
-              garmin_parity_source_fit=None):
+              garmin_parity_source_fit=None, recording_strategy=RECORDING_STRATEGY_STROKE_BOUNDARY):
     """
     Write rowingdata DataFrame to a FIT activity file.
 
@@ -481,6 +486,12 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         message, native Workout, WorkoutStep, SplitSummary (mesg 313), and Split (mesg 312)
         data messages are re-emitted from that file via :mod:`rowingdata.fit_garmin_bridge`.
         Per-stroke data still comes from ``df`` and rowingdata developer field definitions.
+    recording_strategy : int
+        Recording strategy indicator (RecordingStrategy developer field, ID 10).
+        Use constants RECORDING_STRATEGY_* (0=unknown, 1=stroke-boundary, 2=gps-update).
+        Default: RECORDING_STRATEGY_STROKE_BOUNDARY (1). Omitted from export when 0 (unknown)
+        or when use_developer_fields=False. Note: in-stroke curve data requires stroke-boundary.
+        See docs/FIT_EXPORT.md "Record message frequency".
 
     Returns
     -------
@@ -690,6 +701,12 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                     arr = np.clip(arr, 0, float(clip_max))
             dev_arrays[field_id] = arr
             dev_specs.append((field_id, col, name, base_type, size, scale, units))
+        
+        # RecordingStrategy metadata field (ID 10) - not from dataframe, but from parameter
+        if recording_strategy > 0:
+            recording_strategy_arr = np.full(nr_rows, int(recording_strategy), dtype=np.int32)
+            dev_arrays[10] = recording_strategy_arr
+            dev_specs.append((10, None, 'RecordingStrategy', BaseType.UINT8, 1, 1, ''))
 
     # In-stroke curve export (summary, downsampled, or companion)
     instroke_curve_cols = []
@@ -699,6 +716,13 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     if instroke_export in ('summary', 'downsampled', 'full', 'companion'):
         curve_cols = instroke_columns if instroke_columns is not None else _detect_instroke_columns(df)
         instroke_curve_cols = [c for c in curve_cols if c in df.columns]
+        # Validate: in-stroke data requires stroke-boundary recording
+        if instroke_curve_cols and recording_strategy == RECORDING_STRATEGY_GPS_UPDATE:
+            raise ValueError(
+                "In-stroke curve data cannot be exported with recording_strategy=RECORDING_STRATEGY_GPS_UPDATE. "
+                "Curves are inherently per-stroke and require stroke-boundary recording. "
+                "Use recording_strategy=RECORDING_STRATEGY_STROKE_BOUNDARY (default) or RECORDING_STRATEGY_UNKNOWN."
+            )
     if instroke_export == 'summary' and instroke_curve_cols and use_dev:
         base_id = _FIT_EXPORT_RAW['instroke_dynamic']['summary_start']
         for col in instroke_curve_cols:

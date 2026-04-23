@@ -3134,7 +3134,7 @@ class rowingdata:
                     instroke_export='off', instroke_columns=None, instroke_column_map=None,
                     instroke_downsample_points=16, overwrite=True,
                     instroke_abscissa_type=None, instroke_sample_interval_ms=None,
-                    garmin_parity_source_fit=None):
+                    garmin_parity_source_fit=None, recording_strategy=None):
         """Export rowingdata to FIT format for Intervals.icu and other platforms.
 
         Parameters
@@ -3176,6 +3176,12 @@ class rowingdata:
         overwrite : bool
             If True (default), overwrite existing files. If False, raise FileExistsError
             when the target FIT file (or companion .instroke.json) already exists.
+        recording_strategy : int or None
+            Recording strategy indicator (RecordingStrategy developer field, ID 10).
+            Use fitwrite.RECORDING_STRATEGY_* constants (0=unknown, 1=stroke-boundary,
+            2=gps-update). Default: None (uses RECORDING_STRATEGY_STROKE_BOUNDARY).
+            Note: in-stroke curve data requires stroke-boundary.
+            See docs/FIT_EXPORT.md "Record message frequency".
 
         Returns
         -------
@@ -3191,20 +3197,23 @@ class rowingdata:
             res = make_cumvalues(df[' Horizontal (meters)'])
             df[' Horizontal (meters)'] = res[0]
             df['cum_dist'] = res[0]
-            return fitwrite.write_fit(
-                fileName, df,
-                row_date=self.rowdatetime.isoformat(),
-                notes=notes, sport=sport,
-                use_developer_fields=use_developer_fields,
-                instroke_export=instroke_export,
-                instroke_columns=instroke_columns,
-                instroke_column_map=instroke_column_map,
-                instroke_downsample_points=instroke_downsample_points,
-                overwrite=overwrite,
-                instroke_abscissa_type=instroke_abscissa_type,
-                instroke_sample_interval_ms=instroke_sample_interval_ms,
-                garmin_parity_source_fit=garmin_parity_source_fit,
-            )
+            kwargs = {
+                'row_date': self.rowdatetime.isoformat(),
+                'notes': notes,
+                'sport': sport,
+                'use_developer_fields': use_developer_fields,
+                'instroke_export': instroke_export,
+                'instroke_columns': instroke_columns,
+                'instroke_column_map': instroke_column_map,
+                'instroke_downsample_points': instroke_downsample_points,
+                'overwrite': overwrite,
+                'instroke_abscissa_type': instroke_abscissa_type,
+                'instroke_sample_interval_ms': instroke_sample_interval_ms,
+                'garmin_parity_source_fit': garmin_parity_source_fit,
+            }
+            if recording_strategy is not None:
+                kwargs['recording_strategy'] = recording_strategy
+            return fitwrite.write_fit(fileName, df, **kwargs)
         else:  # pragma: no cover
             raise ValueError("Cannot export empty rowingdata session to FIT")
 
