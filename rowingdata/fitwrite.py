@@ -701,12 +701,6 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                     arr = np.clip(arr, 0, float(clip_max))
             dev_arrays[field_id] = arr
             dev_specs.append((field_id, col, name, base_type, size, scale, units))
-        
-        # RecordingStrategy metadata field (ID 10) - not from dataframe, but from parameter
-        if recording_strategy > 0:
-            recording_strategy_arr = np.full(nr_rows, int(recording_strategy), dtype=np.int32)
-            dev_arrays[10] = recording_strategy_arr
-            dev_specs.append((10, None, 'RecordingStrategy', BaseType.UINT8, 1, 1, ''))
 
     # In-stroke curve export (summary, downsampled, or companion)
     instroke_curve_cols = []
@@ -830,7 +824,46 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     avg_cadence = int(np.mean(cadence[cadence > 0])) if np.any(cadence > 0) else 0
     avg_power = int(np.mean(power[power > 0])) if np.any(power > 0) else 0
 
-    session = SessionMessage()
+    # Developer data (ID + field descriptions) - must come before Session/Records that use them
+    DEV_DATA_IDX = 0
+    session_dev_fields = []
+    dev_id_emitted = False
+    
+    # Emit developer data ID and field descriptions for session-level fields (RecordingStrategy)
+    if use_dev and recording_strategy > 0:
+        dev_id_msg = DeveloperDataIdMessage()
+        dev_id_msg.application_id = b'rowingdata'
+        dev_id_msg.developer_data_index = DEV_DATA_IDX
+        builder.add(dev_id_msg)
+        dev_id_emitted = True
+        
+        # Field description for RecordingStrategy (session-level)
+        fd_msg = FieldDescriptionMessage()
+        fd_msg.developer_data_index = DEV_DATA_IDX
+        fd_msg.field_definition_number = 10
+        fd_msg.fit_base_type_id = BaseType.UINT8.value
+        fd_msg.field_name = 'RecordingStrategy'
+        fd_msg.scale = 1
+        fd_msg.offset = 0
+        fd_msg.units = ''
+        builder.add(fd_msg)
+        
+        # Create developer field for Session
+        session_dev_field = DeveloperField(
+            developer_data_index=DEV_DATA_IDX,
+            field_id=10,
+            size=1,
+            name='RecordingStrategy',
+            base_type=BaseType.UINT8,
+            scale=1,
+            offset=0,
+            units=''
+        )
+        session_dev_field.set_value(0, int(recording_strategy))
+        session_dev_fields.append(session_dev_field)
+
+    # Session message with optional developer fields
+    session = SessionMessage(developer_fields=session_dev_fields) if session_dev_fields else SessionMessage()
     session.message_index = 0
     session.timestamp = start_time_ms
     session.start_time = start_time_ms
@@ -853,13 +886,14 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     if garmin_parity_source_fit:
         fit_garmin_bridge.add_preserved_messages_to_builder(builder, garmin_parity_source_fit)
 
-    # Developer data (ID + field descriptions) when we have developer fields
-    DEV_DATA_IDX = 0
+    # Developer data for Record-level fields
     if dev_specs:
-        dev_id_msg = DeveloperDataIdMessage()
-        dev_id_msg.application_id = b'rowingdata'
-        dev_id_msg.developer_data_index = DEV_DATA_IDX
-        builder.add(dev_id_msg)
+        # Only emit DeveloperDataIdMessage if not already emitted for session fields
+        if not dev_id_emitted:
+            dev_id_msg = DeveloperDataIdMessage()
+            dev_id_msg.application_id = b'rowingdata'
+            dev_id_msg.developer_data_index = DEV_DATA_IDX
+            builder.add(dev_id_msg)
         for field_id, col, name, base_type, size, scale, units in dev_specs:
             fd_msg = FieldDescriptionMessage()
             fd_msg.developer_data_index = DEV_DATA_IDX

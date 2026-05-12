@@ -64,7 +64,7 @@ Field definition numbers (**Dev field ID**) match `rowingdata/data/fit_export_sp
 | PeakDriveForce (lbs) | PeakDriveForceLbs | 5 | UINT16 | 10 | lbs |
 | AverageBoatSpeed (m/s) | AverageBoatSpeed | 8 | UINT16 | 100 | m/s |
 | WorkoutState | WorkoutState | 9 | UINT8 | 1 |  |
-| (metadata, see Record message frequency) | RecordingStrategy | 10 | UINT8 | 1 |  |
+| (session metadata, see Record message frequency) | RecordingStrategy | 10 | UINT8 | 1 |  |
 | ` WorkPerStroke (joules)` (first match) or `driveenergy` | StrokeWork | 19 | UINT16 | 1 | J |
 | catch, catchAngle | Catch | 11 | SINT16 | 10 | deg |
 | finish, finishAngle | Finish | 12 | SINT16 | 10 | deg |
@@ -159,7 +159,7 @@ To correctly handle both approaches, consumers MUST:
 
 ### Recording strategy metadata (optional)
 
-To help consumers optimize parsing and provide explicit documentation of producer intent, the **RecordingStrategy** developer field (ID 10, UINT8) indicates the recording approach:
+To help consumers optimize parsing and provide explicit documentation of producer intent, the **RecordingStrategy** developer field (ID 10, UINT8) appears on the **Session message** and indicates the recording approach for all Records in the file:
 
 | Value | Constant | Meaning |
 |-------|----------|---------|
@@ -167,7 +167,7 @@ To help consumers optimize parsing and provide explicit documentation of produce
 | 1 | StrokeBoundary | One Record per stroke cycle (rowingdata default; required for in-stroke curve data) |
 | 2 | GPSUpdate | Records generated at GPS position updates (event-driven, roughly ~1 Hz but irregular) |
 
-This field is **optional**. When omitted or zero, consumers must not assume any particular strategy and should monitor changes in `total_cycles` to detect when strokes occur. When present, it allows consumers to optimize (e.g., in stroke-boundary files, each record is exactly one stroke) but is not required for correct parsing.
+This field is **optional** and **session-level** (one value per file). When omitted or zero, consumers must not assume any particular strategy and should monitor changes in `total_cycles` to detect when strokes occur. When present, consumers can read it once from the Session message to determine the recording strategy for the entire file, allowing optimization (e.g., in stroke-boundary files, each record is exactly one stroke) but is not required for correct parsing.
 
 **Constraint**: In-stroke curve data (developer fields 90-92 for axis metadata, 60+ for curve arrays) can only appear when RecordingStrategy is StrokeBoundary (1) or Unknown (0 with stroke-boundary semantics), since curves are inherently per-stroke.
 
