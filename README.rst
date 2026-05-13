@@ -819,8 +819,9 @@ measurement systems. They describe rigging geometry and blade angles:
 
 * **catch**, **finish** – oar angles at catch and finish (degrees),
   using the rowing convention where **0° = oar perpendicular to the boat's
-  longitudinal axis**. Negative values indicate the oar is toward the bow;
-  positive values toward the stern. NK uses catchAngle, finishAngle.
+  longitudinal axis**. Negative values indicate the catch direction (oar blade
+  toward bow, handle toward stern); positive values indicate the finish direction
+  (oar blade toward stern, handle toward bow). NK uses catchAngle, finishAngle.
 * **slip** – blade slip angle.
 * **wash** – wash/backwash angle.
 * **peakforceangle** – oar angle at peak force (same 0° = perpendicular convention).

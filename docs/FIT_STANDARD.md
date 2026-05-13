@@ -168,7 +168,7 @@ Producers SHOULD use these native FIT fields for rowing data:
 
 **Notes:**
 
-- **Oar angles** (Catch, Finish, PeakForceAngle) use the rowing convention: **0° = oar perpendicular to the boat's longitudinal axis**. Negative values indicate the oar is toward the bow; positive values toward the stern. This is standard oarlock/gateforce sensor convention.
+- **Oar angles** (Catch, Finish, PeakForceAngle) use the rowing convention: **0° = oar perpendicular to the boat's longitudinal axis**. Negative values indicate the catch direction (oar blade toward bow, handle toward stern); positive values indicate the finish direction (oar blade toward stern, handle toward bow). This is standard oarlock/gateforce sensor convention.
 - Summary fields (Catch, Finish, etc.) serve as representative values when per-side data unavailable
 - **PeakForcePositionNorm**: Value in range 0-10000 representing ten-thousandths (0 = catch, 10000 = end of drive)
 - **PeakForceAngle** vs **PeakForcePosition**: Angle is for oar angle sensors (OTW); Position is for handle position sensors (indoor)

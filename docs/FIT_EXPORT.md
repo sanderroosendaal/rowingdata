@@ -75,7 +75,7 @@ Field definition numbers (**Dev field ID**) match `rowingdata/data/fit_export_sp
 | rel_peak_force_pos, PeakForcePositionNorm, `% of Stroke Complete When Peak Force Is Reached` | PeakForcePositionNorm | 17 | UINT16 | 1 | (see below) |
 | peak_force_pos, PeakForcePositionAbs | PeakForcePositionAbs | 18 | UINT16 | 100 | m |
 
-**PeakForceAngle** is the oar angle (degrees) at peak force measured by oarlock sensors (OTW). Oar angles use the rowing convention: **0° = oar perpendicular to the boat's longitudinal axis**; negative values toward bow, positive toward stern. **PeakForcePositionNorm** and **PeakForcePositionAbs** describe where along the drive the force maximum occurs (indoor / RP3-style metrics). Do not confuse oar angle with position along the drive.
+**PeakForceAngle** is the oar angle (degrees) at peak force measured by oarlock sensors (OTW). Oar angles use the rowing convention: **0° = oar perpendicular to the boat's longitudinal axis**; negative values = catch direction (blade toward bow, handle toward stern), positive values = finish direction (blade toward stern, handle toward bow). **PeakForcePositionNorm** and **PeakForcePositionAbs** describe where along the drive the force maximum occurs (indoor / RP3-style metrics). Do not confuse oar angle with position along the drive.
 
 - **PeakForcePositionNorm** – UINT16 **0–10000**: ten-thousandths of unity along the drive phase (0 = catch, 10000 = end of drive). FIT `scale` is 1 (Garmin field descriptions allow scale 0–255 only). Source mapping:
   - **rel_peak_force_pos** (RowPerfect / RP3): relative position; values in 0–100 are treated as percent and converted; values in 0–1 are treated as fractions.
