@@ -157,18 +157,18 @@ Producers SHOULD use these native FIT fields for rowing data:
 
 | Field Name | ID | Base Type | Scale | Units | Definition |
 |------------|----|-----------| ------|-------|------------|
-| Catch | 11 | SINT16 | 10 | deg | Oar angle at catch |
-| Finish | 12 | SINT16 | 10 | deg | Oar angle at finish |
+| Catch | 11 | SINT16 | 10 | deg | Oar angle at catch (0° = perpendicular to boat) |
+| Finish | 12 | SINT16 | 10 | deg | Oar angle at finish (0° = perpendicular to boat) |
 | Slip | 13 | SINT16 | 10 | deg | Oar slip angle (early blade entry) |
 | Wash | 14 | SINT16 | 10 | deg | Wash angle (late blade exit) |
-| PeakForceAngle | 15 | SINT16 | 10 | deg | Oar angle at peak force |
+| PeakForceAngle | 15 | SINT16 | 10 | deg | Oar angle at peak force (0° = perpendicular to boat) |
 | EffectiveLength | 16 | UINT16 | 100 | m | Effective oar lever length (rigging) |
 | PeakForcePositionNorm | 17 | UINT16 | 1 | | Normalized position of peak force along drive (0-10000) |
 | PeakForcePositionAbs | 18 | UINT16 | 100 | m | Absolute handle position at peak force |
 
 **Notes:**
 
-- Oarlock angles reference the longitudinal axis of the boat
+- **Oar angles** (Catch, Finish, PeakForceAngle) use the rowing convention: **0° = oar perpendicular to the boat's longitudinal axis**. Negative values indicate the oar is toward the bow; positive values toward the stern. This is standard oarlock/gateforce sensor convention.
 - Summary fields (Catch, Finish, etc.) serve as representative values when per-side data unavailable
 - **PeakForcePositionNorm**: Value in range 0-10000 representing ten-thousandths (0 = catch, 10000 = end of drive)
 - **PeakForceAngle** vs **PeakForcePosition**: Angle is for oar angle sensors (OTW); Position is for handle position sensors (indoor)

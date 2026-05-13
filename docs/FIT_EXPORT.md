@@ -75,7 +75,7 @@ Field definition numbers (**Dev field ID**) match `rowingdata/data/fit_export_sp
 | rel_peak_force_pos, PeakForcePositionNorm, `% of Stroke Complete When Peak Force Is Reached` | PeakForcePositionNorm | 17 | UINT16 | 1 | (see below) |
 | peak_force_pos, PeakForcePositionAbs | PeakForcePositionAbs | 18 | UINT16 | 100 | m |
 
-**PeakForceAngle** is the oar angle (degrees) at peak force (water / oarlock). **PeakForcePositionNorm** and **PeakForcePositionAbs** describe where along the drive the force maximum occurs (indoor / RP3-style metrics). Do not confuse angle with position along the drive.
+**PeakForceAngle** is the oar angle (degrees) at peak force measured by oarlock sensors (OTW). Oar angles use the rowing convention: **0° = oar perpendicular to the boat's longitudinal axis**; negative values toward bow, positive toward stern. **PeakForcePositionNorm** and **PeakForcePositionAbs** describe where along the drive the force maximum occurs (indoor / RP3-style metrics). Do not confuse oar angle with position along the drive.
 
 - **PeakForcePositionNorm** – UINT16 **0–10000**: ten-thousandths of unity along the drive phase (0 = catch, 10000 = end of drive). FIT `scale` is 1 (Garmin field descriptions allow scale 0–255 only). Source mapping:
   - **rel_peak_force_pos** (RowPerfect / RP3): relative position; values in 0–100 are treated as percent and converted; values in 0–1 are treated as fractions.
@@ -241,7 +241,7 @@ Y-only curve arrays are ambiguous (time vs handle distance vs oar angle). When *
 | 3 | OAR_ANGLE_UNIFORM_DEG | Uniform oar angle spacing; **InstrokeSampleInterval** in 0.1° if documented with scale. |
 | 4 | NORMALIZED_DRIVE_0_1 | Dimensionless 0–1 along drive; interval is step size in 1/10000 if using integer storage. |
 
-**Oar angle and Catch / Finish.** For on-water curves sampled uniformly in **oar angle**, the meaningful domain is **[θ_catch, θ_finish]** in the same angular convention as the stroke scalars **Catch** and **Finish** (developer fields on the same Record). Conceptually, sample index `k` maps to θ_k = θ_catch + k × Δθ with Δθ derived from (θ_finish − θ_catch) and **InstrokePointCount**, or equivalently from **InstrokeSampleInterval** if that is how spacing is defined. Exporters should take θ_catch / θ_finish from those fields when present.
+**Oar angle and Catch / Finish.** For on-water curves sampled uniformly in **oar angle**, the meaningful domain is **[θ_catch, θ_finish]** using the rowing convention (**0° = oar perpendicular to boat's longitudinal axis**), matching the stroke scalars **Catch** and **Finish** (developer fields on the same Record). Conceptually, sample index `k` maps to θ_k = θ_catch + k × Δθ with Δθ derived from (θ_finish − θ_catch) and **InstrokePointCount**, or equivalently from **InstrokeSampleInterval** if that is how spacing is defined. Exporters should take θ_catch / θ_finish from those fields when present.
 
 **Missing Catch / Finish and UNKNOWN.** If **Catch** or **Finish** is missing (or cannot be aligned with the curve), treat the abscissa as unspecified: use **InstrokeAbscissaType = UNKNOWN (0)** and interpret the curve as **shape-only**—useful for relative shape, clustering, or normalization, not for plotting against absolute oar angle without additional metadata (e.g. companion `x[]` or future start/end fields).
 

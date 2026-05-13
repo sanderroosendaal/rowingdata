@@ -817,11 +817,13 @@ source: NK Logbook uses these columns).
 These fields come from NK Logbook (Oarlock) and similar OTW
 measurement systems. They describe rigging geometry and blade angles:
 
-* **catch**, **finish** – oar angles at catch and finish (degrees).
-  NK uses catchAngle, finishAngle.
+* **catch**, **finish** – oar angles at catch and finish (degrees),
+  using the rowing convention where **0° = oar perpendicular to the boat's
+  longitudinal axis**. Negative values indicate the oar is toward the bow;
+  positive values toward the stern. NK uses catchAngle, finishAngle.
 * **slip** – blade slip angle.
 * **wash** – wash/backwash angle.
-* **peakforceangle** – oar angle at peak force.
+* **peakforceangle** – oar angle at peak force (same 0° = perpendicular convention).
 * **effectiveLength** – effective lever length (rigging geometry). *Not*
   the same as Drive Length: Effective Length is the horizontal component
   from pin to handle (a rigging/setup measure, often in cm), whereas
