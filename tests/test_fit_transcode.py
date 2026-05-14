@@ -4,6 +4,7 @@ from __future__ import absolute_import
 
 import os
 import tempfile
+import unittest
 
 import pytest
 
@@ -20,10 +21,10 @@ def test_mesg_constants_document_garmin_extended_profile():
     assert MESG_SPLIT_SUMMARY == 313
 
 
-@pytest.mark.skipif(
+@unittest.skipIf(
     not os.environ.get('ROWINGDATA_GARMIN_SAMPLE_FIT')
     or not os.path.isfile(os.environ.get('ROWINGDATA_GARMIN_SAMPLE_FIT', '')),
-    reason='Set ROWINGDATA_GARMIN_SAMPLE_FIT to a Garmin/ORM .fit with splits',
+    'Set ROWINGDATA_GARMIN_SAMPLE_FIT to a Garmin/ORM .fit with splits',
 )
 def test_preserved_message_roundtrip_from_sample():
     path = os.environ.get('ROWINGDATA_GARMIN_SAMPLE_FIT')
@@ -31,10 +32,10 @@ def test_preserved_message_roundtrip_from_sample():
     assert n >= 5  # at least workout + steps + splits
 
 
-@pytest.mark.skipif(
+@unittest.skipIf(
     not os.environ.get('ROWINGDATA_GARMIN_SAMPLE_FIT')
     or not os.path.isfile(os.environ.get('ROWINGDATA_GARMIN_SAMPLE_FIT', '')),
-    reason='Set ROWINGDATA_GARMIN_SAMPLE_FIT to a Garmin/ORM .fit with splits',
+    'Set ROWINGDATA_GARMIN_SAMPLE_FIT to a Garmin/ORM .fit with splits',
 )
 def test_transcode_writes_split_messages():
     from collections import Counter
