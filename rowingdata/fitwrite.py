@@ -9,6 +9,7 @@ from __future__ import print_function
 import datetime
 import json
 import os
+import uuid
 import numpy as np
 import pandas as pd
 from dateutil import parser as ps
@@ -48,7 +49,7 @@ INSTROKE_ABSCISSA_NORMALIZED_DRIVE_0_1 = _ae['NORMALIZED_DRIVE_0_1']
 
 INSTROKE_AXIS_FIELD_IDS = tuple(_FIT_EXPORT_RAW['instroke_axis_field_ids'])
 
-# FIT developer field size limit: 255 bytes. SINT16 = 2 bytes => max 127 points.
+# FIT developer field size limit: 255 bytes. UINT16 = 2 bytes => max 127 points.
 INSTROKE_MAX_POINTS = 127
 
 # RecordingStrategy field values (field ID 10)
@@ -58,6 +59,10 @@ RECORDING_STRATEGY_GPS_UPDATE = 2
 
 # Developer fields that must be emitted even when value is 0 (semantic zero / unknown).
 ALWAYS_EMIT_DEV_FIELD_IDS = frozenset(_FIT_EXPORT_RAW['always_emit_field_ids'])
+
+# Application ID for FIT developer fields (16-byte UUID as required by FIT SDK).
+# UUID v5 generated from DNS namespace with name "rowingdata" for deterministic, unique ID.
+ROWINGDATA_APP_ID = uuid.uuid5(uuid.NAMESPACE_DNS, 'rowingdata').bytes
 
 # Canonical mapping: df column name -> FIT curve type name (RP3/Quiske); from fit_export_spec.json
 INSTROKE_COLUMN_MAP = dict(_FIT_EXPORT_RAW['instroke_column_map'])
@@ -460,7 +465,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     instroke_export : str
         'off' (default): no in-stroke curve export.
         'summary': export q1,q2,q3,q4,diff,maxpos,minpos per curve as developer fields.
-        'downsampled': export fixed-length downsampled curve (SINT16 array) per stroke.
+        'downsampled': export fixed-length downsampled curve (UINT16 array) per stroke.
         'full': export full-resolution curve up to 127 points per stroke (FIT size limit).
         'companion': write curve data to .instroke.json sidecar file.
     instroke_columns : list, optional
@@ -752,7 +757,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             arr_2d = np.array(curves_list, dtype=np.float64)
             size = n_points * 2
             dev_arrays[base_id] = arr_2d
-            dev_specs.append((base_id, col, canonical, BaseType.SINT16, size, 1, ''))
+            dev_specs.append((base_id, col, canonical, BaseType.UINT16, size, 1, ''))
             base_id += 1
 
     if instroke_export in ('downsampled', 'full') and instroke_curve_cols and use_dev:
@@ -832,7 +837,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     # Emit developer data ID and field descriptions for session-level fields (RecordingStrategy)
     if use_dev and recording_strategy > 0:
         dev_id_msg = DeveloperDataIdMessage()
-        dev_id_msg.application_id = b'rowingdata'
+        dev_id_msg.application_id = ROWINGDATA_APP_ID
         dev_id_msg.developer_data_index = DEV_DATA_IDX
         builder.add(dev_id_msg)
         dev_id_emitted = True
@@ -891,7 +896,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         # Only emit DeveloperDataIdMessage if not already emitted for session fields
         if not dev_id_emitted:
             dev_id_msg = DeveloperDataIdMessage()
-            dev_id_msg.application_id = b'rowingdata'
+            dev_id_msg.application_id = ROWINGDATA_APP_ID
             dev_id_msg.developer_data_index = DEV_DATA_IDX
             builder.add(dev_id_msg)
         for field_id, col, name, base_type, size, scale, units in dev_specs:
@@ -932,10 +937,10 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 if field_id not in dev_arrays:
                     continue
                 arr = dev_arrays[field_id]
-                is_array_field = (base_type == BaseType.SINT16 and size > 2)
+                is_array_field = (base_type == BaseType.UINT16 and size > 2)
                 if is_array_field and arr.ndim == 2:
                     row = arr[i]
-                    vals = np.clip(row, -32768, 32767).astype(np.int32)
+                    vals = np.clip(row, 0, 65535).astype(np.uint32)
                     has_data = np.any(vals != 0)
                     if has_data:
                         dev = DeveloperField(

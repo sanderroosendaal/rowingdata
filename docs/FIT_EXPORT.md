@@ -28,6 +28,14 @@ The repository includes **`testdata/rowingdata_standard_example.fit`**: a full a
 
 FIT **developer field IDs**, FIT names, base types, scales, DataFrame column mappings, in-stroke dynamic ID ranges (`summary_start`, `curve_start`), abscissa enum, and related metadata are defined in **`rowingdata/data/fit_export_spec.json`** (shipped with the package). `rowingdata/fitwrite_spec.py` loads and validates it; `rowingdata/fitwrite.py` uses the loaded tuples. Prose tables in this document should stay aligned with that JSON when the standard changes.
 
+## Application ID
+
+All rowingdata developer fields use a **UUID-based application ID** as required by the FIT SDK:
+
+**UUID:** `74c89dce-0f16-5d5a-aeb1-6c9f3e6d8f3a`
+
+This UUID v5 is deterministically generated from DNS namespace with name "rowingdata". The FIT SDK requires the `application_id` field in `DeveloperDataIdMessage` to be a 16-byte array representation of this UUID. Previous versions incorrectly used a 10-byte string `b'rowingdata'`; version 1.1+ uses the compliant UUID format.
+
 ## Native vs developer fields
 
 **Native fields** are part of the Garmin FIT SDK (timestamp, distance, heart_rate, position_lat, cycle_length, etc.). Every FIT-capable app understands them.
@@ -216,6 +224,15 @@ Community analysis of Garmin native indoor rowing FIT files (see [issue #63](htt
 - **Related lap fields**: Discussion of undocumented lap fields that make lap summaries closer to split-style summaries appears in [markw65/fit-file-writer#14](https://github.com/markw65/fit-file-writer/issues/14).
 
 **Rowingdata today**: Default export remains Lap-only + Summary First for Intervals.icu. **Optional** Split + Workout step parity is implemented as above (`garmin_parity_source_fit`). Documented linkage fields on laps/splits are still not generated from rowingdata alone; full Garmin ordering (Summary Last, etc.) is not replicated unless contributed.
+
+**Key clarifications from issue #63**:
+- Garmin Split messages (FIT message 312) are the native format for workout intervals
+- Splits correspond to Concept2 intervals; Laps correspond to Concept2 splits
+- Native Garmin files include bidirectional linkage: Splits have "first lap index" field, Laps have "workout step index" field
+- Split messages are self-contained summaries that can be parsed independently of Records
+- The rowingdata `lapIdx` column represents intervals and would map to Garmin Splits (not Laps) in Garmin terminology
+- Future enhancement: Native Split generation from DataFrame with proper linkage fields (contributions welcome)
+
 - **sub_sport**: For rowing activities we infer from data when possible:
   - If `sport` is explicitly `indoor_rowing` or `indoor rowing` → `indoorRowing` (indoor/erg)
   - If `sport` is explicitly `water` → generic (on-water)
@@ -261,8 +278,8 @@ When `instroke_export` is not `'off'`, comma-separated curve columns (RP3 `curve
 |-----------------|----------|
 | `'off'` (default) | No curve export; backward compatible. |
 | `'summary'` | Per-stroke metrics (q1, q2, q3, q4, diff, maxpos, minpos) as developer fields, e.g. `HandleForceCurve_q1`. |
-| `'downsampled'` | Fixed-length curve per stroke as SINT16 array. Use `instroke_downsample_points` (default 16, range 2–127). |
-| `'full'` | Full-resolution curve up to 127 points per stroke. Curves with ≤127 points are stored as-is (padded if shorter); longer curves are downsampled to 127. FIT developer fields have a 255-byte limit, so SINT16 (2 bytes) allows max 127 points. |
+| `'downsampled'` | Fixed-length curve per stroke as UINT16 array. Use `instroke_downsample_points` (default 16, range 2–127). |
+| `'full'` | Full-resolution curve up to 127 points per stroke. Curves with ≤127 points are stored as-is (padded if shorter); longer curves are downsampled to 127. FIT developer fields have a 255-byte limit, so UINT16 (2 bytes) allows max 127 points. |
 | `'companion'` | Sidecar `.instroke.json` file with full curve data per stroke (no FIT size limit). |
 
 **Column mapping**: `curve_data` → HandleForceCurve, `boat accelerator curve` → BoatAcceleratorCurve, `oar angle velocity curve` → OarAngleVelocityCurve, `seat curve` → SeatCurve. Override via `instroke_column_map`. Columns are auto-detected when `instroke_columns` is None.
@@ -273,7 +290,9 @@ When `instroke_export` is not `'off'`, comma-separated curve columns (RP3 `curve
 
 ### In-FIT curve size limit (255 bytes)
 
-The FIT protocol encodes developer field size in one byte, so each field is limited to 255 bytes. For SINT16 arrays that yields at most 127 points. We support `'full'` mode (up to 127 points) and configurable `'downsampled'` (2–127 points). For longer curves or lossless storage, use `'companion'`.
+The FIT protocol encodes developer field size in one byte, so each field is limited to 255 bytes. For UINT16 arrays that yields at most 127 points. We support `'full'` mode (up to 127 points) and configurable `'downsampled'` (2–127 points). For longer curves or lossless storage, use `'companion'`.
+
+**Note:** Curve arrays use UINT16 base type (unsigned) for FIT SDK developer field compatibility. Force values are naturally non-negative for rowing; data is clipped to [0, 65535] range during export.
 
 ### Alternative approaches (not implemented)
 
@@ -283,7 +302,7 @@ The FIT protocol encodes developer field size in one byte, so each field is limi
 
 ## Ecosystem and field stability
 
-Field names and enums in this document are the **rowingdata** convention for FIT developer data (`application_id` `rowingdata`). Downstream tools (e.g. [Intervals.icu](https://intervals.icu)) can import these when they read developer field descriptions. If you maintain a consumer, coordinate renames or enum additions with this repo or file an issue before relying on new IDs in production.
+Field names and enums in this document are the **rowingdata** convention for FIT developer data (application UUID `74c89dce-0f16-5d5a-aeb1-6c9f3e6d8f3a`). Downstream tools (e.g. [Intervals.icu](https://intervals.icu)) can import these when they read developer field descriptions. If you maintain a consumer, coordinate renames or enum additions with this repo or file an issue before relying on new IDs in production.
 
 ## Missing columns
 

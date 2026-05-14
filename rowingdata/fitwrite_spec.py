@@ -143,6 +143,9 @@ def _materialize_dev_field_tuples(raw):
             )
         elif group == 'instroke_axis':
             instroke_axis.append((fid, name, bt, size, scale, units))
+        elif group == 'metadata':
+            # Metadata fields (e.g., RecordingStrategy) are handled manually in fitwrite.py
+            pass
         else:
             raise ValueError('Unknown developer_fields group: %s' % group)
 

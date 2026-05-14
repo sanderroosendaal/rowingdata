@@ -1,8 +1,8 @@
 # Rowing Data Standard for Garmin FIT Format
 
-**Version:** 1.0  
-**Date:** May 13, 2026  
-**Application ID:** `rowingdata`
+**Version:** 1.1  
+**Date:** May 14, 2026  
+**Application ID:** `74c89dce-0f16-5d5a-aeb1-6c9f3e6d8f3a` (UUID v5 from DNS:rowingdata)
 
 ## 1. Introduction
 
@@ -28,7 +28,13 @@ This standard specifies:
 
 ### 1.4 Application ID
 
-All developer fields defined in this standard MUST use the application ID **`rowingdata`** to prevent namespace collisions.
+All developer fields defined in this standard MUST use the **rowingdata application ID** to prevent namespace collisions.
+
+**Format:** 16-byte UUID array as required by FIT SDK `DeveloperDataIdMessage`
+
+**UUID:** `74c89dce-0f16-5d5a-aeb1-6c9f3e6d8f3a`
+
+This UUID v5 is deterministically generated from DNS namespace with name "rowingdata", ensuring consistency across implementations. The FIT SDK requires the application_id field to be a 16-byte array representation of this UUID.
 
 ### 1.5 Conformance Language
 
@@ -254,11 +260,15 @@ Recommended curve type names:
 
 ### 6.5 Curve Array Format
 
-Curve data SHOULD be encoded as **SINT16** arrays (developer fields with array size > 1):
+Curve data MUST be encoded as **UINT16** arrays (developer fields with array size > 1):
 
-- **Maximum points per curve:** 127 (FIT limit: 255 bytes / 2 bytes per SINT16)
+- **Maximum points per curve:** 127 (FIT limit: 255 bytes / 2 bytes per UINT16)
 - **Field ID allocation:** Start at 60, increment per curve type
-- **Encoding:** Raw values or scaled appropriately for 16-bit signed integer range
+- **Encoding:** Unsigned 16-bit integers in range [0, 65535]
+- **Data representation:** Values are clipped to [0, 65535] range; negative values not supported
+- **Scale factor:** Use appropriate scale in field description to map physical units to UINT16 range
+
+**Note on signed data:** FIT SDK developer fields with arrays only reliably support UINT16 base type. For force curves and other rowing metrics, values are naturally non-negative. If future curve types require negative values, implement offset transformation (e.g., add 32768) and document in field description.
 
 ### 6.6 Curve Summary Statistics
 
@@ -357,6 +367,7 @@ Producers SHOULD use Newtons for new implementations. Consumers MUST continue to
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1 | 2026-05-14 | FIT SDK compliance updates: Application ID changed to 16-byte UUID (74c89dce-0f16-5d5a-aeb1-6c9f3e6d8f3a); Curve arrays changed from SINT16 to UINT16 for developer field compatibility |
 | 1.0 | 2026-05-13 | Initial standard release |
 
 ## Appendix A: Terminology
