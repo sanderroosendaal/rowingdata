@@ -22,18 +22,18 @@ def test_mesg_constants_document_garmin_extended_profile():
 
 @pytest.mark.skipif(
     not os.environ.get('ROWINGDATA_GARMIN_SAMPLE_FIT')
-    or not os.path.isfile(os.environ['ROWINGDATA_GARMIN_SAMPLE_FIT']),
+    or not os.path.isfile(os.environ.get('ROWINGDATA_GARMIN_SAMPLE_FIT', '')),
     reason='Set ROWINGDATA_GARMIN_SAMPLE_FIT to a Garmin/ORM .fit with splits',
 )
 def test_preserved_message_roundtrip_from_sample():
-    path = os.environ['ROWINGDATA_GARMIN_SAMPLE_FIT']
+    path = os.environ.get('ROWINGDATA_GARMIN_SAMPLE_FIT')
     n = sum(1 for _ in iter_preserved_generic_messages(path))
     assert n >= 5  # at least workout + steps + splits
 
 
 @pytest.mark.skipif(
     not os.environ.get('ROWINGDATA_GARMIN_SAMPLE_FIT')
-    or not os.path.isfile(os.environ['ROWINGDATA_GARMIN_SAMPLE_FIT']),
+    or not os.path.isfile(os.environ.get('ROWINGDATA_GARMIN_SAMPLE_FIT', '')),
     reason='Set ROWINGDATA_GARMIN_SAMPLE_FIT to a Garmin/ORM .fit with splits',
 )
 def test_transcode_writes_split_messages():
@@ -43,7 +43,7 @@ def test_transcode_writes_split_messages():
     from rowingdata.fit_transcode import data_frame_from_garmin_fit
     from rowingdata.fitwrite import write_fit
 
-    src = os.environ['ROWINGDATA_GARMIN_SAMPLE_FIT']
+    src = os.environ.get('ROWINGDATA_GARMIN_SAMPLE_FIT')
     df = data_frame_from_garmin_fit(src)
     with tempfile.NamedTemporaryFile(suffix='.fit', delete=False) as tmp:
         out = tmp.name
