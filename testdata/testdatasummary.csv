@@ -1,4 +1,4 @@
-filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrintervals,lap 1 time,lap 1 dist,timezone,lap 1 time new,lap 1 dist new,,,,
+filename,type,nr_lines,year,month,day,hour,minute,second,dist,seconds,nrintervals,lap 1 time,lap 1 dist,timezone,lap 1 time new,lap 1 dist new,Unnamed: 17,Unnamed: 18,Unnamed: 19,Unnamed: 20
 strava_export.tcx,tcx,1342,2024,11,29,7,18,43,10165,3604,1,3604,10165,UTC,3604,10165,,,,
 quiske_per_stroke_new.csv,quiske,139,2022,11,7,7,58,35,930,382,1,382,930,UTC,382,928,,,,
 boatcoach_fixed_distance.csv,boatcoach,493,2022,6,13,12,31,37,1996,495,4,109,494,UTC,109,494,,,,
@@ -21,8 +21,8 @@ quiske_per_stroke_seat.csv,quiske,55,2017,5,21,6,18,0,484,151,1,151,484,UTC,151,
 quiske_per_stroke_left.csv,quiske,25,2017,5,21,6,33,53,219,57,1,57,219,UTC,57,216,,,,
 quiske_per_stroke_right.csv,quiske,33,2017,5,21,6,31,24,315,93,1,93,315,UTC,93,314,,,,
 boatcoach.csv.gz,boatcoach,3325,2017,11,3,12,13,32,11895,3600,3,1200,3887,UTC,1200,3882,,,,
-davidfit.fit.gz,fit,4609,2017,10,23,18,34,51,38260,4608,1,4608,38260,UTC,4608,38260,,,,
-davidfit.fit,fit,4609,2017,10,23,18,34,51,38260,4608,1,4608,38260,UTC,4608,38260,,,,e
+davidfit.fit.gz,fit,4609,2017,10,23,18,34,51,38260,4608,16,1197,6576,UTC,1197,6576,,,,
+davidfit.fit,fit,4609,2017,10,23,18,34,51,38260,4608,16,1197,6576,UTC,1197,6576,,,,e
 NKLiNKv130.csv,speedcoach2,921,2017,10,22,11,11,4,9180,2573,1,2573,9180,UTC,2573,9173,,,,
 NKLiNKv130.csv.gz,speedcoach2,921,2017,10,22,11,11,4,9180,2573,1,2573,9180,UTC,2573,9173,,,,
 testdata.csv.gz,csv,191,2016,5,20,11,41,26,2000,537,4,139,510,UTC,139,504,,,,
