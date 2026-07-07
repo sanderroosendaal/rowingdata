@@ -2,7 +2,7 @@
 
 **Version:** 1.1  
 **Date:** May 14, 2026  
-**Application ID:** `74c89dce-0f16-5d5a-aeb1-6c9f3e6d8f3a` (UUID v5 from DNS:rowingdata)
+**Application ID:** `89e86158-6d47-5c98-9d46-7d29437f27b9` (UUID v5 from DNS:rowingdata)
 
 ## 1. Introduction
 
@@ -32,9 +32,9 @@ All developer fields defined in this standard MUST use the **rowingdata applicat
 
 **Format:** 16-byte UUID array as required by FIT SDK `DeveloperDataIdMessage`
 
-**UUID:** `74c89dce-0f16-5d5a-aeb1-6c9f3e6d8f3a`
+**UUID:** `89e86158-6d47-5c98-9d46-7d29437f27b9`
 
-This UUID v5 is deterministically generated from DNS namespace with name "rowingdata", ensuring consistency across implementations. The FIT SDK requires the application_id field to be a 16-byte array representation of this UUID.
+This UUID v5 is deterministically generated from DNS namespace with name "rowingdata" (`uuid.uuid5(uuid.NAMESPACE_DNS, 'rowingdata')`), ensuring consistency across implementations. The FIT SDK requires the application_id field to be a 16-byte array representation of this UUID.
 
 ### 1.5 Conformance Language
 
@@ -367,7 +367,7 @@ Producers SHOULD use Newtons for new implementations. Consumers MUST continue to
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.1 | 2026-05-14 | FIT SDK compliance updates: Application ID changed to 16-byte UUID (74c89dce-0f16-5d5a-aeb1-6c9f3e6d8f3a); Curve arrays changed from SINT16 to UINT16 for developer field compatibility |
+| 1.1 | 2026-05-14 | FIT SDK compliance updates: Application ID changed to 16-byte UUID (89e86158-6d47-5c98-9d46-7d29437f27b9); Curve arrays changed from SINT16 to UINT16 for developer field compatibility |
 | 1.0 | 2026-05-13 | Initial standard release |
 
 ## Appendix A: Terminology

@@ -32,9 +32,9 @@ FIT **developer field IDs**, FIT names, base types, scales, DataFrame column map
 
 All rowingdata developer fields use a **UUID-based application ID** as required by the FIT SDK:
 
-**UUID:** `74c89dce-0f16-5d5a-aeb1-6c9f3e6d8f3a`
+**UUID:** `89e86158-6d47-5c98-9d46-7d29437f27b9`
 
-This UUID v5 is deterministically generated from DNS namespace with name "rowingdata". The FIT SDK requires the `application_id` field in `DeveloperDataIdMessage` to be a 16-byte array representation of this UUID. Previous versions incorrectly used a 10-byte string `b'rowingdata'`; version 1.1+ uses the compliant UUID format.
+This UUID v5 is deterministically generated from DNS namespace with name "rowingdata" (`uuid.uuid5(uuid.NAMESPACE_DNS, 'rowingdata')`). The FIT SDK requires the `application_id` field in `DeveloperDataIdMessage` to be a 16-byte array representation of this UUID. Previous versions incorrectly used a 10-byte string `b'rowingdata'`; version 1.1+ uses the compliant UUID format.
 
 ## Native vs developer fields
 
@@ -302,7 +302,7 @@ The FIT protocol encodes developer field size in one byte, so each field is limi
 
 ## Ecosystem and field stability
 
-Field names and enums in this document are the **rowingdata** convention for FIT developer data (application UUID `74c89dce-0f16-5d5a-aeb1-6c9f3e6d8f3a`). Downstream tools (e.g. [Intervals.icu](https://intervals.icu)) can import these when they read developer field descriptions. If you maintain a consumer, coordinate renames or enum additions with this repo or file an issue before relying on new IDs in production.
+Field names and enums in this document are the **rowingdata** convention for FIT developer data (application UUID `89e86158-6d47-5c98-9d46-7d29437f27b9`). Downstream tools (e.g. [Intervals.icu](https://intervals.icu)) can import these when they read developer field descriptions. If you maintain a consumer, coordinate renames or enum additions with this repo or file an issue before relying on new IDs in production.
 
 ## Missing columns
 
