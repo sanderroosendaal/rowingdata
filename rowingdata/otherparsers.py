@@ -451,6 +451,60 @@ def _fit_lap_index_from_record_times(record_times_sec, lap_starts_sec):
     return idx
 
 
+def _fit_collect_developer_field_scales(messages):
+    """Map lowercase FIT developer field name -> scale from field_description messages."""
+    scales = {}
+    for msg in messages:
+        if msg.name != 'field_description':
+            continue
+        row = {f.name: f.value for f in msg}
+        name = row.get('field_name')
+        if not name:
+            continue
+        scale = row.get('scale', 1)
+        try:
+            scale = float(scale)
+        except (TypeError, ValueError):
+            scale = 1.0
+        scales[str(name).lower()] = scale
+    return scales
+
+
+def _fit_serialize_array_value(values, scale=1.0):
+    """
+    Convert a multi-sample FIT developer field to RP3/Quiske parenthesized CSV text
+    in physical units (divide encoded samples by field scale when scale != 1).
+    """
+    if not isinstance(values, (list, tuple, np.ndarray)):
+        return values
+    if len(values) <= 1:
+        return values
+    scale = float(scale) if scale else 1.0
+    parts = []
+    for x in values:
+        try:
+            physical = float(x) / scale if scale != 1.0 else float(x)
+        except (TypeError, ValueError):
+            continue
+        rounded = round(physical)
+        if abs(physical - rounded) < 1e-9:
+            parts.append(str(int(rounded)))
+        else:
+            parts.append(str(physical))
+    return '(' + ','.join(parts) + ')'
+
+
+def _fit_normalize_record_values(record_values, field_scales_by_fit_name):
+    """Serialize multi-value developer fields before building the DataFrame."""
+    out = dict(record_values)
+    for key, val in list(out.items()):
+        key_l = str(key).lower()
+        if isinstance(val, (list, tuple, np.ndarray)) and len(val) > 1:
+            scale = field_scales_by_fit_name.get(key_l, 1.0)
+            out[key] = _fit_serialize_array_value(val, scale=scale)
+    return out
+
+
 class FITParser(object):
 
     # change below so readfile can be a bytes stream
@@ -479,10 +533,14 @@ class FITParser(object):
 
         self.records = self.fitfile.messages
 
+        field_scales = _fit_collect_developer_field_scales(self.records)
+
         recorddicts = []
         for record in self.records:
             if record.name == 'record':
-                recorddicts.append(record.get_values())
+                recorddicts.append(
+                    _fit_normalize_record_values(record.get_values(), field_scales)
+                )
 
         lap_starts = _fit_collect_sorted_lap_start_seconds(self.records)
         if lap_starts is not None and len(lap_starts) > 0:
@@ -609,6 +667,10 @@ class FITParser(object):
             'distance': ' Horizontal (meters)',
             'total_cycles': ' Stroke Number',
             'cycle_length16': ' StrokeDistance (meters)',  # native FIT field for stroke distance
+            'handleforcecurve': 'curve_data',
+            'boatacceleratorcurve': 'boat accelerator curve',
+            'oaranglevelocitycurve': 'oar angle velocity curve',
+            'seatcurve': 'seat curve',
             }
 
         self.df.rename(columns=newcolnames,inplace=True)

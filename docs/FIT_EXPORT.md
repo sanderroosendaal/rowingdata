@@ -62,7 +62,7 @@ Field definition numbers (**Dev field ID**) match `rowingdata/data/fit_export_sp
 
 | rowingdata column | FIT field name | Dev field ID | Base type | Scale | Units |
 |-------------------|----------------|--------------|-----------|-------|-------|
-| DriveLength (meters) | DriveLength | 0 | UINT16 | 100 | m |
+| DriveLength (meters) | DriveLength | 0 | UINT16 | 1 | mm |
 | DriveTime (ms) | StrokeDriveTime | 1 | UINT16 | 1 | ms |
 | DragFactor | DragFactor | 2 | UINT16 | 1 |  |
 | StrokeRecoveryTime (ms) | StrokeRecoveryTime | 3 | UINT16 | 1 | ms |
@@ -70,18 +70,19 @@ Field definition numbers (**Dev field ID**) match `rowingdata/data/fit_export_sp
 | PeakDriveForce (N) | PeakDriveForceN | 7 | UINT16 | 10 | N |
 | AverageDriveForce (lbs) | AverageDriveForceLbs | 4 | UINT16 | 10 | lbs |
 | PeakDriveForce (lbs) | PeakDriveForceLbs | 5 | UINT16 | 10 | lbs |
-| AverageBoatSpeed (m/s) | AverageBoatSpeed | 8 | UINT16 | 100 | m/s |
+| AverageBoatSpeed (m/s) | AverageBoatSpeed | 8 | UINT16 | 255 | m/s |
 | WorkoutState | WorkoutState | 9 | UINT8 | 1 |  |
 | (session metadata, see Record message frequency) | RecordingStrategy | 10 | UINT8 | 1 |  |
 | ` WorkPerStroke (joules)` (first match) or `driveenergy` | StrokeWork | 19 | UINT16 | 1 | J |
+| Cadence (stokes/min) | StrokeRate | 93 | UINT16 | 100 | spm |
 | catch, catchAngle | Catch | 11 | SINT16 | 10 | deg |
 | finish, finishAngle | Finish | 12 | SINT16 | 10 | deg |
 | slip | Slip | 13 | SINT16 | 10 | deg |
 | wash | Wash | 14 | SINT16 | 10 | deg |
 | peakforceangle | PeakForceAngle | 15 | SINT16 | 10 | deg |
-| effectiveLength | EffectiveLength | 16 | UINT16 | 100 | m |
+| effectiveLength | EffectiveLength | 16 | UINT16 | 1 | mm |
 | rel_peak_force_pos, PeakForcePositionNorm, `% of Stroke Complete When Peak Force Is Reached` | PeakForcePositionNorm | 17 | UINT16 | 1 | (see below) |
-| peak_force_pos, PeakForcePositionAbs | PeakForcePositionAbs | 18 | UINT16 | 100 | m |
+| peak_force_pos, PeakForcePositionAbs | PeakForcePositionAbs | 18 | UINT16 | 1 | mm |
 
 **PeakForceAngle** is the oar angle (degrees) at peak force measured by oarlock sensors (OTW). Oar angles use the rowing convention: **0° = oar perpendicular to the boat's longitudinal axis**; negative values = catch direction (blade toward bow, handle toward stern), positive values = finish direction (blade toward stern, handle toward bow). **PeakForcePositionNorm** and **PeakForcePositionAbs** describe where along the drive the force maximum occurs (indoor / RP3-style metrics). Do not confuse oar angle with position along the drive.
 
@@ -89,7 +90,9 @@ Field definition numbers (**Dev field ID**) match `rowingdata/data/fit_export_sp
   - **rel_peak_force_pos** (RowPerfect / RP3): relative position; values in 0–100 are treated as percent and converted; values in 0–1 are treated as fractions.
   - **PeakForcePositionNorm**: explicit column in the same units (0–1 or 0–100).
   - **`% of Stroke Complete When Peak Force Is Reached`** (ETH export): percent of stroke at peak force.
-- **PeakForcePositionAbs** – handle travel from catch to peak force in **meters** (scale 100). **peak_force_pos** from RP3 is often in **centimetres**; values **> 2.5** are divided by 100 to obtain metres; smaller values are assumed already in metres.
+- **PeakForcePositionAbs** – handle travel from catch to peak force in **millimeters** (scale 1, units mm). **peak_force_pos** from RP3 is often in **centimetres**; values **> 2.5** are divided by 100 to obtain metres before conversion to mm; smaller values are assumed already in metres.
+
+- **StrokeRate** – per-stroke rate with **0.01 spm** precision (UINT16 scale 100). Native **`cadence`** (integer spm) and **`fractional_cadence`** (scale 1/128) are still written on Record messages for backward compatibility when cadence is known.
 
 Oarlock scalars (catch, finish, slip, wash, peakforceangle, effectiveLength) are exported when present. NK Logbook (Oarlock) uses these columns. See README *Oarlock scalars (OTW rigging)* for definitions. **EffectiveLength** is distinct from **DriveLength**: the former is rigging geometry (effective lever length); the latter is actual handle travel distance.
 
@@ -115,8 +118,8 @@ Developer field IDs **200–211** (see `rowingdata/data/fit_export_spec.json`, g
 | wash_starboard | WashStarboard | 207 | SINT16 | 10 | deg |
 | peakforceangle_port | PeakForceAnglePort | 208 | SINT16 | 10 | deg |
 | peakforceangle_starboard | PeakForceAngleStarboard | 209 | SINT16 | 10 | deg |
-| effectiveLength_port | EffectiveLengthPort | 210 | UINT16 | 100 | m |
-| effectiveLength_starboard | EffectiveLengthStarboard | 211 | UINT16 | 100 | m |
+| effectiveLength_port | EffectiveLengthPort | 210 | UINT16 | 1 | mm |
+| effectiveLength_starboard | EffectiveLengthStarboard | 211 | UINT16 | 1 | mm |
 
 Per-side fields are exported only when both port and starboard columns exist for that metric.
 
@@ -138,7 +141,9 @@ This keeps backward compatibility and gives partial implementers a representativ
 |-------------------|-----------|-------|
 | TimeStamp (sec) | timestamp | UTC; relative timestamps combined with row_date |
 | cum_dist or Horizontal (meters) | distance | Cumulative meters (FIT scale 100) |
-| Cadence (stokes/min) | cadence | Strokes/min; omitted if zero |
+| Cadence (stokes/min) | cadence | Integer strokes/min; omitted if zero |
+| Cadence (stokes/min) | fractional_cadence | Fractional part of cadence (scale 1/128 spm) when fractional rate known |
+| Cadence (stokes/min) | StrokeRate (dev) | See developer fields table (ID 93) |
 | HRCur (bpm) | heart_rate | Clamped 0–255 |
 | Power (watts) | power | Clamped 0–65535 |
 | Stroke500mPace (sec/500m) | enhanced_speed | Converted to m/s via 500/pace |
@@ -254,7 +259,7 @@ Y-only curve arrays are ambiguous (time vs handle distance vs oar angle). When *
 |-------|----------|---------|
 | 0 | UNKNOWN | Abscissa not specified. |
 | 1 | TIME_UNIFORM_MS | Uniform time sampling; **InstrokeSampleInterval** = milliseconds between samples. Default when ` DriveTime (ms)` is present: `drive_ms / (point_count - 1)` rounded. |
-| 2 | HANDLE_DISTANCE_UNIFORM_M | Uniform spacing along handle travel (metres); **InstrokeSampleInterval** uses scale documented in field (0.01 m steps if using integer ms-style storage—consumers should follow exporter notes). |
+| 2 | HANDLE_DISTANCE_UNIFORM_M | Uniform spacing along handle travel; **InstrokeSampleInterval** = millimeters between samples |
 | 3 | OAR_ANGLE_UNIFORM_DEG | Uniform oar angle spacing; **InstrokeSampleInterval** in 0.1° if documented with scale. |
 | 4 | NORMALIZED_DRIVE_0_1 | Dimensionless 0–1 along drive; interval is step size in 1/10000 if using integer storage. |
 
@@ -292,7 +297,7 @@ When `instroke_export` is not `'off'`, comma-separated curve columns (RP3 `curve
 
 The FIT protocol encodes developer field size in one byte, so each field is limited to 255 bytes. For UINT16 arrays that yields at most 127 points. We support `'full'` mode (up to 127 points) and configurable `'downsampled'` (2–127 points). For longer curves or lossless storage, use `'companion'`.
 
-**Note:** Curve arrays use UINT16 base type (unsigned) for FIT SDK developer field compatibility. Force values are naturally non-negative for rowing; data is clipped to [0, 65535] range during export.
+**Note:** Curve arrays use UINT16 base type with per-curve **Y scale** from `instroke_curve_types` in `fit_export_spec.json` (e.g. HandleForceCurve scale 10 = 0.1 N). Force values are clipped to [0, 65535] after scaling.
 
 ### Alternative approaches (not implemented)
 

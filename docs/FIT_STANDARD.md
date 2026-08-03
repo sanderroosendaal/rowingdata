@@ -1,7 +1,7 @@
 # Rowing Data Standard for Garmin FIT Format
 
-**Version:** 1.1  
-**Date:** May 14, 2026  
+**Version:** 1.2  
+**Date:** August 3, 2026  
 **Application ID:** `89e86158-6d47-5c98-9d46-7d29437f27b9` (UUID v5 from DNS:rowingdata)
 
 ## 1. Introduction
@@ -101,7 +101,7 @@ Consumers MUST:
 4. **Detect stroke occurrences** by monitoring changes in the native `total_cycles` field:
    - When `total_cycles` changes between consecutive records, at least one stroke occurred
    - If change is >1, multiple strokes occurred but per-stroke data for intermediate strokes is unavailable
-5. **Calculate stroke rate** from the native `cadence` field (strokes/min), not from record message frequency
+5. **Calculate stroke rate** from the **StrokeRate** developer field (ID 93) when present, else from native `cadence` plus `fractional_cadence` when available, else from integer `cadence` alone — not from record message frequency
 6. **Handle missing developer fields gracefully** (all developer fields are optional)
 
 ### 3.2 Recommended Requirements
@@ -126,10 +126,11 @@ Producers SHOULD use these native FIT fields for rowing data:
 |-----------|------|-------|-------|
 | timestamp | UINT32 | Record timestamp | Milliseconds since Garmin epoch (1989-12-31 UTC) |
 | distance | UINT32 | Cumulative distance | Meters, scale 100 |
-| cadence | UINT8 | Stroke rate | Strokes per minute |
+| cadence | UINT8 | Stroke rate (integer spm) | Strokes per minute; retain for backward compatibility |
+| fractional_cadence | UINT8 | Stroke rate fraction | Fractional part of cadence (scale 1/128 spm); SHOULD be written when fractional rate is known |
 | heart_rate | UINT8 | Heart rate | Beats per minute, 0-255 |
 | power | UINT16 | Average power | Watts, 0-65535 |
-| enhanced_speed | UINT32 | Boat speed | Meters per second (from pace) |
+| enhanced_speed | UINT32 | Boat speed | Meters per second (scale 1000) |
 | position_lat | SINT32 | Latitude | Semicircles |
 | position_long | SINT32 | Longitude | Semicircles |
 | total_cycles | UINT32 | Cumulative stroke count | MAY repeat (GPS-update) or increment by >1 |
@@ -141,7 +142,7 @@ Producers SHOULD use these native FIT fields for rowing data:
 
 | Field Name | ID | Base Type | Scale | Units | Definition | Typical Range |
 |------------|----|-----------| ------|-------|------------|---------------|
-| DriveLength | 0 | UINT16 | 100 | m | Distance traveled by handle along longitudinal axis during drive phase | 1.2-1.5 m |
+| DriveLength | 0 | UINT16 | 1 | mm | Distance traveled by handle along longitudinal axis during drive phase | 1.2-1.5 m |
 | StrokeDriveTime | 1 | UINT16 | 1 | ms | Duration of drive phase | 300-600 ms |
 | DragFactor | 2 | UINT16 | 1 | | Resistance setting (ergometer) | Device-specific |
 | StrokeRecoveryTime | 3 | UINT16 | 1 | ms | Duration of recovery phase | 500-1500 ms |
@@ -149,15 +150,17 @@ Producers SHOULD use these native FIT fields for rowing data:
 | PeakDriveForceLbs | 5 | UINT16 | 10 | lbs | Peak force during drive (deprecated) | - |
 | AverageDriveForceN | 6 | UINT16 | 10 | N | Average force during drive phase | 200-600 N |
 | PeakDriveForceN | 7 | UINT16 | 10 | N | Peak force during drive phase | 400-1200 N |
-| AverageBoatSpeed | 8 | UINT16 | 100 | m/s | Average boat speed during stroke | 3-6 m/s |
+| AverageBoatSpeed | 8 | UINT16 | 255 | m/s | Average boat speed during stroke | 3-6 m/s |
 | WorkoutState | 9 | UINT8 | 1 | | Rowing state indicator | See WorkoutState values |
 | StrokeWork | 19 | UINT16 | 1 | J | Work done over full stroke cycle | 100-500 J |
+| StrokeRate | 93 | UINT16 | 100 | spm | Per-stroke rate with 0.01 spm precision | 10-40 spm typical |
 
 **Notes:**
 
-- **DriveLength**: For OTW rowing, projection of handle trajectory on longitudinal axis. For indoor, handle travel catch-to-finish.
+- **DriveLength**: For OTW rowing, projection of handle trajectory on longitudinal axis. For indoor, handle travel catch-to-finish. Stored in **millimeters** (scale 1, units mm) for 1 mm precision (v1.2; v1.1 used scale 100 with units m).
 - **Force fields**: Newtons (IDs 6-7) are RECOMMENDED. Pounds (IDs 4-5) retained for backward compatibility only.
 - **StrokeWork**: Energy over complete stroke cycle (not drive-only). Equivalent to average power × stroke period.
+- **StrokeRate**: High-precision per-stroke rate. Native `cadence` (integer spm) MUST still be written for backward compatibility when rate is known. Producers SHOULD also write `fractional_cadence` on Record messages when fractional rate is known.
 
 ### 5.2 Oarlock Metrics (Single, Record-Level)
 
@@ -168,9 +171,9 @@ Producers SHOULD use these native FIT fields for rowing data:
 | Slip | 13 | SINT16 | 10 | deg | Oar slip angle (early blade entry) |
 | Wash | 14 | SINT16 | 10 | deg | Wash angle (late blade exit) |
 | PeakForceAngle | 15 | SINT16 | 10 | deg | Oar angle at peak force (0° = perpendicular to boat) |
-| EffectiveLength | 16 | UINT16 | 100 | m | Effective oar lever length (rigging) |
+| EffectiveLength | 16 | UINT16 | 1 | mm | Effective oar lever length (rigging) |
 | PeakForcePositionNorm | 17 | UINT16 | 1 | | Normalized position of peak force along drive (0-10000) |
-| PeakForcePositionAbs | 18 | UINT16 | 100 | m | Absolute handle position at peak force |
+| PeakForcePositionAbs | 18 | UINT16 | 1 | mm | Absolute handle position at peak force |
 
 **Notes:**
 
@@ -235,7 +238,7 @@ These fields define the X-axis interpretation for curve data on each Record:
 |-------|------|--------------------------------|
 | 0 | UNKNOWN | Not specified (shape-only curves) |
 | 1 | TIME_UNIFORM_MS | Milliseconds between samples |
-| 2 | HANDLE_DISTANCE_UNIFORM_M | Meters between samples (scale as documented) |
+| 2 | HANDLE_DISTANCE_UNIFORM_M | Millimeters between uniform samples along handle travel |
 | 3 | OAR_ANGLE_UNIFORM_DEG | Degrees between samples (scale as documented) |
 | 4 | NORMALIZED_DRIVE_0_1 | Dimensionless step size (0-1 range) |
 
@@ -249,14 +252,18 @@ These fields define the X-axis interpretation for curve data on each Record:
 
 ### 6.4 Standard Curve Types
 
-Recommended curve type names:
+Recommended curve type names and encoding (Y-axis scale in developer field description):
 
-| Curve Name | Typical Data | Units |
-|------------|--------------|-------|
-| HandleForceCurve | Handle force over stroke | Newtons |
-| BoatAcceleratorCurve | Boat acceleration | m/s² |
-| OarAngleVelocityCurve | Angular velocity of oar | deg/s |
-| SeatCurve | Seat position | meters |
+| Curve Name | Typical Data | Y Units | Y Scale (UINT16) | Recommended Abscissa |
+|------------|--------------|---------|------------------|----------------------|
+| HandleForceCurve | Handle force over stroke | N | 10 (0.1 N) | HANDLE_DISTANCE_UNIFORM_M (erg) or TIME_UNIFORM_MS (OTW) |
+| BoatAcceleratorCurve | Boat acceleration | m/s² | 100 (0.01 m/s²) | TIME_UNIFORM_MS |
+| OarAngleVelocityCurve | Angular velocity of oar | deg/s | 10 (0.1 deg/s) | TIME_UNIFORM_MS or OAR_ANGLE_UNIFORM_DEG |
+| SeatCurve | Seat position | m | 255 (~4 mm) | HANDLE_DISTANCE_UNIFORM_M or TIME_UNIFORM_MS |
+
+Curve samples are **uniformly spaced** along the declared abscissa (fields 90-92). Non-uniform source data MUST be resampled before export or stored in a companion JSON file.
+
+For **HANDLE_DISTANCE_UNIFORM_M**, sample index `k` maps to handle position `k × Δm` from catch, with Δm = `DriveLength / (point_count - 1)` when drive length is known.
 
 ### 6.5 Curve Array Format
 
@@ -266,7 +273,7 @@ Curve data MUST be encoded as **UINT16** arrays (developer fields with array siz
 - **Field ID allocation:** Start at 60, increment per curve type
 - **Encoding:** Unsigned 16-bit integers in range [0, 65535]
 - **Data representation:** Values are clipped to [0, 65535] range; negative values not supported
-- **Scale factor:** Use appropriate scale in field description to map physical units to UINT16 range
+- **Scale factor:** Declared per curve type in developer field description (see §6.4). Values are clipped to [0, 65535] after scaling.
 
 **Note on signed data:** FIT SDK developer fields with arrays only reliably support UINT16 base type. For force curves and other rowing metrics, values are naturally non-negative. If future curve types require negative values, implement offset transformation (e.g., add 32768) and document in field description.
 
@@ -319,12 +326,16 @@ Implementers MAY choose compliance levels based on their capabilities:
 
 ### 8.1 Value Ranges
 
-Producers SHOULD clamp values to reasonable ranges:
+Producers MUST NOT exceed FIT type limits (encoded value × scale must fit the base type). Producers SHOULD NOT clamp valid measurements to “typical” ranges.
+
+**Typical ranges** (informative, not encoding limits):
 
 - Force: 0-2000 N typical maximum
-- DriveLength: 0.8-2.0 m
+- DriveLength: 1.2-1.5 m for full strokes; arms-only strokes may be ~0.3 m
 - Angles: -180 to +180 degrees
-- Stroke rate: 10-60 strokes/min typical
+- Stroke rate: 10-40 spm typical; sprint work may exceed 60 spm (up to ~100 spm)
+
+Consumers MAY warn on values outside typical ranges but MUST accept physically valid data within type limits.
 
 ### 8.2 Missing Data
 
@@ -350,7 +361,7 @@ While strict validation is not enforced, producers SHOULD maintain internal cons
 | 20-59 | In-stroke summaries | Dynamic allocation |
 | 60-89 | In-stroke curve arrays | Dynamic allocation |
 | 90-92 | In-stroke axis metadata | Assigned |
-| 93-199 | Reserved for future standard fields | Available |
+| 93-199 | Extended standard fields | StrokeRate (93) assigned; remainder available |
 | 200-211 | Dual oarlock per-side | Assigned |
 | 212-255 | Reserved for future extensions | Available |
 
@@ -367,6 +378,7 @@ Producers SHOULD use Newtons for new implementations. Consumers MUST continue to
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.2 | 2026-08-03 | Precision upgrades: length fields in mm (DriveLength, PeakForcePositionAbs, EffectiveLength); AverageBoatSpeed scale 255; StrokeRate developer field (ID 93); fractional_cadence native field; force-curve Y-scale and abscissa registry; §8.1 value-range guidance |
 | 1.1 | 2026-05-14 | FIT SDK compliance updates: Application ID changed to 16-byte UUID (89e86158-6d47-5c98-9d46-7d29437f27b9); Curve arrays changed from SINT16 to UINT16 for developer field compatibility |
 | 1.0 | 2026-05-13 | Initial standard release |
 

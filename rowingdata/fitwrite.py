@@ -66,6 +66,10 @@ ROWINGDATA_APP_ID = uuid.uuid5(uuid.NAMESPACE_DNS, 'rowingdata').bytes
 
 # Canonical mapping: df column name -> FIT curve type name (RP3/Quiske); from fit_export_spec.json
 INSTROKE_COLUMN_MAP = dict(_FIT_EXPORT_RAW['instroke_column_map'])
+INSTROKE_CURVE_TYPES = dict(_FIT_EXPORT_RAW.get('instroke_curve_types') or {})
+
+# Native cadence fractional part scale (Garmin FIT profile: fractional_cadence scale 1/128 spm)
+CADENCE_FRACTIONAL_SCALE = 128
 
 def _parse_instroke_curve(df, col):
     """Parse curve column to DataFrame of numeric values. Same format as rowingdata get_instroke_data."""
@@ -213,9 +217,10 @@ def _series_to_peak_force_position_norm(values):
 
 
 def _series_to_peak_force_position_abs_m(values):
-    """Map peak_force_pos (often RP3 cm) to meters for PeakForcePositionAbs (scale 100)."""
+    """Map peak_force_pos (often RP3 cm) to millimeters for PeakForcePositionAbs (scale 1, units mm)."""
     v = pd.to_numeric(values, errors='coerce').values
     out = np.zeros(len(v), dtype=np.float64)
+    max_mm = 65535.0
     for i, x in enumerate(v):
         if not np.isfinite(x) or x <= 0:
             continue
@@ -223,8 +228,67 @@ def _series_to_peak_force_position_abs_m(values):
             m = x / 100.0
         else:
             m = float(x)
-        out[i] = min(m, 3.0)
+        out[i] = min(m * 1000.0, max_mm)
     return out
+
+
+def _length_values_to_mm(arr):
+    """Convert oarlock effective-length column values to millimeters."""
+    arr = np.asarray(arr, dtype=np.float64)
+    if np.nanmax(arr) <= 5.0:
+        return arr * 1000.0
+    return arr * 10.0
+
+
+def _values_for_fit_field(arr, units, scale, base_type):
+    """Map physical DataFrame values to FIT developer-field magnitudes before clipping."""
+    arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
+    if units == 'mm':
+        arr = arr * 1000.0
+    if base_type == BaseType.UINT8:
+        arr = np.clip(arr, 0, 255)
+    elif base_type == BaseType.UINT16:
+        max_display = 65535.0 / scale if scale else 65535.0
+        arr = np.clip(arr, 0, max_display)
+    elif base_type == BaseType.SINT16:
+        max_display = 32767.0 / scale if scale else 32767.0
+        min_display = -32768.0 / scale if scale else -32768.0
+        arr = np.clip(arr, min_display, max_display)
+    return arr
+
+
+def _split_cadence_arrays(df, nr_rows):
+    """
+    Return (integer cadence, fractional_cadence, stroke_rate_spm) per row.
+    stroke_rate_spm preserves fractional strokes/min for StrokeRate developer field.
+    """
+    try:
+        raw = pd.to_numeric(df[' Cadence (stokes/min)'].values, errors='coerce')
+        raw = np.nan_to_num(raw, nan=0.0, posinf=0.0, neginf=0.0)
+    except KeyError:
+        z = np.zeros(nr_rows, dtype=int)
+        return z, z.copy(), np.zeros(nr_rows), np.zeros(nr_rows, dtype=np.float64)
+    cadence_int = np.floor(raw).astype(int)
+    frac = raw - np.floor(raw)
+    fractional = np.round(frac * CADENCE_FRACTIONAL_SCALE).astype(int)
+    fractional = np.clip(fractional, 0, 255)
+    cadence_int = np.where(raw > 0, cadence_int, 0)
+    fractional = np.where(raw > 0, fractional, 0)
+    # Physical fractional spm (0-1) for fit-tool fractional_cadence field (scale 1/128)
+    fractional_physical = np.where(raw > 0, frac, 0.0)
+    return cadence_int, fractional, fractional_physical, raw
+
+
+def _default_instroke_abscissa_type(df, curve_canonical_names):
+    """Default X-axis semantics when instroke_abscissa_type is not set."""
+    for name in curve_canonical_names:
+        meta = INSTROKE_CURVE_TYPES.get(name) or {}
+        if meta.get('default_abscissa') == 'HANDLE_DISTANCE_UNIFORM_M':
+            if ' DriveLength (meters)' in df.columns:
+                return INSTROKE_ABSCISSA_HANDLE_DISTANCE_UNIFORM_M
+    if ' DriveTime (ms)' in df.columns:
+        return INSTROKE_ABSCISSA_TIME_UNIFORM_MS
+    return INSTROKE_ABSCISSA_UNKNOWN
 
 
 def _compute_instroke_axis_arrays(df, n_points, instroke_abscissa_type, instroke_sample_interval_ms):
@@ -246,6 +310,13 @@ def _compute_instroke_axis_arrays(df, n_points, instroke_abscissa_type, instroke
         else:
             arr = np.asarray(instroke_sample_interval_ms, dtype=np.float64).reshape(-1)
             interval = arr if len(arr) == nr else np.zeros(nr)
+    elif atype == INSTROKE_ABSCISSA_HANDLE_DISTANCE_UNIFORM_M and ' DriveLength (meters)' in df.columns:
+        drive_m = np.nan_to_num(
+            df[' DriveLength (meters)'].values, nan=0.0, posinf=0.0, neginf=0.0
+        )
+        # Millimeters between uniform samples along handle travel
+        interval = np.round(drive_m * 1000.0 / np.maximum(n_points - 1, 1))
+        interval = np.clip(interval, 0, 65535)
     elif atype == INSTROKE_ABSCISSA_TIME_UNIFORM_MS and ' DriveTime (ms)' in df.columns:
         drive_ms = np.nan_to_num(df[' DriveTime (ms)'].values, nan=0.0, posinf=0.0, neginf=0.0)
         interval = np.round(drive_ms / np.maximum(n_points - 1, 1))
@@ -319,7 +390,7 @@ WORKOUT_STATES_WORK = [1, 4, 5, 6, 7, 8, 9]
 MIN_FIT_LAP_ELAPSED_S = 1e-3
 
 
-def _compute_interval_summaries(df, lap_col, unixtimes, distance_m, heart_rate, cadence,
+def _compute_interval_summaries(df, lap_col, unixtimes, distance_m, heart_rate, stroke_rate_spm,
                                 power, work_mask=None):
     """
     Compute per-interval summary stats for Lap messages.
@@ -392,9 +463,9 @@ def _compute_interval_summaries(df, lap_col, unixtimes, distance_m, heart_rate, 
         hr_seg = hr_seg[np.isfinite(hr_seg)]
         max_hr = int(np.max(hr_seg)) if len(hr_seg) > 0 else 0
 
-        cad_vals = cadence[work_idx]
+        cad_vals = stroke_rate_spm[work_idx]
         cad_vals = cad_vals[cad_vals > 0]
-        avg_cad = int(np.mean(cad_vals)) if len(cad_vals) > 0 else 0
+        avg_cad = int(round(np.mean(cad_vals))) if len(cad_vals) > 0 else 0
 
         pw_vals = power[work_idx]
         pw_vals = pw_vals[pw_vals > 0]
@@ -569,9 +640,11 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         distance_m = df[' Horizontal (meters)'].values
 
     try:
-        cadence = np.round(df[' Cadence (stokes/min)'].values).astype(int)
+        cadence, _fractional_encoded, fractional_cadence, stroke_rate_spm = _split_cadence_arrays(df, nr_rows)
     except KeyError:
         cadence = np.zeros(nr_rows, dtype=int)
+        fractional_cadence = np.zeros(nr_rows, dtype=np.float64)
+        stroke_rate_spm = np.zeros(nr_rows, dtype=np.float64)
 
     try:
         heart_rate = df[' HRCur (bpm)'].values.astype(int)
@@ -639,17 +712,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             col = next((c for c in possible_cols if c in df.columns), None)
             if col is not None:
                 arr = df[col].values
-                arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
-                # Clip to avoid overflow: encoded = value * scale must fit in base_type
-                if base_type == BaseType.UINT8:
-                    arr = np.clip(arr, 0, 255)
-                elif base_type == BaseType.UINT16:
-                    max_display = 65535.0 / scale if scale else 65535.0
-                    arr = np.clip(arr, 0, max_display)
-                elif base_type == BaseType.SINT16:
-                    max_display = 32767.0 / scale if scale else 32767.0
-                    min_display = -32768.0 / scale if scale else -32768.0
-                    arr = np.clip(arr, min_display, max_display)
+                arr = _values_for_fit_field(arr, units, scale, base_type)
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, base_type, size, scale, units))
         for fd in OARLOCK_DEV_FIELDS:
@@ -657,14 +720,13 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             col = next((c for c in possible_cols if c in df.columns), None)
             if col is not None:
                 arr = df[col].values
-                arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
-                if base_type == BaseType.SINT16:
-                    max_display = 32767.0 / scale if scale else 32767.0
-                    min_display = -32768.0 / scale if scale else -32768.0
-                    arr = np.clip(arr, min_display, max_display)
-                elif base_type == BaseType.UINT16:
-                    max_display = 65535.0 / scale if scale else 65535.0
-                    arr = np.clip(arr, 0, max_display)
+                if units == 'mm' and 'EffectiveLength' in name:
+                    arr = _length_values_to_mm(arr)
+                    arr = _values_for_fit_field(arr, '', scale, base_type)
+                elif base_type == BaseType.SINT16:
+                    arr = _values_for_fit_field(arr, units, scale, base_type)
+                else:
+                    arr = _values_for_fit_field(arr, units, scale, base_type)
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, base_type, size, scale, units))
         for _pair_key, port_fd, starboard_fd in OARLOCK_DUAL_PAIRS:
@@ -677,14 +739,11 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             for fd, col in ((port_fd, col_p), (starboard_fd, col_s)):
                 field_id, possible_cols, name, base_type, size, scale, units = fd
                 arr = df[col].values
-                arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
-                if base_type == BaseType.SINT16:
-                    max_display = 32767.0 / scale if scale else 32767.0
-                    min_display = -32768.0 / scale if scale else -32768.0
-                    arr = np.clip(arr, min_display, max_display)
-                elif base_type == BaseType.UINT16:
-                    max_display = 65535.0 / scale if scale else 65535.0
-                    arr = np.clip(arr, 0, max_display)
+                if units == 'mm' and 'EffectiveLength' in name:
+                    arr = _length_values_to_mm(arr)
+                    arr = _values_for_fit_field(arr, '', scale, base_type)
+                else:
+                    arr = _values_for_fit_field(arr, units, scale, base_type)
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, base_type, size, scale, units))
         for fd in PEAK_POSITION_DEV_FIELDS:
@@ -746,6 +805,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         base_id = _FIT_EXPORT_RAW['instroke_dynamic']['curve_start']
         for col in instroke_curve_cols:
             canonical = col_map.get(col, col)
+            curve_meta = INSTROKE_CURVE_TYPES.get(canonical) or {}
+            y_scale = int(curve_meta.get('y_scale', 1))
+            y_units = curve_meta.get('y_units', '') or ''
             try:
                 curves_list, n_points = _get_instroke_curve_for_export(
                     df, col, instroke_export, instroke_downsample_points
@@ -757,7 +819,8 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             arr_2d = np.array(curves_list, dtype=np.float64)
             size = n_points * 2
             dev_arrays[base_id] = arr_2d
-            dev_specs.append((base_id, col, canonical, BaseType.UINT16, size, 1, ''))
+            dev_specs.append((base_id, col, canonical, BaseType.UINT16, size, y_scale, y_units))
+            instroke_downsampled_arrays[col] = base_id
             base_id += 1
 
     if instroke_export in ('downsampled', 'full') and instroke_curve_cols and use_dev:
@@ -771,8 +834,12 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             except (ValueError, KeyError, TypeError):
                 pass
         if nmax >= 2:
+            axis_abscissa = instroke_abscissa_type
+            if axis_abscissa is None:
+                canonicals = [col_map.get(c, c) for c in instroke_curve_cols]
+                axis_abscissa = _default_instroke_abscissa_type(df, canonicals)
             axis_tuples = _compute_instroke_axis_arrays(
-                df, nmax, instroke_abscissa_type, instroke_sample_interval_ms)
+                df, nmax, axis_abscissa, instroke_sample_interval_ms)
             if axis_tuples is not None:
                 ta, interval, pc = axis_tuples
                 axis_arrays = [ta, interval, pc]
@@ -826,7 +893,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
 
     avg_hr = int(np.mean(heart_rate[heart_rate > 0])) if np.any(heart_rate > 0) else 0
     max_hr = int(np.max(heart_rate)) if nr_rows > 0 else 0
-    avg_cadence = int(np.mean(cadence[cadence > 0])) if np.any(cadence > 0) else 0
+    avg_cadence = int(round(np.mean(stroke_rate_spm[stroke_rate_spm > 0]))) if np.any(stroke_rate_spm > 0) else 0
     avg_power = int(np.mean(power[power > 0])) if np.any(power > 0) else 0
 
     # Developer data (ID + field descriptions) - must come before Session/Records that use them
@@ -926,7 +993,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         unique_laps = np.unique(df[lap_col].values)
         if len(unique_laps) > 1:
             interval_summaries = _compute_interval_summaries(
-                df, lap_col, unixtimes, distance_m, heart_rate, cadence, power, work_mask
+                df, lap_col, unixtimes, distance_m, heart_rate, stroke_rate_spm, power, work_mask
             )
 
     def _emit_record(i):
@@ -940,7 +1007,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 is_array_field = (base_type == BaseType.UINT16 and size > 2)
                 if is_array_field and arr.ndim == 2:
                     row = arr[i]
-                    vals = np.clip(row, 0, 65535).astype(np.uint32)
+                    vals = np.nan_to_num(row, nan=0.0, posinf=0.0, neginf=0.0)
+                    max_phys = 65535.0 / max(scale, 1)
+                    vals = np.clip(vals, 0, max_phys)
                     has_data = np.any(vals != 0)
                     if has_data:
                         dev = DeveloperField(
@@ -949,12 +1018,12 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                             size=size,
                             name=name,
                             base_type=base_type,
-                            scale=1,
+                            scale=scale,
                             offset=0,
                             units=units
                         )
                         for j, v in enumerate(vals):
-                            dev.set_value(j, int(v))
+                            dev.set_value(j, float(v))
                         dev_fields.append(dev)
                 else:
                     val = float(arr[i])
@@ -978,6 +1047,8 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         rec.distance = float(distance_m[i])
         rec.heart_rate = heart_rate[i] if heart_rate[i] > 0 else None
         rec.cadence = cadence[i] if cadence[i] > 0 else None
+        if fractional_cadence[i] > 0 and hasattr(rec, 'fractional_cadence'):
+            rec.fractional_cadence = float(fractional_cadence[i])
         rec.power = power[i] if power[i] > 0 else None
         rec.enhanced_speed = float(enhanced_speed[i]) if enhanced_speed[i] > 0 else None
         if hasattr(rec, 'total_cycles'):
@@ -1081,8 +1152,12 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 for row in strokes:
                     max_pts = max(max_pts, len(row))
             max_pts = max(max_pts, 2)
+            canonicals = [col_map.get(c, c) for c in instroke_curve_cols]
+            axis_abscissa = instroke_abscissa_type
+            if axis_abscissa is None:
+                axis_abscissa = _default_instroke_abscissa_type(df, canonicals)
             axis_tuples = _compute_instroke_axis_arrays(
-                df, max_pts, instroke_abscissa_type, instroke_sample_interval_ms)
+                df, max_pts, axis_abscissa, instroke_sample_interval_ms)
             meta = {
                 'version': 1,
                 'instroke_abscissa_type': (

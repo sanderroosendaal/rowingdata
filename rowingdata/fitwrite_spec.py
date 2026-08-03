@@ -78,9 +78,9 @@ def load_fit_spec_raw():
 
 def _validate_spec(raw):
     version = raw.get('version', 0)
-    if version != 1:
+    if version not in (1, 2):
         warnings.warn(
-            'fit_export_spec.json version %s may be unsupported (expected 1)' % version,
+            'fit_export_spec.json version %s may be unsupported (expected 1 or 2)' % version,
             UserWarning,
             stacklevel=2,
         )
@@ -188,6 +188,7 @@ def load_fit_spec():
         'raw': raw,
         'version': raw.get('version', 1),
         'instroke_column_map': dict(raw['instroke_column_map']),
+        'instroke_curve_types': dict(raw.get('instroke_curve_types') or {}),
         'abscissa_enum': dict(raw['abscissa_enum']),
         'instroke_axis_field_ids': tuple(raw['instroke_axis_field_ids']),
         'always_emit_field_ids': frozenset(raw['always_emit_field_ids']),

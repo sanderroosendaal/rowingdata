@@ -69,6 +69,9 @@ class TestFit:
         assert_equal(f.df[' lapIdx'].nunique(), 5)
         cols = [str(c).lower() for c in f.df.columns]
         assert any('instroke' in c for c in cols), 'expected instroke axis developer fields in columns'
+        assert 'curve_data' in f.df.columns, 'HandleForceCurve should round-trip as curve_data'
+        assert 'instrokepointcount' in f.df.columns
+        assert f.df['instrokepointcount'].dropna().iloc[0] == 16
 
 class TestEmpty:
 
@@ -1064,14 +1067,14 @@ class TestFITParser:
         """fit_export_spec.json loads; field IDs and names match exporter expectations."""
         from rowingdata import fitwrite_spec
         raw = fitwrite_spec.load_fit_spec_raw()
-        assert raw['version'] == 1
+        assert raw['version'] == 2
         assert raw['instroke_dynamic']['summary_start'] == 20
         assert raw['instroke_dynamic']['curve_start'] == 60
         ids = [r['field_id'] for r in raw['developer_fields']]
         assert sorted(ids) == sorted(set(ids)), 'duplicate field_id in spec'
-        assert 0 in ids and 17 in ids and 19 in ids and 90 in ids
+        assert 0 in ids and 17 in ids and 19 in ids and 90 in ids and 93 in ids
         spec = fitwrite_spec.load_fit_spec()
-        assert len(spec['ROWING_DEV_FIELDS']) == 11
+        assert len(spec['ROWING_DEV_FIELDS']) == 12
         assert len(spec['OARLOCK_DEV_FIELDS']) == 6
         assert len(spec['OARLOCK_DUAL_PAIRS']) == 6
         assert spec['OARLOCK_DUAL_PAIRS'][0][1][0] == 200
@@ -1135,6 +1138,42 @@ class TestFITParser:
                     os.remove(p)
                 except FileNotFoundError:
                     pass
+
+    def test_fitwrite_stroke_rate_precision(self):
+        """StrokeRate dev field and fractional_cadence preserve sub-integer spm."""
+        from fitparse import FitFile
+        from rowingdata import fitwrite
+
+        df = pd.DataFrame({
+            'TimeStamp (sec)': [1.0, 2.0],
+            ' Horizontal (meters)': [0.0, 10.0],
+            ' Cadence (stokes/min)': [18.6, 19.4],
+        })
+        outfile = os.path.join(os.getcwd(), 'test_stroke_rate_precision.fit')
+        try:
+            fitwrite.write_fit(
+                outfile, df, row_date='2026-08-03', sport='rowing',
+                use_developer_fields=True, overwrite=True,
+            )
+            recs = [m for m in FitFile(outfile).get_messages('record')]
+            assert len(recs) >= 2
+            r0 = recs[0]
+            assert r0.get('cadence').value == 18
+            frac0 = r0.get('fractional_cadence')
+            assert frac0 is not None
+            assert frac0.raw_value == 77  # 0.6 * 128 rounded
+            stroke_rate_field = next(f for f in r0 if f.name == 'StrokeRate')
+            assert stroke_rate_field.raw_value == 1860  # 18.6 spm, scale 100
+            r1 = recs[1]
+            assert r1.get('cadence').value == 19
+            assert r1.get('fractional_cadence').raw_value == 51  # 0.4 * 128
+            dev1 = next(f for f in r1 if f.name == 'StrokeRate')
+            assert dev1.raw_value == 1940  # 19.4 spm, scale 100
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
 
     def test_exporttofit_return_none(self):
         """When no notable conditions, return None."""
