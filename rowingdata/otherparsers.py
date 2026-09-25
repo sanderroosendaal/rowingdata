@@ -35,6 +35,69 @@ def strip_non_ascii(string):
     stripped = (c for c in string if 0 < ord(c) < 127)
     return ''.join(stripped)
 
+def _standard_app_ids():
+    """(standard, private in-stroke) 16-byte application IDs used by fitwrite."""
+    try:
+        from .fitwrite import ROWINGDATA_APP_ID, INSTROKE_APP_ID
+    except (ValueError, ImportError):  # pragma: no cover
+        from fitwrite import ROWINGDATA_APP_ID, INSTROKE_APP_ID
+    return ROWINGDATA_APP_ID, INSTROKE_APP_ID
+
+
+def _load_developer_field_spec():
+    """Reverse map of the export spec: lowercase FIT field name -> definition.
+
+    Built from rowingdata/data/fit_export_spec.json so that reading stays in
+    step with writing when the registry changes upstream.
+    """
+    try:
+        from . import fitwrite_spec
+    except (ValueError, ImportError):  # pragma: no cover
+        import fitwrite_spec
+    raw = fitwrite_spec.load_fit_spec_raw()
+    mapping = {}
+    for entry in raw.get('developer_fields', []):
+        columns = entry.get('df_columns') or []
+        if not columns or entry.get('message_type') == 'session':
+            continue
+        mapping[str(entry['fit_name']).lower()] = {
+            'column': columns[0],
+            'units': entry.get('units') or '',
+            'scale': entry.get('scale') or 1,
+        }
+    return mapping
+
+
+_DEVELOPER_FIELD_SPEC = None
+
+
+def _developer_field_spec():
+    global _DEVELOPER_FIELD_SPEC
+    if _DEVELOPER_FIELD_SPEC is None:
+        try:
+            _DEVELOPER_FIELD_SPEC = _load_developer_field_spec()
+        except (FileNotFoundError, OSError, ValueError, KeyError, ImportError):  # pragma: no cover
+            _DEVELOPER_FIELD_SPEC = {}
+    return _DEVELOPER_FIELD_SPEC
+
+
+def _app_id_bytes(value):
+    """FIT application_id as bytes; fitparse may hand back a list of ints."""
+    if value is None:
+        return b''
+    if isinstance(value, bytes):
+        return value
+    if isinstance(value, (list, tuple)):
+        try:
+            return bytes(bytearray(int(x) & 0xFF for x in value))
+        except (TypeError, ValueError):  # pragma: no cover
+            return b''
+    try:  # pragma: no cover
+        return bytes(value)
+    except (TypeError, ValueError):
+        return b''
+
+
 def tofloat(x):
     try:
         return float(x)
@@ -674,12 +737,85 @@ class FITParser(object):
             }
 
         self.df.rename(columns=newcolnames,inplace=True)
+        self._map_standard_developer_fields()
 
         # timestamp
         # distance
         # pace
         # elapsedtime
 
+    def _standard_developer_fields(self):
+        """Fields written under the standard application ID: name -> file scale.
+
+        Foreign application IDs (including our private in-stroke namespace) are
+        ignored, so another vendor's field 0 is never read as DriveLength. Files
+        from rowingdata 3.7.3 and earlier used a 10-byte ``rowingdata``
+        application ID and metre-scaled DriveLength; those are reported
+        separately so their older scaling can be honoured.
+        """
+        standard_id, _instroke_id = _standard_app_ids()
+        index_to_app = {}
+        try:
+            for msg in self.fitfile.get_messages('developer_data_id'):
+                index_to_app[msg.get_value('developer_data_index')] = _app_id_bytes(
+                    msg.get_value('application_id')
+                )
+        except (ValueError, AttributeError, TypeError):  # pragma: no cover
+            return {}, {}
+
+        standard, legacy = {}, {}
+        try:
+            for msg in self.fitfile.get_messages('field_description'):
+                name = msg.get_value('field_name')
+                if isinstance(name, list):
+                    name = name[0] if name else ''
+                app = index_to_app.get(msg.get_value('developer_data_index'), b'')
+                scale = msg.get_value('scale')
+                if app == standard_id:
+                    standard[str(name).lower()] = scale
+                elif app.rstrip(b'\x00') == b'rowingdata':
+                    legacy[str(name).lower()] = scale
+        except (ValueError, AttributeError, TypeError):  # pragma: no cover
+            return standard, legacy
+        return standard, legacy
+
+    def _map_standard_developer_fields(self):
+        """Rename standard developer fields to rowingdata CSV columns.
+
+        fitparse does not apply developer-field scales, so the raw integers are
+        divided here. The scale in the file wins when present; ``AverageBoatSpeed``
+        needs the spec fallback because scale 255 is the uint8 invalid value and
+        cannot survive in a field_description.
+        """
+        spec = _developer_field_spec()
+        if not spec:  # pragma: no cover
+            return
+        standard, legacy = self._standard_developer_fields()
+        if not standard and not legacy:
+            return
+
+        for source in list(self.df.columns):
+            key = str(source).lower()
+            definition = spec.get(key)
+            if definition is None:
+                continue
+            is_standard = key in standard
+            if not is_standard and key not in legacy:
+                continue
+            file_scale = standard.get(key) if is_standard else legacy.get(key)
+            scale = file_scale if file_scale else definition['scale']
+            values = pd.to_numeric(self.df[source], errors='coerce')
+            if scale and scale != 1:
+                values = values / float(scale)
+            # Pre-UUID files carried lengths in metres already.
+            if definition['units'] == 'mm' and is_standard:
+                values = values / 1000.0
+            target = definition['column']
+            if target == source:
+                self.df[source] = values
+                continue
+            self.df[target] = values
+            self.df.drop(columns=[source], inplace=True)
 
     def write_csv(self, writefile="fit_o.csv", gzip=False):
 

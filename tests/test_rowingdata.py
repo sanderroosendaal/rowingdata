@@ -806,13 +806,13 @@ class TestFITParser:
             row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
             row.exporttofit(outfile, sport='rowing')
             r = rowingdata.FITParser(outfile)
-            # FITParser: developer fields become strokedistance, drivelength, strokedrivetime;
+            # FITParser maps standard developer fields back to CSV column names;
             # native cycle_length16 is renamed to ' StrokeDistance (meters)'.
-            dev_cols = ['strokedistance', 'drivelength', 'strokedrivetime', ' StrokeDistance (meters)']
+            dev_cols = [' DriveLength (meters)', ' DriveTime (ms)', ' StrokeDistance (meters)']
             found = [c for c in dev_cols if c in r.df.columns]
             assert found, (
-                'Expected at least one of strokedistance, drivelength, strokedrivetime, '
-                ' StrokeDistance (meters) in parsed FIT columns; got: %s' % list(r.df.columns)
+                'Expected at least one of DriveLength, DriveTime, StrokeDistance '
+                'in parsed FIT columns; got: %s' % list(r.df.columns)
             )
             for col in found:
                 vals = r.df[col].dropna()
@@ -826,7 +826,7 @@ class TestFITParser:
                 pass
 
     def test_fitwrite_strokework_roundtrip(self):
-        """StrokeWork (FIT id 19) exports from WorkPerStroke / driveenergy and parses as strokework."""
+        """StrokeWork (FIT id 19) exports from WorkPerStroke / driveenergy and parses back."""
         csvfile = 'testdata/correctedpainsled.csv'
         outfile = os.path.join(os.getcwd(), 'test_export_strokework.fit')
         try:
@@ -836,8 +836,8 @@ class TestFITParser:
             assert src.max() > 100
             row.exporttofit(outfile, sport='rowing')
             r = rowingdata.FITParser(outfile)
-            assert 'strokework' in r.df.columns
-            out = r.df['strokework'].replace([np.inf, -np.inf], np.nan).dropna()
+            assert ' WorkPerStroke (joules)' in r.df.columns
+            out = r.df[' WorkPerStroke (joules)'].replace([np.inf, -np.inf], np.nan).dropna()
             assert len(out) > 0
             assert out.max() > 100
         finally:
@@ -978,8 +978,8 @@ class TestFITParser:
             row.exporttofit(outfile, sport='rowing', instroke_export='off')
             assert_equal(rowingdata.get_file_type(outfile), 'fit')
             rr = rowingdata.FITParser(outfile)
-            cols = [str(c).lower() for c in rr.df.columns]
-            assert any('peakforceposition' in c for c in cols), (
+            # PeakForcePositionNorm/Abs map back to the RP3 source column names.
+            assert 'rel_peak_force_pos' in rr.df.columns or 'peak_force_pos' in rr.df.columns, (
                 'Expected PeakForcePositionNorm/Abs in parsed FIT: %s' % rr.df.columns.tolist()
             )
         finally:

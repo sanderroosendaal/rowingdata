@@ -64,6 +64,13 @@ ALWAYS_EMIT_DEV_FIELD_IDS = frozenset(_FIT_EXPORT_RAW['always_emit_field_ids'])
 # UUID v5 generated from DNS namespace with name "rowingdata" for deterministic, unique ID.
 ROWINGDATA_APP_ID = uuid.uuid5(uuid.NAMESPACE_DNS, 'rowingdata').bytes
 
+# In-stroke curve summary (20-59) and array (60-89) IDs are unallocated in the
+# registry, so they travel under a private application ID and cannot collide
+# with a future committee allocation. Axis metadata 90-92 is assigned and stays
+# under ROWINGDATA_APP_ID.
+INSTROKE_APP_ID = uuid.uuid5(uuid.NAMESPACE_DNS, 'rowingdata.instroke').bytes
+INSTROKE_DEV_DATA_IDX = 1
+
 # Canonical mapping: df column name -> FIT curve type name (RP3/Quiske); from fit_export_spec.json
 INSTROKE_COLUMN_MAP = dict(_FIT_EXPORT_RAW['instroke_column_map'])
 INSTROKE_CURVE_TYPES = dict(_FIT_EXPORT_RAW.get('instroke_curve_types') or {})
@@ -699,6 +706,14 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     dev_arrays = {}
     dev_specs = []
     DEV_DATA_IDX = 0
+    instroke_private_field_ids = set()
+
+    def _dev_index_for(field_id):
+        """Developer data index: private namespace for unallocated curve IDs."""
+        if field_id in instroke_private_field_ids:
+            return INSTROKE_DEV_DATA_IDX
+        return DEV_DATA_IDX
+
     if use_dev:
         _spec = fitwrite_spec.load_fit_spec()
         ROWING_DEV_FIELDS = _spec['ROWING_DEV_FIELDS']
@@ -730,6 +745,11 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, base_type, size, scale, units))
         for _pair_key, port_fd, starboard_fd in OARLOCK_DUAL_PAIRS:
+            if _pair_key == 'effectiveLength':
+                # Draft defect: summary field 16 is mm while 210/211 are metres,
+                # and §5.3 calls 16 the average of the two. Unresolved upstream,
+                # so neither encoding is written.
+                continue
             cols_p = port_fd[1]
             cols_s = starboard_fd[1]
             col_p = next((c for c in cols_p if c in df.columns), None)
@@ -798,6 +818,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 arr = np.clip(arr, 0, 65535.0 / max(scale, 1))
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, BaseType.UINT16, 2, scale, ''))
+                instroke_private_field_ids.add(field_id)
                 instroke_summary_arrays.setdefault(col, {})[metric] = field_id
                 base_id += 1
             base_id = (base_id // 10 + 1) * 10
@@ -820,6 +841,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             size = n_points * 2
             dev_arrays[base_id] = arr_2d
             dev_specs.append((base_id, col, canonical, BaseType.UINT16, size, y_scale, y_units))
+            instroke_private_field_ids.add(base_id)
             instroke_downsampled_arrays[col] = base_id
             base_id += 1
 
@@ -966,9 +988,14 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             dev_id_msg.application_id = ROWINGDATA_APP_ID
             dev_id_msg.developer_data_index = DEV_DATA_IDX
             builder.add(dev_id_msg)
+        if instroke_private_field_ids:
+            instroke_id_msg = DeveloperDataIdMessage()
+            instroke_id_msg.application_id = INSTROKE_APP_ID
+            instroke_id_msg.developer_data_index = INSTROKE_DEV_DATA_IDX
+            builder.add(instroke_id_msg)
         for field_id, col, name, base_type, size, scale, units in dev_specs:
             fd_msg = FieldDescriptionMessage()
-            fd_msg.developer_data_index = DEV_DATA_IDX
+            fd_msg.developer_data_index = _dev_index_for(field_id)
             fd_msg.field_definition_number = field_id
             fd_msg.fit_base_type_id = base_type.value
             fd_msg.field_name = name
@@ -1013,7 +1040,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                     has_data = np.any(vals != 0)
                     if has_data:
                         dev = DeveloperField(
-                            developer_data_index=DEV_DATA_IDX,
+                            developer_data_index=_dev_index_for(field_id),
                             field_id=field_id,
                             size=size,
                             name=name,
@@ -1031,7 +1058,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                         val = int(np.clip(round(val), 0, 255))
                     if val != 0 or field_id in ALWAYS_EMIT_DEV_FIELD_IDS:
                         dev = DeveloperField(
-                            developer_data_index=DEV_DATA_IDX,
+                            developer_data_index=_dev_index_for(field_id),
                             field_id=field_id,
                             size=size,
                             name=name,
@@ -1054,7 +1081,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         if hasattr(rec, 'total_cycles'):
             rec.total_cycles = int(stroke_number[i])
         if stroke_distance is not None and hasattr(rec, 'cycle_length16'):
-            rec.cycle_length16 = int(round(float(stroke_distance[i]) * 100))  # scale 100, cm precision
+            rec.cycle_length16 = float(stroke_distance[i])  # fit-tool applies scale 100
         if not (np.isnan(lat[i]) or lat[i] == 0) and not (np.isnan(lon[i]) or lon[i] == 0):
             rec.position_lat = float(lat[i])
             rec.position_long = float(lon[i])

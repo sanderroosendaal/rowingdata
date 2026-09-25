@@ -13,6 +13,7 @@
 /venv/
 /venv38/
 /venv39/
+/.venv/
 /py2/
 /htmlcov/
 .coverage
