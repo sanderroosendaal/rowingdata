@@ -1,0 +1,69 @@
+name: FIT standard interop
+
+# Checks that our FIT export stays readable by the reference implementation of the
+# Rowing Data Standard (https://github.com/MoveLab-Studio/rowing-data-standard).
+#
+# The standard is pinned to a commit rather than a branch: the draft is not ratified,
+# so an upstream edit must be an explicit, reviewed bump here rather than a surprise
+# red build. Bump STANDARD_REF when adopting a new revision.
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+  workflow_dispatch:
+
+env:
+  STANDARD_REF: 5ef01be6de48cbea7d5c57213f778e2fa63353df
+
+jobs:
+  interop:
+    runs-on: ubuntu-latest
+    steps:
+      # Both repos are checked out as siblings, which is what our own tests probe for.
+      - name: Check out rowingdata
+        uses: actions/checkout@v4
+        with:
+          path: rowingdata
+
+      - name: Check out rowing-data-standard
+        uses: actions/checkout@v4
+        with:
+          repository: MoveLab-Studio/rowing-data-standard
+          ref: ${{ env.STANDARD_REF }}
+          path: rowing-data-standard
+
+      # The standard's interop test resolves our golden file as a child of its own
+      # repo root, and skips rather than fails when it is absent. Without this link
+      # the most valuable check in the job would quietly pass as a skip.
+      - name: Expose golden file where the standard expects it
+        run: ln -s ../rowingdata rowing-data-standard/rowingdata
+
+      # The reference package requires 3.11+; requirements.txt pins scipy 1.13,
+      # which has no wheels for 3.13.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install rowingdata
+        working-directory: rowingdata
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      # Test-only dependency. The standard's package is UNLICENSED, so it must never
+      # become a runtime requirement of rowingdata.
+      - name: Install reference implementation
+        run: pip install -e ./rowing-data-standard/python
+
+      - name: Our export conforms to the standard
+        working-directory: rowingdata
+        run: pytest tests/test_fit_standard.py -q
+
+      # -rs surfaces skips, so a silently skipped golden-file check is visible in the log.
+      - name: Reference implementation reads our export
+        working-directory: rowing-data-standard/python
+        run: pytest tests/test_interop.py -q -rs

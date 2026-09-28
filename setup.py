@@ -96,7 +96,10 @@ setup(name='rowingdata',
               '4+.txt',
               '2-.txt',
               '8+.txt'
-          ]
+          ],
+          'rowingdata': [
+              'data/fit_export_spec.json',
+          ],
       },
 
 #      entry_points={

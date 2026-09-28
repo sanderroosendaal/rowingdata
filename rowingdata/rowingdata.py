@@ -3132,7 +3132,9 @@ class rowingdata:
     def exporttofit(self, fileName, notes="Exported by Rowingdata",
                     sport="rowing", use_developer_fields=True,
                     instroke_export='off', instroke_columns=None, instroke_column_map=None,
-                    instroke_downsample_points=16, overwrite=True):
+                    instroke_downsample_points=16, overwrite=True,
+                    instroke_abscissa_type=None, instroke_sample_interval_ms=None,
+                    garmin_parity_source_fit=None, recording_strategy=None):
         """Export rowingdata to FIT format for Intervals.icu and other platforms.
 
         Parameters
@@ -3146,20 +3148,40 @@ class rowingdata:
         use_developer_fields : bool
             If True, include rowing-specific columns (DriveLength, StrokeDistance,
             etc.) when present. Requires fit-tool and Intervals.icu importer support.
+            For drive/peak force, prefer **Newton** columns; **lb** fields are still
+            emitted when ``...(lbs)`` columns exist (backward compatibility; see
+            ``docs/FIT_EXPORT.md``).
         instroke_export : str
             'off' (default): no in-stroke curve export.
             'summary': export q1,q2,q3,q4,diff,maxpos,minpos per curve as developer fields.
-            'downsampled': export fixed-length downsampled curve (SINT16 array) per stroke.
+            'downsampled': export fixed-length downsampled curve (UINT16 array) per stroke.
+            'full': export full-resolution curve up to 127 points per stroke (FIT size limit).
             'companion': write curve data to .instroke.json sidecar file.
         instroke_columns : list, optional
             Curve columns to export. If None, auto-detect.
         instroke_column_map : dict, optional
             Override mapping from df column name to canonical FIT curve type name.
         instroke_downsample_points : int
-            Number of points for downsampled export (default 16).
+            For 'downsampled': number of points per stroke (default 16, range 2-127).
+            Ignored for 'full' and other modes.
+        instroke_abscissa_type : int or None
+            In-stroke curve X-axis (see ``rowingdata.fitwrite`` INSTROKE_ABSCISSA_* constants).
+            None selects automatically (time-based when drive time is present).
+        instroke_sample_interval_ms : float, array-like, or None
+            Override sample spacing for InstrokeSampleInterval (field 91); meaning depends
+            on ``instroke_abscissa_type``.
+        garmin_parity_source_fit : str or None
+            If set, re-emit native Workout, WorkoutStep, Split, and SplitSummary messages
+            from this FIT after the Session message (see ``fitwrite.write_fit``).
         overwrite : bool
             If True (default), overwrite existing files. If False, raise FileExistsError
             when the target FIT file (or companion .instroke.json) already exists.
+        recording_strategy : int or None
+            Recording strategy indicator (RecordingStrategy developer field, ID 10).
+            Use fitwrite.RECORDING_STRATEGY_* constants (0=unknown, 1=stroke-boundary,
+            2=gps-update). Default: None (uses RECORDING_STRATEGY_STROKE_BOUNDARY).
+            Note: in-stroke curve data requires stroke-boundary.
+            See docs/FIT_EXPORT.md "Record message frequency".
 
         Returns
         -------
@@ -3175,17 +3197,23 @@ class rowingdata:
             res = make_cumvalues(df[' Horizontal (meters)'])
             df[' Horizontal (meters)'] = res[0]
             df['cum_dist'] = res[0]
-            return fitwrite.write_fit(
-                fileName, df,
-                row_date=self.rowdatetime.isoformat(),
-                notes=notes, sport=sport,
-                use_developer_fields=use_developer_fields,
-                instroke_export=instroke_export,
-                instroke_columns=instroke_columns,
-                instroke_column_map=instroke_column_map,
-                instroke_downsample_points=instroke_downsample_points,
-                overwrite=overwrite
-            )
+            kwargs = {
+                'row_date': self.rowdatetime.isoformat(),
+                'notes': notes,
+                'sport': sport,
+                'use_developer_fields': use_developer_fields,
+                'instroke_export': instroke_export,
+                'instroke_columns': instroke_columns,
+                'instroke_column_map': instroke_column_map,
+                'instroke_downsample_points': instroke_downsample_points,
+                'overwrite': overwrite,
+                'instroke_abscissa_type': instroke_abscissa_type,
+                'instroke_sample_interval_ms': instroke_sample_interval_ms,
+                'garmin_parity_source_fit': garmin_parity_source_fit,
+            }
+            if recording_strategy is not None:
+                kwargs['recording_strategy'] = recording_strategy
+            return fitwrite.write_fit(fileName, df, **kwargs)
         else:  # pragma: no cover
             raise ValueError("Cannot export empty rowingdata session to FIT")
 

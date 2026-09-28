@@ -76,7 +76,6 @@ requests==2.31.0
 requests-toolbelt==1.0.0
 rfc3986==2.0.0
 rich==13.7.1
--e git+ssh://git@github.com/sanderroosendaal/rowingdata.git@7b69d7305a4f2c9631e04c3a0bf94cc848214de8#egg=rowingdata
 rowingphysics==0.5.2
 scipy==1.13.0
 SecretStorage==3.3.3

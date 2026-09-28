@@ -44,12 +44,34 @@ class TestTCX:
 class TestFit:
     def test_read_fit(self):
         f = rowingdata.FITParser('testdata/3x250m.fit')
+        df = f.df
+        assert ' lapIdx' in df.columns
+        # 3x250m fixture: three laps → distinct lap indices 0, 1, 2 (time-based, not message order)
+        assert_equal(df[' lapIdx'].nunique(), 3)
+        assert_equal(int(df[' lapIdx'].min()), 0)
+        assert_equal(int(df[' lapIdx'].max()), 2)
 
     def test_read_fit_stream(self):
         # read the file in stream mode
         with open('testdata/3x250m.fit', 'rb') as f:
             stream = io.BytesIO(f.read())
         f = rowingdata.FITParser(stream)
+        df = f.df
+        assert ' lapIdx' in df.columns
+        assert_equal(df[' lapIdx'].nunique(), 3)
+
+    def test_read_rowingdata_standard_example_fit(self):
+        """Reference FIT (spec example): multi-lap, developer + instroke fields; see testdata/README."""
+        path = 'testdata/rowingdata_standard_example.fit'
+        f = rowingdata.FITParser(path)
+        assert len(f.df) > 100, 'example FIT should have many stroke records'
+        assert ' lapIdx' in f.df.columns
+        assert_equal(f.df[' lapIdx'].nunique(), 5)
+        cols = [str(c).lower() for c in f.df.columns]
+        assert any('instroke' in c for c in cols), 'expected instroke axis developer fields in columns'
+        assert 'curve_data' in f.df.columns, 'HandleForceCurve should round-trip as curve_data'
+        assert 'instrokepointcount' in f.df.columns
+        assert f.df['instrokepointcount'].dropna().iloc[0] == 16
 
 class TestEmpty:
 
@@ -784,18 +806,40 @@ class TestFITParser:
             row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
             row.exporttofit(outfile, sport='rowing')
             r = rowingdata.FITParser(outfile)
-            # FITParser: developer fields become strokedistance, drivelength, strokedrivetime;
+            # FITParser maps standard developer fields back to CSV column names;
             # native cycle_length16 is renamed to ' StrokeDistance (meters)'.
-            dev_cols = ['strokedistance', 'drivelength', 'strokedrivetime', ' StrokeDistance (meters)']
+            dev_cols = [' DriveLength (meters)', ' DriveTime (ms)', ' StrokeDistance (meters)']
             found = [c for c in dev_cols if c in r.df.columns]
             assert found, (
-                'Expected at least one of strokedistance, drivelength, strokedrivetime, '
-                ' StrokeDistance (meters) in parsed FIT columns; got: %s' % list(r.df.columns)
+                'Expected at least one of DriveLength, DriveTime, StrokeDistance '
+                'in parsed FIT columns; got: %s' % list(r.df.columns)
             )
             for col in found:
                 vals = r.df[col].dropna()
                 assert len(vals) > 0, 'Developer field %s has no non-null values' % col
                 assert vals.max() > 0, 'Developer field %s has no positive values' % col
+            # StrokeWork (id 19) is omitted per-record when value is 0 (testdata has zero joules).
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
+    def test_fitwrite_strokework_roundtrip(self):
+        """StrokeWork (FIT id 19) exports from WorkPerStroke / driveenergy and parses back."""
+        csvfile = 'testdata/correctedpainsled.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_strokework.fit')
+        try:
+            row = rowingdata.rowingdata(csvfile=csvfile, absolutetimestamps=False)
+            assert ' WorkPerStroke (joules)' in row.df.columns
+            src = row.df[' WorkPerStroke (joules)'].replace([np.inf, -np.inf], np.nan).dropna()
+            assert src.max() > 100
+            row.exporttofit(outfile, sport='rowing')
+            r = rowingdata.FITParser(outfile)
+            assert ' WorkPerStroke (joules)' in r.df.columns
+            out = r.df[' WorkPerStroke (joules)'].replace([np.inf, -np.inf], np.nan).dropna()
+            assert len(out) > 0
+            assert out.max() > 100
         finally:
             try:
                 os.remove(outfile)
@@ -839,6 +883,25 @@ class TestFITParser:
                 os.remove(outfile)
             except FileNotFoundError:
                 pass
+
+    def test_fitwrite_lap_wall_clock_elapsed(self):
+        """Lap total_elapsed uses wall time to next lap (Garmin semantics); single-stroke laps stay positive."""
+        from rowingdata.fitwrite import _compute_interval_summaries
+
+        df = pd.DataFrame({
+            ' lapIdx': [0, 0, 1, 2, 2],
+            ' Calories (kCal)': [0.0, 1.0, 2.0, 3.0, 4.0],
+        })
+        unixtimes = np.array([0.0, 1.0, 10.0, 20.0, 21.0], dtype=float)
+        dist = np.array([0.0, 10.0, 20.0, 30.0, 40.0], dtype=float)
+        hr = np.array([100, 100, 100, 100, 100])
+        cad = np.array([20, 20, 20, 20, 20])
+        pw = np.array([100, 100, 100, 100, 100])
+        summ = _compute_interval_summaries(df, ' lapIdx', unixtimes, dist, hr, cad, pw, None)
+        assert_equal(len(summ), 3)
+        assert abs(summ[0]['total_elapsed_s'] - 10.0) < 1e-6
+        assert abs(summ[1]['total_elapsed_s'] - 10.0) < 1e-6
+        assert abs(summ[2]['total_elapsed_s'] - 1.0) < 1e-6
 
     def test_exporttofit_nk_oarlock_scalars(self):
         """Export NK Logbook data to FIT; verify oarlock developer fields (catch, finish, slip, wash, peakforceangle, effectiveLength)."""
@@ -892,12 +955,59 @@ class TestFITParser:
             with open(companion) as f:
                 data = json.load(f)
             assert 'HandleForceCurve' in data or len(data) >= 1
+            assert '_rowingdata_instroke' in data, 'Companion should include axis metadata'
+            meta = data['_rowingdata_instroke']
+            assert meta.get('version') == 1
+            assert 'instroke_abscissa_type' in meta
+            assert 'instroke_point_count' in meta
+            assert 'instroke_sample_interval_ms' in meta
         finally:
             for p in [outfile, companion]:
                 try:
                     os.remove(p)
                 except FileNotFoundError:
                     pass
+
+    def test_exporttofit_peak_force_position_rp3(self):
+        """RP3 rel_peak_force_pos / peak_force_pos export as PeakForcePosition* developer fields."""
+        csvfile = 'testdata/rp3intervals2.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_peak_force_pos.fit')
+        try:
+            r = rowingdata.RowPerfectParser(csvfile)
+            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing', instroke_export='off')
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            rr = rowingdata.FITParser(outfile)
+            # PeakForcePositionNorm/Abs map back to the RP3 source column names.
+            assert 'rel_peak_force_pos' in rr.df.columns or 'peak_force_pos' in rr.df.columns, (
+                'Expected PeakForcePositionNorm/Abs in parsed FIT: %s' % rr.df.columns.tolist()
+            )
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
+    def test_exporttofit_instroke_axis_downsampled(self):
+        """Downsampled in-stroke export includes InstrokeAbscissaType / SampleInterval / PointCount."""
+        csvfile = 'testdata/rp3intervals2.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_instroke_axis.fit')
+        try:
+            r = rowingdata.RowPerfectParser(csvfile)
+            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing', instroke_export='downsampled',
+                           instroke_downsample_points=16)
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            rr = rowingdata.FITParser(outfile)
+            cols = [str(c).lower() for c in rr.df.columns]
+            assert any('instrokeabscissatype' in c for c in cols), (
+                'Expected instroke axis fields: %s' % rr.df.columns.tolist()
+            )
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
 
     def test_exporttofit_instroke_summary_rp3(self):
         """Instroke summary export adds curve metrics as developer fields (RP3 curve_data)."""
@@ -918,6 +1028,60 @@ class TestFITParser:
             except FileNotFoundError:
                 pass
 
+    def test_exporttofit_instroke_full(self):
+        """Instroke full export stores up to 127 points per stroke (no downsampling when curve is short)."""
+        csvfile = 'testdata/quiske_per_stroke_left.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_instroke_full.fit')
+        try:
+            r = rowingdata.QuiskeParser(csvfile)
+            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing', instroke_export='full')
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            rr = rowingdata.FITParser(outfile)
+            # Full mode adds curve array fields; parser may expose them
+            assert len(rr.df) > 0, 'FIT should have records'
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
+    def test_exporttofit_instroke_downsampled_custom_points(self):
+        """Instroke downsampled export with custom instroke_downsample_points (e.g. 120)."""
+        csvfile = 'testdata/quiske_per_stroke_left.csv'
+        outfile = os.path.join(os.getcwd(), 'test_export_instroke_downsampled120.fit')
+        try:
+            r = rowingdata.QuiskeParser(csvfile)
+            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
+            row.exporttofit(outfile, sport='rowing', instroke_export='downsampled',
+                           instroke_downsample_points=32)
+            assert_equal(rowingdata.get_file_type(outfile), 'fit')
+            assert len(row.df) > 0
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
+
+    def test_fit_export_spec_loads(self):
+        """fit_export_spec.json loads; field IDs and names match exporter expectations."""
+        from rowingdata import fitwrite_spec
+        raw = fitwrite_spec.load_fit_spec_raw()
+        assert raw['version'] == 2
+        assert raw['instroke_dynamic']['summary_start'] == 20
+        assert raw['instroke_dynamic']['curve_start'] == 60
+        ids = [r['field_id'] for r in raw['developer_fields']]
+        assert sorted(ids) == sorted(set(ids)), 'duplicate field_id in spec'
+        assert 0 in ids and 17 in ids and 19 in ids and 90 in ids and 93 in ids
+        spec = fitwrite_spec.load_fit_spec()
+        assert len(spec['ROWING_DEV_FIELDS']) == 12
+        assert len(spec['OARLOCK_DEV_FIELDS']) == 6
+        assert len(spec['OARLOCK_DUAL_PAIRS']) == 6
+        assert spec['OARLOCK_DUAL_PAIRS'][0][1][0] == 200
+        assert len(spec['PEAK_POSITION_DEV_FIELDS']) == 2
+        assert spec['PEAK_POSITION_DEV_FIELDS'][0][7] == 'peak_norm'
+        assert len(spec['INSTROKE_AXIS_DEV_FIELDS']) == 3
+
     def test_fitwrite_detect_instroke_columns(self):
         """_detect_instroke_columns finds curve_data and Quiske curve columns."""
         from rowingdata import fitwrite
@@ -929,6 +1093,13 @@ class TestFITParser:
         r2 = rowingdata.RowPerfectParser(csvfile2)
         cols2 = fitwrite._detect_instroke_columns(r2.df)
         assert 'curve_data' in cols2 or len(cols2) >= 1
+        # Garmin/ORM FIT: first strokes often have no force curve; detection must scan past row 0
+        df_late_curve = pd.DataFrame({
+            'curve_data': [np.nan, np.nan, '(28,44,63,86,111)'],
+            'x': [1, 2, 3],
+        })
+        cols3 = fitwrite._detect_instroke_columns(df_late_curve)
+        assert 'curve_data' in cols3
 
     def test_exporttofit_return_instroke_detected(self):
         """When instroke_export='off' but data has curve columns, return dict with instroke_columns_available."""
@@ -967,6 +1138,42 @@ class TestFITParser:
                     os.remove(p)
                 except FileNotFoundError:
                     pass
+
+    def test_fitwrite_stroke_rate_precision(self):
+        """StrokeRate dev field and fractional_cadence preserve sub-integer spm."""
+        from fitparse import FitFile
+        from rowingdata import fitwrite
+
+        df = pd.DataFrame({
+            'TimeStamp (sec)': [1.0, 2.0],
+            ' Horizontal (meters)': [0.0, 10.0],
+            ' Cadence (stokes/min)': [18.6, 19.4],
+        })
+        outfile = os.path.join(os.getcwd(), 'test_stroke_rate_precision.fit')
+        try:
+            fitwrite.write_fit(
+                outfile, df, row_date='2026-08-03', sport='rowing',
+                use_developer_fields=True, overwrite=True,
+            )
+            recs = [m for m in FitFile(outfile).get_messages('record')]
+            assert len(recs) >= 2
+            r0 = recs[0]
+            assert r0.get('cadence').value == 18
+            frac0 = r0.get('fractional_cadence')
+            assert frac0 is not None
+            assert frac0.raw_value == 77  # 0.6 * 128 rounded
+            stroke_rate_field = next(f for f in r0 if f.name == 'StrokeRate')
+            assert stroke_rate_field.raw_value == 1860  # 18.6 spm, scale 100
+            r1 = recs[1]
+            assert r1.get('cadence').value == 19
+            assert r1.get('fractional_cadence').raw_value == 51  # 0.4 * 128
+            dev1 = next(f for f in r1 if f.name == 'StrokeRate')
+            assert dev1.raw_value == 1940  # 19.4 spm, scale 100
+        finally:
+            try:
+                os.remove(outfile)
+            except FileNotFoundError:
+                pass
 
     def test_exporttofit_return_none(self):
         """When no notable conditions, return None."""

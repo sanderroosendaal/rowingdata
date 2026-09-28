@@ -35,6 +35,69 @@ def strip_non_ascii(string):
     stripped = (c for c in string if 0 < ord(c) < 127)
     return ''.join(stripped)
 
+def _standard_app_ids():
+    """(standard, private in-stroke) 16-byte application IDs used by fitwrite."""
+    try:
+        from .fitwrite import ROWINGDATA_APP_ID, INSTROKE_APP_ID
+    except (ValueError, ImportError):  # pragma: no cover
+        from fitwrite import ROWINGDATA_APP_ID, INSTROKE_APP_ID
+    return ROWINGDATA_APP_ID, INSTROKE_APP_ID
+
+
+def _load_developer_field_spec():
+    """Reverse map of the export spec: lowercase FIT field name -> definition.
+
+    Built from rowingdata/data/fit_export_spec.json so that reading stays in
+    step with writing when the registry changes upstream.
+    """
+    try:
+        from . import fitwrite_spec
+    except (ValueError, ImportError):  # pragma: no cover
+        import fitwrite_spec
+    raw = fitwrite_spec.load_fit_spec_raw()
+    mapping = {}
+    for entry in raw.get('developer_fields', []):
+        columns = entry.get('df_columns') or []
+        if not columns or entry.get('message_type') == 'session':
+            continue
+        mapping[str(entry['fit_name']).lower()] = {
+            'column': columns[0],
+            'units': entry.get('units') or '',
+            'scale': entry.get('scale') or 1,
+        }
+    return mapping
+
+
+_DEVELOPER_FIELD_SPEC = None
+
+
+def _developer_field_spec():
+    global _DEVELOPER_FIELD_SPEC
+    if _DEVELOPER_FIELD_SPEC is None:
+        try:
+            _DEVELOPER_FIELD_SPEC = _load_developer_field_spec()
+        except (FileNotFoundError, OSError, ValueError, KeyError, ImportError):  # pragma: no cover
+            _DEVELOPER_FIELD_SPEC = {}
+    return _DEVELOPER_FIELD_SPEC
+
+
+def _app_id_bytes(value):
+    """FIT application_id as bytes; fitparse may hand back a list of ints."""
+    if value is None:
+        return b''
+    if isinstance(value, bytes):
+        return value
+    if isinstance(value, (list, tuple)):
+        try:
+            return bytes(bytearray(int(x) & 0xFF for x in value))
+        except (TypeError, ValueError):  # pragma: no cover
+            return b''
+    try:  # pragma: no cover
+        return bytes(value)
+    except (TypeError, ValueError):
+        return b''
+
+
 def tofloat(x):
     try:
         return float(x)
@@ -402,6 +465,109 @@ class FitSummaryData(object):
         self.summarytext += summarystring
 
 
+def _fit_collect_sorted_lap_start_seconds(messages):
+    """
+    From fitparse messages in file order, collect Lap message start times (seconds since epoch).
+    Uses start_time, else timestamp. Returns None if no valid lap times (caller uses all lapIdx 0).
+    """
+    lap_entries = []
+    for msg in messages:
+        if msg.name != 'lap':
+            continue
+        v = msg.get_values()
+        st = v.get('start_time')
+        if st is None:
+            st = v.get('timestamp')
+        if st is None:
+            continue
+        mi = v.get('message_index')
+        if mi is None:
+            mi = len(lap_entries)
+        try:
+            sec = totimestamp(st)
+        except (TypeError, AttributeError, ValueError, OverflowError):
+            continue
+        lap_entries.append((sec, mi))
+    if not lap_entries:
+        return None
+    lap_entries.sort(key=lambda x: (x[0], x[1]))
+    return np.array([x[0] for x in lap_entries], dtype=np.float64)
+
+
+def _fit_lap_index_from_record_times(record_times_sec, lap_starts_sec):
+    """
+    Assign lap index = last lap index whose start time <= record time (0 = first lap).
+    lap_starts_sec must be sorted ascending non-empty.
+    """
+    n = len(record_times_sec)
+    out = np.zeros(n, dtype=np.int32)
+    if lap_starts_sec is None or len(lap_starts_sec) == 0:
+        return out
+    rt = np.asarray(record_times_sec, dtype=np.float64)
+    # NaN times: leave lapIdx 0
+    valid = np.isfinite(rt)
+    if not valid.any():
+        return out
+    idx = np.searchsorted(lap_starts_sec, rt, side='right') - 1
+    idx = np.clip(idx, 0, len(lap_starts_sec) - 1)
+    idx = np.where(valid, idx, 0)
+    return idx
+
+
+def _fit_collect_developer_field_scales(messages):
+    """Map lowercase FIT developer field name -> scale from field_description messages."""
+    scales = {}
+    for msg in messages:
+        if msg.name != 'field_description':
+            continue
+        row = {f.name: f.value for f in msg}
+        name = row.get('field_name')
+        if not name:
+            continue
+        scale = row.get('scale', 1)
+        try:
+            scale = float(scale)
+        except (TypeError, ValueError):
+            scale = 1.0
+        scales[str(name).lower()] = scale
+    return scales
+
+
+def _fit_serialize_array_value(values, scale=1.0):
+    """
+    Convert a multi-sample FIT developer field to RP3/Quiske parenthesized CSV text
+    in physical units (divide encoded samples by field scale when scale != 1).
+    """
+    if not isinstance(values, (list, tuple, np.ndarray)):
+        return values
+    if len(values) <= 1:
+        return values
+    scale = float(scale) if scale else 1.0
+    parts = []
+    for x in values:
+        try:
+            physical = float(x) / scale if scale != 1.0 else float(x)
+        except (TypeError, ValueError):
+            continue
+        rounded = round(physical)
+        if abs(physical - rounded) < 1e-9:
+            parts.append(str(int(rounded)))
+        else:
+            parts.append(str(physical))
+    return '(' + ','.join(parts) + ')'
+
+
+def _fit_normalize_record_values(record_values, field_scales_by_fit_name):
+    """Serialize multi-value developer fields before building the DataFrame."""
+    out = dict(record_values)
+    for key, val in list(out.items()):
+        key_l = str(key).lower()
+        if isinstance(val, (list, tuple, np.ndarray)) and len(val) > 1:
+            scale = field_scales_by_fit_name.get(key_l, 1.0)
+            out[key] = _fit_serialize_array_value(val, scale=scale)
+    return out
+
+
 class FITParser(object):
 
     # change below so readfile can be a bytes stream
@@ -430,18 +596,30 @@ class FITParser(object):
 
         self.records = self.fitfile.messages
 
-        recorddicts = []
-        lapcounter = 0
+        field_scales = _fit_collect_developer_field_scales(self.records)
 
+        recorddicts = []
         for record in self.records:
             if record.name == 'record':
-                values = record.get_values()
-                values['lapid'] = lapcounter
-                recorddicts.append(values)
-            if record.name == 'lap':
-                lapcounter += 1
+                recorddicts.append(
+                    _fit_normalize_record_values(record.get_values(), field_scales)
+                )
 
-
+        lap_starts = _fit_collect_sorted_lap_start_seconds(self.records)
+        if lap_starts is not None and len(lap_starts) > 0:
+            ts_list = []
+            for v in recorddicts:
+                ts = v.get('timestamp')
+                try:
+                    ts_list.append(totimestamp(ts))
+                except (TypeError, AttributeError, ValueError, OverflowError):
+                    ts_list.append(np.nan)
+            lap_ids = _fit_lap_index_from_record_times(np.array(ts_list, dtype=np.float64), lap_starts)
+            for i, v in enumerate(recorddicts):
+                v['lapid'] = int(lap_ids[i])
+        else:
+            for v in recorddicts:
+                v['lapid'] = 0
 
         self.df = pd.DataFrame(recorddicts)
         if self.df.empty:
@@ -552,15 +730,92 @@ class FITParser(object):
             'distance': ' Horizontal (meters)',
             'total_cycles': ' Stroke Number',
             'cycle_length16': ' StrokeDistance (meters)',  # native FIT field for stroke distance
+            'handleforcecurve': 'curve_data',
+            'boatacceleratorcurve': 'boat accelerator curve',
+            'oaranglevelocitycurve': 'oar angle velocity curve',
+            'seatcurve': 'seat curve',
             }
 
         self.df.rename(columns=newcolnames,inplace=True)
+        self._map_standard_developer_fields()
 
         # timestamp
         # distance
         # pace
         # elapsedtime
 
+    def _standard_developer_fields(self):
+        """Fields written under the standard application ID: name -> file scale.
+
+        Foreign application IDs (including our private in-stroke namespace) are
+        ignored, so another vendor's field 0 is never read as DriveLength. Files
+        from rowingdata 3.7.3 and earlier used a 10-byte ``rowingdata``
+        application ID and metre-scaled DriveLength; those are reported
+        separately so their older scaling can be honoured.
+        """
+        standard_id, _instroke_id = _standard_app_ids()
+        index_to_app = {}
+        try:
+            for msg in self.fitfile.get_messages('developer_data_id'):
+                index_to_app[msg.get_value('developer_data_index')] = _app_id_bytes(
+                    msg.get_value('application_id')
+                )
+        except (ValueError, AttributeError, TypeError):  # pragma: no cover
+            return {}, {}
+
+        standard, legacy = {}, {}
+        try:
+            for msg in self.fitfile.get_messages('field_description'):
+                name = msg.get_value('field_name')
+                if isinstance(name, list):
+                    name = name[0] if name else ''
+                app = index_to_app.get(msg.get_value('developer_data_index'), b'')
+                scale = msg.get_value('scale')
+                if app == standard_id:
+                    standard[str(name).lower()] = scale
+                elif app.rstrip(b'\x00') == b'rowingdata':
+                    legacy[str(name).lower()] = scale
+        except (ValueError, AttributeError, TypeError):  # pragma: no cover
+            return standard, legacy
+        return standard, legacy
+
+    def _map_standard_developer_fields(self):
+        """Rename standard developer fields to rowingdata CSV columns.
+
+        fitparse does not apply developer-field scales, so the raw integers are
+        divided here. The scale in the file wins when present; ``AverageBoatSpeed``
+        needs the spec fallback because scale 255 is the uint8 invalid value and
+        cannot survive in a field_description.
+        """
+        spec = _developer_field_spec()
+        if not spec:  # pragma: no cover
+            return
+        standard, legacy = self._standard_developer_fields()
+        if not standard and not legacy:
+            return
+
+        for source in list(self.df.columns):
+            key = str(source).lower()
+            definition = spec.get(key)
+            if definition is None:
+                continue
+            is_standard = key in standard
+            if not is_standard and key not in legacy:
+                continue
+            file_scale = standard.get(key) if is_standard else legacy.get(key)
+            scale = file_scale if file_scale else definition['scale']
+            values = pd.to_numeric(self.df[source], errors='coerce')
+            if scale and scale != 1:
+                values = values / float(scale)
+            # Pre-UUID files carried lengths in metres already.
+            if definition['units'] == 'mm' and is_standard:
+                values = values / 1000.0
+            target = definition['column']
+            if target == source:
+                self.df[source] = values
+                continue
+            self.df[target] = values
+            self.df.drop(columns=[source], inplace=True)
 
     def write_csv(self, writefile="fit_o.csv", gzip=False):
 

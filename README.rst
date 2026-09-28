@@ -514,8 +514,10 @@ The available data fields are
 * ' StrokeDistance (meters)'
 * ' DriveTime (ms)'
 * ' StrokeRecoveryTime (ms)'
-* ' AverageDriveForce (lbs)'
-* ' PeakDriveForce (lbs)'
+* ' AverageDriveForce (N)' (preferred; SI units)
+* ' PeakDriveForce (N)' (preferred; SI units)
+* ' AverageDriveForce (lbs)' (legacy; still supported)
+* ' PeakDriveForce (lbs)' (legacy; still supported)
 * 'cum_dist'
 
 Oarlock parsers (NK Logbook) may add: ``catch``, ``finish``,
@@ -524,17 +526,22 @@ Oarlock parsers (NK Logbook) may add: ``catch``, ``finish``,
 If imported from TCX, Rowpro, or other tools, some data fields may not contain
 useful information. 
 
-=================
-CSV File Standard
-=================
+=======================
+rowingdata CSV Columns
+=======================
 
-The basic rowingdata class reads CSV files that adher to the standard
-described here. Any parser implementation should adher to the minimum
-standard as described here.
+This section describes the dataframe schema used by the ``rowingdata`` class.
+It is this package's own column layout, not a vendor-neutral standard. For a
+cross-vendor interchange format, see the Rowing Data Standard at
+https://github.com/MoveLab-Studio/rowing-data-standard, which rowingdata
+targets when exporting FIT.
 
-Please send to me any CSV file that adhers to the standard described here
+Any parser implementation feeding the ``rowingdata`` class should produce at
+least the columns described below.
+
+Please send to me any CSV file that follows the layout described here
 but does not parse well in the "rowingdata" module. I will update the module
-and add the file to standard testing. 
+and add the file to regression testing. 
 
 Field Names (Columns)
 ----------------------
@@ -551,13 +558,22 @@ The standard field names are:
 * ' StrokeDistance (meters)'
 * ' DriveTime (ms)'
 * ' StrokeRecoveryTime (ms)'
-* ' AverageDriveForce (lbs)'
-* ' PeakDriveForce (lbs)'
+* ' AverageDriveForce (N)' (preferred; SI units)
+* ' PeakDriveForce (N)' (preferred; SI units)
+* ' AverageDriveForce (lbs)' (legacy; still supported)
+* ' PeakDriveForce (lbs)' (legacy; still supported)
 * ' lapIdx'
 * ' ElapsedTime (sec)'
 
 Optional (Oarlock/NK Logbook): ``catch``/``catchAngle``, ``finish``/``finishAngle``,
 ``slip``, ``wash``, ``peakforceangle``, ``effectiveLength``.
+
+Planned for dual oarlock (port/starboard symmetry): ``catch_port``, ``catch_starboard``,
+``finish_port``, ``finish_starboard``, ``slip_port``, ``slip_starboard``, ``wash_port``,
+``wash_starboard``, ``peakforceangle_port``, ``peakforceangle_starboard``,
+``effectiveLength_port``, ``effectiveLength_starboard``. See *Dual oarlock
+(port/starboard)* below. **Note:** rowingdata does not yet implement parsing or
+export for these per-side columns.
 
 The CSV file adheres to the US conventions, with fields
 separated by a comma (',')
@@ -760,14 +776,12 @@ The duration of the recovery part. See Drive Time for the definition. Drive Time
 Average Drive Force
 --------------------
 
-Field name: ' AverageDriveForce (lbs)' / ' AverageDriveForce (N)'
+Field name: ' AverageDriveForce (N)' (preferred) or ' AverageDriveForce (lbs)' (legacy)
 
-Unit: lbs - or N, see below
+Unit: newtons (N), or pounds (lb) for older files and tools
 
-Currently implemented is only the field name and value in lbs. In the future,
-we will implement ' AverageDriveForce (N)' so we can report in SI units.
-
-This should be the part of the handle force that does actual work.
+Use **Newtons** for new data and integrations. **Pounds** remain supported for
+backward compatibility. This should be the part of the handle force that does actual work.
 
 For dynamic ergs and OTW rowing this is not sufficient to describe the
 complete stroke dynamics, so additional fields can be defined, for example
@@ -790,9 +804,9 @@ as opposed to an average over time or oar angles.
 Peak Drive Force
 ------------------
 
-Field name: ' PeakDriveForce (lbs)' or ' PeakDriveForce (N)'
+Field name: ' PeakDriveForce (N)' (preferred) or ' PeakDriveForce (lbs)' (legacy)
 
-Unit: lbs (currently) or N (supported in the future)
+Unit: newtons (N), or pounds (lb) for older files and tools
 
 See discussion about measuring forces under Average Drive Force.
 
@@ -808,17 +822,30 @@ source: NK Logbook uses these columns).
 These fields come from NK Logbook (Oarlock) and similar OTW
 measurement systems. They describe rigging geometry and blade angles:
 
-* **catch**, **finish** – oar angles at catch and finish (degrees).
-  NK uses catchAngle, finishAngle.
+* **catch**, **finish** – oar angles at catch and finish (degrees),
+  using the rowing convention where **0° = oar perpendicular to the boat's
+  longitudinal axis**. Negative values indicate the catch direction (oar blade
+  toward bow, handle toward stern); positive values indicate the finish direction
+  (oar blade toward stern, handle toward bow). NK uses catchAngle, finishAngle.
 * **slip** – blade slip angle.
 * **wash** – wash/backwash angle.
-* **peakforceangle** – oar angle at peak force.
+* **peakforceangle** – oar angle at peak force (same 0° = perpendicular convention).
 * **effectiveLength** – effective lever length (rigging geometry). *Not*
   the same as Drive Length: Effective Length is the horizontal component
   from pin to handle (a rigging/setup measure, often in cm), whereas
   Drive Length is the *actual distance the handle traveled* during the
   stroke (typically 1.2–1.5 m). Both may appear in the same dataset;
   they serve different purposes.
+
+Dual oarlock (port/starboard)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a rower uses two smart oarlocks, oarlock metrics can be reported per side:
+port (left) and starboard (right). Each metric may appear as a per-side column
+(e.g. ``catch_port``, ``catch_starboard``); the unsuffixed summary column
+(``catch``) is the average of the two sides when both exist, and the value of
+whichever side is present otherwise. **Note:** rowingdata does not yet
+implement parsing or FIT export for these per-side columns.
 
 Lap Identifier
 -------------------
@@ -907,6 +934,26 @@ Boat bearing.
 ================
 Release Notes:
 ================
+
+Unreleased
+----------
+
+- **Breaking change to exported FIT file contents.** FIT export now follows the
+  Rowing Data Standard (https://github.com/MoveLab-Studio/rowing-data-standard,
+  Draft v0.1). The ``exporttofit`` API is unchanged, but the bytes it writes are
+  not: the developer application ID is now the standard UUID, ``DriveLength``
+  and ``EffectiveLength`` are encoded in millimetres rather than metres,
+  ``AverageBoatSpeed`` uses scale 255, stroke rate moves to field ID 93, and
+  stroke work to field ID 19. Consumers that hardcoded the previous rowingdata
+  application ID or the old metre-based scales must be updated. ``FITParser``
+  still reads files written by rowingdata 3.7.3 and earlier.
+- In-stroke curve fields are emitted under a separate, private application ID,
+  because those field IDs are not allocated in the standard's registry and so
+  carry no interoperable meaning.
+- Removed ``docs/FIT_STANDARD.md`` and ``docs/FIT_STANDARD.pdf``. The standard is
+  maintained by a committee at
+  https://github.com/MoveLab-Studio/rowing-data-standard, which is the single
+  source of truth; this repository no longer ships a copy.
 
 0.97.x
 ------
