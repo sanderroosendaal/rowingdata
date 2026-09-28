@@ -47,6 +47,11 @@ jobs:
         with:
           python-version: '3.12'
 
+      # pycairo (needed for matplotlib's TkCairo backend) builds from sdist and
+      # requires cairo's headers/pkg-config file, which ubuntu-latest lacks by default.
+      - name: Install system dependencies for pycairo
+        run: sudo apt-get update && sudo apt-get install -y libcairo2-dev pkg-config
+
       - name: Install rowingdata
         working-directory: rowingdata
         run: |
