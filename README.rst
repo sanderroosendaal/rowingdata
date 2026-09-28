@@ -838,7 +838,7 @@ measurement systems. They describe rigging geometry and blade angles:
   they serve different purposes.
 
 Dual oarlock (port/starboard)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+..............................
 
 When a rower uses two smart oarlocks, oarlock metrics can be reported per side:
 port (left) and starboard (right). Each metric may appear as a per-side column
