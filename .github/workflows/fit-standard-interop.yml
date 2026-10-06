@@ -40,8 +40,7 @@ jobs:
       - name: Expose golden file where the standard expects it
         run: ln -s ../rowingdata rowing-data-standard/rowingdata
 
-      # The reference package requires 3.11+; requirements.txt pins scipy 1.13,
-      # which has no wheels for 3.13.
+      # The reference package requires 3.11+; 3.12 is the version we test against.
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
