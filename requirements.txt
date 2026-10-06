@@ -1,18 +1,22 @@
 # Direct dependencies for development and CI, with security floors.
 # Runtime dependencies of the package are declared (unpinned) in setup.py;
 # this file is deliberately NOT a full `pip freeze`.
+# Floors are the newest releases that still support Python 3.9 (the Rowsandall
+# runtime), so a few alerts (pillow>=12.2, requests 2.33, urllib3 2.7, pytest 9)
+# have no fix available on 3.9.
 -e .
 
-numpy
+numpy<2  # numpy 2 changes rounding in ergstick tests; Rowsandall runs numpy 1.x
 scipy
 pandas
 matplotlib
 polars
 lxml>=6.1.0
-requests>=2.33.0
-urllib3>=2.7.0
-pytest>=9.0.3
-pillow>=12.3.0
+requests>=2.32.4
+urllib3>=2.6.3
+pytest>=8.4.2
+nose; python_version < "3.10"
+pillow>=11.3.0
 
 # Dev tooling
 Sphinx
