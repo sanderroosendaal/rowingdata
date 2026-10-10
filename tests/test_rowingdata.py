@@ -1067,14 +1067,16 @@ class TestFITParser:
         """fit_export_spec.json loads; field IDs and names match exporter expectations."""
         from rowingdata import fitwrite_spec
         raw = fitwrite_spec.load_fit_spec_raw()
-        assert raw['version'] == 2
+        assert raw['version'] == 3
+        assert raw['protocol_version'] == 1
+        assert raw['handle_force_curve_field_id'] == 60
         assert raw['instroke_dynamic']['summary_start'] == 20
         assert raw['instroke_dynamic']['curve_start'] == 60
         ids = [r['field_id'] for r in raw['developer_fields']]
         assert sorted(ids) == sorted(set(ids)), 'duplicate field_id in spec'
         assert 0 in ids and 17 in ids and 19 in ids and 90 in ids and 93 in ids
         spec = fitwrite_spec.load_fit_spec()
-        assert len(spec['ROWING_DEV_FIELDS']) == 12
+        assert len(spec['ROWING_DEV_FIELDS']) == 10  # fields 4, 5 and 93 are read-only legacy
         assert len(spec['OARLOCK_DEV_FIELDS']) == 6
         assert len(spec['OARLOCK_DUAL_PAIRS']) == 6
         assert spec['OARLOCK_DUAL_PAIRS'][0][1][0] == 200
@@ -1140,14 +1142,14 @@ class TestFITParser:
                     pass
 
     def test_fitwrite_stroke_rate_precision(self):
-        """StrokeRate dev field and fractional_cadence preserve sub-integer spm."""
+        """cadence256 keeps sub-integer spm; cadence is rounded (standard section 4)."""
         from fitparse import FitFile
         from rowingdata import fitwrite
 
         df = pd.DataFrame({
-            'TimeStamp (sec)': [1.0, 2.0],
-            ' Horizontal (meters)': [0.0, 10.0],
-            ' Cadence (stokes/min)': [18.6, 19.4],
+            'TimeStamp (sec)': [1.0, 2.0, 3.0],
+            ' Horizontal (meters)': [0.0, 10.0, 20.0],
+            ' Cadence (stokes/min)': [18.6, 19.4, 28.5],
         })
         outfile = os.path.join(os.getcwd(), 'test_stroke_rate_precision.fit')
         try:
@@ -1156,19 +1158,14 @@ class TestFITParser:
                 use_developer_fields=True, overwrite=True,
             )
             recs = [m for m in FitFile(outfile).get_messages('record')]
-            assert len(recs) >= 2
-            r0 = recs[0]
-            assert r0.get('cadence').value == 18
-            frac0 = r0.get('fractional_cadence')
-            assert frac0 is not None
-            assert frac0.raw_value == 77  # 0.6 * 128 rounded
-            stroke_rate_field = next(f for f in r0 if f.name == 'StrokeRate')
-            assert stroke_rate_field.raw_value == 1860  # 18.6 spm, scale 100
-            r1 = recs[1]
-            assert r1.get('cadence').value == 19
-            assert r1.get('fractional_cadence').raw_value == 51  # 0.4 * 128
-            dev1 = next(f for f in r1 if f.name == 'StrokeRate')
-            assert dev1.raw_value == 1940  # 19.4 spm, scale 100
+            assert len(recs) >= 3
+            assert [r.get('cadence').value for r in recs[:3]] == [19, 19, 29]
+            assert recs[0].get('cadence256').raw_value == int(round(18.6 * 256))
+            assert recs[1].get('cadence256').raw_value == int(round(19.4 * 256))
+            assert recs[2].get('cadence256').raw_value == int(28.5 * 256)
+            for r in recs:
+                assert r.get('fractional_cadence') is None  # MUST NOT be written
+                assert not any(f.name == 'StrokeRate' for f in r)  # not in the standard
         finally:
             try:
                 os.remove(outfile)

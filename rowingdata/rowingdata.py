@@ -6,7 +6,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.8.1"
+__version__ = "3.8.2"
 
 from collections import Counter
 
@@ -3134,7 +3134,8 @@ class rowingdata:
                     instroke_export='off', instroke_columns=None, instroke_column_map=None,
                     instroke_downsample_points=16, overwrite=True,
                     instroke_abscissa_type=None, instroke_sample_interval_ms=None,
-                    garmin_parity_source_fit=None, recording_strategy=None):
+                    garmin_parity_source_fit=None, recording_strategy=None,
+                    slip_threshold=None, wash_threshold=None):
         """Export rowingdata to FIT format for Intervals.icu and other platforms.
 
         Parameters
@@ -3179,9 +3180,12 @@ class rowingdata:
         recording_strategy : int or None
             Recording strategy indicator (RecordingStrategy developer field, ID 10).
             Use fitwrite.RECORDING_STRATEGY_* constants (0=unknown, 1=stroke-boundary,
-            2=gps-update). Default: None (uses RECORDING_STRATEGY_STROKE_BOUNDARY).
+            2=gps-update, 3=time-sampled). Default: None (uses RECORDING_STRATEGY_STROKE_BOUNDARY).
             Note: in-stroke curve data requires stroke-boundary.
             See docs/FIT_EXPORT.md "Record message frequency".
+        slip_threshold, wash_threshold : int or None
+            Oarlock force thresholds in N written on the Session message (SlipThreshold 94,
+            WashThreshold 95). See ``fitwrite.write_fit``.
 
         Returns
         -------
@@ -3213,6 +3217,10 @@ class rowingdata:
             }
             if recording_strategy is not None:
                 kwargs['recording_strategy'] = recording_strategy
+            if slip_threshold is not None:
+                kwargs['slip_threshold'] = slip_threshold
+            if wash_threshold is not None:
+                kwargs['wash_threshold'] = wash_threshold
             return fitwrite.write_fit(fileName, df, **kwargs)
         else:  # pragma: no cover
             raise ValueError("Cannot export empty rowingdata session to FIT")

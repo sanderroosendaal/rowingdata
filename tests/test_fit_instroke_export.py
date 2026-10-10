@@ -338,7 +338,9 @@ class TestFitInstrokeExportPhase3(unittest.TestCase):
                 )
             self.assertIn('GPS_UPDATE', str(ctx.exception))
 
-    def test_quiske_multi_curve_field_ids_and_scales(self):
+    def test_quiske_non_force_curves_go_to_companion_file(self):
+        """Standard section 6.1: only HandleForceCurve is written to the FIT file."""
+        import json
         import rowingdata
         csvfile = 'testdata/quiske_per_stroke_left.csv'
         with tempfile.TemporaryDirectory() as tmp:
@@ -352,41 +354,20 @@ class TestFitInstrokeExportPhase3(unittest.TestCase):
                 instroke_downsample_points=16,
             )
             fmap = _field_description_map(outfile)
-            self.assertEqual(fmap[60]['field_name'], 'BoatAcceleratorCurve')
-            self.assertEqual(fmap[60]['scale'], 100)
-            self.assertEqual(fmap[60]['units'], 'm/s^2')
-            self.assertEqual(fmap[61]['field_name'], 'OarAngleVelocityCurve')
-            self.assertEqual(fmap[61]['scale'], 10)
-            self.assertEqual(fmap[61]['units'], 'deg/s')
+            for fid in (60, 61):
+                self.assertNotIn(fid, fmap)
+            names = [f['field_name'] for f in fmap.values()]
+            for name in ('BoatAcceleratorCurve', 'OarAngleVelocityCurve'):
+                self.assertNotIn(name, names)
             rec = _record_field_maps(outfile)[0]
-            self.assertIn('BoatAcceleratorCurve', rec)
-            self.assertIn('OarAngleVelocityCurve', rec)
-            self.assertEqual(len(rec['BoatAcceleratorCurve'].raw_value), 16)
-            self.assertEqual(len(rec['OarAngleVelocityCurve'].raw_value), 16)
-
-    def test_quiske_boat_accelerator_encoded_values_clipped_nonnegative(self):
-        """UINT16 curves clip negatives to zero; encoded = physical * Y scale (100)."""
-        import rowingdata
-        csvfile = 'testdata/quiske_per_stroke_left.csv'
-        with tempfile.TemporaryDirectory() as tmp:
-            outfile = os.path.join(tmp, 'quiske_accel.fit')
-            r = rowingdata.QuiskeParser(csvfile)
-            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
-            row.exporttofit(
-                outfile,
-                sport='rowing',
-                instroke_export='downsampled',
-                instroke_downsample_points=16,
-            )
-            curves, _ = fitwrite._get_instroke_curve_for_export(
-                r.df, 'boat accelerator curve', 'downsampled', 16,
-            )
-            exported = curves[0]
-            expected = tuple(
-                int(max(0, round(float(v) * 100))) for v in exported
-            )
-            rec = _record_field_maps(outfile)[0]
-            self.assertEqual(rec['BoatAcceleratorCurve'].raw_value, expected)
+            self.assertNotIn('BoatAcceleratorCurve', rec)
+            self.assertNotIn('InstrokePointCount', rec)
+            companion = os.path.join(tmp, 'quiske_instroke.instroke.json')
+            self.assertTrue(os.path.isfile(companion))
+            with open(companion) as f:
+                data = json.load(f)
+            self.assertIn('BoatAcceleratorCurve', data)
+            self.assertIn('OarAngleVelocityCurve', data)
 
     def test_golden_standard_example_instroke_metadata_and_samples(self):
         path = 'testdata/rowingdata_standard_example.fit'
@@ -423,40 +404,3 @@ class TestFitInstrokeExportPhase3(unittest.TestCase):
             self.assertEqual(values, [100.0, 200.0, 400.0, 300.0, 50.0])
             source = _parse_curve_parenthesized(df['curve_data'].iloc[0])
             self.assertEqual(values, source)
-
-    def test_fitparser_quiske_curve_columns_roundtrip(self):
-        """FITParser decodes exported downsampled curves to the same physical values as fitparse."""
-        import rowingdata
-        csvfile = 'testdata/quiske_per_stroke_left.csv'
-        with tempfile.TemporaryDirectory() as tmp:
-            outfile = os.path.join(tmp, 'quiske_roundtrip.fit')
-            r = rowingdata.QuiskeParser(csvfile)
-            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
-            row.exporttofit(
-                outfile,
-                sport='rowing',
-                instroke_export='downsampled',
-                instroke_downsample_points=16,
-            )
-            rec = _record_field_maps(outfile)[0]
-            rr = rowingdata.FITParser(outfile)
-            self.assertIn('boat accelerator curve', rr.df.columns)
-            self.assertIn('oar angle velocity curve', rr.df.columns)
-            expected_oar = [
-                v / 10.0 for v in rec['OarAngleVelocityCurve'].raw_value
-            ]
-            out_oar = _parse_curve_parenthesized(
-                rr.df['oar angle velocity curve'].iloc[0],
-            )
-            self.assertEqual(out_oar, expected_oar)
-            expected_accel = [
-                v / 100.0 for v in rec['BoatAcceleratorCurve'].raw_value
-            ]
-            out_accel = _parse_curve_parenthesized(
-                rr.df['boat accelerator curve'].iloc[0],
-            )
-            self.assertEqual(out_accel, expected_accel)
-
-
-if __name__ == '__main__':
-    unittest.main()

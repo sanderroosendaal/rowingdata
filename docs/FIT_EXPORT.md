@@ -45,7 +45,8 @@ That JSON is a **copy** for runtime use. When the committee changes the registry
 Developer fields are split across two application IDs:
 
 - **Standard fields** use the Rowing Data Standard application UUID `89e86158-6d47-5c98-9d46-7d29437f27b9` (developer data index 0), a UUID v5 over the DNS namespace with name "rowingdata". This is the identifier the standard assigns, not a rowingdata-private one, so any conforming consumer can read these fields.
-- **In-stroke curve summary and array fields** use a separate private UUID `uuid5(NAMESPACE_DNS, 'rowingdata.instroke')` (developer data index 1). Their field IDs are **unallocated** in the registry, so they have no interoperable meaning; keeping them off the standard UUID means they cannot be mistaken for, or collide with, a future committee allocation. In-stroke *axis metadata* (IDs 90–92) is allocated and stays on the standard UUID.
+- **Protocol version.** The standard's `DeveloperDataId` message carries `application_version = 1` (§1.5). `FITParser` treats a missing version as a file written before protocol version 1, and then reads `WorkoutState` with its older rowingdata meaning.
+- **In-stroke curve summary fields** (`instroke_export='summary'`) use a separate private UUID `uuid5(NAMESPACE_DNS, 'rowingdata.instroke')` (developer data index 1). Their field IDs (20–59) are **unallocated** in the registry, so they have no interoperable meaning; keeping them off the standard UUID means they cannot be mistaken for, or collide with, a future committee allocation. In-stroke *axis metadata* (IDs 90–92) is allocated and stays on the standard UUID.
 
 rowingdata 3.7.3 and earlier used a non-compliant 10-byte string `b'rowingdata'` as the application ID and metre-based scales for several fields. `FITParser` still recognises and reads those older files.
 
@@ -71,9 +72,9 @@ We export native fields for standard metrics plus developer fields for rowing-sp
 
 For each field below, the **ID, base type, scale and units are defined upstream** in [`registry/field-ids.md`](https://github.com/MoveLab-Studio/rowing-data-standard/blob/main/registry/field-ids.md); look them up there, or in `rowingdata/data/fit_export_spec.json` for the machine-readable copy. The table here records only what is rowingdata's own choice: which DataFrame column feeds which standard field.
 
-In-stroke curve summary and array fields use dynamic IDs from **`instroke_dynamic`** in the spec JSON (default summary from **20**, curve arrays from **60**). Those ranges are *unallocated* upstream and are written under the private in-stroke application ID. In-stroke axis metadata uses the allocated IDs **90–92** (see [In-stroke abscissa](#in-stroke-abscissa-x-axis) below).
+The one curve the standard puts in the FIT file, **HandleForceCurve**, has the fixed ID **60** under the standard application ID (§6). Every other curve (boat acceleration, oar angular velocity, seat) goes to the companion `.instroke.json` file (§6.1), even with `instroke_export='downsampled'` or `'full'`. In-stroke curve *summary* fields (`'summary'` mode) still use dynamic IDs from **`instroke_dynamic`** (from **20**); that range is *unallocated* upstream and is written under the private in-stroke application ID. In-stroke axis metadata uses the allocated IDs **90–92** (see [In-stroke abscissa](#in-stroke-abscissa-x-axis) below).
 
-**Drive and peak force:** **Newtons** are preferred for new code: **` AverageDriveForce (N)`** / **` PeakDriveForce (N)`** → **AverageDriveForceN** / **PeakDriveForceN**. The pound-based fields (**AverageDriveForceLbs** / **PeakDriveForceLbs**) are deprecated in the registry and are still written only when the corresponding **`...(lbs)`** columns exist; do not build new pipelines on them.
+**Drive and peak force:** **Newtons** are preferred for new code: **` AverageDriveForce (N)`** / **` PeakDriveForce (N)`** → **AverageDriveForceN** / **PeakDriveForceN**. The standard has no pound-based fields: if only **`...(lbs)`** columns exist they are converted to Newtons on export. Fields 4 and 5 (**AverageDriveForceLbs** / **PeakDriveForceLbs**) are no longer written, but are still read from older files.
 
 | rowingdata column | FIT field name |
 |-------------------|----------------|
@@ -83,13 +84,13 @@ In-stroke curve summary and array fields use dynamic IDs from **`instroke_dynami
 | StrokeRecoveryTime (ms) | StrokeRecoveryTime |
 | AverageDriveForce (N) | AverageDriveForceN |
 | PeakDriveForce (N) | PeakDriveForceN |
-| AverageDriveForce (lbs) | AverageDriveForceLbs (deprecated) |
-| PeakDriveForce (lbs) | PeakDriveForceLbs (deprecated) |
+| AverageDriveForce (lbs) | AverageDriveForceLbs (read-only, legacy) |
+| PeakDriveForce (lbs) | PeakDriveForceLbs (read-only, legacy) |
 | AverageBoatSpeed (m/s) | AverageBoatSpeed |
 | WorkoutState | WorkoutState |
 | (session metadata, see Record message frequency) | RecordingStrategy |
 | ` WorkPerStroke (joules)` (first match) or `driveenergy` | StrokeWork |
-| Cadence (stokes/min) | StrokeRate |
+| Cadence (stokes/min) | StrokeRate (read-only, legacy; written as native `cadence256`) |
 | catch, catchAngle | Catch |
 | finish, finishAngle | Finish |
 | slip | Slip |
@@ -109,7 +110,10 @@ In-stroke curve summary and array fields use dynamic IDs from **`instroke_dynami
   - **`% of Stroke Complete When Peak Force Is Reached`** (ETH export): percent of stroke at peak force.
 - **PeakForcePositionAbs** – handle travel from catch to peak force in **millimeters** (scale 1, units mm). **peak_force_pos** from RP3 is often in **centimetres**; values **> 2.5** are divided by 100 to obtain metres before conversion to mm; smaller values are assumed already in metres.
 
-- **StrokeRate** – per-stroke rate with **0.01 spm** precision (UINT16 scale 100). Native **`cadence`** (integer spm) and **`fractional_cadence`** (scale 1/128) are still written on Record messages for backward compatibility when cadence is known.
+- **Stroke rate** – native **`cadence`** (integer spm, rounded half up) and **`cadence256`** (fractional spm, scale 256) are written on Record messages when the rate is known. Developer field 93 (**StrokeRate**) and native `fractional_cadence` are no longer written (the standard forbids `fractional_cadence`); `FITParser` still reads them from older files.
+- **WorkoutState** (9) holds the values of the native FIT `intensity` enum (0 Active, 1 Rest, 2 Warmup, 3 Cooldown, 4 Recovery, 5 Interval, 6 Other). The writer maps the rowingdata/Concept2 codes: 1 → Active; 0, 2, 3 → Rest; 4–9 → Interval; others → Other. `FITParser` maps back (Rest → 3, Interval → 5, everything else → 1).
+- **StrokeState** (96) is written from a `` StrokeState`` column only when `recording_strategy=RECORDING_STRATEGY_TIME_SAMPLED`.
+- **SlipThreshold / WashThreshold** (94 / 95, Session message, N) are written when `slip_threshold` / `wash_threshold` are passed.
 
 Oarlock scalars (catch, finish, slip, wash, peakforceangle, effectiveLength) are exported when present. NK Logbook (Oarlock) uses these columns. See README *Oarlock scalars (OTW rigging)* for definitions. **EffectiveLength** is distinct from **DriveLength**: the former is rigging geometry (effective lever length); the latter is actual handle travel distance.
 
@@ -158,9 +162,8 @@ This keeps backward compatibility and gives partial implementers a representativ
 |-------------------|-----------|-------|
 | TimeStamp (sec) | timestamp | UTC; relative timestamps combined with row_date |
 | cum_dist or Horizontal (meters) | distance | Cumulative meters (FIT scale 100) |
-| Cadence (stokes/min) | cadence | Integer strokes/min; omitted if zero |
-| Cadence (stokes/min) | fractional_cadence | Fractional part of cadence (scale 1/128 spm) when fractional rate known |
-| Cadence (stokes/min) | StrokeRate (dev) | See developer fields table (ID 93) |
+| Cadence (stokes/min) | cadence | Integer strokes/min, rounded; omitted if zero |
+| Cadence (stokes/min) | cadence256 | Fractional strokes/min (scale 256) |
 | HRCur (bpm) | heart_rate | Clamped 0–255 |
 | Power (watts) | power | Clamped 0–65535 |
 | Stroke500mPace (sec/500m) | enhanced_speed | Converted to m/s via 500/pace |
@@ -184,7 +187,7 @@ To correctly handle both approaches, consumers MUST:
 - **Not assume** a 1:1 correspondence between Record messages and strokes
 - **Not interpolate** stroke-specific developer fields (DriveLength, StrokeDriveTime, Catch, Finish, oarlock angles, etc.) between records—these describe discrete stroke events, not continuous phenomena
 - **Detect stroke occurrences** by monitoring changes in `total_cycles`, not by counting records. When `total_cycles` changes between consecutive records, at least one stroke completed in that interval. If the change is >1, multiple strokes occurred but per-stroke data for intermediate strokes is unavailable.
-- **Calculate stroke rate** from the native `cadence` field (strokes/min), not from record message frequency
+- **Calculate stroke rate** from the native `cadence256` field when present, else from integer `cadence`, not from record message frequency
 - **Understand GPS-update limitations**: When records are generated at GPS updates rather than stroke boundaries, stroke timing is approximate (occurred sometime between records), and fast rowing may cause `total_cycles` to skip values
 
 ### Recording strategy metadata
@@ -198,7 +201,7 @@ In-stroke curve data can only appear in a stroke-boundary file, because curves a
 ## Session, Lap, and Event messages
 
 - **Session** – One message for the whole workout (total_distance, total_calories, avg_heart_rate, max_heart_rate, avg_cadence, avg_power). Start/end position in degrees when valid.
-- **Lap** – One Lap message per interval when the data has multiple unique `lapIdx` values (supports both ` lapIdx` and `lapIdx` column names). Each Lap has per-interval distance, elapsed time, total_calories, avg HR, max HR, avg cadence, avg power. **Elapsed and timer time** use **wall-clock** duration from the **first** stroke of the interval to the **first** stroke of the **next** interval (or the **last** stroke of the session for the final interval), matching typical Garmin FIT Lap semantics and avoiding zero-duration laps when an interval contains only one stroke. Per-interval avg HR, cadence, and power use **work strokes only** (WorkoutState 1,4,5,6,7,8,9); rest strokes (WorkoutState 3) are excluded from those averages. If `lapIdx` is missing or all values are the same, one Lap for the whole session.
+- **Lap** – One Lap message per interval: a new Lap starts when `lapIdx` changes **or** when the intensity (from ` WorkoutState`) changes, so a lap with `intensity=active` never contains rest (standard §4.1). Every Lap carries the native `intensity` field (`active` when there is no ` WorkoutState`). On import, the Lap `intensity` wins over a record's WorkoutState. Each Lap has per-interval distance, elapsed time, total_calories, avg HR, max HR, avg cadence, avg power. **Elapsed and timer time** use **wall-clock** duration from the **first** stroke of the interval to the **first** stroke of the **next** interval (or the **last** stroke of the session for the final interval), matching typical Garmin FIT Lap semantics and avoiding zero-duration laps when an interval contains only one stroke. Per-interval avg HR, cadence, and power use **work strokes only** (WorkoutState 1,4,5,6,7,8,9); rest strokes (WorkoutState 3) are excluded from those averages. If `lapIdx` is missing or constant and the intensity does not change, one Lap for the whole session.
 - **Event** – Lap boundaries are marked with Event messages (Event.LAP, EventType.START) before each lap's records. Timer start/stop events bracket the activity.
 
 ## Dependencies
@@ -306,7 +309,7 @@ When `instroke_export` is not `'off'`, comma-separated curve columns (RP3 `curve
 
 The FIT protocol encodes developer field size in one byte, so each field is limited to 255 bytes. For UINT16 arrays that yields at most 127 points. We support `'full'` mode (up to 127 points) and configurable `'downsampled'` (2–127 points). For longer curves or lossless storage, use `'companion'`.
 
-**Note:** Curve arrays use UINT16 base type with per-curve **Y scale** from `instroke_curve_types` in `fit_export_spec.json` (e.g. HandleForceCurve scale 10 = 0.1 N). Force values are clipped to [0, 65535] after scaling.
+**Note:** Curve arrays use UINT16 base type with per-curve **Y scale** from `instroke_curve_types` in `fit_export_spec.json` (e.g. HandleForceCurve scale 10 = 0.1 N). Force values are clipped to [0, 65535] after scaling. Only HandleForceCurve is written to the FIT file in `'downsampled'` / `'full'` mode.
 
 ### Alternative approaches (not implemented)
 

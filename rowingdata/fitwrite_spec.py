@@ -78,9 +78,9 @@ def load_fit_spec_raw():
 
 def _validate_spec(raw):
     version = raw.get('version', 0)
-    if version not in (1, 2):
+    if version not in (1, 2, 3):
         warnings.warn(
-            'fit_export_spec.json version %s may be unsupported (expected 1 or 2)' % version,
+            'fit_export_spec.json version %s may be unsupported (expected 1, 2 or 3)' % version,
             UserWarning,
             stacklevel=2,
         )
@@ -144,7 +144,10 @@ def _materialize_dev_field_tuples(raw):
         elif group == 'instroke_axis':
             instroke_axis.append((fid, name, bt, size, scale, units))
         elif group == 'metadata':
-            # Metadata fields (e.g., RecordingStrategy) are handled manually in fitwrite.py
+            # Session-level fields (RecordingStrategy, thresholds) are handled in fitwrite.py
+            pass
+        elif group == 'legacy':
+            # Not in the standard: never written, still read from older rowingdata files
             pass
         else:
             raise ValueError('Unknown developer_fields group: %s' % group)
@@ -193,6 +196,8 @@ def load_fit_spec():
         'instroke_axis_field_ids': tuple(raw['instroke_axis_field_ids']),
         'always_emit_field_ids': frozenset(raw['always_emit_field_ids']),
         'instroke_dynamic': dict(raw['instroke_dynamic']),
+        'protocol_version': int(raw.get('protocol_version', 1)),
+        'handle_force_curve_field_id': int(raw.get('handle_force_curve_field_id', 60)),
         **mats,
     }
     return _SPEC_CACHE
