@@ -17,11 +17,13 @@ import sys
 
 import pandas as pd
 
-# Repo root on path
+# Repo root first on the path, even when it is already listed later (for example
+# by easy-install.pth behind old rowingdata eggs), so this checkout is imported.
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _ROOT = os.path.normpath(os.path.join(_HERE, '..'))
-if _ROOT not in sys.path:
-    sys.path.insert(0, _ROOT)
+if _ROOT in sys.path:
+    sys.path.remove(_ROOT)
+sys.path.insert(0, _ROOT)
 
 
 def main():
