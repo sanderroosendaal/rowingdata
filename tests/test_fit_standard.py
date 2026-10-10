@@ -155,9 +155,76 @@ class TestStandardEncoding(unittest.TestCase):
     def test_stroke_rate_with_native_cadence(self):
         fit = self._write()
         record = list(fit.get_messages('record'))[0]
-        assert _record_field(record, 'StrokeRate').raw_value == 2850
-        assert record.get_value('cadence') == 28
-        assert _record_field(record, 'fractional_cadence').raw_value == 64
+        # 28.5 spm: cadence rounds half up, cadence256 carries the fraction
+        assert record.get_value('cadence') == 29
+        assert _record_field(record, 'cadence256').raw_value == 7296
+        assert _record_field(record, 'fractional_cadence') is None
+        assert _record_field(record, 'StrokeRate') is None
+        assert 93 not in _descriptions(fit)
+
+    def test_protocol_version_is_written(self):
+        fit = self._write()
+        versions = [
+            msg.get_value('application_version')
+            for msg in fit.get_messages('developer_data_id')
+        ]
+        assert versions == [1]
+
+    def test_workout_state_is_fit_intensity(self):
+        df = _sample_df()
+        df[' WorkoutState'] = [1, 3, 5]  # rowing, interval rest, interval work
+        fit = self._write(df=df)
+        states = [
+            _record_field(r, 'WorkoutState').raw_value
+            for r in fit.get_messages('record')
+        ]
+        assert states == [0, 1, 5]  # Active, Rest, Interval
+
+    def test_every_lap_has_intensity_and_rest_is_its_own_lap(self):
+        df = _sample_df()
+        df[' WorkoutState'] = [1, 3, 1]
+        fit = self._write(df=df)
+        laps = list(fit.get_messages('lap'))
+        assert [lap.get_value('intensity') for lap in laps] == ['active', 'rest', 'active']
+        single = self._write()
+        laps = list(single.get_messages('lap'))
+        assert [lap.get_value('intensity') for lap in laps] == ['active']
+
+    def test_time_sampled_session_and_stroke_state(self):
+        df = _sample_df()
+        df[' StrokeState'] = [2, 3, 4]
+        fit = self._write(
+            df=df, recording_strategy=fitwrite.RECORDING_STRATEGY_TIME_SAMPLED)
+        session = list(fit.get_messages('session'))[0]
+        assert int(_record_field(session, 'RecordingStrategy').value) == 3
+        states = [
+            _record_field(r, 'StrokeState').raw_value for r in fit.get_messages('record')
+        ]
+        assert states == [2, 3, 4]
+
+    def test_stroke_state_only_with_time_sampled(self):
+        df = _sample_df()
+        df[' StrokeState'] = [2, 3, 4]
+        fit = self._write(df=df)
+        assert 96 not in _descriptions(fit)
+
+    def test_oarlock_thresholds_on_session(self):
+        fit = self._write(slip_threshold=80, wash_threshold=60)
+        session = list(fit.get_messages('session'))[0]
+        assert _record_field(session, 'SlipThreshold').raw_value == 80
+        assert _record_field(session, 'WashThreshold').raw_value == 60
+        desc = _descriptions(fit)
+        assert desc[94]['units'] == 'N' and desc[95]['units'] == 'N'
+
+    def test_lbs_columns_are_written_as_newtons(self):
+        df = _sample_df().drop(columns=[' AverageDriveForce (N)', ' PeakDriveForce (N)'])
+        df[' AverageDriveForce (lbs)'] = [100.0, 100.0, 100.0]
+        df[' PeakDriveForce (lbs)'] = [200.0, 200.0, 200.0]
+        fit = self._write(df=df)
+        desc = _descriptions(fit)
+        assert 4 not in desc and 5 not in desc
+        record = list(fit.get_messages('record'))[0]
+        assert _record_field(record, 'AverageDriveForceN').raw_value == int(round(444.82216 * 10))
 
     def test_stroke_work_and_forces(self):
         fit = self._write()
@@ -185,7 +252,7 @@ class TestStandardEncoding(unittest.TestCase):
 
 
 class TestInstrokeNamespace(unittest.TestCase):
-    """Unallocated curve IDs must not sit under the standard application ID."""
+    """HandleForceCurve is the one curve in the FIT file; unallocated IDs stay private."""
 
     def setUp(self):
         self.tmpdir = tempfile.mkdtemp()
@@ -204,16 +271,13 @@ class TestInstrokeNamespace(unittest.TestCase):
     def test_private_and_standard_namespaces_differ(self):
         assert fitwrite.INSTROKE_APP_ID != fitwrite.ROWINGDATA_APP_ID
 
-    def test_curve_arrays_use_private_application_id(self):
+    def test_handle_force_curve_uses_standard_application_id(self):
         fit = self._write_curves('full')
-        apps = _app_ids(fit)
-        assert fitwrite.ROWINGDATA_APP_ID in apps
-        assert fitwrite.INSTROKE_APP_ID in apps
         by_index = _dev_index_by_app_id(fit)
         desc = _descriptions(fit)
-        assert by_index[desc[60]['dev_index']] == fitwrite.INSTROKE_APP_ID
-        # Axis metadata 90-92 is assigned in the registry, so it stays standard.
-        for field_id in (90, 91, 92):
+        assert desc[60]['name'] == 'HandleForceCurve'
+        assert fitwrite.INSTROKE_APP_ID not in _app_ids(fit)
+        for field_id in (60, 90, 91, 92):
             assert by_index[desc[field_id]['dev_index']] == fitwrite.ROWINGDATA_APP_ID
 
     def test_summary_fields_use_private_application_id(self):
@@ -229,7 +293,7 @@ class TestInstrokeNamespace(unittest.TestCase):
         fit = self._write_curves('full')
         by_index = _dev_index_by_app_id(fit)
         desc = _descriptions(fit)
-        for field_id in (0, 9, 10, 93):
+        for field_id in (0, 9, 10):
             assert by_index[desc[field_id]['dev_index']] == fitwrite.ROWINGDATA_APP_ID
 
 
@@ -254,6 +318,30 @@ class TestReaderMapsStandardFields(unittest.TestCase):
         assert int(df[' DriveTime (ms)'].iloc[0]) == 800
         assert int(df[' WorkPerStroke (joules)'].iloc[0]) == 250
         assert abs(float(df[' Cadence (stokes/min)'].iloc[0]) - 28.5) < 0.02
+
+    def test_cadence256_is_read_as_stroke_rate(self):
+        df = _sample_df()
+        df[' Cadence (stokes/min)'] = [28.4, 29.0, 28.25]
+        fitwrite.write_fit(self.outfile, df, row_date='2016-01-01')
+        parsed = rowingdata.FITParser(self.outfile).df
+        assert abs(float(parsed[' Cadence (stokes/min)'].iloc[0]) - 28.4) < 0.01
+        assert abs(float(parsed[' Cadence (stokes/min)'].iloc[2]) - 28.25) < 0.01
+
+    def test_workout_state_round_trips_through_intensity(self):
+        df = _sample_df()
+        df[' WorkoutState'] = [1, 3, 5]
+        fitwrite.write_fit(self.outfile, df, row_date='2016-01-01')
+        parsed = rowingdata.FITParser(self.outfile).df
+        assert list(parsed[' WorkoutState']) == [1, 3, 5]
+
+    def test_unknown_intensity_is_read_as_other(self):
+        from rowingdata import otherparsers
+        f = otherparsers._fit_intensity_to_workout_state
+        assert f(0) == 1 and f('active') == 1
+        assert f(1) == 3 and f('rest') == 3
+        assert f(5) == 5 and f('interval') == 5
+        assert f(200) == f(6)
+        assert f(None) is None
 
     def test_legacy_fit_file_still_parses(self):
         df = rowingdata.FITParser('testdata/3x250m.fit').df

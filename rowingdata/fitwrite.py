@@ -32,7 +32,7 @@ try:
     from fit_tool.profile.messages.event_message import EventMessage
     from fit_tool.profile.profile_type import (
         FileType, Manufacturer, Sport, SubSport,
-        Event, EventType, Activity,
+        Event, EventType, Activity, Intensity,
     )
     FIT_TOOL_AVAILABLE = True
 except ImportError:
@@ -56,6 +56,28 @@ INSTROKE_MAX_POINTS = 127
 RECORDING_STRATEGY_UNKNOWN = 0
 RECORDING_STRATEGY_STROKE_BOUNDARY = 1
 RECORDING_STRATEGY_GPS_UPDATE = 2
+RECORDING_STRATEGY_TIME_SAMPLED = 3
+
+# Protocol version (standard §1.5): written in application_version of the
+# DeveloperDataId message that carries the standard's application ID.
+PROTOCOL_VERSION = int(_FIT_EXPORT_RAW.get('protocol_version', 1))
+
+# Field IDs of session-level fields and of the one curve the standard puts in FIT
+RECORDING_STRATEGY_FIELD_ID = 10
+SLIP_THRESHOLD_FIELD_ID = 94
+WASH_THRESHOLD_FIELD_ID = 95
+STROKE_STATE_FIELD_ID = 96
+HANDLE_FORCE_CURVE_FIELD_ID = int(_FIT_EXPORT_RAW.get('handle_force_curve_field_id', 60))
+HANDLE_FORCE_CURVE_NAME = 'HandleForceCurve'
+
+# WorkoutState (field 9) holds the values of the native FIT ``intensity`` enum (§5.1)
+INTENSITY_ACTIVE = 0
+INTENSITY_REST = 1
+INTENSITY_WARMUP = 2
+INTENSITY_COOLDOWN = 3
+INTENSITY_RECOVERY = 4
+INTENSITY_INTERVAL = 5
+INTENSITY_OTHER = 6
 
 # Developer fields that must be emitted even when value is 0 (semantic zero / unknown).
 ALWAYS_EMIT_DEV_FIELD_IDS = frozenset(_FIT_EXPORT_RAW['always_emit_field_ids'])
@@ -64,10 +86,11 @@ ALWAYS_EMIT_DEV_FIELD_IDS = frozenset(_FIT_EXPORT_RAW['always_emit_field_ids'])
 # UUID v5 generated from DNS namespace with name "rowingdata" for deterministic, unique ID.
 ROWINGDATA_APP_ID = uuid.uuid5(uuid.NAMESPACE_DNS, 'rowingdata').bytes
 
-# In-stroke curve summary (20-59) and array (60-89) IDs are unallocated in the
-# registry, so they travel under a private application ID and cannot collide
-# with a future committee allocation. Axis metadata 90-92 is assigned and stays
-# under ROWINGDATA_APP_ID.
+# In-stroke curve summary fields (20-59) are unallocated in the registry, so
+# they travel under a private application ID and cannot collide with a future
+# committee allocation. HandleForceCurve (60) and axis metadata 90-92 are
+# assigned and stay under ROWINGDATA_APP_ID; other curves go to the companion
+# JSON file (standard §6.1).
 INSTROKE_APP_ID = uuid.uuid5(uuid.NAMESPACE_DNS, 'rowingdata.instroke').bytes
 INSTROKE_DEV_DATA_IDX = 1
 
@@ -75,8 +98,6 @@ INSTROKE_DEV_DATA_IDX = 1
 INSTROKE_COLUMN_MAP = dict(_FIT_EXPORT_RAW['instroke_column_map'])
 INSTROKE_CURVE_TYPES = dict(_FIT_EXPORT_RAW.get('instroke_curve_types') or {})
 
-# Native cadence fractional part scale (Garmin FIT profile: fractional_cadence scale 1/128 spm)
-CADENCE_FRACTIONAL_SCALE = 128
 
 def _parse_instroke_curve(df, col):
     """Parse curve column to DataFrame of numeric values. Same format as rowingdata get_instroke_data."""
@@ -266,24 +287,38 @@ def _values_for_fit_field(arr, units, scale, base_type):
 
 def _split_cadence_arrays(df, nr_rows):
     """
-    Return (integer cadence, fractional_cadence, stroke_rate_spm) per row.
-    stroke_rate_spm preserves fractional strokes/min for StrokeRate developer field.
+    Return (cadence, cadence256, stroke_rate_spm) per row.
+
+    ``cadence`` is the stroke rate rounded half up to an integer spm (native
+    ``cadence``); ``cadence256`` is the fractional rate in spm for the native
+    ``cadence256`` field (scale 256). Standard §4.
     """
     try:
         raw = pd.to_numeric(df[' Cadence (stokes/min)'].values, errors='coerce')
         raw = np.nan_to_num(raw, nan=0.0, posinf=0.0, neginf=0.0)
     except KeyError:
-        z = np.zeros(nr_rows, dtype=int)
-        return z, z.copy(), np.zeros(nr_rows), np.zeros(nr_rows, dtype=np.float64)
-    cadence_int = np.floor(raw).astype(int)
-    frac = raw - np.floor(raw)
-    fractional = np.round(frac * CADENCE_FRACTIONAL_SCALE).astype(int)
-    fractional = np.clip(fractional, 0, 255)
-    cadence_int = np.where(raw > 0, cadence_int, 0)
-    fractional = np.where(raw > 0, fractional, 0)
-    # Physical fractional spm (0-1) for fit-tool fractional_cadence field (scale 1/128)
-    fractional_physical = np.where(raw > 0, frac, 0.0)
-    return cadence_int, fractional, fractional_physical, raw
+        return (np.zeros(nr_rows, dtype=int), np.zeros(nr_rows, dtype=np.float64),
+                np.zeros(nr_rows, dtype=np.float64))
+    raw = np.where(raw > 0, raw, 0.0)
+    cadence_int = np.floor(raw + 0.5).astype(int)
+    cadence256 = np.clip(raw, 0.0, 65535.0 / 256.0)
+    return cadence_int, cadence256, raw
+
+
+def _workout_state_to_intensity(values):
+    """
+    Map rowingdata ``WorkoutState`` values (Concept2 PM codes) to FIT ``intensity``.
+
+    1 (rowing) -> Active; 3 (interval rest), 0 (waiting) and 2 (countdown pause)
+    -> Rest; 4-9 (interval work states) -> Interval; anything else -> Other.
+    """
+    arr = np.nan_to_num(np.asarray(values, dtype=np.float64), nan=1.0, posinf=1.0, neginf=1.0)
+    arr = arr.astype(int)
+    out = np.full(arr.shape, INTENSITY_OTHER, dtype=int)
+    out[arr == 1] = INTENSITY_ACTIVE
+    out[np.isin(arr, (0, 2, 3))] = INTENSITY_REST
+    out[np.isin(arr, (4, 5, 6, 7, 8, 9))] = INTENSITY_INTERVAL
+    return out
 
 
 def _default_instroke_abscissa_type(df, curve_canonical_names):
@@ -398,11 +433,11 @@ MIN_FIT_LAP_ELAPSED_S = 1e-3
 
 
 def _compute_interval_summaries(df, lap_col, unixtimes, distance_m, heart_rate, stroke_rate_spm,
-                                power, work_mask=None):
+                                power, work_mask=None, intensity=None):
     """
     Compute per-interval summary stats for Lap messages.
     Returns list of dicts with keys: start_time_ms, total_elapsed_s, total_distance,
-    total_calories, avg_heart_rate, max_heart_rate, avg_cadence, avg_power, indices.
+    total_calories, avg_heart_rate, max_heart_rate, avg_cadence, avg_power, intensity, indices.
     Uses work strokes only for avg HR, cadence, power (matches intervalstats).
 
     Per Garmin FIT semantics, Lap **total_elapsed_time** / **total_timer_time** use **wall-clock**
@@ -487,6 +522,7 @@ def _compute_interval_summaries(df, lap_col, unixtimes, distance_m, heart_rate, 
             'max_heart_rate': max_hr,
             'avg_cadence': avg_cad,
             'avg_power': avg_pw,
+            'intensity': int(intensity[indices[0]]) if intensity is not None else INTENSITY_ACTIVE,
             'indices': indices,
         })
 
@@ -517,7 +553,8 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
               instroke_export='off', instroke_columns=None, instroke_column_map=None,
               instroke_downsample_points=16, overwrite=True,
               instroke_abscissa_type=None, instroke_sample_interval_ms=None,
-              garmin_parity_source_fit=None, recording_strategy=RECORDING_STRATEGY_STROKE_BOUNDARY):
+              garmin_parity_source_fit=None, recording_strategy=RECORDING_STRATEGY_STROKE_BOUNDARY,
+              slip_threshold=None, wash_threshold=None):
     """
     Write rowingdata DataFrame to a FIT activity file.
 
@@ -571,10 +608,17 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         Per-stroke data still comes from ``df`` and rowingdata developer field definitions.
     recording_strategy : int
         Recording strategy indicator (RecordingStrategy developer field, ID 10).
-        Use constants RECORDING_STRATEGY_* (0=unknown, 1=stroke-boundary, 2=gps-update).
+        Use constants RECORDING_STRATEGY_* (0=unknown, 1=stroke-boundary, 2=gps-update,
+        3=time-sampled). Time-sampled files may carry the StrokeState field (96) from a
+        `` StrokeState`` column; with other strategies that column is not written.
         Default: RECORDING_STRATEGY_STROKE_BOUNDARY (1). Omitted from export when 0 (unknown)
         or when use_developer_fields=False. Note: in-stroke curve data requires stroke-boundary.
         See docs/FIT_EXPORT.md "Record message frequency".
+    slip_threshold, wash_threshold : int or None
+        Handle force in N above/below which the blade counts as entered/exited (Session
+        fields SlipThreshold 94 / WashThreshold 95, standard §5.4). Written when given
+        and use_developer_fields is True; the standard recommends writing them whenever
+        Slip, Wash or EffectiveLength are written.
 
     Returns
     -------
@@ -593,10 +637,20 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     curve_cols_for_export = (
         instroke_columns if instroke_columns is not None else detected_instroke_cols
     )
-    instroke_would_write_companion = (
-        instroke_export == 'companion' and
-        [c for c in curve_cols_for_export if c in df.columns]
-    )
+    # The standard puts only HandleForceCurve in the FIT file (§6.1); every other
+    # curve goes to the companion JSON file.
+    _early_col_map = instroke_column_map if instroke_column_map is not None else INSTROKE_COLUMN_MAP
+    _existing_curve_cols = [c for c in curve_cols_for_export if c in df.columns]
+    if instroke_export == 'companion':
+        companion_curve_cols = list(_existing_curve_cols)
+    elif instroke_export in ('downsampled', 'full'):
+        companion_curve_cols = [
+            c for c in _existing_curve_cols
+            if _early_col_map.get(c, c) != HANDLE_FORCE_CURVE_NAME
+        ]
+    else:
+        companion_curve_cols = []
+    instroke_would_write_companion = bool(companion_curve_cols)
     companion_path = None
     if instroke_would_write_companion:
         base, _ = os.path.splitext(file_name)
@@ -646,12 +700,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     except KeyError:
         distance_m = df[' Horizontal (meters)'].values
 
-    try:
-        cadence, _fractional_encoded, fractional_cadence, stroke_rate_spm = _split_cadence_arrays(df, nr_rows)
-    except KeyError:
-        cadence = np.zeros(nr_rows, dtype=int)
-        fractional_cadence = np.zeros(nr_rows, dtype=np.float64)
-        stroke_rate_spm = np.zeros(nr_rows, dtype=np.float64)
+    cadence, cadence256, stroke_rate_spm = _split_cadence_arrays(df, nr_rows)
 
     try:
         heart_rate = df[' HRCur (bpm)'].values.astype(int)
@@ -701,6 +750,13 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         except KeyError:
             stroke_number = np.arange(1, nr_rows + 1, dtype=int)  # 1-based row index
 
+    # The standard defines drive force in N only (fields 6, 7); convert lbs columns
+    for _lbs, _n in ((' AverageDriveForce (lbs)', ' AverageDriveForce (N)'),
+                     (' PeakDriveForce (lbs)', ' PeakDriveForce (N)')):
+        if _lbs in df.columns and _n not in df.columns:
+            df = df.copy()
+            df[_n] = pd.to_numeric(df[_lbs], errors='coerce') * 4.4482216
+
     # Developer fields: which columns exist and their arrays (definitions from fit_export_spec.json)
     use_dev = use_developer_fields and FIT_TOOL_AVAILABLE
     dev_arrays = {}
@@ -724,10 +780,14 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             field_id, possible_cols, name, base_type, size, scale, units = fd
             if not isinstance(possible_cols, (list, tuple)):
                 possible_cols = [possible_cols]
+            if field_id == STROKE_STATE_FIELD_ID and recording_strategy != RECORDING_STRATEGY_TIME_SAMPLED:
+                continue  # §5.1: StrokeState is meaningful only for time-sampled files
             col = next((c for c in possible_cols if c in df.columns), None)
             if col is not None:
                 arr = df[col].values
                 arr = _values_for_fit_field(arr, units, scale, base_type)
+                if field_id == 9:
+                    arr = _workout_state_to_intensity(arr)
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, base_type, size, scale, units))
         for fd in OARLOCK_DEV_FIELDS:
@@ -795,9 +855,11 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         curve_cols = instroke_columns if instroke_columns is not None else _detect_instroke_columns(df)
         instroke_curve_cols = [c for c in curve_cols if c in df.columns]
         # Validate: in-stroke data requires stroke-boundary recording
-        if instroke_curve_cols and recording_strategy == RECORDING_STRATEGY_GPS_UPDATE:
+        if instroke_curve_cols and recording_strategy in (
+                RECORDING_STRATEGY_GPS_UPDATE, RECORDING_STRATEGY_TIME_SAMPLED):
             raise ValueError(
-                "In-stroke curve data cannot be exported with recording_strategy=RECORDING_STRATEGY_GPS_UPDATE. "
+                "In-stroke curve data cannot be exported with recording_strategy=RECORDING_STRATEGY_GPS_UPDATE "
+                "or RECORDING_STRATEGY_TIME_SAMPLED. "
                 "Curves are inherently per-stroke and require stroke-boundary recording. "
                 "Use recording_strategy=RECORDING_STRATEGY_STROKE_BOUNDARY (default) or RECORDING_STRATEGY_UNKNOWN."
             )
@@ -823,9 +885,13 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 base_id += 1
             base_id = (base_id // 10 + 1) * 10
     elif instroke_export in ('downsampled', 'full') and instroke_curve_cols and use_dev:
-        base_id = _FIT_EXPORT_RAW['instroke_dynamic']['curve_start']
         for col in instroke_curve_cols:
             canonical = col_map.get(col, col)
+            if canonical != HANDLE_FORCE_CURVE_NAME:
+                continue  # companion JSON file (§6.1)
+            base_id = HANDLE_FORCE_CURVE_FIELD_ID
+            if base_id in dev_arrays:
+                continue
             curve_meta = INSTROKE_CURVE_TYPES.get(canonical) or {}
             y_scale = int(curve_meta.get('y_scale', 1))
             y_units = curve_meta.get('y_units', '') or ''
@@ -841,13 +907,12 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             size = n_points * 2
             dev_arrays[base_id] = arr_2d
             dev_specs.append((base_id, col, canonical, BaseType.UINT16, size, y_scale, y_units))
-            instroke_private_field_ids.add(base_id)
             instroke_downsampled_arrays[col] = base_id
-            base_id += 1
 
-    if instroke_export in ('downsampled', 'full') and instroke_curve_cols and use_dev:
+    if instroke_export in ('downsampled', 'full') and instroke_downsampled_arrays and use_dev:
+        fit_curve_cols = list(instroke_downsampled_arrays)
         nmax = 0
-        for col in instroke_curve_cols:
+        for col in fit_curve_cols:
             try:
                 _, np_ = _get_instroke_curve_for_export(
                     df, col, instroke_export, instroke_downsample_points
@@ -858,7 +923,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         if nmax >= 2:
             axis_abscissa = instroke_abscissa_type
             if axis_abscissa is None:
-                canonicals = [col_map.get(c, c) for c in instroke_curve_cols]
+                canonicals = [col_map.get(c, c) for c in fit_curve_cols]
                 axis_abscissa = _default_instroke_abscissa_type(df, canonicals)
             axis_tuples = _compute_instroke_axis_arrays(
                 df, nmax, axis_abscissa, instroke_sample_interval_ms)
@@ -923,38 +988,50 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     session_dev_fields = []
     dev_id_emitted = False
     
-    # Emit developer data ID and field descriptions for session-level fields (RecordingStrategy)
-    if use_dev and recording_strategy > 0:
+    # Emit developer data ID and field descriptions for session-level fields
+    # (RecordingStrategy, SlipThreshold, WashThreshold)
+    session_values = []
+    if recording_strategy > 0:
+        session_values.append((RECORDING_STRATEGY_FIELD_ID, 'RecordingStrategy',
+                               BaseType.UINT8, 1, int(recording_strategy)))
+    if slip_threshold is not None:
+        session_values.append((SLIP_THRESHOLD_FIELD_ID, 'SlipThreshold', BaseType.UINT16, 2,
+                               int(np.clip(round(float(slip_threshold)), 0, 65534))))
+    if wash_threshold is not None:
+        session_values.append((WASH_THRESHOLD_FIELD_ID, 'WashThreshold', BaseType.UINT16, 2,
+                               int(np.clip(round(float(wash_threshold)), 0, 65534))))
+    if use_dev and (session_values or dev_specs):
         dev_id_msg = DeveloperDataIdMessage()
         dev_id_msg.application_id = ROWINGDATA_APP_ID
+        dev_id_msg.application_version = PROTOCOL_VERSION
         dev_id_msg.developer_data_index = DEV_DATA_IDX
         builder.add(dev_id_msg)
         dev_id_emitted = True
-        
-        # Field description for RecordingStrategy (session-level)
-        fd_msg = FieldDescriptionMessage()
-        fd_msg.developer_data_index = DEV_DATA_IDX
-        fd_msg.field_definition_number = 10
-        fd_msg.fit_base_type_id = BaseType.UINT8.value
-        fd_msg.field_name = 'RecordingStrategy'
-        fd_msg.scale = 1
-        fd_msg.offset = 0
-        fd_msg.units = ''
-        builder.add(fd_msg)
-        
-        # Create developer field for Session
-        session_dev_field = DeveloperField(
-            developer_data_index=DEV_DATA_IDX,
-            field_id=10,
-            size=1,
-            name='RecordingStrategy',
-            base_type=BaseType.UINT8,
-            scale=1,
-            offset=0,
-            units=''
-        )
-        session_dev_field.set_value(0, int(recording_strategy))
-        session_dev_fields.append(session_dev_field)
+
+    if use_dev:
+        for field_id, name, base_type, size, value in session_values:
+            fd_msg = FieldDescriptionMessage()
+            fd_msg.developer_data_index = DEV_DATA_IDX
+            fd_msg.field_definition_number = field_id
+            fd_msg.fit_base_type_id = base_type.value
+            fd_msg.field_name = name
+            fd_msg.scale = 1
+            fd_msg.offset = 0
+            fd_msg.units = 'N' if field_id in (SLIP_THRESHOLD_FIELD_ID, WASH_THRESHOLD_FIELD_ID) else ''
+            builder.add(fd_msg)
+
+            session_dev_field = DeveloperField(
+                developer_data_index=DEV_DATA_IDX,
+                field_id=field_id,
+                size=size,
+                name=name,
+                base_type=base_type,
+                scale=1,
+                offset=0,
+                units=fd_msg.units
+            )
+            session_dev_field.set_value(0, value)
+            session_dev_fields.append(session_dev_field)
 
     # Session message with optional developer fields
     session = SessionMessage(developer_fields=session_dev_fields) if session_dev_fields else SessionMessage()
@@ -1006,22 +1083,34 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
 
     # Lap column: rowingdata uses ' lapIdx'; some CSVs use 'lapIdx'
     lap_col = ' lapIdx' if ' lapIdx' in df.columns else ('lapIdx' if 'lapIdx' in df.columns else None)
+    ws_col = ' WorkoutState' if ' WorkoutState' in df.columns else (
+        'WorkoutState' if 'WorkoutState' in df.columns else None)
     work_mask = None
-    if lap_col is not None:
+    intensity_arr = np.full(nr_rows, INTENSITY_ACTIVE, dtype=int)
+    if ws_col is not None:
         try:
-            ws = df[' WorkoutState'].values if ' WorkoutState' in df.columns else df['WorkoutState'].values
-            work_mask = np.isin(ws.astype(int), WORKOUT_STATES_WORK)
-        except (KeyError, TypeError):
-            work_mask = np.ones(nr_rows, dtype=bool)
+            ws = df[ws_col].values.astype(int)
+            work_mask = np.isin(ws, WORKOUT_STATES_WORK)
+            intensity_arr = _workout_state_to_intensity(ws)
+        except (KeyError, TypeError, ValueError):
+            work_mask = None
+    elif lap_col is not None:
+        work_mask = np.ones(nr_rows, dtype=bool)
 
-    # Determine if we have multiple intervals (per-interval Lap messages)
+    # Laps follow lapIdx and are split wherever the intensity changes, so a lap
+    # with intensity=active never contains rest (standard §4.1).
+    lap_values = df[lap_col].values if lap_col is not None else np.zeros(nr_rows, dtype=int)
+    changed = np.zeros(nr_rows, dtype=bool)
+    if nr_rows > 1:
+        changed[1:] = (lap_values[1:] != lap_values[:-1]) | (intensity_arr[1:] != intensity_arr[:-1])
+    segment_ids = np.cumsum(changed)
     interval_summaries = None
-    if lap_col is not None:
-        unique_laps = np.unique(df[lap_col].values)
-        if len(unique_laps) > 1:
-            interval_summaries = _compute_interval_summaries(
-                df, lap_col, unixtimes, distance_m, heart_rate, stroke_rate_spm, power, work_mask
-            )
+    if segment_ids[-1] > 0:
+        df = df.assign(_fit_segment=segment_ids)
+        interval_summaries = _compute_interval_summaries(
+            df, '_fit_segment', unixtimes, distance_m, heart_rate, stroke_rate_spm, power,
+            work_mask, intensity_arr
+        )
 
     def _emit_record(i):
         """Emit a single Record message for row index i."""
@@ -1074,8 +1163,8 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         rec.distance = float(distance_m[i])
         rec.heart_rate = heart_rate[i] if heart_rate[i] > 0 else None
         rec.cadence = cadence[i] if cadence[i] > 0 else None
-        if fractional_cadence[i] > 0 and hasattr(rec, 'fractional_cadence'):
-            rec.fractional_cadence = float(fractional_cadence[i])
+        if cadence256[i] > 0 and hasattr(rec, 'cadence256'):
+            rec.cadence256 = float(cadence256[i])  # fit-tool applies scale 256
         rec.power = power[i] if power[i] > 0 else None
         rec.enhanced_speed = float(enhanced_speed[i]) if enhanced_speed[i] > 0 else None
         if hasattr(rec, 'total_cycles'):
@@ -1106,6 +1195,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             lap.total_calories = summ['total_calories']
             lap.sport = _sport_to_fit(sport)
             lap.sub_sport = _sub_sport_for_sport(sport, has_gps)
+            lap.intensity = Intensity(summ['intensity'])
             if summ['avg_heart_rate'] > 0:
                 lap.avg_heart_rate = summ['avg_heart_rate']
             if summ['max_heart_rate'] > 0:
@@ -1130,6 +1220,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         lap.total_calories = total_calories
         lap.sport = _sport_to_fit(sport)
         lap.sub_sport = _sub_sport_for_sport(sport, has_gps)
+        lap.intensity = Intensity(int(intensity_arr[0]))
         if avg_hr > 0:
             lap.avg_heart_rate = avg_hr
         if max_hr > 0:
@@ -1155,12 +1246,12 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
 
     # Companion export: write .instroke.json sidecar when instroke_export='companion'
     companion_written_path = None
-    if instroke_export == 'companion' and instroke_curve_cols:
+    if companion_curve_cols and instroke_curve_cols:
         col_map = instroke_column_map if instroke_column_map is not None else INSTROKE_COLUMN_MAP
         base, _ = os.path.splitext(file_name)
         companion_path = base + '.instroke.json'
         curves = {}
-        for col in instroke_curve_cols:
+        for col in companion_curve_cols:
             canonical = col_map.get(col, col)
             try:
                 parsed = _parse_instroke_curve(df, col)
@@ -1179,7 +1270,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 for row in strokes:
                     max_pts = max(max_pts, len(row))
             max_pts = max(max_pts, 2)
-            canonicals = [col_map.get(c, c) for c in instroke_curve_cols]
+            canonicals = [col_map.get(c, c) for c in companion_curve_cols]
             axis_abscissa = instroke_abscissa_type
             if axis_abscissa is None:
                 axis_abscissa = _default_instroke_abscissa_type(df, canonicals)

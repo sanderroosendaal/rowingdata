@@ -465,10 +465,46 @@ class FitSummaryData(object):
         self.summarytext += summarystring
 
 
+# FIT ``intensity`` enum (standard §5.1) -> rowingdata WorkoutState (Concept2 PM codes).
+# Active, Warmup, Cooldown, Recovery and Other are rowing: 1. Rest: 3. Interval: 5.
+_INTENSITY_NAMES = ('active', 'rest', 'warmup', 'cooldown', 'recovery', 'interval', 'other')
+_INTENSITY_TO_WORKOUT_STATE = {0: 1, 1: 3, 2: 1, 3: 1, 4: 1, 5: 5, 6: 1}
+
+
+def _fit_intensity_to_workout_state(value):
+    """Map a FIT intensity (name or number) to a rowingdata WorkoutState.
+
+    Unknown values are read as Other (standard §5.1); None stays None.
+    """
+    if value is None:
+        return None
+    if isinstance(value, str):
+        key = value.strip().lower()
+        number = _INTENSITY_NAMES.index(key) if key in _INTENSITY_NAMES else 6
+    else:
+        try:
+            if np.isnan(value):
+                return None
+            number = int(value)
+        except (TypeError, ValueError):
+            return None
+    return _INTENSITY_TO_WORKOUT_STATE.get(number, _INTENSITY_TO_WORKOUT_STATE[6])
+
+
 def _fit_collect_sorted_lap_start_seconds(messages):
     """
     From fitparse messages in file order, collect Lap message start times (seconds since epoch).
     Uses start_time, else timestamp. Returns None if no valid lap times (caller uses all lapIdx 0).
+    """
+    laps = _fit_collect_sorted_laps(messages)
+    return None if laps is None else laps[0]
+
+
+def _fit_collect_sorted_laps(messages):
+    """
+    Like _fit_collect_sorted_lap_start_seconds, but also returns each lap's intensity
+    as a rowingdata WorkoutState (None when the lap has no intensity), in the same
+    order. Returns (starts, workout_states) or None.
     """
     lap_entries = []
     for msg in messages:
@@ -487,11 +523,12 @@ def _fit_collect_sorted_lap_start_seconds(messages):
             sec = totimestamp(st)
         except (TypeError, AttributeError, ValueError, OverflowError):
             continue
-        lap_entries.append((sec, mi))
+        lap_entries.append((sec, mi, _fit_intensity_to_workout_state(v.get('intensity'))))
     if not lap_entries:
         return None
     lap_entries.sort(key=lambda x: (x[0], x[1]))
-    return np.array([x[0] for x in lap_entries], dtype=np.float64)
+    return (np.array([x[0] for x in lap_entries], dtype=np.float64),
+            [x[2] for x in lap_entries])
 
 
 def _fit_lap_index_from_record_times(record_times_sec, lap_starts_sec):
@@ -605,7 +642,9 @@ class FITParser(object):
                     _fit_normalize_record_values(record.get_values(), field_scales)
                 )
 
-        lap_starts = _fit_collect_sorted_lap_start_seconds(self.records)
+        laps = _fit_collect_sorted_laps(self.records)
+        lap_starts = laps[0] if laps is not None else None
+        lap_states = laps[1] if laps is not None else []
         if lap_starts is not None and len(lap_starts) > 0:
             ts_list = []
             for v in recorddicts:
@@ -617,6 +656,9 @@ class FITParser(object):
             lap_ids = _fit_lap_index_from_record_times(np.array(ts_list, dtype=np.float64), lap_starts)
             for i, v in enumerate(recorddicts):
                 v['lapid'] = int(lap_ids[i])
+                # Lap intensity wins over a record's WorkoutState (standard §5.1)
+                if lap_states[lap_ids[i]] is not None:
+                    v['lapworkoutstate'] = lap_states[lap_ids[i]]
         else:
             for v in recorddicts:
                 v['lapid'] = 0
@@ -706,10 +748,19 @@ class FITParser(object):
         self.df[' Stroke500mPace (sec/500m)'] = pace
         self.df[' ElapsedTime (sec)'] = elapsed_time
 
-        try:
-            self.df['cadence'] = self.df['cadence'] + self.df['fractional_cadence']
-        except KeyError: # pragma: no cover
-            pass
+        # Stroke rate: native cadence256 (fractional spm) when present, else integer
+        # cadence (standard §3.1). fractional_cadence is no longer written, but older
+        # files carry it, so it still refines the integer cadence.
+        if 'cadence256' in self.df.columns and self.df['cadence256'].notna().any():
+            cad256 = pd.to_numeric(self.df['cadence256'], errors='coerce')
+            if 'cadence' in self.df.columns:
+                cad256 = cad256.fillna(pd.to_numeric(self.df['cadence'], errors='coerce'))
+            self.df['cadence'] = cad256
+        else:
+            try:
+                self.df['cadence'] = self.df['cadence'] + self.df['fractional_cadence']
+            except KeyError: # pragma: no cover
+                pass
 
         hrname = 'heart_rate'
         spmname = 'cadence'
@@ -738,11 +789,42 @@ class FITParser(object):
 
         self.df.rename(columns=newcolnames,inplace=True)
         self._map_standard_developer_fields()
+        self._apply_lap_intensity()
 
         # timestamp
         # distance
         # pace
         # elapsedtime
+
+    def _protocol_version(self):
+        """application_version of the standard's DeveloperDataId, or None when absent.
+
+        Files written before protocol version 1 do not carry it (standard §1.5).
+        """
+        standard_id, _instroke_id = _standard_app_ids()
+        try:
+            for msg in self.fitfile.get_messages('developer_data_id'):
+                if _app_id_bytes(msg.get_value('application_id')) == standard_id:
+                    version = msg.get_value('application_version')
+                    return None if version is None else int(version)
+        except (ValueError, AttributeError, TypeError):  # pragma: no cover
+            pass
+        return None
+
+    def _apply_lap_intensity(self):
+        """Resolve WorkoutState: lap intensity wins; FIT intensity values -> rowingdata codes."""
+        if ' WorkoutState' in self.df.columns and (self._protocol_version() or 0) >= 1:
+            states = pd.to_numeric(self.df[' WorkoutState'], errors='coerce')
+            self.df[' WorkoutState'] = [
+                _fit_intensity_to_workout_state(x) for x in states
+            ]
+        if 'lapworkoutstate' in self.df.columns:
+            lap_state = pd.to_numeric(self.df['lapworkoutstate'], errors='coerce')
+            if ' WorkoutState' in self.df.columns:
+                lap_state = lap_state.fillna(
+                    pd.to_numeric(self.df[' WorkoutState'], errors='coerce'))
+            self.df[' WorkoutState'] = lap_state
+            self.df.drop(columns=['lapworkoutstate'], inplace=True)
 
     def _standard_developer_fields(self):
         """Fields written under the standard application ID: name -> file scale.
