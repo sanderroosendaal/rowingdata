@@ -5,7 +5,7 @@ The rowingdata library exports rowing sessions to Garmin FIT format for use with
 > **This document describes rowingdata's behaviour, not the data format itself.**
 > The developer field IDs, names, base types, scales and units that rowingdata
 > writes are defined by the **Rowing Data Standard**, maintained by a committee at
-> <https://github.com/MoveLab-Studio/rowing-data-standard> (currently Draft v0.1).
+> <https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard> (working draft, nothing ratified).
 > That repository — specifically `registry/field-ids.md` — is the single source of
 > truth. Field tables are deliberately **not** reproduced here, so that this
 > document cannot drift out of step with the registry. What you will find below is
@@ -63,18 +63,18 @@ We export native fields for standard metrics plus developer fields for rowing-sp
 - **StrokeDriveTime** – drive phase time (ms). Named for symmetry with StrokeRecoveryTime.
 - **DriveLength** – handle distance (meters). Per README: distance traveled by the handle along the longitudinal axis of the boat or erg. For OTW rowing, this is the projection of the handle trajectory on the longitudinal axis (not the full path the hands travel). For indoor rowing, typically handle travel catch-to-finish. Typical range: 1.2–1.5 m. This is a *stroke output* metric.
 - **StrokeDistance** – distance traveled during the stroke cycle (meters). Per README: the distance the boat/erg travels during one stroke cycle. Distinct from DriveLength (handle distance). Typical range: 7–12 m for OTW. Uses native FIT field **cycle_length16** (UINT16, scale 100, max 655 m) for interoperability with Garmin Connect, Intervals.icu, and other FIT parsers.
-- **DriveLength vs EffectiveLength** – Not duplicates. **DriveLength** is the actual distance the handle traveled during the stroke (~1.2–1.5 m). **EffectiveLength** is an oarlock/rigging metric: the effective lever length (horizontal component from pin to handle, often in cm). It describes rigging geometry, varies slightly stroke-to-stroke, and comes from NK Logbook (Oarlock). Both can appear in the same dataset.
+- **DriveLength vs EffectiveArc** – Not duplicates. **DriveLength** is the actual distance the handle traveled during the stroke (~1.2–1.5 m). **EffectiveArc** is an oarlock metric in degrees: catch to finish, less slip and wash. Earlier drafts had a length (`EffectiveLength`, mm) in its place; it is still read from old files into the `effectiveLength` column (metres) but is not written.
 - **Stroke Number** – stored in the native **total_cycles** field (Garmin/ANT+ cycles). Rowing machines report it via ANT+ to Garmin watches; we write it per record since data is per stroke.
 
 **StrokeWork (J)** – work done over one **full stroke cycle** (joules), not drive-phase-only work. The exporter maps the first present DataFrame column among ` WorkPerStroke (joules)` and `driveenergy`. Those names describe the same physical quantity in most pipelines: device-reported joules per stroke, or derived **average power × stroke period** (e.g. `60 * Power / Cadence`). The internal name **`driveenergy`** is historical and can be misread as “drive phase only”; **StrokeWork** is the preferred FIT label for this full-cycle metric.
 
 ## Developer fields exported
 
-For each field below, the **ID, base type, scale and units are defined upstream** in [`registry/field-ids.md`](https://github.com/MoveLab-Studio/rowing-data-standard/blob/main/registry/field-ids.md); look them up there, or in `rowingdata/data/fit_export_spec.json` for the machine-readable copy. The table here records only what is rowingdata's own choice: which DataFrame column feeds which standard field.
+For each field below, the **ID, base type, scale and units are defined upstream** in [`registry/field-ids.md`](https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard/blob/main/registry/field-ids.md); look them up there, or in `rowingdata/data/fit_export_spec.json` for the machine-readable copy. The table here records only what is rowingdata's own choice: which DataFrame column feeds which standard field.
 
 The one curve the standard puts in the FIT file, **HandleForceCurve**, has the fixed ID **60** under the standard application ID (§6). Every other curve (boat acceleration, oar angular velocity, seat) goes to the companion `.instroke.json` file (§6.1), even with `instroke_export='downsampled'` or `'full'`. In-stroke curve *summary* fields (`'summary'` mode) still use dynamic IDs from **`instroke_dynamic`** (from **20**); that range is *unallocated* upstream and is written under the private in-stroke application ID. In-stroke axis metadata uses the allocated IDs **90–92** (see [In-stroke abscissa](#in-stroke-abscissa-x-axis) below).
 
-**Drive and peak force:** **Newtons** are preferred for new code: **` AverageDriveForce (N)`** / **` PeakDriveForce (N)`** → **AverageDriveForceN** / **PeakDriveForceN**. The standard has no pound-based fields: if only **`...(lbs)`** columns exist they are converted to Newtons on export. Fields 4 and 5 (**AverageDriveForceLbs** / **PeakDriveForceLbs**) are no longer written, but are still read from older files.
+**Drive and peak force:** **Newtons** are preferred for new code: **` AverageDriveForce (N)`** / **` PeakDriveForce (N)`** → **AverageDriveForce** / **PeakDriveForce**. The standard has no pound-based fields: if only **`...(lbs)`** columns exist they are converted to Newtons on export. Fields 4 and 5 (**AverageDriveForceLbs** / **PeakDriveForceLbs**) are no longer written, but are still read from older files.
 
 | rowingdata column | FIT field name |
 |-------------------|----------------|
@@ -82,8 +82,8 @@ The one curve the standard puts in the FIT file, **HandleForceCurve**, has the f
 | DriveTime (ms) | StrokeDriveTime |
 | DragFactor | DragFactor |
 | StrokeRecoveryTime (ms) | StrokeRecoveryTime |
-| AverageDriveForce (N) | AverageDriveForceN |
-| PeakDriveForce (N) | PeakDriveForceN |
+| AverageDriveForce (N) | AverageDriveForce |
+| PeakDriveForce (N) | PeakDriveForce |
 | AverageDriveForce (lbs) | AverageDriveForceLbs (read-only, legacy) |
 | PeakDriveForce (lbs) | PeakDriveForceLbs (read-only, legacy) |
 | AverageBoatSpeed (m/s) | AverageBoatSpeed |
@@ -96,11 +96,13 @@ The one curve the standard puts in the FIT file, **HandleForceCurve**, has the f
 | slip | Slip |
 | wash | Wash |
 | peakforceangle | PeakForceAngle |
-| effectiveLength | EffectiveLength |
+| effectiveArc | EffectiveArc |
 | rel_peak_force_pos, PeakForcePositionNorm, `% of Stroke Complete When Peak Force Is Reached` | PeakForcePositionNorm |
 | peak_force_pos, PeakForcePositionAbs | PeakForcePositionAbs |
 
-**Note on units:** several fields are carried in millimetres in FIT (`DriveLength`, `EffectiveLength`, `PeakForcePositionAbs`) while the corresponding DataFrame columns are in metres. The conversion happens in the writer and is reversed on read. Also be aware that `AverageBoatSpeed`'s registry scale of **255** collides with the FIT `uint8` invalid value, so the scale cannot be transmitted in the field description; consumers must apply the divisor themselves. This has been observed against the reference implementation and is worth resolving upstream.
+**Note on units:** several fields are carried in millimetres in FIT (`DriveLength`, `PeakForcePositionAbs`) while the corresponding DataFrame columns are in metres. The conversion happens in the writer and is reversed on read. `AverageBoatSpeed` uses scale 100, which fits in the field description. Fields written by earlier rowingdata versions at scale 255 could not carry it (255 is the `uint8` invalid value), so such a file is read with the current scale of 100.
+
+**Invalid values:** FIT reserves 255 (`UINT8`), 65535 (`UINT16`) and 32767 (`SINT16`) for "no data". The writer never writes them as a measurement: a value that would encode to one is clipped to the next valid value. The reader treats them as missing.
 
 **PeakForceAngle** is the oar angle (degrees) at peak force measured by oarlock sensors (OTW). Oar angles use the rowing convention: **0° = oar perpendicular to the boat's longitudinal axis**; negative values = catch direction (blade toward bow, handle toward stern), positive values = finish direction (blade toward stern, handle toward bow). **PeakForcePositionNorm** and **PeakForcePositionAbs** describe where along the drive the force maximum occurs (indoor / RP3-style metrics). Do not confuse oar angle with position along the drive.
 
@@ -115,7 +117,7 @@ The one curve the standard puts in the FIT file, **HandleForceCurve**, has the f
 - **StrokeState** (96) is written from a `` StrokeState`` column only when `recording_strategy=RECORDING_STRATEGY_TIME_SAMPLED`.
 - **SlipThreshold / WashThreshold** (94 / 95, Session message, N) are written when `slip_threshold` / `wash_threshold` are passed.
 
-Oarlock scalars (catch, finish, slip, wash, peakforceangle, effectiveLength) are exported when present. NK Logbook (Oarlock) uses these columns. See README *Oarlock scalars (OTW rigging)* for definitions. **EffectiveLength** is distinct from **DriveLength**: the former is rigging geometry (effective lever length); the latter is actual handle travel distance.
+Oarlock scalars (catch, finish, slip, wash, peakforceangle, effectiveArc) are exported when present. NK Logbook (Oarlock) uses these columns. See README *Oarlock scalars (OTW rigging)* for definitions. **EffectiveArc** (degrees) is distinct from **DriveLength**: the former is an angle, the latter is actual handle travel distance. The `effectiveArc` columns are written as given; rowingdata does not derive an arc from an old `effectiveLength` column.
 
 These have no native equivalents. Apps like Intervals.icu can import them when the developer field descriptions are present.
 
@@ -125,7 +127,7 @@ When a rower uses two smart oarlocks (e.g. dual EmPower or Quiske per-side data)
 
 ### Per-side developer fields
 
-The per-side field IDs are allocated upstream; see [`registry/field-ids.md`](https://github.com/MoveLab-Studio/rowing-data-standard/blob/main/registry/field-ids.md) for IDs, base types and scales, and group `oarlock_dual` in `rowingdata/data/fit_export_spec.json` for the copy rowingdata uses.
+The per-side field IDs are allocated upstream; see [`registry/field-ids.md`](https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard/blob/main/registry/field-ids.md) for IDs, base types and scales, and group `oarlock_dual` in `rowingdata/data/fit_export_spec.json` for the copy rowingdata uses.
 
 | rowingdata column | FIT field name |
 |-------------------|----------------|
@@ -139,14 +141,14 @@ The per-side field IDs are allocated upstream; see [`registry/field-ids.md`](htt
 | wash_starboard | WashStarboard |
 | peakforceangle_port | PeakForceAnglePort |
 | peakforceangle_starboard | PeakForceAngleStarboard |
+| effectiveArc_port | EffectiveArcPort |
+| effectiveArc_starboard | EffectiveArcStarboard |
 
 Per-side fields are exported only when both port and starboard columns exist for that metric.
 
-**EffectiveLengthPort / EffectiveLengthStarboard are deliberately not written.** The draft registry gives those two fields units of metres while the unsuffixed summary field `EffectiveLength` is in millimetres, and separately describes the summary as the average of the two sides. The registry flags this as unresolved and says not to implement either interpretation until it is settled, so rowingdata emits neither. Once upstream resolves it, remove the guard in `rowingdata/fitwrite.py`.
-
 ### Summary fields (Catch, Finish, etc.)
 
-The non-suffixed fields (Catch, Finish, Slip, Wash, PeakForceAngle, EffectiveLength) serve as summary values so developers who implement only the partial standard still get meaningful data:
+The non-suffixed fields (Catch, Finish, Slip, Wash, PeakForceAngle, EffectiveArc) serve as summary values so developers who implement only the partial standard still get meaningful data:
 
 | Scenario | Catch (and other oarlock scalars) |
 |----------|-----------------------------------|
@@ -164,7 +166,7 @@ This keeps backward compatibility and gives partial implementers a representativ
 | cum_dist or Horizontal (meters) | distance | Cumulative meters (FIT scale 100) |
 | Cadence (stokes/min) | cadence | Integer strokes/min, rounded; omitted if zero |
 | Cadence (stokes/min) | cadence256 | Fractional strokes/min (scale 256) |
-| HRCur (bpm) | heart_rate | Clamped 0–255 |
+| HRCur (bpm) | heart_rate | Clamped 0–254 (255 is the FIT invalid value) |
 | Power (watts) | power | Clamped 0–65535 |
 | Stroke500mPace (sec/500m) | enhanced_speed | Converted to m/s via 500/pace |
 | latitude | position_lat | Degrees; omitted if invalid |
@@ -321,7 +323,7 @@ The FIT protocol encodes developer field size in one byte, so each field is limi
 
 Field names, IDs and enums are governed by the Rowing Data Standard, **not** by this repository. Downstream tools (e.g. [Intervals.icu](https://intervals.icu)) can import them when they read developer field descriptions.
 
-The standard is currently **Draft v0.1 and not ratified**, so encodings may still change. Propose renames, new IDs or enum additions at <https://github.com/MoveLab-Studio/rowing-data-standard>; do not file them here, and do not rely on unallocated IDs (including rowingdata's in-stroke curve ranges) in production. `tests/test_fit_standard.py` pins the standard to a specific upstream commit, so adopting a newer revision is an explicit, reviewed change here rather than a silent one.
+The standard is currently a **working draft and not ratified**, so encodings may still change. Propose renames, new IDs or enum additions at <https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard>; do not file them here, and do not rely on unallocated IDs (including rowingdata's in-stroke curve ranges) in production. `tests/test_fit_standard.py` pins the standard to a specific upstream commit, so adopting a newer revision is an explicit, reviewed change here rather than a silent one.
 
 ## Missing columns
 

@@ -2,7 +2,7 @@
 """Thorough tests for FIT in-stroke curve export.
 
 In-stroke curve field IDs are unallocated in the Rowing Data Standard registry
-(https://github.com/MoveLab-Studio/rowing-data-standard), so they are emitted
+(https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard), so they are emitted
 under rowingdata's private application ID; see fitwrite.INSTROKE_APP_ID.
 """
 from __future__ import absolute_import

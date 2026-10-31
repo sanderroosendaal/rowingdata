@@ -521,7 +521,7 @@ The available data fields are
 * 'cum_dist'
 
 Oarlock parsers (NK Logbook) may add: ``catch``, ``finish``,
-``slip``, ``wash``, ``peakforceangle``, ``effectiveLength``.
+``slip``, ``wash``, ``peakforceangle``, ``effectiveArc``.
 
 If imported from TCX, Rowpro, or other tools, some data fields may not contain
 useful information. 
@@ -533,7 +533,7 @@ rowingdata CSV Columns
 This section describes the dataframe schema used by the ``rowingdata`` class.
 It is this package's own column layout, not a vendor-neutral standard. For a
 cross-vendor interchange format, see the Rowing Data Standard at
-https://github.com/MoveLab-Studio/rowing-data-standard, which rowingdata
+https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard, which rowingdata
 targets when exporting FIT.
 
 Any parser implementation feeding the ``rowingdata`` class should produce at
@@ -566,12 +566,12 @@ The standard field names are:
 * ' ElapsedTime (sec)'
 
 Optional (Oarlock/NK Logbook): ``catch``/``catchAngle``, ``finish``/``finishAngle``,
-``slip``, ``wash``, ``peakforceangle``, ``effectiveLength``.
+``slip``, ``wash``, ``peakforceangle``, ``effectiveArc``.
 
 Planned for dual oarlock (port/starboard symmetry): ``catch_port``, ``catch_starboard``,
 ``finish_port``, ``finish_starboard``, ``slip_port``, ``slip_starboard``, ``wash_port``,
 ``wash_starboard``, ``peakforceangle_port``, ``peakforceangle_starboard``,
-``effectiveLength_port``, ``effectiveLength_starboard``. See *Dual oarlock
+``effectiveArc_port``, ``effectiveArc_starboard``. See *Dual oarlock
 (port/starboard)* below. **Note:** rowingdata does not yet implement parsing or
 export for these per-side columns.
 
@@ -814,10 +814,9 @@ Oarlock scalars (OTW rigging)
 -----------------------------
 
 Field names: 'catch' / 'catchAngle', 'finish' / 'finishAngle', 'slip',
-'wash', 'peakforceangle', 'effectiveLength'
+'wash', 'peakforceangle', 'effectiveArc'
 
-Units: degrees for angles; meter for effectiveLength (scale may vary by
-source: NK Logbook uses these columns).
+Units: degrees for angles and for effectiveArc.
 
 These fields come from NK Logbook (Oarlock) and similar OTW
 measurement systems. They describe rigging geometry and blade angles:
@@ -830,12 +829,11 @@ measurement systems. They describe rigging geometry and blade angles:
 * **slip** – blade slip angle.
 * **wash** – wash/backwash angle.
 * **peakforceangle** – oar angle at peak force (same 0° = perpendicular convention).
-* **effectiveLength** – effective lever length (rigging geometry). *Not*
-  the same as Drive Length: Effective Length is the horizontal component
-  from pin to handle (a rigging/setup measure, often in cm), whereas
-  Drive Length is the *actual distance the handle traveled* during the
-  stroke (typically 1.2–1.5 m). Both may appear in the same dataset;
-  they serve different purposes.
+* **effectiveArc** – the part of the stroke arc that is effective: catch to
+  finish, less slip and wash (degrees). The Rowing Data Standard replaced the
+  earlier effective *length* (a lever length in mm) with this arc. Files written
+  against earlier drafts carry ``EffectiveLength``; it is read into the
+  ``effectiveLength`` column (metres) and is not converted into an arc.
 
 Dual oarlock (port/starboard)
 ..............................
@@ -939,12 +937,16 @@ Unreleased
 ----------
 
 - **Breaking change to exported FIT file contents.** FIT export now follows the
-  Rowing Data Standard (https://github.com/MoveLab-Studio/rowing-data-standard,
-  Draft v0.1). The ``exporttofit`` API is unchanged, but the bytes it writes are
-  not: the developer application ID is now the standard UUID, ``DriveLength``
-  and ``EffectiveLength`` are encoded in millimetres rather than metres,
-  ``AverageBoatSpeed`` uses scale 255, stroke rate moves to field ID 93, and
-  stroke work to field ID 19. Consumers that hardcoded the previous rowingdata
+  Rowing Data Standard (https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard,
+  current ``main``). The ``exporttofit`` API is unchanged, but the bytes it
+  writes are not: the developer application ID is now the standard UUID,
+  ``DriveLength`` is encoded in millimetres rather than metres,
+  ``AverageBoatSpeed`` uses scale 100, ``EffectiveLength`` is replaced by
+  ``EffectiveArc`` in degrees (IDs 16, 210, 211; the ``effectiveLength*``
+  columns are no longer exported, use ``effectiveArc*``), the force fields are
+  named ``AverageDriveForce`` and ``PeakDriveForce``, stroke rate is written as
+  native ``cadence256``, stroke work uses field ID 19, and no value is written
+  as the FIT invalid value (255 / 65535 / 32767): measurements clip one below it. Consumers that hardcoded the previous rowingdata
   application ID or the old metre-based scales must be updated. ``FITParser``
   still reads files written by rowingdata 3.7.3 and earlier.
 - In-stroke curve fields are emitted under a separate, private application ID,
@@ -952,7 +954,7 @@ Unreleased
   carry no interoperable meaning.
 - Removed ``docs/FIT_STANDARD.md`` and ``docs/FIT_STANDARD.pdf``. The standard is
   maintained by a committee at
-  https://github.com/MoveLab-Studio/rowing-data-standard, which is the single
+  https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard, which is the single
   source of truth; this repository no longer ships a copy.
 
 0.97.x

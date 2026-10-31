@@ -1067,7 +1067,7 @@ class TestFITParser:
         """fit_export_spec.json loads; field IDs and names match exporter expectations."""
         from rowingdata import fitwrite_spec
         raw = fitwrite_spec.load_fit_spec_raw()
-        assert raw['version'] == 3
+        assert raw['version'] == 4
         assert raw['protocol_version'] == 1
         assert raw['handle_force_curve_field_id'] == 60
         assert raw['instroke_dynamic']['summary_start'] == 20

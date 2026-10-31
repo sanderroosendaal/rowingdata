@@ -44,6 +44,10 @@ def _standard_app_ids():
     return ROWINGDATA_APP_ID, INSTROKE_APP_ID
 
 
+# FIT invalid ("no data") value per base type (standard §6.5): read as missing.
+_FIT_INVALID_VALUES = {'UINT8': 255, 'UINT16': 65535, 'SINT16': 32767}
+
+
 def _load_developer_field_spec():
     """Reverse map of the export spec: lowercase FIT field name -> definition.
 
@@ -64,6 +68,22 @@ def _load_developer_field_spec():
             'column': columns[0],
             'units': entry.get('units') or '',
             'scale': entry.get('scale') or 1,
+            'invalid': _FIT_INVALID_VALUES.get(entry.get('base_type')),
+        }
+    # Names the standard has since renamed. Files written against earlier drafts
+    # still carry them, so they are read, but never written.
+    renamed = (
+        ('AverageDriveForceN', 'AverageDriveForce'),
+        ('PeakDriveForceN', 'PeakDriveForce'),
+    )
+    for old, new in renamed:
+        mapping[old.lower()] = dict(mapping[new.lower()])
+    # EffectiveLength (mm) became EffectiveArc (deg); the two are not convertible
+    # into each other, so an old file's length keeps its own column, in metres.
+    for suffix in ('', 'Port', 'Starboard'):
+        column = 'effectiveLength' + ('_' + suffix.lower() if suffix else '')
+        mapping['effectivelength' + suffix.lower()] = {
+            'column': column, 'units': 'mm', 'scale': 1, 'invalid': 65535,
         }
     return mapping
 
@@ -865,9 +885,8 @@ class FITParser(object):
         """Rename standard developer fields to rowingdata CSV columns.
 
         fitparse does not apply developer-field scales, so the raw integers are
-        divided here. The scale in the file wins when present; ``AverageBoatSpeed``
-        needs the spec fallback because scale 255 is the uint8 invalid value and
-        cannot survive in a field_description.
+        divided here. The scale in the file wins when present; the spec scale is
+        the fallback for files that do not carry one.
         """
         spec = _developer_field_spec()
         if not spec:  # pragma: no cover
@@ -887,6 +906,8 @@ class FITParser(object):
             file_scale = standard.get(key) if is_standard else legacy.get(key)
             scale = file_scale if file_scale else definition['scale']
             values = pd.to_numeric(self.df[source], errors='coerce')
+            if definition.get('invalid') is not None:
+                values = values.mask(values == definition['invalid'])
             if scale and scale != 1:
                 values = values / float(scale)
             # Pre-UUID files carried lengths in metres already.
