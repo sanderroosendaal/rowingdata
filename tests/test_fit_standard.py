@@ -1,7 +1,7 @@
 """FIT export conformance with the Rowing Data Standard draft.
 
-Source of truth: https://github.com/MoveLab-Studio/rowing-data-standard
-(Draft v0.1, pinned commit 5ef01be6de48cbea7d5c57213f778e2fa63353df).
+Source of truth: https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard
+(pinned commit fdf2d3b6503f433969d31f4c16201fcd8b3edc53).
 
 These tests assert raw encoded integers, not round-trips through our own
 parser, so a scale or unit change upstream fails the build here.
@@ -49,14 +49,14 @@ def _sample_df(dual_oarlock=False, curve=False):
         ' Stroke Number': [1, 2, 3],
         'catch': [-32.1, -31.8, -32.4],
         'finish': [20.5, 20.1, 20.8],
-        'effectiveLength': [0.87, 0.88, 0.86],
+        'effectiveArc': [85.0, 86.5, 84.0],
     }
     if dual_oarlock:
         data.update({
             'catch_port': [-32.0, -31.5, -32.2],
             'catch_starboard': [-32.2, -32.1, -32.6],
-            'effectiveLength_port': [0.87, 0.88, 0.86],
-            'effectiveLength_starboard': [0.88, 0.89, 0.87],
+            'effectiveArc_port': [85.0, 86.5, 84.0],
+            'effectiveArc_starboard': [85.5, 87.0, 84.5],
         })
     if curve:
         data['curve_data'] = ['[10,40,80,60,20]', '[12,44,84,62,22]', '[11,42,82,61,21]']
@@ -137,13 +137,11 @@ class TestStandardEncoding(unittest.TestCase):
         record = list(fit.get_messages('record'))[0]
         assert _record_field(record, 'DriveLength').raw_value == 1420
 
-    def test_average_boat_speed_uses_scale_255(self):
+    def test_average_boat_speed_uses_scale_100(self):
         fit = self._write()
         record = list(fit.get_messages('record'))[0]
-        assert _record_field(record, 'AverageBoatSpeed').raw_value == int(round(4.17 * 255))
-        # Scale 255 is the uint8 invalid value, so it cannot travel in the
-        # field_description scale byte. Consumers take it from the registry.
-        assert _descriptions(fit)[8]['scale'] is None
+        assert _record_field(record, 'AverageBoatSpeed').raw_value == 417
+        assert int(_descriptions(fit)[8]['scale']) == 100
 
     def test_session_carries_recording_strategy(self):
         fit = self._write()
@@ -224,31 +222,41 @@ class TestStandardEncoding(unittest.TestCase):
         desc = _descriptions(fit)
         assert 4 not in desc and 5 not in desc
         record = list(fit.get_messages('record'))[0]
-        assert _record_field(record, 'AverageDriveForceN').raw_value == int(round(444.82216 * 10))
+        assert _record_field(record, 'AverageDriveForce').raw_value == int(round(444.82216 * 10))
 
     def test_stroke_work_and_forces(self):
         fit = self._write()
         record = list(fit.get_messages('record'))[0]
         assert _record_field(record, 'StrokeWork').raw_value == 250
-        assert _record_field(record, 'AverageDriveForceN').raw_value == 4123
+        assert _record_field(record, 'AverageDriveForce').raw_value == 4123
 
-    def test_effective_length_is_millimetres(self):
+    def test_effective_arc_is_degrees(self):
         fit = self._write()
         record = list(fit.get_messages('record'))[0]
-        assert _record_field(record, 'EffectiveLength').raw_value == 870
-        assert _descriptions(fit)[16]['units'] == 'mm'
+        assert _record_field(record, 'EffectiveArc').raw_value == 850
+        assert int(_descriptions(fit)[16]['scale']) == 10
+        assert _descriptions(fit)[16]['units'] == 'deg'
+        assert _descriptions(fit)[16]['name'] == 'EffectiveArc'
 
-    def test_dual_effective_length_is_not_emitted(self):
-        """Registry flags 210/211 as unresolved (mm vs m); do not write them."""
+    def test_dual_effective_arc_is_emitted(self):
         fit = self._write(df=_sample_df(dual_oarlock=True))
         desc = _descriptions(fit)
         assert 200 in desc and desc[200]['name'] == 'CatchPort'
-        assert 201 in desc
-        assert 210 not in desc
-        assert 211 not in desc
+        assert desc[210]['name'] == 'EffectiveArcPort'
+        assert desc[211]['name'] == 'EffectiveArcStarboard'
         record = list(fit.get_messages('record'))[0]
-        assert _record_field(record, 'EffectiveLengthPort') is None
-        assert _record_field(record, 'EffectiveLengthStarboard') is None
+        assert _record_field(record, 'EffectiveArcPort').raw_value == 850
+        assert _record_field(record, 'EffectiveArcStarboard').raw_value == 855
+
+    def test_invalid_values_are_never_written_as_measurements(self):
+        """§6.5: 255 / 65535 are FIT invalid values, so a measurement clips below them."""
+        df = _sample_df()
+        df[' AverageDriveForce (N)'] = [1.0e6, 400.0, 410.0]
+        df[' HRCur (bpm)'] = [300, 141, 142]
+        fit = self._write(df=df)
+        record = list(fit.get_messages('record'))[0]
+        assert _record_field(record, 'AverageDriveForce').raw_value == 65534
+        assert record.get_value('heart_rate') == 254
 
 
 class TestInstrokeNamespace(unittest.TestCase):
@@ -313,7 +321,7 @@ class TestReaderMapsStandardFields(unittest.TestCase):
         assert abs(float(df[' DriveLength (meters)'].iloc[0]) - 1.42) < 0.005
         assert abs(float(df[' AverageBoatSpeed (m/s)'].iloc[0]) - 4.17) < 0.01
         assert abs(float(df[' AverageDriveForce (N)'].iloc[0]) - 412.3) < 0.1
-        assert abs(float(df['effectiveLength'].iloc[0]) - 0.87) < 0.005
+        assert abs(float(df['effectiveArc'].iloc[0]) - 85.0) < 0.05
         assert abs(float(df['catch'].iloc[0]) - (-32.1)) < 0.05
         assert int(df[' DriveTime (ms)'].iloc[0]) == 800
         assert int(df[' WorkPerStroke (joules)'].iloc[0]) == 250
@@ -402,3 +410,21 @@ class TestStandardPackageInterop(unittest.TestCase):
             assert errors == []
         finally:
             shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+class TestReaderKeepsRenamedFields(unittest.TestCase):
+    """Files written against earlier drafts still read; the names are never written."""
+
+    def test_old_names_map_to_current_columns(self):
+        from rowingdata.otherparsers import _developer_field_spec
+        spec = _developer_field_spec()
+        assert spec['averagedriveforcen']['column'] == ' AverageDriveForce (N)'
+        assert spec['peakdriveforcen']['column'] == ' PeakDriveForce (N)'
+        assert spec['effectivearc']['column'] == 'effectiveArc'
+        # EffectiveLength (mm) is not an arc, so it keeps its own column
+        assert spec['effectivelength']['column'] == 'effectiveLength'
+        assert spec['effectivelengthport']['column'] == 'effectiveLength_port'
+
+    def test_invalid_value_is_read_as_missing(self):
+        from rowingdata.otherparsers import _developer_field_spec
+        assert _developer_field_spec()['averageboatspeed']['invalid'] == 65535

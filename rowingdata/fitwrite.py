@@ -79,6 +79,12 @@ INTENSITY_RECOVERY = 4
 INTENSITY_INTERVAL = 5
 INTENSITY_OTHER = 6
 
+# Largest value that is not the FIT invalid value of the base type (standard §6.5):
+# 255 / 65535 / 32767 mean "no data" and are never written as a measurement.
+UINT8_MAX_VALID = 254
+UINT16_MAX_VALID = 65534
+SINT16_MAX_VALID = 32766
+
 # Developer fields that must be emitted even when value is 0 (semantic zero / unknown).
 ALWAYS_EMIT_DEV_FIELD_IDS = frozenset(_FIT_EXPORT_RAW['always_emit_field_ids'])
 
@@ -248,7 +254,7 @@ def _series_to_peak_force_position_abs_m(values):
     """Map peak_force_pos (often RP3 cm) to millimeters for PeakForcePositionAbs (scale 1, units mm)."""
     v = pd.to_numeric(values, errors='coerce').values
     out = np.zeros(len(v), dtype=np.float64)
-    max_mm = 65535.0
+    max_mm = float(UINT16_MAX_VALID)
     for i, x in enumerate(v):
         if not np.isfinite(x) or x <= 0:
             continue
@@ -260,26 +266,18 @@ def _series_to_peak_force_position_abs_m(values):
     return out
 
 
-def _length_values_to_mm(arr):
-    """Convert oarlock effective-length column values to millimeters."""
-    arr = np.asarray(arr, dtype=np.float64)
-    if np.nanmax(arr) <= 5.0:
-        return arr * 1000.0
-    return arr * 10.0
-
-
 def _values_for_fit_field(arr, units, scale, base_type):
     """Map physical DataFrame values to FIT developer-field magnitudes before clipping."""
     arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
     if units == 'mm':
         arr = arr * 1000.0
     if base_type == BaseType.UINT8:
-        arr = np.clip(arr, 0, 255)
+        arr = np.clip(arr, 0, UINT8_MAX_VALID)
     elif base_type == BaseType.UINT16:
-        max_display = 65535.0 / scale if scale else 65535.0
+        max_display = UINT16_MAX_VALID / scale if scale else float(UINT16_MAX_VALID)
         arr = np.clip(arr, 0, max_display)
     elif base_type == BaseType.SINT16:
-        max_display = 32767.0 / scale if scale else 32767.0
+        max_display = SINT16_MAX_VALID / scale if scale else float(SINT16_MAX_VALID)
         min_display = -32768.0 / scale if scale else -32768.0
         arr = np.clip(arr, min_display, max_display)
     return arr
@@ -301,7 +299,7 @@ def _split_cadence_arrays(df, nr_rows):
                 np.zeros(nr_rows, dtype=np.float64))
     raw = np.where(raw > 0, raw, 0.0)
     cadence_int = np.floor(raw + 0.5).astype(int)
-    cadence256 = np.clip(raw, 0.0, 65535.0 / 256.0)
+    cadence256 = np.clip(raw, 0.0, UINT16_MAX_VALID / 256.0)
     return cadence_int, cadence256, raw
 
 
@@ -358,11 +356,11 @@ def _compute_instroke_axis_arrays(df, n_points, instroke_abscissa_type, instroke
         )
         # Millimeters between uniform samples along handle travel
         interval = np.round(drive_m * 1000.0 / np.maximum(n_points - 1, 1))
-        interval = np.clip(interval, 0, 65535)
+        interval = np.clip(interval, 0, UINT16_MAX_VALID)
     elif atype == INSTROKE_ABSCISSA_TIME_UNIFORM_MS and ' DriveTime (ms)' in df.columns:
         drive_ms = np.nan_to_num(df[' DriveTime (ms)'].values, nan=0.0, posinf=0.0, neginf=0.0)
         interval = np.round(drive_ms / np.maximum(n_points - 1, 1))
-        interval = np.clip(interval, 0, 65535)
+        interval = np.clip(interval, 0, UINT16_MAX_VALID)
     else:
         interval = np.zeros(nr)
     pc = np.full(nr, float(min(int(n_points), 127)))
@@ -618,7 +616,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         Handle force in N above/below which the blade counts as entered/exited (Session
         fields SlipThreshold 94 / WashThreshold 95, standard §5.4). Written when given
         and use_developer_fields is True; the standard recommends writing them whenever
-        Slip, Wash or EffectiveLength are written.
+        Slip, Wash or EffectiveArc are written.
 
     Returns
     -------
@@ -704,13 +702,13 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
 
     try:
         heart_rate = df[' HRCur (bpm)'].values.astype(int)
-        heart_rate = np.clip(heart_rate, 0, 255)  # uint8
+        heart_rate = np.clip(heart_rate, 0, UINT8_MAX_VALID)  # uint8
     except KeyError:
         heart_rate = np.zeros(nr_rows, dtype=int)
 
     try:
         power = df[' Power (watts)'].values.astype(int)
-        power = np.clip(power, 0, 65535)  # uint16
+        power = np.clip(power, 0, UINT16_MAX_VALID)  # uint16
     except KeyError:
         power = np.zeros(nr_rows, dtype=int)
 
@@ -795,21 +793,10 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             col = next((c for c in possible_cols if c in df.columns), None)
             if col is not None:
                 arr = df[col].values
-                if units == 'mm' and 'EffectiveLength' in name:
-                    arr = _length_values_to_mm(arr)
-                    arr = _values_for_fit_field(arr, '', scale, base_type)
-                elif base_type == BaseType.SINT16:
-                    arr = _values_for_fit_field(arr, units, scale, base_type)
-                else:
-                    arr = _values_for_fit_field(arr, units, scale, base_type)
+                arr = _values_for_fit_field(arr, units, scale, base_type)
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, base_type, size, scale, units))
         for _pair_key, port_fd, starboard_fd in OARLOCK_DUAL_PAIRS:
-            if _pair_key == 'effectiveLength':
-                # Draft defect: summary field 16 is mm while 210/211 are metres,
-                # and §5.3 calls 16 the average of the two. Unresolved upstream,
-                # so neither encoding is written.
-                continue
             cols_p = port_fd[1]
             cols_s = starboard_fd[1]
             col_p = next((c for c in cols_p if c in df.columns), None)
@@ -819,11 +806,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             for fd, col in ((port_fd, col_p), (starboard_fd, col_s)):
                 field_id, possible_cols, name, base_type, size, scale, units = fd
                 arr = df[col].values
-                if units == 'mm' and 'EffectiveLength' in name:
-                    arr = _length_values_to_mm(arr)
-                    arr = _values_for_fit_field(arr, '', scale, base_type)
-                else:
-                    arr = _values_for_fit_field(arr, units, scale, base_type)
+                arr = _values_for_fit_field(arr, units, scale, base_type)
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, base_type, size, scale, units))
         for fd in PEAK_POSITION_DEV_FIELDS:
@@ -839,7 +822,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 continue
             arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
             if base_type == BaseType.UINT16:
-                max_display = 65535.0 / scale if scale else 65535.0
+                max_display = UINT16_MAX_VALID / scale if scale else float(UINT16_MAX_VALID)
                 arr = np.clip(arr, 0, max_display)
                 if clip_max is not None:
                     arr = np.clip(arr, 0, float(clip_max))
@@ -875,9 +858,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 field_id = base_id
                 name = '%s_%s' % (canonical, metric)
                 arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
-                # UINT16: encoded = value * scale, must be <= 65535. Scale 1 => max display 65535
+                # UINT16: encoded = value * scale, must be <= 65534. Scale 1 => max display 65534
                 scale = 1
-                arr = np.clip(arr, 0, 65535.0 / max(scale, 1))
+                arr = np.clip(arr, 0, UINT16_MAX_VALID / max(scale, 1))
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, BaseType.UINT16, 2, scale, ''))
                 instroke_private_field_ids.add(field_id)
@@ -935,9 +918,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                     fid, name, bt, size, scale, units = axis_row
                     arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
                     if bt == BaseType.UINT8:
-                        arr = np.clip(arr, 0, 255)
+                        arr = np.clip(arr, 0, UINT8_MAX_VALID)
                     elif bt == BaseType.UINT16:
-                        arr = np.clip(arr, 0, 65535)
+                        arr = np.clip(arr, 0, UINT16_MAX_VALID)
                     dev_arrays[fid] = arr
                     dev_specs.append((fid, '_instroke_axis', name, bt, size, scale, units))
 
@@ -1124,7 +1107,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 if is_array_field and arr.ndim == 2:
                     row = arr[i]
                     vals = np.nan_to_num(row, nan=0.0, posinf=0.0, neginf=0.0)
-                    max_phys = 65535.0 / max(scale, 1)
+                    max_phys = UINT16_MAX_VALID / max(scale, 1)
                     vals = np.clip(vals, 0, max_phys)
                     has_data = np.any(vals != 0)
                     if has_data:
@@ -1144,7 +1127,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 else:
                     val = float(arr[i])
                     if base_type == BaseType.UINT8:
-                        val = int(np.clip(round(val), 0, 255))
+                        val = int(np.clip(round(val), 0, UINT8_MAX_VALID))
                     if val != 0 or field_id in ALWAYS_EMIT_DEV_FIELD_IDS:
                         dev = DeveloperField(
                             developer_data_index=_dev_index_for(field_id),
