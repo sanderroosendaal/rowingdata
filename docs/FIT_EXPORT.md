@@ -45,7 +45,7 @@ That JSON is a **copy** for runtime use. When the committee changes the registry
 Developer fields are split across two application IDs:
 
 - **Standard fields** use the Rowing Data Standard application UUID `89e86158-6d47-5c98-9d46-7d29437f27b9` (developer data index 0), a UUID v5 over the DNS namespace with name "rowingdata". This is the identifier the standard assigns, not a rowingdata-private one, so any conforming consumer can read these fields.
-- **Protocol version.** The standard's `DeveloperDataId` message carries `application_version = 1` (§1.5). `FITParser` treats a missing version as a file written before protocol version 1, and then reads `WorkoutState` with its older rowingdata meaning.
+- **Protocol version.** The standard's `DeveloperDataId` message carries `application_version = 1` (§1.5). `FITParser` treats a missing version as a file written before protocol version 1, and then reads a record-level `WorkoutState` (field 9) with its older rowingdata meaning.
 - **In-stroke curve summary fields** (`instroke_export='summary'`) use a separate private UUID `uuid5(NAMESPACE_DNS, 'rowingdata.instroke')` (developer data index 1). Their field IDs (20–59) are **unallocated** in the registry, so they have no interoperable meaning; keeping them off the standard UUID means they cannot be mistaken for, or collide with, a future committee allocation. In-stroke *axis metadata* (IDs 90–92) is allocated and stays on the standard UUID.
 
 rowingdata 3.7.3 and earlier used a non-compliant 10-byte string `b'rowingdata'` as the application ID and metre-based scales for several fields. `FITParser` still recognises and reads those older files.
@@ -87,7 +87,7 @@ The one curve the standard puts in the FIT file, **HandleForceCurve**, has the f
 | AverageDriveForce (lbs) | AverageDriveForceLbs (read-only, legacy) |
 | PeakDriveForce (lbs) | PeakDriveForceLbs (read-only, legacy) |
 | AverageBoatSpeed (m/s) | AverageBoatSpeed |
-| WorkoutState | WorkoutState |
+| WorkoutState | WorkoutState (field 9: read-only, legacy; never written) |
 | (session metadata, see Record message frequency) | RecordingStrategy |
 | ` WorkPerStroke (joules)` (first match) or `driveenergy` | StrokeWork |
 | Cadence (stokes/min) | StrokeRate (read-only, legacy; written as native `cadence256`) |
@@ -113,7 +113,7 @@ The one curve the standard puts in the FIT file, **HandleForceCurve**, has the f
 - **PeakForcePositionAbs** – handle travel from catch to peak force in **millimeters** (scale 1, units mm). **peak_force_pos** from RP3 is often in **centimetres**; values **> 2.5** are divided by 100 to obtain metres before conversion to mm; smaller values are assumed already in metres.
 
 - **Stroke rate** – native **`cadence`** (integer spm, rounded half up) and **`cadence256`** (fractional spm, scale 256) are written on Record messages when the rate is known. Developer field 93 (**StrokeRate**) and native `fractional_cadence` are no longer written (the standard forbids `fractional_cadence`); `FITParser` still reads them from older files.
-- **WorkoutState** (9) holds the values of the native FIT `intensity` enum (0 Active, 1 Rest, 2 Warmup, 3 Cooldown, 4 Recovery, 5 Interval, 6 Other). The writer maps the rowingdata/Concept2 codes: 1 → Active; 0, 2, 3 → Rest; 4–9 → Interval; others → Other. `FITParser` maps back (Rest → 3, Interval → 5, everything else → 1).
+- **WorkoutState** (record field 9) was removed from the standard and its ID is reserved, so it is **no longer written**. The interval state travels only in the native Lap `intensity` field (0 Active, 1 Rest, 2 Warmup, 3 Cooldown, 4 Recovery, 5 Interval, 6 Other). The writer maps the rowingdata/Concept2 codes from the ` WorkoutState` column: 1 → Active; 0, 2, 3 → Rest; 4–9 → Interval; others → Other. `FITParser` maps back (Rest → 3, Interval → 5, everything else → 1) and still reads field 9 from older files.
 - **StrokeState** (96) is written from a `` StrokeState`` column only when `recording_strategy=RECORDING_STRATEGY_TIME_SAMPLED`.
 - **SlipThreshold / WashThreshold** (94 / 95, Session message, N) are written when `slip_threshold` / `wash_threshold` are passed.
 
@@ -123,7 +123,7 @@ These have no native equivalents. Apps like Intervals.icu can import them when t
 
 ## Symmetry with two oarlocks
 
-When a rower uses two smart oarlocks (e.g. dual EmPower or Quiske per-side data), oarlock metrics can be reported per side: **port** (left) and **starboard** (right). We export per-side developer fields when both sides are present, and always export summary fields so partial implementations still get useful data.
+When a rower uses two smart oarlocks (e.g. dual EmPower or Quiske per-side data), oarlock metrics can be reported per side: **port** (left) and **starboard** (right). We export per-side developer fields when both sides are present, and always export summary fields so partial implementations still get useful data. When both sides are present, the summary fields (Catch, Finish, Slip, Wash, PeakForceAngle, EffectiveArc; IDs 11–16) are written as the **average of port and starboard** (standard §5.3); a side that reads 0 is treated as missing and the other side's value is used.
 
 ### Per-side developer fields
 
@@ -203,7 +203,7 @@ In-stroke curve data can only appear in a stroke-boundary file, because curves a
 ## Session, Lap, and Event messages
 
 - **Session** – One message for the whole workout (total_distance, total_calories, avg_heart_rate, max_heart_rate, avg_cadence, avg_power). Start/end position in degrees when valid.
-- **Lap** – One Lap message per interval: a new Lap starts when `lapIdx` changes **or** when the intensity (from ` WorkoutState`) changes, so a lap with `intensity=active` never contains rest (standard §4.1). Every Lap carries the native `intensity` field (`active` when there is no ` WorkoutState`). On import, the Lap `intensity` wins over a record's WorkoutState. Each Lap has per-interval distance, elapsed time, total_calories, avg HR, max HR, avg cadence, avg power. **Elapsed and timer time** use **wall-clock** duration from the **first** stroke of the interval to the **first** stroke of the **next** interval (or the **last** stroke of the session for the final interval), matching typical Garmin FIT Lap semantics and avoiding zero-duration laps when an interval contains only one stroke. Per-interval avg HR, cadence, and power use **work strokes only** (WorkoutState 1,4,5,6,7,8,9); rest strokes (WorkoutState 3) are excluded from those averages. If `lapIdx` is missing or constant and the intensity does not change, one Lap for the whole session.
+- **Lap** – One Lap message per interval: a new Lap starts when `lapIdx` changes **or** when the intensity (from ` WorkoutState`) changes, so that each Lap's `intensity` describes all of its records. (The standard allows a Lap to contain pauses, §4.1; this is the exporter's choice.) Every Lap carries the native `intensity` field (`active` when there is no ` WorkoutState`). On import, the Lap `intensity` wins over a record's WorkoutState. Each Lap has per-interval distance, elapsed time, total_calories, avg HR, max HR, avg cadence, avg power. **Elapsed and timer time** use **wall-clock** duration from the **first** stroke of the interval to the **first** stroke of the **next** interval (or the **last** stroke of the session for the final interval), matching typical Garmin FIT Lap semantics and avoiding zero-duration laps when an interval contains only one stroke. Per-interval avg HR, cadence, and power use **work strokes only** (WorkoutState 1,4,5,6,7,8,9); rest strokes (WorkoutState 3) are excluded from those averages. If `lapIdx` is missing or constant and the intensity does not change, one Lap for the whole session.
 - **Event** – Lap boundaries are marked with Event messages (Event.LAP, EventType.START) before each lap's records. Timer start/stop events bracket the activity.
 
 ## Dependencies
@@ -259,7 +259,7 @@ Community analysis of Garmin native indoor rowing FIT files (see [issue #63](htt
 
 ## In-stroke abscissa (X-axis)
 
-Y-only curve arrays are ambiguous (time vs handle distance vs oar angle). When **`instroke_export`** is **`'downsampled'`** or **`'full'`**, we add three per-Record **developer fields** (IDs 90–92) whenever curve data is written into the FIT file:
+Y-only curve arrays are ambiguous (time vs handle distance vs oar angle). When **`instroke_export`** is **`'downsampled'`** or **`'full'`**, we add three per-Record **developer fields** (IDs 90–92) on every Record that carries curve data (and only on those). If the X-axis cannot be determined (no `instroke_abscissa_type`/interval and neither ` DriveTime (ms)` nor ` DriveLength (meters)`), the force curve is **not written** to the FIT file and a `UserWarning` is raised; the curve can still go in the companion JSON file:
 
 | FIT field name | Base type | Meaning |
 |----------------|-----------|---------|
@@ -271,7 +271,7 @@ Y-only curve arrays are ambiguous (time vs handle distance vs oar angle). When *
 
 | Value | Constant | Meaning |
 |-------|----------|---------|
-| 0 | UNKNOWN | Abscissa not specified. |
+| 0 | UNKNOWN | Abscissa not specified. **Never written** (standard §6.3); the curve is left out of the FIT file when no abscissa can be determined. |
 | 1 | TIME_UNIFORM_MS | Uniform time sampling; **InstrokeSampleInterval** = milliseconds between samples. Default when ` DriveTime (ms)` is present: `drive_ms / (point_count - 1)` rounded. |
 | 2 | HANDLE_DISTANCE_UNIFORM_M | Uniform spacing along handle travel; **InstrokeSampleInterval** = millimeters between samples |
 | 3 | OAR_ANGLE_UNIFORM_DEG | Uniform oar angle spacing; **InstrokeSampleInterval** in 0.1° if documented with scale. |
@@ -279,7 +279,7 @@ Y-only curve arrays are ambiguous (time vs handle distance vs oar angle). When *
 
 **Oar angle and Catch / Finish.** For on-water curves sampled uniformly in **oar angle**, the meaningful domain is **[θ_catch, θ_finish]** using the rowing convention (**0° = oar perpendicular to boat's longitudinal axis**), matching the stroke scalars **Catch** and **Finish** (developer fields on the same Record). Conceptually, sample index `k` maps to θ_k = θ_catch + k × Δθ with Δθ derived from (θ_finish − θ_catch) and **InstrokePointCount**, or equivalently from **InstrokeSampleInterval** if that is how spacing is defined. Exporters should take θ_catch / θ_finish from those fields when present.
 
-**Missing Catch / Finish and UNKNOWN.** If **Catch** or **Finish** is missing (or cannot be aligned with the curve), treat the abscissa as unspecified: use **InstrokeAbscissaType = UNKNOWN (0)** and interpret the curve as **shape-only**—useful for relative shape, clustering, or normalization, not for plotting against absolute oar angle without additional metadata (e.g. companion `x[]` or future start/end fields).
+**Missing Catch / Finish and UNKNOWN.** If **Catch** or **Finish** is missing (or cannot be aligned with the curve), the abscissa is unspecified. The standard forbids writing **InstrokeAbscissaType = UNKNOWN (0)**, so rowingdata does not write the curve to the FIT file in that case. *Reading* is unchanged: older files that carry type 0 are still read, and consumers should treat such a curve as **shape-only**.
 
 **Consistency (not enforced).** In angle-based or time-based modes, **InstrokeSampleInterval**, **InstrokePointCount**, and **InstrokeAbscissaType** are **expected** to be mutually consistent with **Catch**, **Finish**, and drive timing when those scalars exist. **rowingdata does not validate** that relationship; consumers may perform their own checks if strict consistency is required.
 

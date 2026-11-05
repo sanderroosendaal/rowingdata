@@ -1,8 +1,8 @@
 {
-  "version": 4,
+  "version": 5,
   "protocol_version": 1,
   "handle_force_curve_field_id": 60,
-  "_comment": "Authoritative FIT developer field definitions for rowingdata fitwrite. Field IDs, scales and units must match the Rowing Data Standard registry at https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard (registry/field-ids.md); that repository is the source of truth, this file is only rowingdata's machine-readable copy of the subset it emits. v2: mm precision for DriveLength/PeakForcePositionAbs (scale 1000); StrokeRate dev field (93); instroke curve Y-scale registry. v4: main of 2026-10-31: AverageBoatSpeed scale 100; EffectiveLength -> EffectiveArc (deg, scale 10; 16, 210, 211); force fields named without the N suffix. v3: standard draft 0.1: WorkoutState holds FIT intensity values; StrokeState (96); SlipThreshold/WashThreshold (94/95); HandleForceCurve fixed at 60; fields 4, 5 and 93 are not in the standard and are read-only (group legacy).",
+  "_comment": "Authoritative FIT developer field definitions for rowingdata fitwrite. Field IDs, scales and units must match the Rowing Data Standard registry at https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard (registry/field-ids.md); that repository is the source of truth, this file is only rowingdata's machine-readable copy of the subset it emits. v2: mm precision for DriveLength/PeakForcePositionAbs (scale 1000); StrokeRate dev field (93); instroke curve Y-scale registry. v5: main of 2026-11-05: record field 9 (WorkoutState) was removed from the standard and its ID is reserved, so it is read-only here (group legacy) and never written; always_emit_field_ids is empty (axis fields 90-92 are only written with curve data and never as UNKNOWN). v4: main of 2026-10-31: AverageBoatSpeed scale 100; EffectiveLength -> EffectiveArc (deg, scale 10; 16, 210, 211); force fields named without the N suffix. v3: standard draft 0.1: WorkoutState holds FIT intensity values; StrokeState (96); SlipThreshold/WashThreshold (94/95); HandleForceCurve fixed at 60; fields 4, 5 and 93 are not in the standard and are read-only (group legacy).",
   "instroke_dynamic": {
     "summary_start": 20,
     "summary_id_padding": "ceil_to_10",
@@ -38,7 +38,7 @@
     "NORMALIZED_DRIVE_0_1": 4
   },
   "instroke_axis_field_ids": [90, 91, 92],
-  "always_emit_field_ids": [9, 90, 91, 92],
+  "always_emit_field_ids": [],
   "instroke_column_map": {
     "curve_data": "HandleForceCurve",
     "boat accelerator curve": "BoatAcceleratorCurve",
@@ -55,7 +55,7 @@
     {"field_id": 6, "group": "rowing", "fit_name": "AverageDriveForce", "base_type": "UINT16", "size": 2, "scale": 10, "units": "N", "df_columns": [" AverageDriveForce (N)"]},
     {"field_id": 7, "group": "rowing", "fit_name": "PeakDriveForce", "base_type": "UINT16", "size": 2, "scale": 10, "units": "N", "df_columns": [" PeakDriveForce (N)"]},
     {"field_id": 8, "group": "rowing", "fit_name": "AverageBoatSpeed", "base_type": "UINT16", "size": 2, "scale": 100, "units": "m/s", "df_columns": [" AverageBoatSpeed (m/s)"]},
-    {"field_id": 9, "group": "rowing", "fit_name": "WorkoutState", "base_type": "UINT8", "size": 1, "scale": 1, "units": "", "df_columns": [" WorkoutState"]},
+    {"field_id": 9, "group": "legacy", "fit_name": "WorkoutState", "base_type": "UINT8", "size": 1, "scale": 1, "units": "", "df_columns": [" WorkoutState"]},
     {"field_id": 10, "group": "metadata", "fit_name": "RecordingStrategy", "base_type": "UINT8", "size": 1, "scale": 1, "units": "", "df_columns": [], "message_type": "session"},
     {"field_id": 94, "group": "metadata", "fit_name": "SlipThreshold", "base_type": "UINT16", "size": 2, "scale": 1, "units": "N", "df_columns": [], "message_type": "session"},
     {"field_id": 95, "group": "metadata", "fit_name": "WashThreshold", "base_type": "UINT16", "size": 2, "scale": 1, "units": "N", "df_columns": [], "message_type": "session"},

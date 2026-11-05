@@ -168,15 +168,45 @@ class TestStandardEncoding(unittest.TestCase):
         ]
         assert versions == [1]
 
-    def test_workout_state_is_fit_intensity(self):
+    def test_workout_state_field_9_is_never_written(self):
+        """Field 9 was removed from the standard; intensity lives on the Lap only."""
         df = _sample_df()
         df[' WorkoutState'] = [1, 3, 5]  # rowing, interval rest, interval work
         fit = self._write(df=df)
-        states = [
-            _record_field(r, 'WorkoutState').raw_value
-            for r in fit.get_messages('record')
-        ]
-        assert states == [0, 1, 5]  # Active, Rest, Interval
+        assert 9 not in _descriptions(fit)
+        for r in fit.get_messages('record'):
+            assert _record_field(r, 'WorkoutState') is None
+        laps = list(fit.get_messages('lap'))
+        assert [lap.get_value('intensity') for lap in laps] == ['active', 'rest', 5]  # 5 = interval
+
+    def test_unknown_abscissa_curve_is_not_written(self):
+        """InstrokeAbscissaType 0 must never be written (§6.3): the curve is left out."""
+        import warnings
+        df = _sample_df(curve=True).drop(columns=[' DriveTime (ms)', ' DriveLength (meters)'])
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter('always')
+            fit = self._write(df=df, instroke_export='downsampled')
+        assert any('X-axis' in str(w.message) for w in caught)
+        descriptions = _descriptions(fit)
+        for field_id in (60, 90, 91, 92):
+            assert field_id not in descriptions
+
+    def test_abscissa_fields_only_with_curve_data(self):
+        df = _sample_df(curve=True)
+        df.loc[1, 'curve_data'] = None
+        fit = self._write(df=df, instroke_export='downsampled')
+        for r, has_curve in zip(fit.get_messages('record'), (True, False, True)):
+            assert (_record_field(r, 'InstrokeAbscissaType') is not None) == has_curve
+            if has_curve:
+                assert _record_field(r, 'InstrokeAbscissaType').raw_value != 0
+
+    def test_dual_oarlock_summary_is_side_average(self):
+        df = _sample_df(dual_oarlock=True)
+        df['catch'] = [-10.0, -10.0, -10.0]  # source summary is overridden by the average
+        fit = self._write(df=df)
+        first = next(iter(fit.get_messages('record')))
+        assert _record_field(first, 'Catch').raw_value == round(-32.1 * 10)  # (-32.0 + -32.2) / 2
+        assert _record_field(first, 'EffectiveArc').raw_value == round(85.25 * 10)
 
     def test_every_lap_has_intensity_and_rest_is_its_own_lap(self):
         df = _sample_df()
@@ -301,7 +331,7 @@ class TestInstrokeNamespace(unittest.TestCase):
         fit = self._write_curves('full')
         by_index = _dev_index_by_app_id(fit)
         desc = _descriptions(fit)
-        for field_id in (0, 9, 10):
+        for field_id in (0, 10):
             assert by_index[desc[field_id]['dev_index']] == fitwrite.ROWINGDATA_APP_ID
 
 
@@ -339,6 +369,62 @@ class TestReaderMapsStandardFields(unittest.TestCase):
         df = _sample_df()
         df[' WorkoutState'] = [1, 3, 5]
         fitwrite.write_fit(self.outfile, df, row_date='2016-01-01')
+        parsed = rowingdata.FITParser(self.outfile).df
+        assert list(parsed[' WorkoutState']) == [1, 3, 5]
+
+    def _write_file_with_field_9(self, states, protocol_version):
+        """An older file: record field 9 (WorkoutState), written by hand since
+        the exporter no longer produces it. No Lap carries an intensity, so the
+        record field is the only source of the state."""
+        from fit_tool.base_type import BaseType
+        from fit_tool.developer_field import DeveloperField
+        from fit_tool.fit_file_builder import FitFileBuilder
+        from fit_tool.profile.messages.developer_data_id_message import DeveloperDataIdMessage
+        from fit_tool.profile.messages.field_description_message import FieldDescriptionMessage
+        from fit_tool.profile.messages.file_id_message import FileIdMessage
+        from fit_tool.profile.messages.record_message import RecordMessage
+        from fit_tool.profile.profile_type import FileType, Manufacturer
+
+        builder = FitFileBuilder(auto_define=True, min_string_size=50)
+        file_id = FileIdMessage()
+        file_id.type = FileType.ACTIVITY
+        file_id.manufacturer = Manufacturer.GARMIN.value
+        file_id.time_created = 1_000_000_000_000
+        builder.add(file_id)
+        dev_id = DeveloperDataIdMessage()
+        dev_id.application_id = fitwrite.ROWINGDATA_APP_ID
+        dev_id.developer_data_index = 0
+        if protocol_version is not None:
+            dev_id.application_version = protocol_version
+        builder.add(dev_id)
+        desc = FieldDescriptionMessage()
+        desc.developer_data_index = 0
+        desc.field_definition_number = 9
+        desc.fit_base_type_id = BaseType.UINT8.value
+        desc.field_name = 'WorkoutState'
+        desc.scale = 1
+        desc.offset = 0
+        desc.units = ''
+        builder.add(desc)
+        for i, state in enumerate(states):
+            field = DeveloperField(
+                developer_data_index=0, field_id=9, size=1, name='WorkoutState',
+                base_type=BaseType.UINT8, scale=1, offset=0, units='')
+            field.set_value(0, state)
+            rec = RecordMessage(developer_fields=[field])
+            rec.timestamp = 1_000_000_000_000 + i * 2000
+            rec.distance = 8.5 * (i + 1)
+            builder.add(rec)
+        builder.build().to_file(self.outfile)
+
+    def test_field_9_is_still_read_from_older_files(self):
+        """Field 9 left the standard, but files that carry it are still read."""
+        # Protocol version 1: field 9 holds FIT intensity values (0 Active, 1 Rest, 5 Interval)
+        self._write_file_with_field_9([0, 1, 5], protocol_version=1)
+        parsed = rowingdata.FITParser(self.outfile).df
+        assert list(parsed[' WorkoutState']) == [1, 3, 5]  # rowingdata codes
+        # No application_version: pre-protocol files carry rowingdata codes as they are
+        self._write_file_with_field_9([1, 3, 5], protocol_version=None)
         parsed = rowingdata.FITParser(self.outfile).df
         assert list(parsed[' WorkoutState']) == [1, 3, 5]
 
