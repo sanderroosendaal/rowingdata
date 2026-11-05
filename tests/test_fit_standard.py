@@ -200,6 +200,17 @@ class TestStandardEncoding(unittest.TestCase):
             if has_curve:
                 assert _record_field(r, 'InstrokeAbscissaType').raw_value != 0
 
+    def test_curve_without_known_interval_is_dropped_with_its_axis(self):
+        """A Record whose sample interval is unknown carries no curve and no axis (§6.3)."""
+        df = _sample_df(curve=True)
+        df.loc[1, ' DriveLength (meters)'] = 0  # interval cannot be derived for this stroke
+        fit = self._write(df=df, instroke_export='downsampled')
+        for r, expected in zip(fit.get_messages('record'), (True, False, True)):
+            names = {f.name for f in r}
+            for name in ('HandleForceCurve', 'InstrokeAbscissaType',
+                         'InstrokeSampleInterval', 'InstrokePointCount'):
+                assert (name in names) == expected, name
+
     def test_dual_oarlock_summary_is_side_average(self):
         df = _sample_df(dual_oarlock=True)
         df['catch'] = [-10.0, -10.0, -10.0]  # source summary is overridden by the average
