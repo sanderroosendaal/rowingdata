@@ -1067,7 +1067,7 @@ class TestFITParser:
         """fit_export_spec.json loads; field IDs and names match exporter expectations."""
         from rowingdata import fitwrite_spec
         raw = fitwrite_spec.load_fit_spec_raw()
-        assert raw['version'] == 4
+        assert raw['version'] == 5
         assert raw['protocol_version'] == 1
         assert raw['handle_force_curve_field_id'] == 60
         assert raw['instroke_dynamic']['summary_start'] == 20
@@ -1076,7 +1076,7 @@ class TestFITParser:
         assert sorted(ids) == sorted(set(ids)), 'duplicate field_id in spec'
         assert 0 in ids and 17 in ids and 19 in ids and 90 in ids and 93 in ids
         spec = fitwrite_spec.load_fit_spec()
-        assert len(spec['ROWING_DEV_FIELDS']) == 10  # fields 4, 5 and 93 are read-only legacy
+        assert len(spec["ROWING_DEV_FIELDS"]) == 9  # fields 4, 5, 9 and 93 are read-only legacy
         assert len(spec['OARLOCK_DEV_FIELDS']) == 6
         assert len(spec['OARLOCK_DUAL_PAIRS']) == 6
         assert spec['OARLOCK_DUAL_PAIRS'][0][1][0] == 200

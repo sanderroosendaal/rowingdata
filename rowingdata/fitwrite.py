@@ -10,6 +10,7 @@ import datetime
 import json
 import os
 import uuid
+import warnings
 import numpy as np
 import pandas as pd
 from dateutil import parser as ps
@@ -69,8 +70,10 @@ WASH_THRESHOLD_FIELD_ID = 95
 STROKE_STATE_FIELD_ID = 96
 HANDLE_FORCE_CURVE_FIELD_ID = int(_FIT_EXPORT_RAW.get('handle_force_curve_field_id', 60))
 HANDLE_FORCE_CURVE_NAME = 'HandleForceCurve'
+INSTROKE_AXIS_FIELD_IDS = frozenset((90, 91, 92))
 
-# WorkoutState (field 9) holds the values of the native FIT ``intensity`` enum (§5.1)
+# Values of the native FIT ``intensity`` enum, set on every Lap (standard §4.1).
+# (Record field 9, WorkoutState, was removed from the standard; it is never written.)
 INTENSITY_ACTIVE = 0
 INTENSITY_REST = 1
 INTENSITY_WARMUP = 2
@@ -334,7 +337,9 @@ def _default_instroke_abscissa_type(df, curve_canonical_names):
 def _compute_instroke_axis_arrays(df, n_points, instroke_abscissa_type, instroke_sample_interval_ms):
     """
     Per-record arrays for InstrokeAbscissaType (90), InstrokeSampleInterval (91), InstrokePointCount (92).
-    Returns None if n_points < 2.
+    Returns None if n_points < 2, if the abscissa type is UNKNOWN, or if the sample
+    interval cannot be determined: producers MUST NOT write type 0 (standard §6.3) and
+    must not write a placeholder interval (§7.2). The caller then leaves the curve out.
     """
     nr = len(df)
     if n_points < 2:
@@ -344,6 +349,8 @@ def _compute_instroke_axis_arrays(df, n_points, instroke_abscissa_type, instroke
     else:
         atype = (INSTROKE_ABSCISSA_TIME_UNIFORM_MS if ' DriveTime (ms)' in df.columns
                  else INSTROKE_ABSCISSA_UNKNOWN)
+    if atype == INSTROKE_ABSCISSA_UNKNOWN:
+        return None
     if instroke_sample_interval_ms is not None:
         if np.isscalar(instroke_sample_interval_ms):
             interval = np.full(nr, float(instroke_sample_interval_ms))
@@ -362,7 +369,7 @@ def _compute_instroke_axis_arrays(df, n_points, instroke_abscissa_type, instroke
         interval = np.round(drive_ms / np.maximum(n_points - 1, 1))
         interval = np.clip(interval, 0, UINT16_MAX_VALID)
     else:
-        interval = np.zeros(nr)
+        return None  # no way to derive the spacing: do not write a placeholder
     pc = np.full(nr, float(min(int(n_points), 127)))
     ta = np.full(nr, float(atype))
     return ta, interval, pc
@@ -784,8 +791,6 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             if col is not None:
                 arr = df[col].values
                 arr = _values_for_fit_field(arr, units, scale, base_type)
-                if field_id == 9:
-                    arr = _workout_state_to_intensity(arr)
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, base_type, size, scale, units))
         for fd in OARLOCK_DEV_FIELDS:
@@ -809,6 +814,24 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 arr = _values_for_fit_field(arr, units, scale, base_type)
                 dev_arrays[field_id] = arr
                 dev_specs.append((field_id, col, name, base_type, size, scale, units))
+        # Standard §5.3: with per-side fields present, summary fields 11-16 SHOULD
+        # carry the port/starboard average. A side reading 0 counts as missing, so
+        # the other side's value is used (§5.3, "when only one side is available").
+        _summary_by_name = {fd[2]: fd for fd in OARLOCK_DEV_FIELDS}
+        for _pair_key, port_fd, starboard_fd in OARLOCK_DUAL_PAIRS:
+            summary_fd = _summary_by_name.get(port_fd[2][:-len('Port')])
+            if summary_fd is None or port_fd[0] not in dev_arrays or starboard_fd[0] not in dev_arrays:
+                continue
+            port_arr = np.asarray(dev_arrays[port_fd[0]], dtype=np.float64)
+            star_arr = np.asarray(dev_arrays[starboard_fd[0]], dtype=np.float64)
+            averaged = np.where(
+                port_arr == 0, star_arr,
+                np.where(star_arr == 0, port_arr, (port_arr + star_arr) / 2.0))
+            summary_id = summary_fd[0]
+            if summary_id not in dev_arrays:
+                dev_specs.append((summary_id, port_fd[1][0], summary_fd[2], summary_fd[3],
+                                  summary_fd[4], summary_fd[5], summary_fd[6]))
+            dev_arrays[summary_id] = averaged
         for fd in PEAK_POSITION_DEV_FIELDS:
             field_id, possible_cols, name, base_type, size, scale, units, transformer, clip_max = fd
             col = next((c for c in possible_cols if c in df.columns), None)
@@ -903,6 +926,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 nmax = max(nmax, np_)
             except (ValueError, KeyError, TypeError):
                 pass
+        axis_tuples = None
         if nmax >= 2:
             axis_abscissa = instroke_abscissa_type
             if axis_abscissa is None:
@@ -910,19 +934,33 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 axis_abscissa = _default_instroke_abscissa_type(df, canonicals)
             axis_tuples = _compute_instroke_axis_arrays(
                 df, nmax, axis_abscissa, instroke_sample_interval_ms)
-            if axis_tuples is not None:
-                ta, interval, pc = axis_tuples
-                axis_arrays = [ta, interval, pc]
-                for axis_row, arr in zip(
-                        fitwrite_spec.load_fit_spec()['INSTROKE_AXIS_DEV_FIELDS'], axis_arrays):
-                    fid, name, bt, size, scale, units = axis_row
-                    arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
-                    if bt == BaseType.UINT8:
-                        arr = np.clip(arr, 0, UINT8_MAX_VALID)
-                    elif bt == BaseType.UINT16:
-                        arr = np.clip(arr, 0, UINT16_MAX_VALID)
-                    dev_arrays[fid] = arr
-                    dev_specs.append((fid, '_instroke_axis', name, bt, size, scale, units))
+        if axis_tuples is None:
+            # A curve without a declared X-axis is not conforming (§6.3): leave it
+            # out of the FIT file (it can still go in the companion JSON file).
+            warnings.warn(
+                'In-stroke force curve not written to the FIT file: the X-axis '
+                '(InstrokeAbscissaType / InstrokeSampleInterval) cannot be determined. '
+                'Pass instroke_abscissa_type and instroke_sample_interval_ms, or provide '
+                "' DriveTime (ms)' or ' DriveLength (meters)'.",
+                UserWarning, stacklevel=2)
+            for curve_id in instroke_downsampled_arrays.values():
+                dev_arrays.pop(curve_id, None)
+            curve_ids = set(instroke_downsampled_arrays.values())
+            dev_specs[:] = [d for d in dev_specs if d[0] not in curve_ids]
+            instroke_downsampled_arrays.clear()
+        else:
+            ta, interval, pc = axis_tuples
+            axis_arrays = [ta, interval, pc]
+            for axis_row, arr in zip(
+                    fitwrite_spec.load_fit_spec()['INSTROKE_AXIS_DEV_FIELDS'], axis_arrays):
+                fid, name, bt, size, scale, units = axis_row
+                arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
+                if bt == BaseType.UINT8:
+                    arr = np.clip(arr, 0, UINT8_MAX_VALID)
+                elif bt == BaseType.UINT16:
+                    arr = np.clip(arr, 0, UINT16_MAX_VALID)
+                dev_arrays[fid] = arr
+                dev_specs.append((fid, '_instroke_axis', name, bt, size, scale, units))
 
     # Build FIT file
     min_str = 50 if dev_specs else 8
@@ -1080,8 +1118,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     elif lap_col is not None:
         work_mask = np.ones(nr_rows, dtype=bool)
 
-    # Laps follow lapIdx and are split wherever the intensity changes, so a lap
-    # with intensity=active never contains rest (standard §4.1).
+    # Laps follow lapIdx and are also split wherever the intensity changes, so each
+    # Lap's native ``intensity`` describes all of its records. (The standard allows
+    # a Lap to contain pauses; this is a choice, not a requirement, §4.1.)
     lap_values = df[lap_col].values if lap_col is not None else np.zeros(nr_rows, dtype=int)
     changed = np.zeros(nr_rows, dtype=bool)
     if nr_rows > 1:
@@ -1095,6 +1134,10 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             work_mask, intensity_arr
         )
 
+    def _curve_in_row(i):
+        curve = dev_arrays.get(HANDLE_FORCE_CURVE_FIELD_ID)
+        return curve is not None and curve.ndim == 2 and bool(np.any(np.nan_to_num(curve[i]) != 0))
+
     def _emit_record(i):
         """Emit a single Record message for row index i."""
         dev_fields = []
@@ -1102,6 +1145,8 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             for field_id, col, name, base_type, size, scale, units in dev_specs:
                 if field_id not in dev_arrays:
                     continue
+                if field_id in INSTROKE_AXIS_FIELD_IDS and not _curve_in_row(i):
+                    continue  # axis metadata only on Records that carry curve data (§6.3)
                 arr = dev_arrays[field_id]
                 is_array_field = (base_type == BaseType.UINT16 and size > 2)
                 if is_array_field and arr.ndim == 2:
