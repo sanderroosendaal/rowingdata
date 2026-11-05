@@ -57,6 +57,7 @@ setup(name='rowingdata',
 	  'arrow>=1.0.2',
 	  #	  'mechanize',
 	  'python-dateutil',
+	  'six',  # imported directly; python-dateutil 4 no longer brings it in
 	  'docopt',
 	  'tqdm',
 	  'rowingphysics>=0.2.3',

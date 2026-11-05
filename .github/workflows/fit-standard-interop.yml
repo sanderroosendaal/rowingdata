@@ -1,7 +1,7 @@
 name: FIT standard interop
 
 # Checks that our FIT export stays readable by the reference implementation of the
-# Rowing Data Standard (https://github.com/MoveLab-Studio/rowing-data-standard).
+# Rowing Data Standard (https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard).
 #
 # The standard is pinned to a commit rather than a branch: the draft is not ratified,
 # so an upstream edit must be an explicit, reviewed bump here rather than a surprise
@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
 
 env:
-  STANDARD_REF: 5ef01be6de48cbea7d5c57213f778e2fa63353df
+  STANDARD_REF: 5bfb47f91fa755a4c3199a77f1018a9ce6ca3111
 
 jobs:
   interop:
@@ -30,7 +30,7 @@ jobs:
       - name: Check out rowing-data-standard
         uses: actions/checkout@v4
         with:
-          repository: MoveLab-Studio/rowing-data-standard
+          repository: Rowing-Industry-Trade-Association/rowing-data-standard
           ref: ${{ env.STANDARD_REF }}
           path: rowing-data-standard
 

@@ -768,6 +768,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     dev_specs = []
     DEV_DATA_IDX = 0
     instroke_private_field_ids = set()
+    axis_row_ok = None  # per row: the curve's X-axis is fully known (§6.3)
 
     def _dev_index_for(field_id):
         """Developer data index: private namespace for unallocated curve IDs."""
@@ -950,6 +951,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             instroke_downsampled_arrays.clear()
         else:
             ta, interval, pc = axis_tuples
+            axis_row_ok = np.nan_to_num(np.asarray(interval, dtype=np.float64)) > 0
             axis_arrays = [ta, interval, pc]
             for axis_row, arr in zip(
                     fitwrite_spec.load_fit_spec()['INSTROKE_AXIS_DEV_FIELDS'], axis_arrays):
@@ -1135,8 +1137,12 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         )
 
     def _curve_in_row(i):
+        # A curve is written only where its X-axis is fully known: a Record without
+        # a sample interval (e.g. no drive time) carries neither curve nor axis fields.
         curve = dev_arrays.get(HANDLE_FORCE_CURVE_FIELD_ID)
-        return curve is not None and curve.ndim == 2 and bool(np.any(np.nan_to_num(curve[i]) != 0))
+        if curve is None or curve.ndim != 2 or not np.any(np.nan_to_num(curve[i]) != 0):
+            return False
+        return axis_row_ok is None or bool(axis_row_ok[i])
 
     def _emit_record(i):
         """Emit a single Record message for row index i."""
@@ -1145,8 +1151,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             for field_id, col, name, base_type, size, scale, units in dev_specs:
                 if field_id not in dev_arrays:
                     continue
-                if field_id in INSTROKE_AXIS_FIELD_IDS and not _curve_in_row(i):
-                    continue  # axis metadata only on Records that carry curve data (§6.3)
+                if (field_id in INSTROKE_AXIS_FIELD_IDS
+                        or field_id == HANDLE_FORCE_CURVE_FIELD_ID) and not _curve_in_row(i):
+                    continue  # curve and axis metadata go together, or not at all (§6.3)
                 arr = dev_arrays[field_id]
                 is_array_field = (base_type == BaseType.UINT16 and size > 2)
                 if is_array_field and arr.ndim == 2:
