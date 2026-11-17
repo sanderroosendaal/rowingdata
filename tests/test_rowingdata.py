@@ -1009,68 +1009,13 @@ class TestFITParser:
             except FileNotFoundError:
                 pass
 
-    def test_exporttofit_instroke_summary_rp3(self):
-        """Instroke summary export adds curve metrics as developer fields (RP3 curve_data)."""
-        csvfile = 'testdata/rp3intervals2.csv'
-        outfile = os.path.join(os.getcwd(), 'test_export_instroke_summary.fit')
-        try:
-            r = rowingdata.RowPerfectParser(csvfile)
-            row = rowingdata.rowingdata(df=r.df)
-            row.exporttofit(outfile, sport='rowing', instroke_export='summary')
-            assert_equal(rowingdata.get_file_type(outfile), 'fit')
-            rr = rowingdata.FITParser(outfile)
-            # Summary adds HandleForceCurve_q1, _q2, etc. (lowercase in FITParser)
-            has_curve = any('handleforce' in str(c).lower() or 'q1' in str(c).lower() for c in rr.df.columns)
-            assert has_curve or len(rr.df) > 0  # At least FIT exported
-        finally:
-            try:
-                os.remove(outfile)
-            except FileNotFoundError:
-                pass
-
-    def test_exporttofit_instroke_full(self):
-        """Instroke full export stores up to 127 points per stroke (no downsampling when curve is short)."""
-        csvfile = 'testdata/quiske_per_stroke_left.csv'
-        outfile = os.path.join(os.getcwd(), 'test_export_instroke_full.fit')
-        try:
-            r = rowingdata.QuiskeParser(csvfile)
-            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
-            row.exporttofit(outfile, sport='rowing', instroke_export='full')
-            assert_equal(rowingdata.get_file_type(outfile), 'fit')
-            rr = rowingdata.FITParser(outfile)
-            # Full mode adds curve array fields; parser may expose them
-            assert len(rr.df) > 0, 'FIT should have records'
-        finally:
-            try:
-                os.remove(outfile)
-            except FileNotFoundError:
-                pass
-
-    def test_exporttofit_instroke_downsampled_custom_points(self):
-        """Instroke downsampled export with custom instroke_downsample_points (e.g. 120)."""
-        csvfile = 'testdata/quiske_per_stroke_left.csv'
-        outfile = os.path.join(os.getcwd(), 'test_export_instroke_downsampled120.fit')
-        try:
-            r = rowingdata.QuiskeParser(csvfile)
-            row = rowingdata.rowingdata(df=r.df, absolutetimestamps=False)
-            row.exporttofit(outfile, sport='rowing', instroke_export='downsampled',
-                           instroke_downsample_points=32)
-            assert_equal(rowingdata.get_file_type(outfile), 'fit')
-            assert len(row.df) > 0
-        finally:
-            try:
-                os.remove(outfile)
-            except FileNotFoundError:
-                pass
-
     def test_fit_export_spec_loads(self):
         """fit_export_spec.json loads; field IDs and names match exporter expectations."""
         from rowingdata import fitwrite_spec
         raw = fitwrite_spec.load_fit_spec_raw()
-        assert raw['version'] == 5
+        assert raw['version'] == 6
         assert raw['protocol_version'] == 1
         assert raw['handle_force_curve_field_id'] == 60
-        assert raw['instroke_dynamic']['summary_start'] == 20
         assert raw['instroke_dynamic']['curve_start'] == 60
         ids = [r['field_id'] for r in raw['developer_fields']]
         assert sorted(ids) == sorted(set(ids)), 'duplicate field_id in spec'

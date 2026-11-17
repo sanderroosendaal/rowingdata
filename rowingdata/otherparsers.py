@@ -36,12 +36,12 @@ def strip_non_ascii(string):
     return ''.join(stripped)
 
 def _standard_app_ids():
-    """(standard, private in-stroke) 16-byte application IDs used by fitwrite."""
+    """16-byte application ID of the Rowing Data Standard."""
     try:
-        from .fitwrite import ROWINGDATA_APP_ID, INSTROKE_APP_ID
+        from .fitwrite import ROWINGDATA_APP_ID
     except (ValueError, ImportError):  # pragma: no cover
-        from fitwrite import ROWINGDATA_APP_ID, INSTROKE_APP_ID
-    return ROWINGDATA_APP_ID, INSTROKE_APP_ID
+        from fitwrite import ROWINGDATA_APP_ID
+    return ROWINGDATA_APP_ID
 
 
 # FIT invalid ("no data") value per base type (standard §6.5): read as missing.
@@ -807,6 +807,13 @@ class FITParser(object):
             'seatcurve': 'seat curve',
             }
 
+        # fitparse's profile lacks Record field 87 (cycle_length16, UINT16, scale 100, m)
+        # and returns it raw as ``unknown_87``.
+        if 'unknown_87' in self.df.columns and 'cycle_length16' not in self.df.columns:
+            self.df['cycle_length16'] = pd.to_numeric(
+                self.df['unknown_87'], errors='coerce').mask(lambda v: v == 65535) / 100.0
+            self.df.drop(columns=['unknown_87'], inplace=True)
+
         self.df.rename(columns=newcolnames,inplace=True)
         self._map_standard_developer_fields()
         self._apply_lap_intensity()
@@ -821,7 +828,7 @@ class FITParser(object):
 
         Files written before protocol version 1 do not carry it (standard §1.5).
         """
-        standard_id, _instroke_id = _standard_app_ids()
+        standard_id = _standard_app_ids()
         try:
             for msg in self.fitfile.get_messages('developer_data_id'):
                 if _app_id_bytes(msg.get_value('application_id')) == standard_id:
@@ -855,7 +862,7 @@ class FITParser(object):
         application ID and metre-scaled DriveLength; those are reported
         separately so their older scaling can be honoured.
         """
-        standard_id, _instroke_id = _standard_app_ids()
+        standard_id = _standard_app_ids()
         index_to_app = {}
         try:
             for msg in self.fitfile.get_messages('developer_data_id'):

@@ -22,6 +22,7 @@ from . import fit_garmin_bridge
 try:
     from fit_tool.base_type import BaseType
     from fit_tool.developer_field import DeveloperField
+    from fit_tool.field import Field
     from fit_tool.fit_file_builder import FitFileBuilder
     from fit_tool.profile.messages.developer_data_id_message import DeveloperDataIdMessage
     from fit_tool.profile.messages.field_description_message import FieldDescriptionMessage
@@ -95,13 +96,8 @@ ALWAYS_EMIT_DEV_FIELD_IDS = frozenset(_FIT_EXPORT_RAW['always_emit_field_ids'])
 # UUID v5 generated from DNS namespace with name "rowingdata" for deterministic, unique ID.
 ROWINGDATA_APP_ID = uuid.uuid5(uuid.NAMESPACE_DNS, 'rowingdata').bytes
 
-# In-stroke curve summary fields (20-59) are unallocated in the registry, so
-# they travel under a private application ID and cannot collide with a future
-# committee allocation. HandleForceCurve (60) and axis metadata 90-92 are
-# assigned and stay under ROWINGDATA_APP_ID; other curves go to the companion
-# JSON file (standard §6.1).
-INSTROKE_APP_ID = uuid.uuid5(uuid.NAMESPACE_DNS, 'rowingdata.instroke').bytes
-INSTROKE_DEV_DATA_IDX = 1
+# Only HandleForceCurve (60) and axis metadata 90-92 go in the FIT file, under
+# ROWINGDATA_APP_ID; every other curve goes to the companion JSON file (standard §6.1).
 
 # Canonical mapping: df column name -> FIT curve type name (RP3/Quiske); from fit_export_spec.json
 INSTROKE_COLUMN_MAP = dict(_FIT_EXPORT_RAW['instroke_column_map'])
@@ -112,38 +108,6 @@ def _parse_instroke_curve(df, col):
     """Parse curve column to DataFrame of numeric values. Same format as rowingdata get_instroke_data."""
     d = df[col].astype(str).str[1:-1].str.split(',', expand=True)
     return d.apply(pd.to_numeric, errors='coerce')
-
-
-def _compute_instroke_summary(df, col):
-    """
-    Compute per-stroke summary metrics for a curve column (q1..q4, diff, maxpos, minpos).
-    Mirrors add_instroke_metrics, add_instroke_diff, add_instroke_maxminpos from rowingdata.
-    Returns dict with keys q1,q2,q3,q4,diff,maxpos,minpos (each a 1D array of length len(df)).
-    """
-    curve = _parse_instroke_curve(df, col)
-    dfnorm = curve.copy().abs()
-    row_max = dfnorm.T.max()
-    row_max = row_max.replace(0, np.nan)
-    dfnorm = dfnorm.T / row_max.values
-    dfnorm = dfnorm.T
-    dfnorm = dfnorm.fillna(0)
-
-    ncol = len(dfnorm.columns)
-    markers = (np.arange(5) * ncol / 4).astype(int)
-    q1 = dfnorm.iloc[:, markers[0]:markers[1]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
-    q2 = dfnorm.iloc[:, markers[1]:markers[2]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
-    q3 = dfnorm.iloc[:, markers[2]:markers[3]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
-    q4 = dfnorm.iloc[:, markers[3]:markers[4]].mean(axis=1).rolling(10, min_periods=1).std().fillna(0).values
-
-    diff_mat = dfnorm.diff(axis=0).fillna(0) ** 2
-    diff_arr = (diff_mat.sum(axis=1) / float(ncol)).fillna(0).values
-
-    min_idxs = dfnorm.idxmin(axis=1)
-    max_idxs = dfnorm.idxmax(axis=1)
-    maxpos = (max_idxs.astype(float) / ncol).fillna(0).values
-    minpos = (min_idxs.astype(float) / ncol).fillna(0).values
-
-    return {'q1': q1, 'q2': q2, 'q3': q3, 'q4': q4, 'diff': diff_arr, 'maxpos': maxpos, 'minpos': minpos}
 
 
 def _downsample_instroke_curve(df, col, n_points):
@@ -164,6 +128,23 @@ def _downsample_instroke_curve(df, col, n_points):
         indices = np.linspace(0, len(row) - 1, n_points, dtype=int)
         result.append(row[indices].astype(float))
     return result
+
+
+def _instroke_row_point_counts(df, col, n_points):
+    """
+    Number of real samples each record's curve carries in the FIT file.
+
+    A curve is written at its own length (at most ``n_points``): short strokes are not
+    padded, so InstrokePointCount and InstrokeSampleInterval describe every record
+    truthfully. Rows with fewer than 2 samples carry no curve (count 0).
+    """
+    curve = _parse_instroke_curve(df, col)
+    counts = np.zeros(len(curve), dtype=int)
+    for i in range(len(curve)):
+        row = curve.iloc[i].dropna().values
+        n = int(np.count_nonzero(np.isfinite(row)))
+        counts[i] = min(n, int(n_points)) if n >= 2 else 0
+    return counts
 
 
 def _get_instroke_curve_for_export(df, col, mode, downsample_points):
@@ -342,7 +323,9 @@ def _compute_instroke_axis_arrays(df, n_points, instroke_abscissa_type, instroke
     must not write a placeholder interval (§7.2). The caller then leaves the curve out.
     """
     nr = len(df)
-    if n_points < 2:
+    # n_points is one count for every record, or one count per record (0 = no curve)
+    npts = np.broadcast_to(np.asarray(n_points, dtype=np.float64), (nr,))
+    if nr == 0 or npts.max() < 2:
         return None
     if instroke_abscissa_type is not None:
         atype = int(instroke_abscissa_type)
@@ -362,17 +345,35 @@ def _compute_instroke_axis_arrays(df, n_points, instroke_abscissa_type, instroke
             df[' DriveLength (meters)'].values, nan=0.0, posinf=0.0, neginf=0.0
         )
         # Millimeters between uniform samples along handle travel
-        interval = np.round(drive_m * 1000.0 / np.maximum(n_points - 1, 1))
+        interval = np.round(drive_m * 1000.0 / np.maximum(npts - 1, 1))
         interval = np.clip(interval, 0, UINT16_MAX_VALID)
     elif atype == INSTROKE_ABSCISSA_TIME_UNIFORM_MS and ' DriveTime (ms)' in df.columns:
         drive_ms = np.nan_to_num(df[' DriveTime (ms)'].values, nan=0.0, posinf=0.0, neginf=0.0)
-        interval = np.round(drive_ms / np.maximum(n_points - 1, 1))
+        interval = np.round(drive_ms / np.maximum(npts - 1, 1))
         interval = np.clip(interval, 0, UINT16_MAX_VALID)
     else:
         return None  # no way to derive the spacing: do not write a placeholder
-    pc = np.full(nr, float(min(int(n_points), 127)))
+    interval = np.where(npts >= 2, interval, 0.0)
+    pc = np.where(npts >= 2, np.minimum(npts, 127.0), 0.0)
     ta = np.full(nr, float(atype))
     return ta, interval, pc
+
+
+CYCLE_LENGTH16_FIELD_ID = 87
+
+
+def _set_cycle_length16(rec, metres):
+    """
+    Write native Record ``cycle_length16`` (field 87, UINT16, scale 100, m): distance per
+    stroke cycle, catch to catch (standard §4). fit-tool's Record profile does not define
+    this field (only the 8-bit ``cycle_length``, max 2.55 m), so it is added by hand.
+    """
+    metres = min(max(metres, 0.0), UINT16_MAX_VALID / 100.0)
+    field = Field(name='cycle_length16', field_id=CYCLE_LENGTH16_FIELD_ID,
+                  base_type=BaseType.UINT16, offset=0, scale=100, size=0, units='m',
+                  type_name='', growable=True, sub_fields=[])
+    rec.fields.append(field)
+    field.set_value(0, metres)
 
 
 # Sport string to FIT enum mapping
@@ -584,7 +585,6 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         ``...(lbs)`` columns exist for backward compatibility (see ``fit_export_spec.json``).
     instroke_export : str
         'off' (default): no in-stroke curve export.
-        'summary': export q1,q2,q3,q4,diff,maxpos,minpos per curve as developer fields.
         'downsampled': export fixed-length downsampled curve (UINT16 array) per stroke.
         'full': export full-resolution curve up to 127 points per stroke (FIT size limit).
         'companion': write curve data to .instroke.json sidecar file.
@@ -636,6 +636,12 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     """
     if not FIT_TOOL_AVAILABLE:
         raise ImportError("fit-tool is required for FIT export. Install with: pip install fit-tool")
+
+    if instroke_export not in ('off', 'downsampled', 'full', 'companion'):
+        raise ValueError(
+            "instroke_export must be 'off', 'downsampled', 'full' or 'companion' "
+            "(got %r; the 'summary' mode was removed because it used field IDs 20-59, "
+            "which the Rowing Data Standard reserves)" % (instroke_export,))
 
     # Detect in-stroke columns early (for return value and overwrite check)
     detected_instroke_cols = _detect_instroke_columns(df)
@@ -744,7 +750,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     stroke_distance = None
     if ' StrokeDistance (meters)' in df.columns:
         stroke_distance = np.nan_to_num(df[' StrokeDistance (meters)'].values, nan=0.0, posinf=0.0, neginf=0.0)
-        stroke_distance = np.clip(stroke_distance, 0, 655.35)  # uint16 scale 100 max
+        stroke_distance = np.clip(stroke_distance, 0, 655.34)  # uint16 scale 100, below invalid 65535
 
     # Stroke number for native total_cycles field (data is per-stroke, one record per stroke)
     try:
@@ -767,14 +773,8 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     dev_arrays = {}
     dev_specs = []
     DEV_DATA_IDX = 0
-    instroke_private_field_ids = set()
+    instroke_row_points = None  # per row: real samples of the HandleForceCurve
     axis_row_ok = None  # per row: the curve's X-axis is fully known (§6.3)
-
-    def _dev_index_for(field_id):
-        """Developer data index: private namespace for unallocated curve IDs."""
-        if field_id in instroke_private_field_ids:
-            return INSTROKE_DEV_DATA_IDX
-        return DEV_DATA_IDX
 
     if use_dev:
         _spec = fitwrite_spec.load_fit_spec()
@@ -855,10 +855,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
 
     # In-stroke curve export (summary, downsampled, or companion)
     instroke_curve_cols = []
-    instroke_summary_arrays = {}
     instroke_downsampled_arrays = {}
     col_map = instroke_column_map if instroke_column_map is not None else INSTROKE_COLUMN_MAP
-    if instroke_export in ('summary', 'downsampled', 'full', 'companion'):
+    if instroke_export in ('downsampled', 'full', 'companion'):
         curve_cols = instroke_columns if instroke_columns is not None else _detect_instroke_columns(df)
         instroke_curve_cols = [c for c in curve_cols if c in df.columns]
         # Validate: in-stroke data requires stroke-boundary recording
@@ -870,28 +869,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 "Curves are inherently per-stroke and require stroke-boundary recording. "
                 "Use recording_strategy=RECORDING_STRATEGY_STROKE_BOUNDARY (default) or RECORDING_STRATEGY_UNKNOWN."
             )
-    if instroke_export == 'summary' and instroke_curve_cols and use_dev:
-        base_id = _FIT_EXPORT_RAW['instroke_dynamic']['summary_start']
-        for col in instroke_curve_cols:
-            canonical = col_map.get(col, col)
-            try:
-                summ = _compute_instroke_summary(df, col)
-            except (ValueError, KeyError, TypeError):
-                continue
-            for metric, arr in summ.items():
-                field_id = base_id
-                name = '%s_%s' % (canonical, metric)
-                arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
-                # UINT16: encoded = value * scale, must be <= 65534. Scale 1 => max display 65534
-                scale = 1
-                arr = np.clip(arr, 0, UINT16_MAX_VALID / max(scale, 1))
-                dev_arrays[field_id] = arr
-                dev_specs.append((field_id, col, name, BaseType.UINT16, 2, scale, ''))
-                instroke_private_field_ids.add(field_id)
-                instroke_summary_arrays.setdefault(col, {})[metric] = field_id
-                base_id += 1
-            base_id = (base_id // 10 + 1) * 10
-    elif instroke_export in ('downsampled', 'full') and instroke_curve_cols and use_dev:
+    if instroke_export in ('downsampled', 'full') and instroke_curve_cols and use_dev:
         for col in instroke_curve_cols:
             canonical = col_map.get(col, col)
             if canonical != HANDLE_FORCE_CURVE_NAME:
@@ -912,29 +890,21 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 continue
             arr_2d = np.array(curves_list, dtype=np.float64)
             size = n_points * 2
+            instroke_row_points = _instroke_row_point_counts(df, col, n_points)
             dev_arrays[base_id] = arr_2d
             dev_specs.append((base_id, col, canonical, BaseType.UINT16, size, y_scale, y_units))
             instroke_downsampled_arrays[col] = base_id
 
     if instroke_export in ('downsampled', 'full') and instroke_downsampled_arrays and use_dev:
         fit_curve_cols = list(instroke_downsampled_arrays)
-        nmax = 0
-        for col in fit_curve_cols:
-            try:
-                _, np_ = _get_instroke_curve_for_export(
-                    df, col, instroke_export, instroke_downsample_points
-                )
-                nmax = max(nmax, np_)
-            except (ValueError, KeyError, TypeError):
-                pass
         axis_tuples = None
-        if nmax >= 2:
+        if instroke_row_points is not None and instroke_row_points.max() >= 2:
             axis_abscissa = instroke_abscissa_type
             if axis_abscissa is None:
                 canonicals = [col_map.get(c, c) for c in fit_curve_cols]
                 axis_abscissa = _default_instroke_abscissa_type(df, canonicals)
             axis_tuples = _compute_instroke_axis_arrays(
-                df, nmax, axis_abscissa, instroke_sample_interval_ms)
+                df, instroke_row_points, axis_abscissa, instroke_sample_interval_ms)
         if axis_tuples is None:
             # A curve without a declared X-axis is not conforming (§6.3): leave it
             # out of the FIT file (it can still go in the companion JSON file).
@@ -1088,14 +1058,9 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
             dev_id_msg.application_id = ROWINGDATA_APP_ID
             dev_id_msg.developer_data_index = DEV_DATA_IDX
             builder.add(dev_id_msg)
-        if instroke_private_field_ids:
-            instroke_id_msg = DeveloperDataIdMessage()
-            instroke_id_msg.application_id = INSTROKE_APP_ID
-            instroke_id_msg.developer_data_index = INSTROKE_DEV_DATA_IDX
-            builder.add(instroke_id_msg)
         for field_id, col, name, base_type, size, scale, units in dev_specs:
             fd_msg = FieldDescriptionMessage()
-            fd_msg.developer_data_index = _dev_index_for(field_id)
+            fd_msg.developer_data_index = DEV_DATA_IDX
             fd_msg.field_definition_number = field_id
             fd_msg.fit_base_type_id = base_type.value
             fd_msg.field_name = name
@@ -1158,15 +1123,17 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                 is_array_field = (base_type == BaseType.UINT16 and size > 2)
                 if is_array_field and arr.ndim == 2:
                     row = arr[i]
+                    if field_id == HANDLE_FORCE_CURVE_FIELD_ID and instroke_row_points is not None:
+                        row = row[:int(instroke_row_points[i])]  # no padding
                     vals = np.nan_to_num(row, nan=0.0, posinf=0.0, neginf=0.0)
                     max_phys = UINT16_MAX_VALID / max(scale, 1)
                     vals = np.clip(vals, 0, max_phys)
                     has_data = np.any(vals != 0)
                     if has_data:
                         dev = DeveloperField(
-                            developer_data_index=_dev_index_for(field_id),
+                            developer_data_index=DEV_DATA_IDX,
                             field_id=field_id,
-                            size=size,
+                            size=len(vals) * 2,
                             name=name,
                             base_type=base_type,
                             scale=scale,
@@ -1182,7 +1149,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
                         val = int(np.clip(round(val), 0, UINT8_MAX_VALID))
                     if val != 0 or field_id in ALWAYS_EMIT_DEV_FIELD_IDS:
                         dev = DeveloperField(
-                            developer_data_index=_dev_index_for(field_id),
+                            developer_data_index=DEV_DATA_IDX,
                             field_id=field_id,
                             size=size,
                             name=name,
@@ -1204,8 +1171,8 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
         rec.enhanced_speed = float(enhanced_speed[i]) if enhanced_speed[i] > 0 else None
         if hasattr(rec, 'total_cycles'):
             rec.total_cycles = int(stroke_number[i])
-        if stroke_distance is not None and hasattr(rec, 'cycle_length16'):
-            rec.cycle_length16 = float(stroke_distance[i])  # fit-tool applies scale 100
+        if stroke_distance is not None and stroke_distance[i] > 0:
+            _set_cycle_length16(rec, float(stroke_distance[i]))
         if not (np.isnan(lat[i]) or lat[i] == 0) and not (np.isnan(lon[i]) or lon[i] == 0):
             rec.position_lat = float(lat[i])
             rec.position_long = float(lon[i])
@@ -1333,7 +1300,7 @@ def write_fit(file_name, df, row_date="2016-01-01", notes="Exported by Rowingdat
     if instroke_export == 'off' and detected_instroke_cols:
         result = {
             'instroke_columns_available': detected_instroke_cols,
-            'suggestion': 'Re-export with instroke_export="summary", "downsampled", "full", or "companion" to include curve data.'
+            'suggestion': 'Re-export with instroke_export="downsampled", "full", or "companion" to include curve data.'
         }
     if companion_written_path is not None:
         if result is None:

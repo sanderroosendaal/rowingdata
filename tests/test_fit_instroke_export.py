@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """Thorough tests for FIT in-stroke curve export.
 
-In-stroke curve field IDs are unallocated in the Rowing Data Standard registry
-(https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard), so they are emitted
-under rowingdata's private application ID; see fitwrite.INSTROKE_APP_ID.
+Only HandleForceCurve (60) and axis fields 90-92 go in the FIT file, per the Rowing Data Standard
+(https://github.com/Rowing-Industry-Trade-Association/rowing-data-standard); other curves go to the
+companion JSON file.
 """
 from __future__ import absolute_import
 
@@ -161,6 +161,11 @@ class TestFitInstrokeExportPhase1(unittest.TestCase):
             recs = _record_field_maps(fit_path)
             self.assertNotIn('HandleForceCurve', recs[0])
 
+    def test_summary_mode_removed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(ValueError):
+                _export_synthetic(tmp, 'summary')
+
     def test_spec_curve_start_and_axis_ids(self):
         raw = fitwrite_spec.load_fit_spec_raw()
         self.assertEqual(raw['instroke_dynamic']['curve_start'], 60)
@@ -168,91 +173,49 @@ class TestFitInstrokeExportPhase1(unittest.TestCase):
         handle = raw['instroke_curve_types']['HandleForceCurve']
         self.assertEqual(handle['y_scale'], 10)
         self.assertEqual(handle['default_abscissa'], 'HANDLE_DISTANCE_UNIFORM_M')
+        # Only HandleForceCurve is a FIT curve; others live in the companion JSON.
+        self.assertEqual(list(raw['instroke_curve_types']), ['HandleForceCurve'])
+        self.assertNotIn('summary_start', raw['instroke_dynamic'])
 
 
 class TestFitInstrokeExportPhase2(unittest.TestCase):
-    """Summary IDs/names, companion fidelity, downsampled point counts."""
+    """Companion fidelity, downsampled point counts."""
 
-    def test_summary_field_ids_20_through_26(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            fit_path, _ = _export_synthetic(tmp, 'summary')
-            fmap = _field_description_map(fit_path)
-            expected = {
-                20: 'HandleForceCurve_q1',
-                21: 'HandleForceCurve_q2',
-                22: 'HandleForceCurve_q3',
-                23: 'HandleForceCurve_q4',
-                24: 'HandleForceCurve_diff',
-                25: 'HandleForceCurve_maxpos',
-                26: 'HandleForceCurve_minpos',
-            }
-            for fid, name in expected.items():
-                self.assertIn(fid, fmap)
-                self.assertEqual(fmap[fid]['field_name'], name)
-
-    def test_summary_mode_no_axis_field_descriptions(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            fit_path, _ = _export_synthetic(tmp, 'summary')
-            fmap = _field_description_map(fit_path)
-            self.assertNotIn(90, fmap)
-            self.assertNotIn(91, fmap)
-            self.assertNotIn(92, fmap)
-            rec = _record_field_maps(fit_path)[0]
-            self.assertNotIn('InstrokeAbscissaType', rec)
-
-    def test_summary_metrics_follow_computed_zero_omission_rule(self):
-        """Records include summary dev fields only when computed metric != 0."""
-        with tempfile.TemporaryDirectory() as tmp:
-            df = _synthetic_stroke_df()
-            summ = fitwrite._compute_instroke_summary(df, 'curve_data')
-            fit_path, _ = _export_synthetic(tmp, 'summary', df=df)
-            rec = _record_field_maps(fit_path)[0]
-            for metric, arr in summ.items():
-                key = 'HandleForceCurve_%s' % metric
-                if arr[0] == 0:
-                    self.assertNotIn(key, rec)
-                else:
-                    self.assertIn(key, rec)
-
-    def test_downsampled_point_count_16_pads_short_curve(self):
+    def test_downsampled_short_curve_is_not_padded(self):
+        """A curve shorter than the requested count is written at its own length."""
         with tempfile.TemporaryDirectory() as tmp:
             fit_path, _ = _export_synthetic(
                 tmp, 'downsampled', instroke_downsample_points=16,
+            )
+            rec = _record_field_maps(fit_path)[0]
+            self.assertEqual(rec['InstrokePointCount'].raw_value, 5)
+            self.assertEqual(rec['HandleForceCurve'].raw_value, (1000, 2000, 4000, 3000, 500))
+
+    def test_downsampled_long_curve_is_reduced_to_requested_count(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            df = _synthetic_stroke_df(curve_values=tuple(range(10, 410, 10)))  # 40 values
+            fit_path, _ = _export_synthetic(
+                tmp, 'downsampled', df=df, instroke_downsample_points=16,
             )
             rec = _record_field_maps(fit_path)[0]
             self.assertEqual(rec['InstrokePointCount'].raw_value, 16)
-            raw = rec['HandleForceCurve'].raw_value
-            self.assertEqual(len(raw), 16)
-            # First five samples match source; remainder padded with zeros
-            self.assertEqual(raw[:5], (1000, 2000, 4000, 3000, 500))
-            self.assertEqual(raw[5:], (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+            self.assertEqual(len(rec['HandleForceCurve'].raw_value), 16)
 
-    def test_downsampled_point_count_32_on_longer_source(self):
+    def test_interval_follows_each_records_own_point_count(self):
+        """Interval mm = drive_mm / (point_count - 1) of that record's curve."""
         with tempfile.TemporaryDirectory() as tmp:
-            long_curve = tuple(range(10, 90, 5))  # 16 values: 10..85
-            df = _synthetic_stroke_df(curve_values=long_curve)
-            fit_path = os.path.join(tmp, 'ds32.fit')
-            fitwrite.write_fit(
-                fit_path,
-                df,
-                row_date='2026-08-03',
-                sport='rowing',
-                instroke_export='downsampled',
-                instroke_downsample_points=32,
-                overwrite=True,
-            )
-            rec = _record_field_maps(fit_path)[0]
-            self.assertEqual(rec['InstrokePointCount'].raw_value, 32)
-            self.assertEqual(len(rec['HandleForceCurve'].raw_value), 32)
-
-    def test_downsampled_interval_updates_with_point_count(self):
-        """Interval mm = drive_mm / (point_count - 1) when using distance abscissa."""
-        with tempfile.TemporaryDirectory() as tmp:
+            # 5 real samples over 1000 mm -> 250 mm
             fit_path, _ = _export_synthetic(
                 tmp, 'downsampled', instroke_downsample_points=16,
             )
             rec = _record_field_maps(fit_path)[0]
-            # 1000 mm / 15 ≈ 67
+            self.assertEqual(rec['InstrokeSampleInterval'].raw_value, 250)
+            # 40 samples reduced to 16 points over 1000 mm -> 1000 / 15 = 67 mm
+            df = _synthetic_stroke_df(curve_values=tuple(range(10, 410, 10)))
+            fit_path, _ = _export_synthetic(
+                tmp, 'downsampled', df=df, instroke_downsample_points=16,
+            )
+            rec = _record_field_maps(fit_path)[0]
             self.assertEqual(rec['InstrokeSampleInterval'].raw_value, 67)
 
     def test_companion_json_preserves_full_source_curve(self):
@@ -404,3 +367,109 @@ class TestFitInstrokeExportPhase3(unittest.TestCase):
             self.assertEqual(values, [100.0, 200.0, 400.0, 300.0, 50.0])
             source = _parse_curve_parenthesized(df['curve_data'].iloc[0])
             self.assertEqual(values, source)
+
+
+def _curve_values(n_points, peak):
+    """Smooth force-curve-like profile (half sine, in N) with ``n_points`` samples."""
+    x = np.linspace(0.0, np.pi, n_points)
+    return [round(float(v), 1) for v in peak * np.sin(x) + 5.0]
+
+
+class TestFitInstrokeNativeCsvFullResolution(unittest.TestCase):
+    """Native rowingdata CSV with 50-100 point force curves -> FIT at original resolution."""
+
+    POINTS_PER_STROKE = [50, 64, 75, 99, 100]
+    STROKE_DISTANCE_M = [9.87, 10.05, 10.31, 9.5, 10.0]
+
+    def _write_native_csv(self, path):
+        n = len(self.POINTS_PER_STROKE)
+        curves = [_curve_values(p, 300.0 + 20 * i) for i, p in enumerate(self.POINTS_PER_STROKE)]
+        df = pd.DataFrame({
+            'TimeStamp (sec)': 1500000000.0 + np.arange(1.0, n + 1.0) * 3.0,
+            ' lapIdx': np.zeros(n, dtype=int),
+            ' Horizontal (meters)': np.arange(1, n + 1) * 10.0,
+            ' Cadence (stokes/min)': np.full(n, 24.0),
+            ' Stroke500mPace (sec/500m)': np.full(n, 120.0),
+            ' Power (watts)': np.full(n, 200.0),
+            ' HRCur (bpm)': np.full(n, 140),
+            ' DriveLength (meters)': np.full(n, 1.2),
+            ' DriveTime (ms)': np.full(n, 900),
+            ' StrokeDistance (meters)': self.STROKE_DISTANCE_M,
+            'curve_data': ['(' + ','.join('%g' % v for v in c) + ')' for c in curves],
+        })
+        df.to_csv(path, index=False)
+        return curves
+
+    def test_native_csv_curves_exported_at_original_resolution(self):
+        import rowingdata
+        with tempfile.TemporaryDirectory() as tmp:
+            csv_path = os.path.join(tmp, 'native_curves.csv')
+            fit_path = os.path.join(tmp, 'native_curves.fit')
+            source = self._write_native_csv(csv_path)
+
+            row = rowingdata.rowingdata(csvfile=csv_path)
+            self.assertIn('curve_data', row.df.columns)
+            row.exporttofit(fit_path, sport='rowing', instroke_export='full')
+
+            # Field description: HandleForceCurve, UINT16 array, scale 10, N
+            fmap = _field_description_map(fit_path)
+            self.assertEqual(fmap[60]['field_name'], 'HandleForceCurve')
+            self.assertEqual(fmap[60]['scale'], 10)
+            self.assertEqual(fmap[60]['units'], 'N')
+
+            recs = [r for r in _record_field_maps(fit_path) if 'HandleForceCurve' in r]
+            self.assertEqual(len(recs), len(source))
+
+            for rec, curve, n_points in zip(recs, source, self.POINTS_PER_STROKE):
+                raw = rec['HandleForceCurve'].raw_value
+                # Original resolution: exactly the source samples, no padding, no resampling
+                self.assertEqual(rec['InstrokePointCount'].raw_value, n_points)
+                self.assertEqual(list(raw), [int(round(v * 10)) for v in curve])
+                self.assertLessEqual(len(raw), fitwrite.INSTROKE_MAX_POINTS)
+                # Standard §6.3: axis metadata describes this record's curve
+                self.assertEqual(
+                    rec['InstrokeAbscissaType'].raw_value,
+                    INSTROKE_ABSCISSA_HANDLE_DISTANCE_UNIFORM_M)
+                # drive length 1.2 m = 1200 mm spread over n_points - 1 intervals
+                self.assertEqual(
+                    rec['InstrokeSampleInterval'].raw_value,
+                    int(round(1200.0 / (n_points - 1))))
+
+    def test_native_csv_cycle_length16_written_per_record(self):
+        """Record field 87 (cycle_length16, UINT16, scale 100 m) = distance per stroke."""
+        import rowingdata
+        with tempfile.TemporaryDirectory() as tmp:
+            csv_path = os.path.join(tmp, 'native_curves.csv')
+            fit_path = os.path.join(tmp, 'native_curves.fit')
+            self._write_native_csv(csv_path)
+            row = rowingdata.rowingdata(csvfile=csv_path)
+            row.exporttofit(fit_path, sport='rowing', instroke_export='full')
+
+            raw = [
+                {f.name: f.raw_value for f in m}.get('unknown_87')  # fitparse lacks 87
+                for m in FitFile(fit_path).get_messages('record')
+            ]
+            self.assertEqual(raw, [int(round(d * 100)) for d in self.STROKE_DISTANCE_M])
+
+            parsed = rowingdata.FITParser(fit_path)
+            np.testing.assert_allclose(
+                parsed.df[' StrokeDistance (meters)'].values, self.STROKE_DISTANCE_M)
+
+    def test_native_csv_curves_survive_fit_roundtrip(self):
+        import rowingdata
+        with tempfile.TemporaryDirectory() as tmp:
+            csv_path = os.path.join(tmp, 'native_curves.csv')
+            fit_path = os.path.join(tmp, 'native_curves.fit')
+            source = self._write_native_csv(csv_path)
+            row = rowingdata.rowingdata(csvfile=csv_path)
+            row.exporttofit(fit_path, sport='rowing', instroke_export='full')
+
+            parsed = rowingdata.FITParser(fit_path)
+            self.assertIn('curve_data', parsed.df.columns)
+            curves = [
+                _parse_curve_parenthesized(v)
+                for v in parsed.df['curve_data'] if isinstance(v, str)
+            ]
+            self.assertEqual(len(curves), len(source))
+            for got, want in zip(curves, source):
+                self.assertEqual(got, want)

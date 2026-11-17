@@ -317,26 +317,14 @@ class TestInstrokeNamespace(unittest.TestCase):
         )
         return FitFile(path, check_crc=False)
 
-    def test_private_and_standard_namespaces_differ(self):
-        assert fitwrite.INSTROKE_APP_ID != fitwrite.ROWINGDATA_APP_ID
-
     def test_handle_force_curve_uses_standard_application_id(self):
         fit = self._write_curves('full')
         by_index = _dev_index_by_app_id(fit)
         desc = _descriptions(fit)
         assert desc[60]['name'] == 'HandleForceCurve'
-        assert fitwrite.INSTROKE_APP_ID not in _app_ids(fit)
+        assert len(_app_ids(fit)) == 1
         for field_id in (60, 90, 91, 92):
             assert by_index[desc[field_id]['dev_index']] == fitwrite.ROWINGDATA_APP_ID
-
-    def test_summary_fields_use_private_application_id(self):
-        fit = self._write_curves('summary')
-        by_index = _dev_index_by_app_id(fit)
-        desc = _descriptions(fit)
-        summary_ids = [fid for fid, d in desc.items() if 'HandleForceCurve_' in str(d['name'])]
-        assert summary_ids
-        for fid in summary_ids:
-            assert by_index[desc[fid]['dev_index']] == fitwrite.INSTROKE_APP_ID
 
     def test_core_fields_stay_on_standard_id_with_curves(self):
         fit = self._write_curves('full')
