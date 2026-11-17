@@ -1174,6 +1174,12 @@ class QuiskeParser(CSVParser):
         self.df[self.columns['catch']] = 0
         self.df[self.columns['finish']] = self.df['stroke angle (deg)']
 
+        # distance per stroke (m): boat speed over stroke rate
+        spm = pd.to_numeric(self.df[self.columns[' Cadence (stokes/min)']], errors='coerce')
+        strokelength = velo / (spm.replace(0, np.nan) / 60.)
+        self.df[self.columns[' StrokeDistance (meters)']] = strokelength.replace(
+            [np.inf, -np.inf], np.nan).fillna(0.0).clip(lower=0.0)
+
         self.to_standard()
 
 class BoatCoachOTWParser(CSVParser):
@@ -2227,6 +2233,8 @@ class RowPerfectParser(CSVParser):
         self.df[self.columns[' StrokeRecoveryTime (ms)']] *= 1000.
         self.df[self.columns[' PeakDriveForce (lbs)']] /= lbstoN
         self.df[self.columns[' DriveLength (meters)']] /= 100.
+        # RowPerfect reports distance per stroke in cm
+        self.df[self.columns[' StrokeDistance (meters)']] /= 100.
 
         wperstroke = self.df['energy_per_stroke']
         fav = wperstroke / self.df[self.columns[' DriveLength (meters)']]

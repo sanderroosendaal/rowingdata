@@ -720,6 +720,21 @@ class TestSpeedCoach2_v127Parser:
         assert_equal(checks['velo_time_distance'],True)
         #        assert_equal(checks['velo_valid'],True)
 
+class TestStrokeDistance:
+    def test_rowperfect_stroke_distance_is_in_metres(self):
+        r = rowingdata.RowPerfectParser('testdata/rowperfect.csv')
+        d = r.df[' StrokeDistance (meters)']
+        assert d.max() < 30  # was in cm (up to ~1300) before
+        assert d.iloc[1] == 10.1665
+
+    def test_quiske_has_stroke_distance(self):
+        r = rowingdata.QuiskeParser('testdata/quiske_per_stroke_left.csv')
+        d = r.df[' StrokeDistance (meters)']
+        assert (d >= 0).all()
+        assert d.max() > 0
+        assert d.max() < 30
+
+
 class TestCurveData:
     def testcurvedata(self):
         file = 'testdata/rp3_curve.csv'
