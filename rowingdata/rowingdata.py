@@ -6,7 +6,7 @@ from __future__ import print_function
 from six.moves import range
 from six.moves import input
 
-__version__ = "3.8.5"
+__version__ = "3.8.6"
 
 from collections import Counter
 
@@ -3154,7 +3154,6 @@ class rowingdata:
             ``docs/FIT_EXPORT.md``).
         instroke_export : str
             'off' (default): no in-stroke curve export.
-            'summary': export q1,q2,q3,q4,diff,maxpos,minpos per curve as developer fields.
             'downsampled': export fixed-length downsampled curve (UINT16 array) per stroke.
             'full': export full-resolution curve up to 127 points per stroke (FIT size limit).
             'companion': write curve data to .instroke.json sidecar file.

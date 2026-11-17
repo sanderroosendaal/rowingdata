@@ -78,9 +78,9 @@ def load_fit_spec_raw():
 
 def _validate_spec(raw):
     version = raw.get('version', 0)
-    if version not in (1, 2, 3, 4, 5):
+    if version not in (1, 2, 3, 4, 5, 6):
         warnings.warn(
-            'fit_export_spec.json version %s may be unsupported (expected 1, 2, 3, 4 or 5)' % version,
+            'fit_export_spec.json version %s may be unsupported (expected 1 to 6)' % version,
             UserWarning,
             stacklevel=2,
         )

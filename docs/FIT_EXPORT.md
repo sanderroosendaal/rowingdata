@@ -36,17 +36,17 @@ The repository includes **`testdata/rowingdata_standard_example.fit`**: a full a
 
 ## Developer field definitions (machine-readable)
 
-**`rowingdata/data/fit_export_spec.json`** (shipped with the package) holds the subset of the standard's registry that rowingdata emits: field IDs, FIT names, base types, scales, DataFrame column mappings, in-stroke dynamic ID ranges (`summary_start`, `curve_start`), and the abscissa enum. `rowingdata/fitwrite_spec.py` loads and validates it; `rowingdata/fitwrite.py` and `rowingdata/otherparsers.py` both drive off the loaded tuples, so reading and writing stay in step.
+**`rowingdata/data/fit_export_spec.json`** (shipped with the package) holds the subset of the standard's registry that rowingdata emits: field IDs, FIT names, base types, scales, DataFrame column mappings, in-stroke dynamic ID ranges (`curve_start`), and the abscissa enum. `rowingdata/fitwrite_spec.py` loads and validates it; `rowingdata/fitwrite.py` and `rowingdata/otherparsers.py` both drive off the loaded tuples, so reading and writing stay in step.
 
 That JSON is a **copy** for runtime use. When the committee changes the registry, update the JSON to match `registry/field-ids.md` upstream; `tests/test_fit_standard.py` asserts the resulting raw encodings, so a drifting scale or unit fails the build.
 
 ## Application IDs
 
-Developer fields are split across two application IDs:
+Developer fields use one application ID:
 
 - **Standard fields** use the Rowing Data Standard application UUID `89e86158-6d47-5c98-9d46-7d29437f27b9` (developer data index 0), a UUID v5 over the DNS namespace with name "rowingdata". This is the identifier the standard assigns, not a rowingdata-private one, so any conforming consumer can read these fields.
 - **Protocol version.** The standard's `DeveloperDataId` message carries `application_version = 1` (§1.5). `FITParser` treats a missing version as a file written before protocol version 1, and then reads a record-level `WorkoutState` (field 9) with its older rowingdata meaning.
-- **In-stroke curve summary fields** (`instroke_export='summary'`) use a separate private UUID `uuid5(NAMESPACE_DNS, 'rowingdata.instroke')` (developer data index 1). Their field IDs (20–59) are **unallocated** in the registry, so they have no interoperable meaning; keeping them off the standard UUID means they cannot be mistaken for, or collide with, a future committee allocation. In-stroke *axis metadata* (IDs 90–92) is allocated and stays on the standard UUID.
+- **In-stroke curves:** only HandleForceCurve (60) and the axis metadata (90–92) are written to FIT, on the standard UUID. Other curves go to the companion `.instroke.json` file. The former `instroke_export='summary'` mode (IDs 20–59, reserved in the registry) was removed.
 
 rowingdata 3.7.3 and earlier used a non-compliant 10-byte string `b'rowingdata'` as the application ID and metre-based scales for several fields. `FITParser` still recognises and reads those older files.
 
@@ -291,14 +291,15 @@ Non-uniform abscissas are not stored in FIT (255-byte field limit); resample to 
 
 ## In-stroke curve export
 
-When `instroke_export` is not `'off'`, comma-separated curve columns (RP3 `curve_data`, Quiske `boat accelerator curve`, `oar angle velocity curve`, `seat curve`) can be exported:
+Each record's curve is written at its own length and is never zero-padded: `InstrokePointCount` and `InstrokeSampleInterval` (drive length or drive time divided by `point_count - 1`) are computed per record.
+
+When `instroke_export` is not `'off'`, comma-separated curve columns (RP3 `curve_data`, Quiske `boat accelerator curve`, `oar angle velocity curve`, `seat curve`) can be exported (only HandleForceCurve goes into FIT; the others are written to the companion file):
 
 | instroke_export | Behavior |
 |-----------------|----------|
 | `'off'` (default) | No curve export; backward compatible. |
-| `'summary'` | Per-stroke metrics (q1, q2, q3, q4, diff, maxpos, minpos) as developer fields, e.g. `HandleForceCurve_q1`. |
-| `'downsampled'` | Fixed-length curve per stroke as UINT16 array. Use `instroke_downsample_points` (default 16, range 2–127). |
-| `'full'` | Full-resolution curve up to 127 points per stroke. Curves with ≤127 points are stored as-is (padded if shorter); longer curves are downsampled to 127. FIT developer fields have a 255-byte limit, so UINT16 (2 bytes) allows max 127 points. |
+| `'downsampled'` | Fixed-length curve per stroke as UINT16 array. Use `instroke_downsample_points` (default 16, range 2–127); curves shorter than that are not upsampled. |
+| `'full'` | Full-resolution curve up to 127 points per stroke. Curves with ≤127 points are stored as-is; longer curves are downsampled to 127. FIT developer fields have a 255-byte limit, so UINT16 (2 bytes) allows max 127 points. |
 | `'companion'` | Sidecar `.instroke.json` file with full curve data per stroke (no FIT size limit). |
 
 **Column mapping**: `curve_data` → HandleForceCurve, `boat accelerator curve` → BoatAcceleratorCurve, `oar angle velocity curve` → OarAngleVelocityCurve, `seat curve` → SeatCurve. Override via `instroke_column_map`. Columns are auto-detected when `instroke_columns` is None.
