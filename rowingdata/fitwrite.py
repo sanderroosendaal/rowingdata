@@ -106,7 +106,8 @@ INSTROKE_CURVE_TYPES = dict(_FIT_EXPORT_RAW.get('instroke_curve_types') or {})
 
 def _parse_instroke_curve(df, col):
     """Parse curve column to DataFrame of numeric values. Same format as rowingdata get_instroke_data."""
-    d = df[col].astype(str).str[1:-1].str.split(',', expand=True)
+    # Curves are stored as "(1,2,3)", "[1,2,3]" or "1,2,3" (OpenRowingMonitor)
+    d = df[col].astype(str).str.strip().str.strip('()[]').str.split(',', expand=True)
     return d.apply(pd.to_numeric, errors='coerce')
 
 
@@ -540,7 +541,7 @@ def _downsample_curve_series(series, n_points):
     curves = []
     for val in series:
         s = str(val).strip().strip('"')
-        inner = s[1:-1] if len(s) > 2 else s
+        inner = s[1:-1] if len(s) > 2 and s[0] in '([' and s[-1] in ')]' else s
         parts = [float(x) for x in inner.split(',') if x.strip()]
         if len(parts) < 2:
             curves.append([0.0] * n_points)
