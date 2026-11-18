@@ -375,6 +375,57 @@ def _curve_values(n_points, peak):
     return [round(float(v), 1) for v in peak * np.sin(x) + 5.0]
 
 
+class TestFitInstrokeOrmHandleForce(unittest.TestCase):
+    """OpenRowingMonitor names its in-stroke force column ``Handle_Force_(N)``."""
+
+    ORM_COLUMN = 'Handle_Force_(N)'
+
+    def _orm_df(self):
+        df = _synthetic_stroke_df(curve_values=(100, 200, 400, 300, 50), n_strokes=3)
+        df = df.rename(columns={'curve_data': self.ORM_COLUMN})
+        # ORM writes the curve without brackets
+        df[self.ORM_COLUMN] = ['100,200,400,300,50'] * len(df)
+        df['Handle_Velocity_(m/s)'] = ['0.5,1.0,1.5,1.0,0.5'] * len(df)
+        df['Handle_Power_(W)'] = ['50,200,600,300,25'] * len(df)
+        return df
+
+    def test_column_map_names_orm_column(self):
+        self.assertEqual(fitwrite.INSTROKE_COLUMN_MAP[self.ORM_COLUMN], 'HandleForceCurve')
+
+    def test_orm_handle_force_goes_to_fit_field_60(self):
+        for mode in ('full', 'downsampled'):
+            with tempfile.TemporaryDirectory() as tmp:
+                fit_path, _ = _export_synthetic(tmp, mode, df=self._orm_df())
+                fmap = _field_description_map(fit_path)
+                self.assertEqual(fmap[60]['field_name'], 'HandleForceCurve')
+                recs = [r for r in _record_field_maps(fit_path) if 'HandleForceCurve' in r]
+                self.assertEqual(len(recs), 3)
+                for rec in recs:
+                    self.assertEqual(list(rec['HandleForceCurve'].raw_value),
+                                     [1000, 2000, 4000, 3000, 500])
+                    self.assertEqual(rec['InstrokePointCount'].raw_value, 5)
+
+    def test_orm_handle_force_not_in_companion_when_in_fit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            fit_path, _ = _export_synthetic(tmp, 'full', df=self._orm_df())
+            with open(os.path.splitext(fit_path)[0] + '.instroke.json') as f:
+                companion = json.load(f)
+            self.assertNotIn(self.ORM_COLUMN, companion)
+            self.assertNotIn('HandleForceCurve', companion)
+
+    def test_orm_velocity_and_power_stay_out_of_fit(self):
+        """The standard (§6.1) allows only the handle force curve in the FIT file."""
+        with tempfile.TemporaryDirectory() as tmp:
+            fit_path, _ = _export_synthetic(tmp, 'full', df=self._orm_df())
+            names = {d['field_name'] for d in _field_description_map(fit_path).values()}
+            self.assertNotIn('Handle_Velocity_(m/s)', names)
+            self.assertNotIn('Handle_Power_(W)', names)
+            with open(os.path.splitext(fit_path)[0] + '.instroke.json') as f:
+                companion = json.load(f)
+            self.assertIn('Handle_Velocity_(m/s)', companion)
+            self.assertIn('Handle_Power_(W)', companion)
+
+
 class TestFitInstrokeNativeCsvFullResolution(unittest.TestCase):
     """Native rowingdata CSV with 50-100 point force curves -> FIT at original resolution."""
 

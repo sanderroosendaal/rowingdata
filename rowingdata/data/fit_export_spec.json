@@ -24,6 +24,7 @@
   "always_emit_field_ids": [],
   "instroke_column_map": {
     "curve_data": "HandleForceCurve",
+    "Handle_Force_(N)": "HandleForceCurve",
     "boat accelerator curve": "BoatAcceleratorCurve",
     "oar angle velocity curve": "OarAngleVelocityCurve",
     "seat curve": "SeatCurve"
